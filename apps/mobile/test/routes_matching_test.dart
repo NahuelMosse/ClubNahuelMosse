@@ -2,23 +2,23 @@ import 'package:clubnahuelmosse/api/rutas.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('una ruta sin la barra inicial no coincide con la declarada', () {
+  test('a route without the leading slash does not match the declared one', () {
     expect(rutaDeclarada('GET', '/me'), isTrue);
     expect(rutaDeclarada('GET', 'x/me'), isFalse);
   });
 
-  test('una llave suelta no hace de parámetro: solo `{nombre}` completo', () {
-    const ruta = ApiRoute('GET', '/a/x}');
-    expect(ruta.coincideCon('GET', ['', 'a', 'x}']), isTrue);
-    expect(ruta.coincideCon('GET', ['', 'a', 'y}']), isFalse);
+  test('a stray brace is not a parameter: only a complete `{name}` is', () {
+    const route = ApiRoute('GET', '/a/x}');
+    expect(route.coincideCon('GET', ['', 'a', 'x}']), isTrue);
+    expect(route.coincideCon('GET', ['', 'a', 'y}']), isFalse);
   });
 
   test(
-    'un parámetro `{id}` acepta cualquier valor no vacío y rechaza el vacío',
+    'an `{id}` parameter accepts any non-empty value and rejects the empty one',
     () {
-      const ruta = ApiRoute('GET', '/a/{id}');
-      expect(ruta.coincideCon('GET', ['', 'a', '7']), isTrue);
-      expect(ruta.coincideCon('GET', ['', 'a', '']), isFalse);
+      const route = ApiRoute('GET', '/a/{id}');
+      expect(route.coincideCon('GET', ['', 'a', '7']), isTrue);
+      expect(route.coincideCon('GET', ['', 'a', '']), isFalse);
     },
   );
 }

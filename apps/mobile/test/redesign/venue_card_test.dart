@@ -10,7 +10,7 @@ import '../support/user.dart';
 
 void main() {
   testWidgets(
-    'la cantidad de canchas de la tarjeta de sede es el dorsal con el rótulo CANCHAS, sin el bloque violeta @RED-03-ASM-14',
+    'the venue card court count is the bib with the «CANCHAS» label, without the violet block @RED-03-ASM-14',
     (tester) async {
       await mountUser(
         tester,
@@ -18,30 +18,24 @@ void main() {
         api: apiRoutes(venueRoutes(venues: '[$venueMoronWithSports]')),
       );
 
-      final tarjeta = find.byType(VenueCard);
-      expect(tarjeta, findsOneWidget);
-      final dorsal = find.descendant(
-        of: tarjeta,
-        matching: find.byType(GiantBib),
-      );
-      expect(tester.widget<GiantBib>(dorsal).color, Palette.dark.textOnMedia);
-      final rotulo = find.descendant(
-        of: tarjeta,
-        matching: find.text('CANCHAS'),
-      );
-      expect(rotulo, findsOneWidget);
+      final card = find.byType(VenueCard);
+      expect(card, findsOneWidget);
+      final bib = find.descendant(of: card, matching: find.byType(GiantBib));
+      expect(tester.widget<GiantBib>(bib).color, Palette.dark.textOnMedia);
+      final label = find.descendant(of: card, matching: find.text('CANCHAS'));
+      expect(label, findsOneWidget);
       expect(
-        tester.getTopLeft(rotulo).dy,
-        greaterThan(tester.getTopLeft(dorsal).dy),
+        tester.getTopLeft(label).dy,
+        greaterThan(tester.getTopLeft(bib).dy),
       );
-      final violetas = tester
+      final violets = tester
           .widgetList<Container>(
-            find.descendant(of: tarjeta, matching: find.byType(Container)),
+            find.descendant(of: card, matching: find.byType(Container)),
           )
           .map((c) => c.decoration)
           .whereType<BoxDecoration>()
           .where((d) => d.color == Palette.dark.accentBase);
-      expect(violetas, isEmpty);
+      expect(violets, isEmpty);
     },
   );
 }

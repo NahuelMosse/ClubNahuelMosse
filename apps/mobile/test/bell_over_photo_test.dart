@@ -7,48 +7,48 @@ import 'package:flutter_test/flutter_test.dart';
 import 'notifications_test.dart' show FakeApi, centerOf;
 import 'support/mount.dart';
 
-Future<void> _montarCampana(
+Future<void> _mountBell(
   WidgetTester tester, {
-  required ThemeData tema,
-  int noLeidas = 0,
+  required ThemeData theme,
+  int unread = 0,
 }) async {
   final api = FakeApi()
     ..avisos = []
-    ..unread = noLeidas;
-  final centro = centerOf(api, FakeSession(userProfile));
+    ..unread = unread;
+  final center = centerOf(api, FakeSession(userProfile));
   await mountScreen(
     tester,
-    Material(child: NotificationsButton(center: centro)),
-    theme: tema,
+    Material(child: NotificationsButton(center: center)),
+    theme: theme,
   );
   await tester.pumpAndSettle();
 }
 
-Color _colorDelIcono(WidgetTester tester) =>
+Color _iconColor(WidgetTester tester) =>
     tester.widget<Icon>(find.byIcon(Icons.notifications_none_rounded)).color!;
 
 void main() {
   testWidgets(
-    'en modo claro y oscuro la campana de la portada se pinta con el color sobre foto @NOT-04-S1',
+    'in light and dark mode the cover bell is painted with the on-photo color @NOT-04-S1',
     (tester) async {
-      await _montarCampana(tester, tema: lightTheme);
-      expect(_colorDelIcono(tester), Palette.light.textOnMedia);
+      await _mountBell(tester, theme: lightTheme);
+      expect(_iconColor(tester), Palette.light.textOnMedia);
 
-      await _montarCampana(tester, tema: darkTheme);
-      expect(_colorDelIcono(tester), Palette.dark.textOnMedia);
+      await _mountBell(tester, theme: darkTheme);
+      expect(_iconColor(tester), Palette.dark.textOnMedia);
     },
   );
 
   testWidgets(
-    'con avisos sin leer el contador sigue en el acento @assumption:NOT-04-ASM-01',
+    'with unread notices the counter stays in the accent color @assumption:NOT-04-ASM-01',
     (tester) async {
-      await _montarCampana(tester, tema: lightTheme, noLeidas: 2);
+      await _mountBell(tester, theme: lightTheme, unread: 2);
 
-      final contador = tester.widget<Container>(
+      final counter = tester.widget<Container>(
         find.ancestor(of: find.text('2'), matching: find.byType(Container)),
       );
-      final decoracion = contador.decoration! as BoxDecoration;
-      expect(decoracion.color, Palette.light.accentBase);
+      final decoration = counter.decoration! as BoxDecoration;
+      expect(decoration.color, Palette.light.accentBase);
     },
   );
 }

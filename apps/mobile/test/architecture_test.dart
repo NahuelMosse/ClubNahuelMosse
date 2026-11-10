@@ -2,144 +2,144 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _raiz = '(raiz)';
+const _root = '(root)';
 
-/// La carpeta de `lib/` a la que pertenece [ruta] (relativa a `lib/`); los archivos sueltos
-/// de la raíz cuentan como una carpeta más.
-String _carpeta(String ruta) {
-  final partes = ruta.split('/');
-  return partes.length == 1 ? _raiz : partes.first;
+/// The folder of `lib/` that [path] (relative to `lib/`) belongs to; loose files
+/// in the root count as one more folder.
+String _folder(String path) {
+  final parts = path.split('/');
+  return parts.length == 1 ? _root : parts.first;
 }
 
-final _importacion = RegExp(
+final _import = RegExp(
   r'''^\s*(?:import|export)\s+['"]([^'"]+)['"]''',
   multiLine: true,
 );
 
-/// Cada archivo de `lib/` con los archivos de `lib/` que importa o reexporta (rutas
-/// relativas a `lib/`).
-Map<String, Set<String>> _archivos() {
+/// Each file of `lib/` with the files of `lib/` it imports or re-exports (paths
+/// relative to `lib/`).
+Map<String, Set<String>> _files() {
   final lib = Directory('lib');
-  final salida = <String, Set<String>>{};
+  final output = <String, Set<String>>{};
   for (final f in lib.listSync(recursive: true).whereType<File>()) {
     if (!f.path.endsWith('.dart')) continue;
-    final ruta = f.path
+    final path = f.path
         .replaceAll('\\', '/')
         .split('lib/')
         .skip(1)
         .join('lib/');
-    final destinos = <String>{};
-    for (final m in _importacion.allMatches(f.readAsStringSync())) {
-      final uso = m.group(1)!;
-      if (uso.startsWith('package:clubnahuelmosse/')) {
-        destinos.add(uso.substring('package:clubnahuelmosse/'.length));
-      } else if (!uso.contains(':')) {
-        destinos.add(Uri.parse(ruta).resolve(uso).path);
+    final targets = <String>{};
+    for (final m in _import.allMatches(f.readAsStringSync())) {
+      final usage = m.group(1)!;
+      if (usage.startsWith('package:clubnahuelmosse/')) {
+        targets.add(usage.substring('package:clubnahuelmosse/'.length));
+      } else if (!usage.contains(':')) {
+        targets.add(Uri.parse(path).resolve(usage).path);
       }
     }
-    salida[ruta] = destinos;
+    output[path] = targets;
   }
-  return salida;
+  return output;
 }
 
-/// Las dependencias entre carpetas de `lib/`, sin las de una carpeta consigo misma.
-Map<String, Set<String>> _grafo() {
-  final grafo = <String, Set<String>>{};
-  for (final MapEntry(:key, :value) in _archivos().entries) {
-    final de = _carpeta(key);
-    grafo.putIfAbsent(de, () => {});
+/// The dependencies between folders of `lib/`, without those of a folder on itself.
+Map<String, Set<String>> _graph() {
+  final graph = <String, Set<String>>{};
+  for (final MapEntry(:key, :value) in _files().entries) {
+    final from = _folder(key);
+    graph.putIfAbsent(from, () => {});
     for (final a in value) {
-      final hacia = _carpeta(a);
-      if (hacia != de) grafo[de]!.add(hacia);
+      final to = _folder(a);
+      if (to != from) graph[from]!.add(to);
     }
   }
-  return grafo;
+  return graph;
 }
 
-/// Un ciclo del [grafo] (la primera carpeta se repite al final), o `null` si no hay.
-List<String>? _ciclo(Map<String, Set<String>> grafo) {
-  final estado = <String, int>{};
-  final camino = <String>[];
-  List<String>? hallado;
+/// A cycle of the [graph] (the first folder repeats at the end), or `null` if there is none.
+List<String>? _cycle(Map<String, Set<String>> graph) {
+  final state = <String, int>{};
+  final trail = <String>[];
+  List<String>? found;
 
-  void visitar(String nodo) {
-    if (hallado != null) return;
-    estado[nodo] = 1;
-    camino.add(nodo);
-    for (final v in grafo[nodo] ?? const <String>{}) {
-      if (estado[v] == 1) {
-        hallado ??= [...camino.sublist(camino.indexOf(v)), v];
+  void visit(String node) {
+    if (found != null) return;
+    state[node] = 1;
+    trail.add(node);
+    for (final v in graph[node] ?? const <String>{}) {
+      if (state[v] == 1) {
+        found ??= [...trail.sublist(trail.indexOf(v)), v];
         return;
       }
-      if (estado[v] == null) visitar(v);
+      if (state[v] == null) visit(v);
     }
-    camino.removeLast();
-    estado[nodo] = 2;
+    trail.removeLast();
+    state[node] = 2;
   }
 
-  for (final n in grafo.keys) {
-    if (estado[n] == null) visitar(n);
+  for (final n in graph.keys) {
+    if (state[n] == null) visit(n);
   }
-  return hallado;
+  return found;
 }
 
-/// El texto de [ruta] (relativa a `lib/`) sin los comentarios de línea.
-String _codigo(String ruta) => File(
-  'lib/$ruta',
+/// The text of [path] (relative to `lib/`) without the line comments.
+String _code(String path) => File(
+  'lib/$path',
 ).readAsLinesSync().map((l) => l.replaceFirst(RegExp(r'//.*'), '')).join('\n');
 
 void main() {
   test(
-    'ninguna carpeta de lib forma un ciclo de imports @REV-06-S4 @assumption:REV-06-ASM-02',
+    'no lib folder forms an import cycle @REV-06-S4 @assumption:REV-06-ASM-02',
     () {
-      expect(_ciclo(_grafo()), isNull);
+      expect(_cycle(_graph()), isNull);
     },
   );
 
   test(
-    'los archivos de la raíz de lib cuentan como una carpeta en el test de ciclos @REV-06-S4 @assumption:REV-06-ASM-12',
+    'the files in the lib root count as one folder in the cycles test @REV-06-S4 @assumption:REV-06-ASM-12',
     () {
       expect(
-        _ciclo({
-          _raiz: {'a'},
-          'a': {_raiz},
+        _cycle({
+          _root: {'a'},
+          'a': {_root},
         }),
-        [_raiz, 'a', _raiz],
+        [_root, 'a', _root],
       );
       expect(
-        _ciclo({
-          _raiz: {'a'},
+        _cycle({
+          _root: {'a'},
           'a': <String>{},
         }),
         isNull,
       );
-      final grafo = _grafo();
-      expect(grafo.containsKey(_raiz), isTrue);
-      expect(grafo.entries.where((e) => e.value.contains(_raiz)), isEmpty);
+      final graph = _graph();
+      expect(graph.containsKey(_root), isTrue);
+      expect(graph.entries.where((e) => e.value.contains(_root)), isEmpty);
     },
   );
 
   test(
-    'la app tiene un test de imports y comun importa sólo api y tema, que no importan otras carpetas de lib @REV-06-S2 @assumption:REV-06-ASM-02 @assumption:REV-06-ASM-13',
+    'the app has an imports test and common imports only api and theme, which import no other lib folders @REV-06-S2 @assumption:REV-06-ASM-02 @assumption:REV-06-ASM-13',
     () {
-      final grafo = _grafo();
+      final graph = _graph();
       expect(
-        grafo['common']!.difference({'api', 'theme'}),
+        graph['common']!.difference({'api', 'theme'}),
         isEmpty,
-        reason: 'comun sólo puede importar api y tema',
+        reason: 'common can only import api and theme',
       );
-      expect(grafo['api'] ?? <String>{}, isEmpty);
-      expect(grafo['theme'] ?? <String>{}, isEmpty);
+      expect(graph['api'] ?? <String>{}, isEmpty);
+      expect(graph['theme'] ?? <String>{}, isEmpty);
     },
   );
 
   test(
-    'historial_reservas.dart no fuerza nulos con el operador ! @REV-06-S7 @assumption:REV-06-ASM-06',
+    'the booking history entry does not force nulls with the ! operator @REV-06-S7 @assumption:REV-06-ASM-06',
     () {
-      final forzados = RegExp(r'[\w)\]]!(?!=)');
+      final forced = RegExp(r'[\w)\]]!(?!=)');
       expect(
-        forzados.hasMatch(
-          _codigo('features/admin/domain/booking_history_entry.dart'),
+        forced.hasMatch(
+          _code('features/admin/domain/booking_history_entry.dart'),
         ),
         isFalse,
       );
@@ -147,14 +147,14 @@ void main() {
   );
 
   test(
-    'la zona del club se define una sola vez en la app @REV-06-S10 @assumption:REV-06-ASM-07',
+    'the club timezone is defined only once in the app @REV-06-S10 @assumption:REV-06-ASM-07',
     () {
-      final desfase = RegExp(r'hours:\s*3\b');
-      final donde = [
-        for (final ruta in _archivos().keys)
-          if (desfase.hasMatch(_codigo(ruta))) ruta,
+      final offset = RegExp(r'hours:\s*3\b');
+      final where = [
+        for (final path in _files().keys)
+          if (offset.hasMatch(_code(path))) path,
       ];
-      expect(donde, ['common/club_timezone.dart']);
+      expect(where, ['common/club_timezone.dart']);
     },
   );
 }

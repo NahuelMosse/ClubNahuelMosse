@@ -7,129 +7,125 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  /// Una sede propia del test y la parte del nombre compuesto que le corresponde.
-  Future<(String, String)> sedePropia() async {
+  /// A venue owned by the test and the part of the composed name that belongs to it.
+  Future<(String, String)> ownVenue() async {
     final s = unique();
     await createVenue('Sede Haedo $s', 'Av. Vergara 1850');
     return ('Sede Haedo $s', 'Haedo${s}_Vergara_1850');
   }
 
-  /// Una sede con dos Fútbol 5 y un Hockey 7.
-  Future<(String, String)> sedeConCanchas() async {
-    final (sede, prefijo) = await sedePropia();
-    await createSpace(sede);
-    await createSpace(sede);
-    await createSpace(sede, sport: 'Hockey', kind: 'H7');
-    return (sede, prefijo);
+  /// A venue with two Fútbol 5 and one Hockey 7.
+  Future<(String, String)> venueWithCourts() async {
+    final (venue, prefix) = await ownVenue();
+    await createSpace(venue);
+    await createSpace(venue);
+    await createSpace(venue, sport: 'Hockey', kind: 'H7');
+    return (venue, prefix);
   }
 
-  Future<void> entrarA(
-    WidgetTester tester,
-    String sede,
-    String contador,
-  ) async {
+  Future<void> goTo(WidgetTester tester, String venue, String counter) async {
     await tapText(tester, 'SEDES');
-    final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-    await waitUntil(tester, tarjeta);
-    await tester.ensureVisible(tarjeta);
+    final card = find.bySemanticsLabel(RegExp('^${RegExp.escape(venue)},'));
+    await waitUntil(tester, card);
+    await tester.ensureVisible(card);
     await tester.pumpAndSettle();
-    await tester.tap(tarjeta);
+    await tester.tap(card);
     await tester.pumpAndSettle();
-    await waitUntil(tester, find.text(contador));
+    await waitUntil(tester, find.text(counter));
   }
 
-  Future<void> filtrar(WidgetTester tester, String chip) async {
-    final boton = find.bySemanticsLabel(chip);
-    await tester.ensureVisible(boton);
+  Future<void> filter(WidgetTester tester, String chip) async {
+    final button = find.bySemanticsLabel(chip);
+    await tester.ensureVisible(button);
     await tester.pumpAndSettle();
-    await tester.tap(boton);
+    await tester.tap(button);
     await tester.pumpAndSettle();
   }
 
-  /// La tarjeta del panel del administrador para el espacio [nombre] de la sede [sede].
-  Finder tarjetaDelPanel(String sede, String nombre) => find.bySemanticsLabel(
-    RegExp('${RegExp.escape(sede)}, ${RegExp.escape(nombre)}\$'),
+  /// The administrator panel card for the space [name] of the venue [venue].
+  Finder panelCard(String venue, String name) => find.bySemanticsLabel(
+    RegExp('${RegExp.escape(venue)}, ${RegExp.escape(name)}\$'),
   );
 
   testWidgets(
-    'en la pantalla de cada sede, cada espacio se muestra con su sede y su dirección @TP-05-H01-01',
+    'on each venue screen, each space is shown with its venue and its address @TP-05-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, prefijo) = await sedeConCanchas();
+      final semantics = tester.ensureSemantics();
+      final (venue, prefix) = await venueWithCourts();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
-      await entrarA(tester, sede, '3 CANCHAS · TODOS LOS DEPORTES');
+      await goTo(tester, venue, '3 CANCHAS · TODOS LOS DEPORTES');
 
-      // Verifica: la sede y su dirección encabezan sus canchas, y cada una las lleva en el nombre.
-      expect(find.text(sede.toUpperCase()), findsOneWidget);
+      // Verifies: the venue and its address head its courts, and each one carries them in its name.
+      expect(find.text(venue.toUpperCase()), findsOneWidget);
       expect(find.textContaining('AV. VERGARA 1850'), findsOneWidget);
       for (final n in ['Futbol_F5_1', 'Futbol_F5_2', 'Hockey_H7_1']) {
-        expect(find.text('${prefijo}_$n'), findsOneWidget);
+        expect(find.text('${prefix}_$n'), findsOneWidget);
       }
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'cada espacio muestra su nombre compuesto por sede, dirección, tipo y número @TP-05-H01-02',
+    'each space shows its name composed of venue, address, kind and number @TP-05-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, prefijo) = await sedePropia();
-      final uno = await createSpace(sede, sport: 'Padel', kind: 'PAD');
-      final dos = await createSpace(sede, sport: 'Padel', kind: 'PAD');
+      final semantics = tester.ensureSemantics();
+      final (venue, prefix) = await ownVenue();
+      final one = await createSpace(venue, sport: 'Padel', kind: 'PAD');
+      final two = await createSpace(venue, sport: 'Padel', kind: 'PAD');
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
-      await entrarA(tester, sede, '2 CANCHAS · TODOS LOS DEPORTES');
+      await goTo(tester, venue, '2 CANCHAS · TODOS LOS DEPORTES');
 
-      // Verifica: sede, calle, altura, deporte, tipo y número, en ese orden.
-      expect(uno, '${prefijo}_Padel_PAD_1');
-      expect(dos, '${prefijo}_Padel_PAD_2');
-      expect(find.text(uno), findsOneWidget);
-      expect(find.text(dos), findsOneWidget);
-      semantica.dispose();
+      // Verifies: venue, street, number, sport, kind and ordinal, in that order.
+      expect(one, '${prefix}_Padel_PAD_1');
+      expect(two, '${prefix}_Padel_PAD_2');
+      expect(find.text(one), findsOneWidget);
+      expect(find.text(two), findsOneWidget);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el panel del administrador lista los espacios de todas las sedes, cada uno con su sede @TP-05-H01-03',
+    'the administrator panel lists the spaces of all the venues, each with its venue @TP-05-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (haedo, _) = await sedePropia();
+      final semantics = tester.ensureSemantics();
+      final (haedo, _) = await ownVenue();
       final s = unique();
       await createVenue('Sede Ramos $s', 'Av. Vergara 1850');
-      final enHaedo = await createSpace(haedo);
-      final enRamos = await createSpace('Sede Ramos $s', kind: 'F7');
+      final inHaedo = await createSpace(haedo);
+      final inRamos = await createSpace('Sede Ramos $s', kind: 'F7');
       await signInAsAdmin(tester);
 
       await tapText(tester, 'ESPACIOS');
 
-      // Verifica: los espacios de las dos sedes, cada uno con la suya.
-      for (final (sede, nombre) in [
-        (haedo, enHaedo),
-        ('Sede Ramos $s', enRamos),
+      // Verifies: the spaces of the two venues, each with its own.
+      for (final (venue, name) in [
+        (haedo, inHaedo),
+        ('Sede Ramos $s', inRamos),
       ]) {
-        final tarjeta = tarjetaDelPanel(sede, nombre);
-        await waitUntil(tester, tarjeta);
-        await tester.ensureVisible(tarjeta);
+        final card = panelCard(venue, name);
+        await waitUntil(tester, card);
+        await tester.ensureVisible(card);
         await tester.pumpAndSettle();
-        expect(find.text(nombre), findsOneWidget);
+        expect(find.text(name), findsOneWidget);
       }
       expect(find.textContaining('ESPACIOS ACTIVOS ·'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'un espacio recién dado de alta aparece en su sede y en el panel del administrador @TP-05-H01-04',
+    'a newly created space appears in its venue and in the administrator panel @TP-05-H01-04',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, prefijo) = await sedePropia();
-      final nombre = '${prefijo}_Voley_PLA_1';
+      final semantics = tester.ensureSemantics();
+      final (venue, prefix) = await ownVenue();
+      final name = '${prefix}_Voley_PLA_1';
       await signInAsAdmin(tester);
       await tapText(tester, 'ESPACIOS');
       await tapText(tester, 'ALTA ESPACIO');
       await waitUntil(tester, find.text('Nuevo espacio deportivo'));
-      await choose(tester, 'Sede', sede);
+      await choose(tester, 'Sede', venue);
       await choose(tester, 'Deporte', 'Vóley');
       await choose(tester, 'Tipo', 'Vóley playa');
       await choose(tester, 'Condición', 'Al aire libre');
@@ -140,55 +136,55 @@ void main() {
 
       await tapText(tester, 'IR AL LISTADO');
 
-      // Verifica: el panel ya lo lista con su sede.
-      final tarjeta = tarjetaDelPanel(sede, nombre);
-      await waitUntil(tester, tarjeta);
+      // Verifies: the panel already lists it with its venue.
+      final card = panelCard(venue, name);
+      await waitUntil(tester, card);
 
-      // Verifica: un usuario lo ve en la pantalla de la sede.
+      // Verifies: a user sees it on the venue screen.
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await entrarA(tester, sede, '1 CANCHA · TODOS LOS DEPORTES');
-      expect(find.text(nombre), findsOneWidget);
-      semantica.dispose();
+      await goTo(tester, venue, '1 CANCHA · TODOS LOS DEPORTES');
+      expect(find.text(name), findsOneWidget);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'dentro de una sede filtra por tipo y sólo ve los espacios de ese tipo @TP-05-H02-01',
+    'inside a venue it filters by kind and sees only the spaces of that kind @TP-05-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, prefijo) = await sedeConCanchas();
+      final semantics = tester.ensureSemantics();
+      final (venue, prefix) = await venueWithCourts();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await entrarA(tester, sede, '3 CANCHAS · TODOS LOS DEPORTES');
+      await goTo(tester, venue, '3 CANCHAS · TODOS LOS DEPORTES');
 
-      await filtrar(tester, 'Deporte Hockey');
+      await filter(tester, 'Deporte Hockey');
 
-      // Verifica: queda sólo la de hockey.
+      // Verifies: only the hockey one is left.
       await waitUntil(tester, find.text('1 CANCHA · HOCKEY'));
-      expect(find.text('${prefijo}_Hockey_H7_1'), findsOneWidget);
-      expect(find.text('${prefijo}_Futbol_F5_1'), findsNothing);
-      expect(find.text('${prefijo}_Futbol_F5_2'), findsNothing);
-      semantica.dispose();
+      expect(find.text('${prefix}_Hockey_H7_1'), findsOneWidget);
+      expect(find.text('${prefix}_Futbol_F5_1'), findsNothing);
+      expect(find.text('${prefix}_Futbol_F5_2'), findsNothing);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'quita el filtro y vuelve a ver todos los espacios de la sede @TP-05-H02-02',
+    'removes the filter and sees all the spaces of the venue again @TP-05-H02-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, prefijo) = await sedeConCanchas();
+      final semantics = tester.ensureSemantics();
+      final (venue, prefix) = await venueWithCourts();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await entrarA(tester, sede, '3 CANCHAS · TODOS LOS DEPORTES');
-      await filtrar(tester, 'Deporte Fútbol');
+      await goTo(tester, venue, '3 CANCHAS · TODOS LOS DEPORTES');
+      await filter(tester, 'Deporte Fútbol');
       await waitUntil(tester, find.text('2 CANCHAS · FÚTBOL'));
 
-      await filtrar(tester, 'Deporte Fútbol');
+      await filter(tester, 'Deporte Fútbol');
 
-      // Verifica: vuelven las tres canchas, sin deporte elegido.
+      // Verifies: the three courts are back, with no sport chosen.
       await waitUntil(tester, find.text('3 CANCHAS · TODOS LOS DEPORTES'));
       for (final n in ['Futbol_F5_1', 'Futbol_F5_2', 'Hockey_H7_1']) {
-        expect(find.text('${prefijo}_$n'), findsOneWidget);
+        expect(find.text('${prefix}_$n'), findsOneWidget);
       }
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

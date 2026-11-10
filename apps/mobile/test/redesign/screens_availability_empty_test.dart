@@ -6,21 +6,21 @@ import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 import '../support/user.dart';
 
-/// Cada grilla se monta en su propio test: montar la app dos veces en el mismo test reusa la
-/// API del primer montaje.
-Future<void> _abrirHorarios(WidgetTester tester, String grilla) => mountUser(
+/// Each grid is mounted in its own test: mounting the app twice in the same test reuses the
+/// API of the first mount.
+Future<void> _openSchedule(WidgetTester tester, String grid) => mountUser(
   tester,
   start:
       '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
   size: const Size(393, 2400),
-  api: apiRoutes(venueRoutes(grid: grilla)),
+  api: apiRoutes(venueRoutes(grid: grid)),
 );
 
 void main() {
   testWidgets(
-    'con «No hay horarios disponibles» no va la línea del día @RED-03-ASM-08',
+    'with «No hay horarios disponibles» there is no day timeline @RED-03-ASM-08',
     (tester) async {
-      await _abrirHorarios(tester, gridJson(opens: false));
+      await _openSchedule(tester, gridJson(opens: false));
 
       expect(find.text('No hay horarios disponibles'), findsOneWidget);
       expect(find.byType(DayTimeline), findsNothing);
@@ -28,9 +28,9 @@ void main() {
   );
 
   testWidgets(
-    'con todas las franjas ocupadas tampoco va la línea del día @RED-03-ASM-08',
+    'with all the slots taken there is no day timeline either @RED-03-ASM-08',
     (tester) async {
-      await _abrirHorarios(
+      await _openSchedule(
         tester,
         gridJson(taken: {for (var h = 8; h < 23; h++) h}),
       );

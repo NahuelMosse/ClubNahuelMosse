@@ -9,7 +9,7 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const dias = [
+  const days = [
     'Lunes',
     'Martes',
     'Miércoles',
@@ -18,43 +18,43 @@ void main() {
     'Sábado',
     'Domingo',
   ];
-  final manana = todayAtClub().add(const Duration(days: 1));
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
 
-  String chip(DateTime dia) => '${dias[dia.weekday - 1]} ${dia.day}';
+  String chip(DateTime day) => '${days[day.weekday - 1]} ${day.day}';
 
-  String franja(int hora, [int horas = 1]) {
-    String dos(int h) => '${(h % 24).toString().padLeft(2, '0')}:00';
-    return '${dos(hora)} – ${dos(hora + horas)}';
+  String slot(int hour, [int hours = 1]) {
+    String two(int h) => '${(h % 24).toString().padLeft(2, '0')}:00';
+    return '${two(hour)} – ${two(hour + hours)}';
   }
 
-  /// Una sede de 08:00 a 23:00 con un Fútbol 5 techado de $ 43.000 la hora.
-  Future<(String, String)> sedeConCancha() async {
-    final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850');
-    return (sede, await createSpace(sede));
+  /// A venue open 08:00 to 23:00 with a covered Fútbol 5 court at $ 43.000 an hour.
+  Future<(String, String)> venueWithCourt() async {
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850');
+    return (venue, await createSpace(venue));
   }
 
-  Future<String> cuenta() async {
-    final correo = 'socio.${unique()}@correo.com';
-    await createAccount(email: correo, password: 'ClubNahuel1');
-    return correo;
+  Future<String> account() async {
+    final email = 'socio.${unique()}@correo.com';
+    await createAccount(email: email, password: 'ClubNahuel1');
+    return email;
   }
 
-  Future<void> entrar(
+  Future<void> signIn(
     WidgetTester tester,
-    String correo, {
-    String contrasena = 'ClubNahuel1',
+    String email, {
+    String password = 'ClubNahuel1',
     String? apiUrl,
   }) async {
     await openApp(tester, apiUrl: apiUrl);
-    await typeInto(tester, 'Correo', correo);
-    await typeInto(tester, 'Contraseña', contrasena);
+    await typeInto(tester, 'Correo', email);
+    await typeInto(tester, 'Contraseña', password);
     await tapText(tester, 'INICIAR SESIÓN');
     await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
-  Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
-    final control = find.bySemanticsLabel(etiqueta);
+  Future<void> tapLabel(WidgetTester tester, String label) async {
+    final control = find.bySemanticsLabel(label);
     await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
@@ -62,134 +62,134 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
-      tester.getSemantics(find.bySemanticsLabel(etiqueta)).flagsCollection;
+  SemanticsFlags flags(WidgetTester tester, String label) =>
+      tester.getSemantics(find.bySemanticsLabel(label)).flagsCollection;
 
-  /// De la sede a los horarios de su cancha, mañana, con [horas] horas.
-  Future<void> abrirHorarios(
+  /// From the venue to the times of its court, tomorrow, with [hours] hours.
+  Future<void> openTimes(
     WidgetTester tester,
-    String sede, {
-    int horas = 1,
+    String venue, {
+    int hours = 1,
   }) async {
     await tapText(tester, 'SEDES');
-    final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-    await waitUntil(tester, tarjeta);
-    await tester.ensureVisible(tarjeta);
+    final card = find.bySemanticsLabel(RegExp('^${RegExp.escape(venue)},'));
+    await waitUntil(tester, card);
+    await tester.ensureVisible(card);
     await tester.pumpAndSettle();
-    await tester.tap(tarjeta);
+    await tester.tap(card);
     await tester.pumpAndSettle();
     await tapText(tester, 'VER HORARIOS / RESERVAR');
     await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-    await tocarEtiqueta(tester, chip(manana));
-    for (var i = 1; i < horas; i++) {
-      await tocarEtiqueta(tester, 'Una hora más');
+    await tapLabel(tester, chip(tomorrow));
+    for (var i = 1; i < hours; i++) {
+      await tapLabel(tester, 'Una hora más');
     }
   }
 
-  /// Elige la franja que empieza a la [hora] y llega a «Confirmá tu reserva».
-  Future<void> irAConfirmar(
+  /// Picks the slot that starts at [hour] and reaches «Confirmá tu reserva».
+  Future<void> goToConfirm(
     WidgetTester tester,
-    String sede, {
-    int hora = 18,
-    int horas = 1,
+    String venue, {
+    int hour = 18,
+    int hours = 1,
   }) async {
-    await abrirHorarios(tester, sede, horas: horas);
-    await tocarEtiqueta(tester, franja(hora, horas));
+    await openTimes(tester, venue, hours: hours);
+    await tapLabel(tester, slot(hour, hours));
     await tapText(tester, 'CONTINUAR');
     await waitUntil(tester, find.text('Confirmá tu reserva'));
   }
 
   testWidgets(
-    'confirma la reserva y aparece activa en Mis reservas con sede, espacio, fecha, horario y total @CU-09-H01-01',
+    'confirms the booking and it shows as active in «Mis reservas» with venue, space, date, time and total @CU-09-H01-01',
     (tester) async {
-      final (sede, cancha) = await sedeConCancha();
-      final correo = await cuenta();
-      await entrar(tester, correo);
-      await irAConfirmar(tester, sede);
+      final (venue, court) = await venueWithCourt();
+      final email = await account();
+      await signIn(tester, email);
+      await goToConfirm(tester, venue);
 
       await tapText(tester, 'CONFIRMAR RESERVA');
 
-      // Verifica: el comprobante con el espacio y el horario.
+      // Verifies: the receipt with the space and the time.
       await waitUntil(tester, find.text('¡Reserva confirmada!'));
-      expect(find.text(cancha), findsOneWidget);
-      expect(find.textContaining(franja(18)), findsOneWidget);
+      expect(find.text(court), findsOneWidget);
+      expect(find.textContaining(slot(18)), findsOneWidget);
 
       await tapText(tester, 'VER MIS RESERVAS');
 
-      // Verifica: en Mis reservas, activa y con todos sus datos.
-      await waitUntil(tester, find.text(cancha));
-      expect(find.text('$sede · Av. Vergara 1850'), findsOneWidget);
-      expect(find.text(franja(18)), findsOneWidget);
+      // Verifies: in «Mis reservas», active and with all its data.
+      await waitUntil(tester, find.text(court));
+      expect(find.text('$venue · Av. Vergara 1850'), findsOneWidget);
+      expect(find.text(slot(18)), findsOneWidget);
       expect(find.textContaining('43.000'), findsOneWidget);
       expect(find.text('ACTIVA'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'después de reservar, ese horario aparece no disponible para otro usuario @CU-09-H01-02',
+    'after booking, that time shows as unavailable to another user @CU-09-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _) = await sedeConCancha();
-      await entrar(tester, await cuenta());
-      await irAConfirmar(tester, sede, hora: 11);
+      final semantics = tester.ensureSemantics();
+      final (venue, _) = await venueWithCourt();
+      await signIn(tester, await account());
+      await goToConfirm(tester, venue, hour: 11);
       await tapText(tester, 'CONFIRMAR RESERVA');
       await waitUntil(tester, find.text('¡Reserva confirmada!'));
 
-      // Otra persona entra a los horarios de la misma cancha.
-      await entrar(tester, await cuenta());
-      await abrirHorarios(tester, sede);
+      // Another person opens the times of the same court.
+      await signIn(tester, await account());
+      await openTimes(tester, venue);
 
-      // Verifica: las 11 ya no se pueden elegir.
-      expect(banderas(tester, franja(11)).isEnabled, isFalse);
-      expect(banderas(tester, franja(12)).isEnabled, isTrue);
-      semantica.dispose();
+      // Verifies: 11 can no longer be picked.
+      expect(flags(tester, slot(11)).isEnabled, isFalse);
+      expect(flags(tester, slot(12)).isEnabled, isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'reserva varias horas seguidas y el total es el precio por hora por la duración @CU-09-H01-03',
+    'books several consecutive hours and the total is the hourly price times the duration @CU-09-H01-03',
     (tester) async {
-      final (sede, _) = await sedeConCancha();
-      final correo = await cuenta();
-      await entrar(tester, correo);
-      await irAConfirmar(tester, sede, hora: 15, horas: 3);
-      expect(find.text('${franja(15, 3)} · 3 horas'), findsOneWidget);
+      final (venue, _) = await venueWithCourt();
+      final email = await account();
+      await signIn(tester, email);
+      await goToConfirm(tester, venue, hour: 15, hours: 3);
+      expect(find.text('${slot(15, 3)} · 3 horas'), findsOneWidget);
 
       await tapText(tester, 'CONFIRMAR RESERVA');
 
-      // Verifica: tres horas a $ 43.000.
+      // Verifies: three hours at $ 43.000.
       await waitUntil(tester, find.text('¡Reserva confirmada!'));
       expect(find.textContaining('129.000'), findsOneWidget);
-      expect(await bookingsOf(correo), hasLength(1));
+      expect(await bookingsOf(email), hasLength(1));
     },
   );
 
   testWidgets(
-    'toca Cancelar en la confirmación y no se crea ninguna reserva @CU-09-H01-07',
+    'taps «Cancelar» on the confirmation and no booking is created @CU-09-H01-07',
     (tester) async {
-      final (sede, _) = await sedeConCancha();
-      final correo = await cuenta();
-      await entrar(tester, correo);
-      await irAConfirmar(tester, sede);
+      final (venue, _) = await venueWithCourt();
+      final email = await account();
+      await signIn(tester, email);
+      await goToConfirm(tester, venue);
 
       await tapText(tester, 'CANCELAR');
 
-      // Verifica: vuelve a los horarios y no hay reserva.
+      // Verifies: back to the times and there is no booking.
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(await bookingsOf(correo), isEmpty);
+      expect(await bookingsOf(email), isEmpty);
     },
   );
 
   testWidgets(
-    'desde el comprobante va a Mis reservas o vuelve al inicio @CU-09-H01-09',
+    'from the receipt goes to «Mis reservas» or back to the home screen @CU-09-H01-09',
     (tester) async {
-      final (sede, _) = await sedeConCancha();
-      await entrar(tester, await cuenta());
-      await irAConfirmar(tester, sede);
+      final (venue, _) = await venueWithCourt();
+      await signIn(tester, await account());
+      await goToConfirm(tester, venue);
       await tapText(tester, 'CONFIRMAR RESERVA');
       await waitUntil(tester, find.text('¡Reserva confirmada!'));
 
-      // Verifica: las dos salidas están.
+      // Verifies: both exits are there.
       expect(find.text('VER MIS RESERVAS'), findsOneWidget);
       await tapText(tester, 'Volver al inicio');
       await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
@@ -197,112 +197,112 @@ void main() {
   );
 
   testWidgets(
-    'otra persona reservó ese horario mientras confirmaba: ve el aviso y no se crea la reserva @CU-09-H02-01',
+    'another person booked that time while confirming: sees the notice and no booking is created @CU-09-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha) = await sedeConCancha();
-      final correo = await cuenta();
-      await entrar(tester, correo);
-      await irAConfirmar(tester, sede, hora: 20);
+      final semantics = tester.ensureSemantics();
+      final (venue, court) = await venueWithCourt();
+      final email = await account();
+      await signIn(tester, email);
+      await goToConfirm(tester, venue, hour: 20);
 
-      // Mientras confirma, otra persona toma ese horario.
-      await occupy(cancha, manana, 20);
+      // While confirming, another person takes that time.
+      await occupy(court, tomorrow, 20);
       await tapText(tester, 'CONFIRMAR RESERVA');
 
-      // Verifica: el aviso, y al volver a la grilla el horario está ocupado.
+      // Verifies: the notice, and back on the grid the time is taken.
       await waitUntil(tester, find.text('Ese horario se ocupó'));
       await tapText(tester, 'ELEGIR OTRO HORARIO');
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(banderas(tester, franja(20)).isEnabled, isFalse);
-      expect(await bookingsOf(correo), isEmpty);
-      semantica.dispose();
+      expect(flags(tester, slot(20)).isEnabled, isFalse);
+      expect(await bookingsOf(email), isEmpty);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin horario elegido, el botón de confirmar está deshabilitado @CU-09-H03-01',
+    'with no time picked, the confirm button is disabled @CU-09-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _) = await sedeConCancha();
-      await entrar(tester, await cuenta());
+      final semantics = tester.ensureSemantics();
+      final (venue, _) = await venueWithCourt();
+      await signIn(tester, await account());
 
-      await abrirHorarios(tester, sede);
+      await openTimes(tester, venue);
 
-      // Verifica: no se puede seguir hasta elegir, y el resumen dice qué falta.
+      // Verifies: cannot continue until one is picked, and the summary says what is missing.
       expect(find.text('Sin horario elegido'), findsOneWidget);
-      expect(banderas(tester, 'CONTINUAR').isEnabled, isFalse);
-      semantica.dispose();
+      expect(flags(tester, 'CONTINUAR').isEnabled, isFalse);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'con la sesión vencida va al login y, al volver a entrar, retoma la reserva que tenía en curso @CU-09-H04-01',
+    'with an expired session goes to login and, on signing in again, resumes the booking in progress @CU-09-H04-01',
     (tester) async {
-      final (sede, cancha) = await sedeConCancha();
-      final correo = await cuenta();
-      await entrar(tester, correo);
-      await irAConfirmar(tester, sede, hora: 16);
+      final (venue, court) = await venueWithCourt();
+      final email = await account();
+      await signIn(tester, email);
+      await goToConfirm(tester, venue, hour: 16);
 
-      // La contraseña cambia desde otro teléfono y la sesión vence.
-      await changeFromAnotherDevice(correo, 'ClubNahuel1', 'ClubNahuel2');
+      // The password changes from another phone and the session expires.
+      await changeFromAnotherDevice(email, 'ClubNahuel1', 'ClubNahuel2');
       await tapText(tester, 'CONFIRMAR RESERVA');
 
-      // Verifica: avisa y lleva al inicio de sesión.
+      // Verifies: warns and leads to the sign-in screen.
       await waitUntil(tester, find.text('Tu sesión expiró'));
       await tapText(tester, 'IR AL INICIO DE SESIÓN');
       await waitUntil(tester, find.text('INICIAR SESIÓN'));
-      await typeInto(tester, 'Correo', correo);
+      await typeInto(tester, 'Correo', email);
       await typeInto(tester, 'Contraseña', 'ClubNahuel2');
       await tapText(tester, 'INICIAR SESIÓN');
 
-      // Verifica: vuelve a la confirmación con la misma cancha y el mismo horario.
+      // Verifies: back on the confirmation with the same court and the same time.
       await waitUntil(tester, find.text('Confirmá tu reserva'));
-      expect(find.text('${franja(16)} · 1 hora'), findsOneWidget);
+      expect(find.text('${slot(16)} · 1 hora'), findsOneWidget);
       await tapText(tester, 'CONFIRMAR RESERVA');
       await waitUntil(tester, find.text('¡Reserva confirmada!'));
-      expect(await bookingsOf(correo, password: 'ClubNahuel2'), [
-        (cancha, '16:00'),
+      expect(await bookingsOf(email, password: 'ClubNahuel2'), [
+        (court, '16:00'),
       ]);
     },
   );
 
   testWidgets(
-    'sin conexión al confirmar, ve el error y la reserva no se crea @CU-09-H05-01',
+    'with no connection on confirming, sees the error and the booking is not created @CU-09-H05-01',
     (tester) async {
-      final (sede, _) = await sedeConCancha();
-      final correo = await cuenta();
+      final (venue, _) = await venueWithCourt();
+      final email = await account();
       final api = await ProxyApi.open();
-      await entrar(tester, correo, apiUrl: api.url);
-      await irAConfirmar(tester, sede);
+      await signIn(tester, email, apiUrl: api.url);
+      await goToConfirm(tester, venue);
 
       api.state = ApiState.offline;
       await tapText(tester, 'CONFIRMAR RESERVA');
 
-      // Verifica: el aviso de conexión, sigue en la confirmación y no hay reserva.
+      // Verifies: the connection notice, stays on the confirmation and there is no booking.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
       expect(find.text('Confirmá tu reserva'), findsOneWidget);
-      expect(await bookingsOf(correo), isEmpty);
+      expect(await bookingsOf(email), isEmpty);
     },
   );
 
   testWidgets(
-    'el servidor falla al confirmar y la reserva no se crea @CU-09-H05-02',
+    'the server fails on confirming and the booking is not created @CU-09-H05-02',
     (tester) async {
-      final (sede, _) = await sedeConCancha();
-      final correo = await cuenta();
+      final (venue, _) = await venueWithCourt();
+      final email = await account();
       final api = await ProxyApi.open();
-      await entrar(tester, correo, apiUrl: api.url);
-      await irAConfirmar(tester, sede);
+      await signIn(tester, email, apiUrl: api.url);
+      await goToConfirm(tester, venue);
 
       api.state = ApiState.failing;
       await tapText(tester, 'CONFIRMAR RESERVA');
 
-      // Verifica: el error del servidor, sigue en la confirmación y no hay reserva.
+      // Verifies: the server error, stays on the confirmation and there is no booking.
       await waitUntil(tester, find.text('Error del servidor'));
       await tapText(tester, 'ACEPTAR');
       expect(find.text('Confirmá tu reserva'), findsOneWidget);
-      expect(await bookingsOf(correo), isEmpty);
+      expect(await bookingsOf(email), isEmpty);
     },
   );
 }

@@ -9,9 +9,9 @@ import '../support/user.dart';
 
 void main() {
   testWidgets(
-    'los tiles usan las fotos de la app, ninguno está elegido y tocar uno abre «Buscar cancha» con ese deporte @RED-03-ASM-03',
+    'the tiles use the app photos, none is selected and tapping one opens «Buscar cancha» with that sport @RED-03-ASM-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
         api: apiRoutes({
@@ -29,8 +29,8 @@ void main() {
         expect(tile.selected, isFalse, reason: tile.name);
       }
       expect(find.text('ELEGIDO'), findsNothing);
-      final nodo = tester.getSemantics(find.bySemanticsLabel('Tenis'));
-      expect(nodo.flagsCollection.isButton, isTrue);
+      final node = tester.getSemantics(find.bySemanticsLabel('Tenis'));
+      expect(node.flagsCollection.isButton, isTrue);
 
       await tester.tap(
         find.ancestor(of: find.text('Tenis'), matching: find.byType(SportTile)),
@@ -45,7 +45,7 @@ void main() {
         'Tenis',
       );
       expect(find.text('Tenis'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

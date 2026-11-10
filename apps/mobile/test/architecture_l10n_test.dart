@@ -2,73 +2,73 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _raiz = '(raiz)';
+const _root = '(root)';
 
-/// La carpeta de `lib/` a la que pertenece [ruta] (relativa a `lib/`); los archivos sueltos
-/// de la raíz cuentan como una carpeta más.
-String _carpeta(String ruta) {
-  final partes = ruta.split('/');
-  return partes.length == 1 ? _raiz : partes.first;
+/// The folder of `lib/` that [path] (relative to `lib/`) belongs to; loose files
+/// in the root count as one more folder.
+String _folder(String path) {
+  final parts = path.split('/');
+  return parts.length == 1 ? _root : parts.first;
 }
 
-final _importacion = RegExp(
+final _import = RegExp(
   r'''^\s*(?:import|export)\s+['"]([^'"]+)['"]''',
   multiLine: true,
 );
 
-/// Cada archivo de `lib/` con los archivos de `lib/` que importa o reexporta (rutas
-/// relativas a `lib/`).
-Map<String, Set<String>> _archivos() {
+/// Each file of `lib/` with the files of `lib/` it imports or re-exports (paths
+/// relative to `lib/`).
+Map<String, Set<String>> _files() {
   final lib = Directory('lib');
   final imports = <String, Set<String>>{};
   for (final f in lib.listSync(recursive: true).whereType<File>()) {
     if (!f.path.endsWith('.dart')) continue;
-    final ruta = f.path
+    final path = f.path
         .replaceAll('\\', '/')
         .split('lib/')
         .skip(1)
         .join('lib/');
-    final destinos = <String>{};
-    for (final m in _importacion.allMatches(f.readAsStringSync())) {
+    final targets = <String>{};
+    for (final m in _import.allMatches(f.readAsStringSync())) {
       final usage = m.group(1)!;
       if (usage.startsWith('package:clubnahuelmosse/')) {
-        destinos.add(usage.substring('package:clubnahuelmosse/'.length));
+        targets.add(usage.substring('package:clubnahuelmosse/'.length));
       } else if (!usage.contains(':')) {
-        destinos.add(Uri.parse(ruta).resolve(usage).path);
+        targets.add(Uri.parse(path).resolve(usage).path);
       }
     }
-    imports[ruta] = destinos;
+    imports[path] = targets;
   }
   return imports;
 }
 
-/// Las dependencias entre carpetas de `lib/`, sin las de una carpeta consigo misma.
-Map<String, Set<String>> _grafo() {
-  final grafo = <String, Set<String>>{};
-  for (final MapEntry(:key, :value) in _archivos().entries) {
-    final de = _carpeta(key);
-    grafo.putIfAbsent(de, () => {});
+/// The dependencies between folders of `lib/`, without those of a folder on itself.
+Map<String, Set<String>> _graph() {
+  final graph = <String, Set<String>>{};
+  for (final MapEntry(:key, :value) in _files().entries) {
+    final from = _folder(key);
+    graph.putIfAbsent(from, () => {});
     for (final a in value) {
-      final hacia = _carpeta(a);
-      if (hacia != de) grafo[de]!.add(hacia);
+      final to = _folder(a);
+      if (to != from) graph[from]!.add(to);
     }
   }
-  return grafo;
+  return graph;
 }
 
 void main() {
   test(
-    'la app tiene un test de imports y comun importa sólo api, tema y l10n, que no importan otras carpetas de lib @REV-06-S2 @assumption:REV-06-ASM-02 @assumption:REV-06-ASM-13',
+    'the app has an imports test and common imports only api, theme and l10n, which import no other lib folders @REV-06-S2 @assumption:REV-06-ASM-02 @assumption:REV-06-ASM-13',
     () {
-      final grafo = _grafo();
+      final graph = _graph();
       expect(
-        grafo['common']!.difference({'api', 'theme', 'l10n'}),
+        graph['common']!.difference({'api', 'theme', 'l10n'}),
         isEmpty,
-        reason: 'comun sólo puede importar api, tema y l10n',
+        reason: 'common can only import api, theme and l10n',
       );
-      expect(grafo['api'] ?? <String>{}, isEmpty);
-      expect(grafo['theme'] ?? <String>{}, isEmpty);
-      expect(grafo['l10n'] ?? <String>{}, isEmpty);
+      expect(graph['api'] ?? <String>{}, isEmpty);
+      expect(graph['theme'] ?? <String>{}, isEmpty);
+      expect(graph['l10n'] ?? <String>{}, isEmpty);
     },
   );
 }

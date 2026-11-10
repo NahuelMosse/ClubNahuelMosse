@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'notifications_test.dart' show FakeApi, noticesNow, centerOf, noticeJson;
 import 'support/mount.dart';
 
-final leida = noticeJson(
+final readNotice = noticeJson(
   id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 50),
   tipo: 'forced_cancellation',
@@ -17,7 +17,7 @@ final leida = noticeJson(
   leida: true,
 );
 
-final agrupado = noticeJson(
+final groupedNotice = noticeJson(
   id: '00000000-0000-7000-8000-000000000006',
   club: DateTime.utc(2026, 11, 12, 19, 59),
   tipo: 'forced_cancellation',
@@ -31,36 +31,36 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'una anulación agrupada con otro id reabre el panel con la app abierta @supuesto:CU-24.2-SUP-02',
+    'a grouped voiding with another id reopens the panel while the app is open @assumption:CU-24.2-SUP-02',
     (tester) async {
       final api = FakeApi()
-        ..avisos = [leida]
+        ..avisos = [readNotice]
         ..unread = 0;
-      final sesion = FakeSession(userProfile);
-      final NotificationCenter centro = centerOf(api, sesion)
+      final session = FakeSession(userProfile);
+      final NotificationCenter center = centerOf(api, session)
         ..location = () => '/inicio';
       await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
+            NoticePanel(center: center, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
         theme: darkTheme,
       );
-      await tester.runAsync(centro.load);
+      await tester.runAsync(center.load);
       await tester.pumpAndSettle();
       expect(find.text('MARCAR TODAS'), findsNothing);
 
       api
-        ..avisos = [agrupado, leida]
+        ..avisos = [groupedNotice, readNotice]
         ..unread = 1;
-      await tester.runAsync(centro.load);
+      await tester.runAsync(center.load);
       await tester.pumpAndSettle();
 
       expect(find.text('El club anuló 2 de tus reservas'), findsOneWidget);
-      expect(centro.unread, 1);
+      expect(center.unread, 1);
     },
   );
 }

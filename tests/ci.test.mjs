@@ -138,11 +138,11 @@ test('flutter test is green when every failing test and every file that no longe
 test('flutter test is red when a failing test or a file that does not load is not declared replaced @CI-01-S1 @assumption:CI-01-ASM-01', () => {
   const loose = flutter(`${FL_REPLACED}\n${FL_NOT_REPLACED}\n${SOME_FAILED}\n`, 1);
   assert.equal(loose.status, 1);
-  assert.match(loose.stderr, /baja_sede_test\.dart: desde la edición/);
+  assert.match(loose.stderr, /deactivate_venue_test\.dart: desde la edición/);
   assert.doesNotMatch(loose.stderr, /bilingual_account_test/);
   const unloaded = flutter(`${FL_UNLOADED_UNDECLARED}\n${SOME_FAILED}\n`, 1);
   assert.equal(unloaded.status, 1);
-  assert.match(unloaded.stderr, /could not load apps\/mobile\/test\/baja_sede_test\.dart/);
+  assert.match(unloaded.stderr, /could not load apps\/mobile\/test\/deactivate_venue_test\.dart/);
   assert.equal(flutter(`${SOME_FAILED}\n`, 1).status, 1);
   assert.equal(flutter('', 69).status, 1);
 });

@@ -199,15 +199,15 @@ double _effectiveOpacity(RenderObject start) {
   return o;
 }
 
-Map<String, dynamic> _entry(Map<String, dynamic> el) {
-  final primary = el['primary'] as String;
-  final m = (el['moves'] as List).cast<Map<String, dynamic>>().firstWhere(
+Map<String, dynamic> _entry(Map<String, dynamic> element) {
+  final primary = element['primary'] as String;
+  final m = (element['moves'] as List).cast<Map<String, dynamic>>().firstWhere(
     (x) => x['prop'] == primary,
   );
   return {
-    'label': el['label'],
+    'label': element['label'],
     'prop': primary,
-    'startMs': el['startMs'],
+    'startMs': element['startMs'],
     'durationMs': m['durationMs'],
     'shape': m['shape'],
     'overshootPct': m['overshootPct'],
@@ -272,13 +272,13 @@ Future<Map<String, dynamic>> kitTrace(
   }
 
   final elements = <Map<String, dynamic>>[];
-  Map<String, dynamic>? el;
+  Map<String, dynamic>? element;
   if (moves.isNotEmpty) {
     final primary = _preference
         .map((p) => moves.where((m) => m['prop'] == p))
         .firstWhere((x) => x.isNotEmpty)
         .first['prop'];
-    el = {
+    element = {
       'id': 1,
       'label': label,
       'parent': 0,
@@ -291,16 +291,16 @@ Future<Map<String, dynamic>> kitTrace(
           .reduce(math.max),
       'series': {'t': times, for (final c in _cols) c: series[c]},
     };
-    elements.add(el);
+    elements.add(element);
   }
 
-  Map<String, dynamic>? entry = el == null ? null : _entry(el);
+  Map<String, dynamic>? entry = element == null ? null : _entry(element);
   if (entry != null && (role == 'click' || role == 'hero')) {
     entry = {
       ...entry,
       'stepMs': 0,
       'count': 1,
-      'totalMs': (el!['endMs'] as num) - (el['startMs'] as num),
+      'totalMs': (element!['endMs'] as num) - (element['startMs'] as num),
     };
   }
   final roles = <String, dynamic>{};

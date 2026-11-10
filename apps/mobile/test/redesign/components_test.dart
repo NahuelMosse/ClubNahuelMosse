@@ -15,8 +15,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/mount.dart';
 
-/// Un PNG de 1×1 transparente: la foto de prueba.
-final _foto = MemoryImage(
+/// A transparent 1×1 PNG: the test photo.
+final _photo = MemoryImage(
   Uint8List.fromList(const [
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, //
     0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -29,40 +29,40 @@ final _foto = MemoryImage(
 
 const _p = Palette.dark;
 
-Future<void> _montar(WidgetTester tester, Widget hijo) => mountScreen(
+Future<void> _mount(WidgetTester tester, Widget child) => mountScreen(
   tester,
-  Scaffold(body: Center(child: hijo)),
+  Scaffold(body: Center(child: child)),
   theme: darkTheme,
 );
 
-const _celdas = [
+const _cells = [
   MarkerCell(figure: '04', label: 'Sedes'),
   MarkerCell(figure: '17', label: 'Canchas'),
   MarkerCell(figure: '23', label: 'Libres hoy', highlighted: true),
 ];
 
-Color? _colorDeTexto(WidgetTester tester, String texto) =>
-    tester.widget<Text>(find.text(texto)).style?.color;
+Color? _textColor(WidgetTester tester, String text) =>
+    tester.widget<Text>(find.text(text)).style?.color;
 
 void main() {
   testWidgets(
-    'el isotipo se dibuja en su tamaño con el acento y se anuncia como el club @RED-02-S1',
+    'the logo mark is drawn at its size with the accent and is announced as the club @RED-02-S1',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(tester, const LogoMark(size: 48));
+      final semantics = tester.ensureSemantics();
+      await _mount(tester, const LogoMark(size: 48));
 
       expect(tester.getSize(find.byType(LogoMark)), const Size(48, 48));
       expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el isotipo es un CustomPainter con el trazo del acento @RED-02-ASM-03',
+    'the logo mark is a CustomPainter with the accent stroke @RED-02-ASM-03',
     (tester) async {
-      await _montar(tester, const LogoMark(decorative: true));
+      await _mount(tester, const LogoMark(decorative: true));
 
-      final pintor = tester
+      final painter = tester
           .widgetList<CustomPaint>(
             find.descendant(
               of: find.byType(LogoMark),
@@ -72,31 +72,31 @@ void main() {
           .map((c) => c.painter)
           .whereType<LogoMarkPainter>()
           .single;
-      expect(pintor.color, _p.accentBase);
+      expect(painter.color, _p.accentBase);
       expect(tester.getSize(find.byType(LogoMark)), const Size(64, 64));
     },
   );
 
   testWidgets(
-    'el marcador muestra cada celda con su cifra y su rótulo y destaca la elegida @RED-02-S2',
+    'the marker shows each cell with its figure and its label and highlights the selected one @RED-02-S2',
     (tester) async {
-      await _montar(tester, const AppMarker(cells: _celdas));
+      await _mount(tester, const AppMarker(cells: _cells));
 
-      for (final (cifra, rotulo) in [
+      for (final (figure, label) in [
         ('04', 'SEDES'),
         ('17', 'CANCHAS'),
         ('23', 'LIBRES HOY'),
       ]) {
-        expect(find.text(cifra), findsOneWidget);
-        expect(find.text(rotulo), findsOneWidget);
-        final estilo = tester.widget<Text>(find.text(cifra)).style;
-        expect(estilo?.fontFamily, 'Archivo Black');
-        expect(estilo?.fontSize, 28);
+        expect(find.text(figure), findsOneWidget);
+        expect(find.text(label), findsOneWidget);
+        final style = tester.widget<Text>(find.text(figure)).style;
+        expect(style?.fontFamily, 'Archivo Black');
+        expect(style?.fontSize, 28);
       }
-      expect(_colorDeTexto(tester, '04'), _p.textOnMedia);
-      expect(_colorDeTexto(tester, '23'), _p.accentOnMedia);
+      expect(_textColor(tester, '04'), _p.textOnMedia);
+      expect(_textColor(tester, '23'), _p.accentOnMedia);
 
-      final marcos = tester
+      final frames = tester
           .widgetList<DecoratedBox>(
             find.descendant(
               of: find.byType(AppMarker),
@@ -110,45 +110,45 @@ void main() {
                 d.border is Border &&
                 (d.border! as Border).top.color == _p.accentBase,
           );
-      expect(marcos.single.borderRadius, BorderRadius.circular(16));
+      expect(frames.single.borderRadius, BorderRadius.circular(16));
     },
   );
 
   testWidgets(
-    'el lector lee cada celda del marcador como cifra y rótulo @RED-02-S2',
+    'the screen reader reads each marker cell as figure and label @RED-02-S2',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(tester, const AppMarker(cells: _celdas));
+      final semantics = tester.ensureSemantics();
+      await _mount(tester, const AppMarker(cells: _cells));
 
-      for (final etiqueta in ['04 sedes', '17 canchas', '23 libres hoy']) {
-        expect(find.bySemanticsLabel(etiqueta), findsOneWidget);
+      for (final label in ['04 sedes', '17 canchas', '23 libres hoy']) {
+        expect(find.bySemanticsLabel(label), findsOneWidget);
       }
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el tile de deporte muestra la foto, el emoji y el nombre y llama al tocarlo @RED-02-S3',
+    'the sport tile shows the photo, the emoji and the name and calls back on tap @RED-02-S3',
     (tester) async {
-      var tocado = 0;
-      await _montar(
+      var tapped = 0;
+      await _mount(
         tester,
         SportTile(
-          image: _foto,
+          image: _photo,
           emoji: '⚽',
           name: 'Fútbol',
-          onTap: () => tocado++,
+          onTap: () => tapped++,
         ),
       );
 
       expect(find.text('⚽'), findsOneWidget);
       expect(find.text('Fútbol'), findsOneWidget);
-      expect(_colorDeTexto(tester, 'Fútbol'), _p.textOnMedia);
+      expect(_textColor(tester, 'Fútbol'), _p.textOnMedia);
       expect(
         find.descendant(
           of: find.byType(SportTile),
           matching: find.byWidgetPredicate(
-            (w) => w is Image && w.image == _foto,
+            (w) => w is Image && w.image == _photo,
           ),
         ),
         findsOneWidget,
@@ -156,18 +156,18 @@ void main() {
       expect(find.text('ELEGIDO'), findsNothing);
 
       await tester.tap(find.byType(SportTile));
-      expect(tocado, 1);
+      expect(tapped, 1);
     },
   );
 
   testWidgets(
-    'el tile elegido lleva el borde del acento y la etiqueta ELEGIDO @RED-02-S3',
+    'the selected tile has the accent border and the «ELEGIDO» label @RED-02-S3',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(
+      final semantics = tester.ensureSemantics();
+      await _mount(
         tester,
         SportTile(
-          image: _foto,
+          image: _photo,
           emoji: '🎾',
           name: 'Tenis',
           selected: true,
@@ -176,7 +176,7 @@ void main() {
       );
 
       expect(find.text('ELEGIDO'), findsOneWidget);
-      final bordes = tester
+      final borders = tester
           .widgetList<DecoratedBox>(
             find.descendant(
               of: find.byType(SportTile),
@@ -190,7 +190,7 @@ void main() {
                 d.border is Border &&
                 (d.border! as Border).top.color == _p.accentBase,
           );
-      expect(bordes, isNotEmpty);
+      expect(borders, isNotEmpty);
       expect(
         tester.getSemantics(find.byType(SportTile)),
         matchesSemantics(
@@ -204,14 +204,14 @@ void main() {
           isFocusable: true,
         ),
       );
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   test(
-    'los componentes de comun reciben la foto por parámetro y no importan sedes @RED-02-ASM-01',
+    'the common components receive the photo as a parameter and do not import venues @RED-02-ASM-01',
     () {
-      for (final archivo in [
+      for (final file in [
         'logo_mark',
         'marker',
         'sport_tile',
@@ -220,26 +220,26 @@ void main() {
         'bib',
         'die_cut',
       ]) {
-        final codigo = File('lib/common/$archivo.dart').readAsStringSync();
-        expect(codigo, isNot(contains("import '../sedes")), reason: archivo);
+        final code = File('lib/common/$file.dart').readAsStringSync();
+        expect(code, isNot(contains("import '../sedes")), reason: file);
       }
-      for (final archivo in ['sport_tile', 'member_profile']) {
-        final codigo = File('lib/common/$archivo.dart').readAsStringSync();
-        expect(codigo, contains('ImageProvider'), reason: archivo);
+      for (final file in ['sport_tile', 'member_profile']) {
+        final code = File('lib/common/$file.dart').readAsStringSync();
+        expect(code, contains('ImageProvider'), reason: file);
       }
     },
   );
 
   testWidgets(
-    'la ficha de socio muestra rótulo, isotipo, iniciales, nombre, correo y su marcador @RED-02-S4',
+    'the member card shows label, logo mark, initials, name, email and its marker @RED-02-S4',
     (tester) async {
-      await _montar(
+      await _mount(
         tester,
         MemberProfile(
           initials: 'NM',
           name: 'Nahuel Agustín Mosse',
           email: 'nmosse@unimoron.edu.ar',
-          image: _foto,
+          image: _photo,
           stats: const [
             MarkerCell(figure: '12', label: 'Partidos'),
             MarkerCell(figure: '3', label: 'Este mes', highlighted: true),
@@ -256,7 +256,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('NM'), findsOneWidget);
-      expect(_colorDeTexto(tester, 'NM'), _p.accentOn);
+      expect(_textColor(tester, 'NM'), _p.accentOn);
       expect(find.text('Nahuel Agustín Mosse'), findsOneWidget);
       expect(find.text('nmosse@unimoron.edu.ar'), findsOneWidget);
       expect(
@@ -270,7 +270,7 @@ void main() {
     },
   );
 
-  const franjas = [
+  const slots = [
     SlotState.free,
     SlotState.free,
     SlotState.taken,
@@ -279,16 +279,16 @@ void main() {
   ];
 
   testWidgets(
-    'la línea del día pinta una celda por hora con el color de su estado @RED-02-S5',
+    'the day timeline paints one cell per hour with the color of its state @RED-02-S5',
     (tester) async {
-      await _montar(tester, const DayTimeline(slots: franjas, from: 8));
+      await _mount(tester, const DayTimeline(slots: slots, from: 8));
 
       expect(find.text('TU DÍA EN LA CANCHA'), findsOneWidget);
-      for (final leyenda in ['Libre', 'Ocupado', 'Elegido']) {
-        expect(find.text(leyenda), findsOneWidget);
+      for (final legend in ['Libre', 'Ocupado', 'Elegido']) {
+        expect(find.text(legend), findsOneWidget);
       }
-      for (final hora in ['08', '09', '10', '11', '12']) {
-        expect(find.byKey(ValueKey('franja-$hora')), findsOneWidget);
+      for (final hour in ['08', '09', '10', '11', '12']) {
+        expect(find.byKey(ValueKey('franja-$hour')), findsOneWidget);
       }
       expect(find.byKey(const ValueKey('franja-13')), findsNothing);
       expect(find.text('08'), findsOneWidget);
@@ -296,37 +296,37 @@ void main() {
   );
 
   testWidgets(
-    'el lector lee cada hora de la línea del día con su estado @RED-02-S5',
+    'the screen reader reads each hour of the day timeline with its state @RED-02-S5',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(tester, const DayTimeline(slots: franjas, from: 8));
+      final semantics = tester.ensureSemantics();
+      await _mount(tester, const DayTimeline(slots: slots, from: 8));
 
-      for (final etiqueta in [
+      for (final label in [
         '08 h libre',
         '09 h libre',
         '10 h ocupada',
         '11 h elegida',
         '12 h libre',
       ]) {
-        expect(find.bySemanticsLabel(etiqueta), findsOneWidget);
+        expect(find.bySemanticsLabel(label), findsOneWidget);
       }
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'libre es accentMuted, ocupado stateDisabled y elegido accentBase @RED-02-ASM-02',
+    'free is accentMuted, taken stateDisabled and selected accentBase @RED-02-ASM-02',
     (tester) async {
-      await _montar(tester, const DayTimeline(slots: franjas, from: 8));
+      await _mount(tester, const DayTimeline(slots: slots, from: 8));
 
-      Color? color(String hora) {
-        final caja = tester.widget<DecoratedBox>(
+      Color? color(String hour) {
+        final box = tester.widget<DecoratedBox>(
           find.descendant(
-            of: find.byKey(ValueKey('franja-$hora')),
+            of: find.byKey(ValueKey('franja-$hour')),
             matching: find.byType(DecoratedBox),
           ),
         );
-        return (caja.decoration as BoxDecoration).color;
+        return (box.decoration as BoxDecoration).color;
       }
 
       expect(color('08'), _p.accentMuted);
@@ -336,17 +336,17 @@ void main() {
   );
 
   testWidgets(
-    'el dorsal se dibuja sólo con trazo y el lector no lo lee @RED-02-S6',
+    'the bib is drawn with stroke only and the screen reader does not read it @RED-02-S6',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(
+      final semantics = tester.ensureSemantics();
+      await _mount(
         tester,
         GiantBib(text: '07', size: 92, color: _p.textOnMedia),
       );
 
       expect(find.text('07'), findsNothing);
       expect(find.bySemanticsLabel('07'), findsNothing);
-      final pintor = tester
+      final painter = tester
           .widgetList<CustomPaint>(
             find.descendant(
               of: find.byType(GiantBib),
@@ -356,20 +356,20 @@ void main() {
           .map((c) => c.painter)
           .whereType<BibPainter>()
           .single;
-      expect(pintor.text, '07');
-      expect(pintor.color, _p.textOnMedia);
-      expect(pintor.size, 92);
-      semantica.dispose();
+      expect(painter.text, '07');
+      expect(painter.color, _p.textOnMedia);
+      expect(painter.size, 92);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el troquel dibuja la línea punteada y las dos muescas y el lector no lo lee @RED-02-S7',
+    'the die-cut draws the dotted line and the two notches and the screen reader does not read it @RED-02-S7',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(tester, DieCut(background: _p.bgBase));
+      final semantics = tester.ensureSemantics();
+      await _mount(tester, DieCut(background: _p.bgBase));
 
-      final pintor = tester
+      final painter = tester
           .widgetList<CustomPaint>(
             find.descendant(
               of: find.byType(DieCut),
@@ -379,11 +379,11 @@ void main() {
           .map((c) => c.painter)
           .whereType<DieCutPainter>()
           .single;
-      expect(pintor.line, _p.borderControl);
-      expect(pintor.background, _p.bgBase);
-      expect(pintor.notchDiameter, 16);
+      expect(painter.line, _p.borderControl);
+      expect(painter.background, _p.bgBase);
+      expect(painter.notchDiameter, 16);
       expect(tester.getSemantics(find.byType(DieCut)).label, isEmpty);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

@@ -11,64 +11,64 @@ import 'package:http/testing.dart';
 import 'support/admin.dart';
 
 void main() {
-  Future<List<http.Request>> abrir(
+  Future<List<http.Request>> open(
     WidgetTester tester, {
-    (int, String) alDarDeBaja = (204, ''),
-    Size tamano = const Size(393, 852),
+    (int, String) onDeactivate = (204, ''),
+    Size size = const Size(393, 852),
   }) async {
-    final pedidos = <http.Request>[];
-    var dadaDeBaja = false;
+    final requests = <http.Request>[];
+    var deactivated = false;
     await mountAdmin(
       tester,
-      size: tamano,
+      size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+        cliente: MockClient((request) async {
+          requests.add(request);
+          final (status, body) = switch ((request.method, request.url.path)) {
             ('DELETE', '/venues/00000000-0000-7000-8000-000000000001') => () {
-              dadaDeBaja = alDarDeBaja.$1 == 204 || alDarDeBaja.$1 == 404;
-              return alDarDeBaja;
+              deactivated = onDeactivate.$1 == 204 || onDeactivate.$1 == 404;
+              return onDeactivate;
             }(),
             ('GET', '/venues') => (
               200,
-              '{"venues": [${dadaDeBaja ? venueHaedoJson : '$venueHaedoJson, $venueMoronJson'}]}',
+              '{"venues": [${deactivated ? venueHaedoJson : '$venueHaedoJson, $venueMoronJson'}]}',
             ),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            codigo,
+            utf8.encode(body),
+            status,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       ),
     );
-    return pedidos;
+    return requests;
   }
 
-  Future<void> tocar(WidgetTester tester, Finder f) async {
+  Future<void> tapSettled(WidgetTester tester, Finder f) async {
     await tester.ensureVisible(f);
     await tester.pumpAndSettle();
     await tester.tap(f);
     await tester.pumpAndSettle();
   }
 
-  Future<void> desdeLaEdicion(WidgetTester tester) async {
-    await tocar(tester, find.bySemanticsLabel('Editar sede Sede Morón'));
-    await tocar(tester, find.text('DAR DE BAJA LA SEDE'));
+  Future<void> fromEdit(WidgetTester tester) async {
+    await tapSettled(tester, find.bySemanticsLabel('Editar sede Sede Morón'));
+    await tapSettled(tester, find.text('DAR DE BAJA LA SEDE'));
   }
 
   testWidgets(
-    'desde la edición: confirma, avisa y vuelve al listado sin la sede',
+    'from the edit screen: confirms, notifies and returns to the list without the venue',
     (tester) async {
-      final pedidos = await abrir(tester);
-      await desdeLaEdicion(tester);
+      final requests = await open(tester);
+      await fromEdit(tester);
 
       expect(find.text('¿Dar de baja la sede?'), findsOneWidget);
-      await tocar(tester, find.text('DAR DE BAJA'));
+      await tapSettled(tester, find.text('DAR DE BAJA'));
 
-      expect(pedidos.where((p) => p.method == 'DELETE'), hasLength(1));
+      expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
       expect(
         find.text('La sede fue dada de baja correctamente'),
         findsOneWidget,
@@ -78,12 +78,12 @@ void main() {
     },
   );
 
-  testWidgets('desde la tarjeta del listado, sin pasar por la edición', (
+  testWidgets('from the list card, without going through the edit screen', (
     tester,
   ) async {
-    final pedidos = await abrir(tester);
+    final requests = await open(tester);
 
-    await tocar(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
+    await tapSettled(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
     expect(
       find.text(
         'Sede Morón · Av. Rivadavia 19850. Sus espacios deportivos dejan de '
@@ -91,125 +91,127 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tocar(tester, find.text('DAR DE BAJA'));
+    await tapSettled(tester, find.text('DAR DE BAJA'));
 
-    expect(pedidos.where((p) => p.method == 'DELETE'), hasLength(1));
+    expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
     expect(find.text('Sede Morón'), findsNothing);
   });
 
-  testWidgets('CANCELAR no pide nada', (tester) async {
-    final pedidos = await abrir(tester);
-    await desdeLaEdicion(tester);
+  testWidgets('CANCELAR sends nothing', (tester) async {
+    final requests = await open(tester);
+    await fromEdit(tester);
 
-    await tocar(tester, find.text('CANCELAR'));
+    await tapSettled(tester, find.text('CANCELAR'));
 
-    expect(pedidos.where((p) => p.method == 'DELETE'), isEmpty);
-    expect(find.text('Editar sede'), findsOneWidget);
-  });
-
-  testWidgets('con reservas pendientes: el aviso y sigue en la edición', (
-    tester,
-  ) async {
-    await abrir(
-      tester,
-      alDarDeBaja: (
-        409,
-        '{"errors": {"venue": "No se puede dar de baja la sede porque posee '
-            'reservas futuras asociadas."}}',
-      ),
-    );
-    await desdeLaEdicion(tester);
-    await tocar(tester, find.text('DAR DE BAJA'));
-
-    expect(find.text('No se puede dar de baja la sede'), findsOneWidget);
-    await tocar(tester, find.text('ACEPTAR'));
-    expect(find.text('Editar sede'), findsOneWidget);
-  });
-
-  testWidgets('ya dada de baja en otra sesión: el aviso y el listado', (
-    tester,
-  ) async {
-    await abrir(tester, alDarDeBaja: (404, ''));
-    await desdeLaEdicion(tester);
-    await tocar(tester, find.text('DAR DE BAJA'));
-
-    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tocar(tester, find.text('VER LO ACTUALIZADO'));
-    expect(find.text('AGREGAR SEDE'), findsOneWidget);
-    expect(find.text('Sede Morón'), findsNothing);
-  });
-
-  testWidgets('el servidor falla: el aviso y sigue en la edición', (
-    tester,
-  ) async {
-    await abrir(tester, alDarDeBaja: (500, '{}'));
-    await desdeLaEdicion(tester);
-    await tocar(tester, find.text('DAR DE BAJA'));
-
-    expect(find.text('Error del servidor'), findsOneWidget);
-    await tocar(tester, find.text('ACEPTAR'));
+    expect(requests.where((p) => p.method == 'DELETE'), isEmpty);
     expect(find.text('Editar sede'), findsOneWidget);
   });
 
   testWidgets(
-    'la tarjeta con el texto al 200 % en un teléfono chico apila los botones',
+    'with pending bookings: the notice shows and it stays on the edit screen',
     (tester) async {
-      tester.platformDispatcher.textScaleFactorTestValue = 2;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await abrir(tester, tamano: const Size(360, 800));
-      expect(tester.takeException(), isNull);
-      final editar = tester.getRect(find.text('Editar sede').first);
-      final baja = tester.getRect(find.text('Dar de baja').first);
-      expect(baja.top, greaterThan(editar.bottom));
+      await open(
+        tester,
+        onDeactivate: (
+          409,
+          '{"errors": {"venue": "No se puede dar de baja la sede porque posee '
+              'reservas futuras asociadas."}}',
+        ),
+      );
+      await fromEdit(tester);
+      await tapSettled(tester, find.text('DAR DE BAJA'));
+
+      expect(find.text('No se puede dar de baja la sede'), findsOneWidget);
+      await tapSettled(tester, find.text('ACEPTAR'));
+      expect(find.text('Editar sede'), findsOneWidget);
     },
   );
 
-  Future<List<http.Request>> abrirCon(
-    WidgetTester tester,
-    Future<http.Response> Function(http.Request pedido, int intento)
-    alDarDeBaja,
+  testWidgets('already deactivated in another session: the notice and the list', (
+    tester,
   ) async {
-    final pedidos = <http.Request>[];
-    var intentos = 0;
-    var dadaDeBaja = false;
-    http.Response json(int codigo, String cuerpo) => http.Response.bytes(
-      utf8.encode(cuerpo),
-      codigo,
+    await open(tester, onDeactivate: (404, ''));
+    await fromEdit(tester);
+    await tapSettled(tester, find.text('DAR DE BAJA'));
+
+    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+    await tapSettled(tester, find.text('VER LO ACTUALIZADO'));
+    expect(find.text('AGREGAR SEDE'), findsOneWidget);
+    expect(find.text('Sede Morón'), findsNothing);
+  });
+
+  testWidgets(
+    'the server fails: the notice shows and it stays on the edit screen',
+    (tester) async {
+      await open(tester, onDeactivate: (500, '{}'));
+      await fromEdit(tester);
+      await tapSettled(tester, find.text('DAR DE BAJA'));
+
+      expect(find.text('Error del servidor'), findsOneWidget);
+      await tapSettled(tester, find.text('ACEPTAR'));
+      expect(find.text('Editar sede'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the card with text at 200 % on a small phone stacks the buttons',
+    (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await open(tester, size: const Size(360, 800));
+      expect(tester.takeException(), isNull);
+      final editRect = tester.getRect(find.text('Editar sede').first);
+      final deactivateRect = tester.getRect(find.text('Dar de baja').first);
+      expect(deactivateRect.top, greaterThan(editRect.bottom));
+    },
+  );
+
+  Future<List<http.Request>> openWith(
+    WidgetTester tester,
+    Future<http.Response> Function(http.Request request, int attempt)
+    onDeactivate,
+  ) async {
+    final requests = <http.Request>[];
+    var attempts = 0;
+    var deactivated = false;
+    http.Response json(int status, String body) => http.Response.bytes(
+      utf8.encode(body),
+      status,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
     await mountAdmin(
       tester,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          if (pedido.method == 'DELETE') {
-            final r = await alDarDeBaja(pedido, ++intentos);
-            dadaDeBaja = true;
+        cliente: MockClient((request) async {
+          requests.add(request);
+          if (request.method == 'DELETE') {
+            final r = await onDeactivate(request, ++attempts);
+            deactivated = true;
             return r;
           }
-          if (pedido.url.path == '/venues') {
+          if (request.url.path == '/venues') {
             return json(
               200,
-              '{"venues": [${dadaDeBaja ? venueHaedoJson : '$venueHaedoJson, $venueMoronJson'}]}',
+              '{"venues": [${deactivated ? venueHaedoJson : '$venueHaedoJson, $venueMoronJson'}]}',
             );
           }
           return json(404, '{}');
         }),
       ),
     );
-    return pedidos;
+    return requests;
   }
 
-  testWidgets('mientras la baja está en camino, las tarjetas no se tocan', (
+  testWidgets('while the deactivation is in flight, the cards cannot be tapped', (
     tester,
   ) async {
-    final respuesta = Completer<http.Response>();
-    final pedidos = await abrirCon(tester, (_, _) => respuesta.future);
+    final response = Completer<http.Response>();
+    final requests = await openWith(tester, (_, _) => response.future);
 
-    await tocar(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
+    await tapSettled(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
     await tester.tap(find.text('DAR DE BAJA'));
-    // El diálogo termina de cerrarse; el pedido sigue sin respuesta.
+    // The dialog finishes closing; the request is still unanswered.
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.bySemanticsLabel('Dando de baja Sede Morón'), findsOneWidget);
@@ -219,25 +221,25 @@ void main() {
     expect(find.text('¿Dar de baja la sede?'), findsNothing);
     expect(find.bySemanticsLabel('Nombre de la sede'), findsNothing);
 
-    respuesta.complete(http.Response('', 204));
+    response.complete(http.Response('', 204));
     await tester.pumpAndSettle();
-    expect(pedidos.where((p) => p.method == 'DELETE'), hasLength(1));
+    expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
     expect(find.text('La sede fue dada de baja correctamente'), findsOneWidget);
     expect(find.text('Sede Morón'), findsNothing);
   });
 
   testWidgets(
-    'si el pedido cortado la dio de baja, el reintento avisa el éxito',
+    'if the interrupted request deactivated it, the retry reports success',
     (tester) async {
-      await abrirCon(tester, (_, intento) async {
-        if (intento == 1) throw const SocketException('se cortó');
+      await openWith(tester, (_, attempt) async {
+        if (attempt == 1) throw const SocketException('connection dropped');
         return http.Response('', 404);
       });
 
-      await tocar(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
-      await tocar(tester, find.text('DAR DE BAJA'));
+      await tapSettled(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
+      await tapSettled(tester, find.text('DAR DE BAJA'));
       expect(find.text('Error de conexión'), findsOneWidget);
-      await tocar(tester, find.text('REINTENTAR'));
+      await tapSettled(tester, find.text('REINTENTAR'));
 
       expect(find.text('Esto cambió mientras tanto'), findsNothing);
       expect(
@@ -248,15 +250,13 @@ void main() {
     },
   );
 
-  testWidgets('con el texto al 130 % los botones de la tarjeta se apilan', (
-    tester,
-  ) async {
+  testWidgets('with text at 130 % the card buttons stack', (tester) async {
     tester.platformDispatcher.textScaleFactorTestValue = 1.3;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await abrir(tester, tamano: const Size(360, 800));
+    await open(tester, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
-    final editar = tester.getRect(find.text('Editar sede').first);
-    final baja = tester.getRect(find.text('Dar de baja').first);
-    expect(baja.top, greaterThan(editar.bottom));
+    final editRect = tester.getRect(find.text('Editar sede').first);
+    final deactivateRect = tester.getRect(find.text('Dar de baja').first);
+    expect(deactivateRect.top, greaterThan(editRect.bottom));
   });
 }

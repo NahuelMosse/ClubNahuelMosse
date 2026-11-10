@@ -10,7 +10,7 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'sin red dice Revisá tu conexión a internet y no que el servidor no responde @SIM-01-S4',
+    'offline says «Revisá tu conexión a internet», not that the server does not respond @SIM-01-S4',
     (tester) async {
       final api = ApiClient(
         'http://api.falsa',

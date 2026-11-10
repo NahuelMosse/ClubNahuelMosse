@@ -22,25 +22,25 @@ import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 void main() {
   setUpAll(loadFonts);
 
-  testWidgets('Mis reservas cumple las guías de accesibilidad @SIM-01-S1', (
+  testWidgets('«Mis reservas» meets the accessibility guidelines @SIM-01-S1', (
     tester,
   ) async {
-    final rutas = venueRoutes();
+    final routes = venueRoutes();
     await mountUser(
       tester,
       start: '/reservas',
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          final (c, cuerpo) = pedido.url.path == '/bookings'
+        cliente: MockClient((request) async {
+          final (code, body) = request.url.path == '/bookings'
               ? (
                   200,
-                  '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'canceled', motivo: 'Lluvia')}]' : '[${bookingJson()}]'}}',
+                  '{"bookings": ${request.url.queryParameters['when'] == 'history' ? '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'canceled', motivo: 'Lluvia')}]' : '[${bookingJson()}]'}}',
                 )
-              : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+              : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            c,
+            utf8.encode(body),
+            code,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
@@ -50,7 +50,7 @@ void main() {
     await kitA11y(tester);
   });
 
-  testWidgets('Inicio cumple las guías de accesibilidad @SIM-01-S1', (
+  testWidgets('«Inicio» meets the accessibility guidelines @SIM-01-S1', (
     tester,
   ) async {
     await mountScreen(
@@ -63,9 +63,9 @@ void main() {
   });
 
   testWidgets(
-    'el listado de reservas del admin cumple las guías de accesibilidad @SIM-01-S2',
+    'the admin\'s booking list meets the accessibility guidelines @SIM-01-S2',
     (tester) async {
-      const reserva =
+      const booking =
           '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
           ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
           ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
@@ -76,24 +76,24 @@ void main() {
       final api = apiRoutes({
         'GET /bookings/all': (
           200,
-          '{"bookings": [$reserva], "total": 1, "page": 1,'
+          '{"bookings": [$booking], "total": 1, "page": 1,'
               ' "per_page": 20, "counters": {"all": 1, "active": 1,'
               ' "completed": 0, "voided": 0}}',
         ),
         'GET /spaces/catalog': (200, catalogJson),
       });
-      final sesion = FakeSession(adminProfile);
+      final session = FakeSession(adminProfile);
       await mountScreen(
         tester,
         AdminPanelScreen(
-          history: BookingHistory(api: api, sesion: sesion),
+          history: BookingHistory(api: api, sesion: session),
           venues: Venues(
-            repository: VenuesRepository(api: api, session: sesion),
+            repository: VenuesRepository(api: api, session: session),
           ),
           spaces: Spaces(
-            repository: SpacesRepository(api: api, session: sesion),
+            repository: SpacesRepository(api: api, session: session),
           ),
-          session: sesion,
+          session: session,
           pending: PendingPanelFilters(),
         ),
         theme: darkTheme,

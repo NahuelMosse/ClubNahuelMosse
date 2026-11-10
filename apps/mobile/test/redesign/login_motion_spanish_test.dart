@@ -16,88 +16,88 @@ import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 
 void main() {
   testWidgets(
-    'el login entra escalonado: isotipo, formulario, botón y pie @RED-04-S6',
+    'the login enters staggered: logo mark, form, button and footer @RED-04-S6',
     (tester) async {
-      await _montarLibre(tester, _login());
-      Iterable<Duration> retrasos(Finder f) =>
-          _aparecedores(tester, f).map((a) => a.delay);
+      await _mountFree(tester, _login());
+      Iterable<Duration> delays(Finder f) =>
+          _appearances(tester, f).map((a) => a.delay);
 
       expect(
-        _aparecedores(
+        _appearances(
           tester,
           find.byType(LogoMark),
         ).any((a) => a.turn != 0 && a.fromY < 0),
         isTrue,
-        reason: 'el isotipo cae y gira',
+        reason: 'the logo mark drops and spins',
       );
-      expect(retrasos(find.byType(FormTextField).first), contains(_ms(460)));
-      expect(retrasos(find.text('INICIAR SESIÓN')), contains(_ms(540)));
-      expect(retrasos(find.text('¿No tenés cuenta?')), contains(_ms(620)));
+      expect(delays(find.byType(FormTextField).first), contains(_ms(460)));
+      expect(delays(find.text('INICIAR SESIÓN')), contains(_ms(540)));
+      expect(delays(find.text('¿No tenés cuenta?')), contains(_ms(620)));
 
-      final form = _aparecerQue(
+      final form = _appearanceWhere(
         find.byType(FormTextField).first,
         (a) => a.delay == _ms(460),
       ).first;
-      expect(_opacidad(tester, form), 0);
+      expect(_opacity(tester, form), 0);
       await tester.pump(_ms(400));
-      expect(_opacidad(tester, form), 0);
+      expect(_opacity(tester, form), 0);
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, form), allOf(greaterThan(0), lessThan(1)));
+      expect(_opacity(tester, form), allOf(greaterThan(0), lessThan(1)));
       await tester.pumpAndSettle();
-      expect(_opacidad(tester, form), 1);
+      expect(_opacity(tester, form), 1);
     },
   );
 
   testWidgets(
-    'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
+    'the invalid-credentials notice shakes every time it appears and the same error does not shake the field again @RED-04-ASM-10',
     (tester) async {
-      final credenciales = FakeCredentials(
+      final credentials = FakeCredentials(
         onSignIn: (_, _) async => throw const InvalidCredentials(),
       );
-      await _montarLibre(tester, _login(credenciales: credenciales));
+      await _mountFree(tester, _login(credentials: credentials));
       await tester.pumpAndSettle();
-      final campo = find.byType(TextField).first;
+      final field = find.byType(TextField).first;
 
-      // Reenviar vacío con el mismo error: tiembla la primera vez y no la segunda.
+      // Resubmitting empty with the same error: it shakes the first time and not the second.
       await tester.tap(find.text('INICIAR SESIÓN'));
-      await _arrancar(tester);
+      await _start(tester);
       expect(find.text('Completá tu correo electrónico'), findsOneWidget);
-      _tiembla(await _recorrido(tester, campo), motivo: 'el campo, 1.ª vez');
+      _expectShakes(await _path(tester, field), reason: 'el campo, 1.ª vez');
       await tester.tap(find.text('INICIAR SESIÓN'));
-      await _arrancar(tester);
+      await _start(tester);
       expect(find.text('Completá tu correo electrónico'), findsOneWidget);
-      _noTiembla(await _recorrido(tester, campo), motivo: 'el mismo error');
+      _doesNotShake(await _path(tester, field), reason: 'el mismo error');
 
-      // Con los datos completos y mal, el aviso tiembla al aparecer, cada vez.
+      // With complete but wrong data, the notice shakes when it appears, every time.
       await tester.enterText(find.byType(TextField).first, 'nahuel@correo.com');
       await tester.enterText(find.byType(TextField).last, 'Mala1234');
-      for (var vez = 1; vez <= 2; vez++) {
+      for (var time = 1; time <= 2; time++) {
         await tester.tap(find.text('INICIAR SESIÓN'));
-        await _hastaQue(
+        await _until(
           tester,
           () => find.text(invalidCredentialsMessage).evaluate().isNotEmpty,
         );
-        await _arrancar(tester);
-        _tiembla(
-          await _recorrido(tester, find.byType(ErrorSnackbar)),
-          motivo: 'el aviso, $vez.ª vez',
+        await _start(tester);
+        _expectShakes(
+          await _path(tester, find.byType(ErrorSnackbar)),
+          reason: 'el aviso, $time.ª vez',
         );
         await tester.tap(find.byTooltip('Cerrar aviso'));
         await tester.pumpAndSettle();
         expect(find.text(invalidCredentialsMessage), findsNothing);
       }
-      expect(credenciales.attempts, hasLength(2));
+      expect(credentials.attempts, hasLength(2));
     },
   );
 }
 
 Duration _ms(int n) => Duration(milliseconds: n);
 
-/// Lo que desplaza el temblor a los 60, 120, 180, 240, 300 y 360 ms.
-const _temblor = [-9.0, 9.0, -6.0, 6.0, -3.0, 0.0];
+/// What the shake displaces at 60, 120, 180, 240, 300 and 360 ms.
+const _shakeOffsets = [-9.0, 9.0, -6.0, 6.0, -3.0, 0.0];
 
-/// La pantalla con el tema y el idioma de la app, sin esperar a que termine ninguna animación.
-Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
+/// The screen with the app's theme and language, without waiting for any animation to finish.
+Future<void> _mountFree(WidgetTester tester, Widget screen) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -108,79 +108,80 @@ Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
       localeListResolutionCallback: resolveLanguage,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: pantalla,
+      home: screen,
     ),
   );
 }
 
-/// Pasa cuadros sin avanzar el reloj, para que arranque lo que se disparó.
-Future<void> _arrancar(WidgetTester tester) async {
+/// Pumps frames without advancing the clock, so that whatever was triggered starts.
+Future<void> _start(WidgetTester tester) async {
   for (var i = 0; i < 3; i++) {
     await tester.pump();
   }
 }
 
-/// Pasa cuadros sin avanzar el reloj hasta que se cumple [condicion].
-Future<void> _hastaQue(WidgetTester tester, bool Function() condicion) async {
-  for (var i = 0; i < 20 && !condicion(); i++) {
+/// Pumps frames without advancing the clock until [condition] holds.
+Future<void> _until(WidgetTester tester, bool Function() condition) async {
+  for (var i = 0; i < 20 && !condition(); i++) {
     await tester.pump();
   }
-  expect(condicion(), isTrue);
+  expect(condition(), isTrue);
 }
 
-/// Los `FadeIn` que envuelven a [f], del más cercano al más lejano.
-List<FadeIn> _aparecedores(WidgetTester tester, Finder f) => tester
+/// The `FadeIn`s that wrap [f], from the closest to the farthest.
+List<FadeIn> _appearances(WidgetTester tester, Finder f) => tester
     .widgetList<FadeIn>(find.ancestor(of: f, matching: find.byType(FadeIn)))
     .toList();
 
-/// El `FadeIn` que envuelve a [f] y cumple [cumple].
-Finder _aparecerQue(Finder f, bool Function(FadeIn) cumple) => find.ancestor(
-  of: f,
-  matching: find.byWidgetPredicate((w) => w is FadeIn && cumple(w)),
-);
+/// The `FadeIn` that wraps [f] and satisfies [matches].
+Finder _appearanceWhere(Finder f, bool Function(FadeIn) matches) =>
+    find.ancestor(
+      of: f,
+      matching: find.byWidgetPredicate((w) => w is FadeIn && matches(w)),
+    );
 
-Widget _login({FakeCredentials? credenciales}) => LoginScreen(
+Widget _login({FakeCredentials? credentials}) => LoginScreen(
   session: Session(
     repository: SessionRepository(
-      credentials: credenciales ?? FakeCredentials(),
+      credentials: credentials ?? FakeCredentials(),
       api: fakeApi(status: 200, body: profileJson()),
     ),
   ),
   pending: PendingBooking(),
 );
 
-double _opacidad(WidgetTester tester, Finder aparecer) => tester
+double _opacity(WidgetTester tester, Finder appearance) => tester
     .widget<FadeTransition>(
       find
-          .descendant(of: aparecer, matching: find.byType(FadeTransition))
+          .descendant(of: appearance, matching: find.byType(FadeTransition))
           .first,
     )
     .opacity
     .value;
 
-void _tiembla(List<double> recorrido, {String? motivo}) {
-  expect(recorrido, hasLength(_temblor.length));
-  for (var i = 0; i < _temblor.length; i++) {
+void _expectShakes(List<double> path, {String? reason}) {
+  expect(path, hasLength(_shakeOffsets.length));
+  for (var i = 0; i < _shakeOffsets.length; i++) {
     expect(
-      recorrido[i],
-      closeTo(_temblor[i], 0.01),
-      reason: '$motivo a los ${60 * (i + 1)} ms',
+      path[i],
+      closeTo(_shakeOffsets[i], 0.01),
+      reason: '$reason at ${60 * (i + 1)} ms',
     );
   }
 }
 
-void _noTiembla(List<double> recorrido, {String? motivo}) {
-  expect(recorrido, everyElement(closeTo(0, 0.01)), reason: motivo);
+void _doesNotShake(List<double> path, {String? reason}) {
+  expect(path, everyElement(closeTo(0, 0.01)), reason: reason);
 }
 
-/// Cuánto se corrió [f] a los 60, 120, 180, 240, 300 y 360 ms respecto de su reposo.
-Future<List<double>> _recorrido(WidgetTester tester, Finder f) async {
-  final posiciones = <double>[];
+/// How far [f] moved at 60, 120, 180, 240, 300 and 360 ms relative to its rest position.
+Future<List<double>> _path(WidgetTester tester, Finder f) async {
+  final positions = <double>[];
   for (var t = 0; t < 360; t += 60) {
     await tester.pump(_ms(60));
-    posiciones.add(tester.getTopLeft(f).dx);
+    positions.add(tester.getTopLeft(f).dx);
   }
   await tester.pumpAndSettle();
-  final reposo = tester.getTopLeft(f).dx;
-  return [for (final x in posiciones) x - reposo];
+  final rest = tester.getTopLeft(f).dx;
+  return [for (final x in positions) x - rest];
 }

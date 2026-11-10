@@ -7,22 +7,22 @@ import '../support/admin.dart';
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo (CU-14).
+/// Asserts nothing: produces the step-9 strip to compare against the prototype (CU-14).
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  const modos = {'dark': true, 'light': false};
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  const modes = {'dark': true, 'light': false};
 
-  Future<void> capturar(WidgetTester tester, String archivo) async {
+  Future<void> capture(WidgetTester tester, String file) async {
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
   }
 
-  const contadores =
+  const counters =
       '"counters": {"all": 49, "active": 12, "completed": 31, "voided": 5}';
 
-  const reservaActivaJson =
+  const activeBookingJson =
       '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
       ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
       ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
@@ -31,7 +31,7 @@ void main() {
       ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
       ' "canceled_by_name": null, "space_deactivated": false, "voidable": true}';
 
-  const reservaCompletadaJson =
+  const completedBookingJson =
       '{"id": "00000000-0000-7000-8000-000000000002", "space_id": "00000000-0000-7000-8000-000000000010", "venue_id": "00000000-0000-7000-8000-000000000002", "space":'
       ' "RamosMejia_Belgrano_1240_Voley_IND_1", "sport": "Voley", "kind": "IND", "venue":'
       ' "Sede Ramos Mejía", "address": "Calle Belgrano 1240", "starts_at":'
@@ -40,7 +40,7 @@ void main() {
       ' "created_at": "2026-10-20T09:10:00-03:00", "canceled_at": null,'
       ' "canceled_by_name": null, "space_deactivated": false}';
 
-  const reservaAnuladaJson =
+  const voidedBookingJson =
       '{"id": "00000000-0000-7000-8000-000000000003", "space_id": "00000000-0000-7000-8000-000000000011", "venue_id": "00000000-0000-7000-8000-000000000002", "space":'
       ' "RamosMejia_Belgrano_1240_Hockey_H7_1", "sport": "Hockey", "kind": "H7", "venue":'
       ' "Sede Ramos Mejía", "address": "Calle Belgrano 1240", "starts_at":'
@@ -51,55 +51,55 @@ void main() {
       ' "Admin Sistema", "space_deactivated": false, "notice_delivery": "sent",'
       ' "notice_at": "2026-10-28T09:15:00-03:00"}';
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
-      testWidgets('listado con reservas $ancho $modo', (tester) async {
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: dark) in modes.entries) {
+      testWidgets('listing with bookings $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
-              '{"bookings": [$reservaActivaJson, $reservaCompletadaJson,'
-                  ' $reservaAnuladaJson], "total": 49, "page": 1, "per_page": 20,'
-                  ' $contadores}',
+              '{"bookings": [$activeBookingJson, $completedBookingJson,'
+                  ' $voidedBookingJson], "total": 49, "page": 1, "per_page": 20,'
+                  ' $counters}',
             ),
             'GET /spaces/catalog': (200, catalogJson),
           }),
         );
-        await capturar(tester, 'admin/bookings_${ancho}_$modo.png');
+        await capture(tester, 'admin/bookings_${width}_$mode.png');
       });
 
-      testWidgets('listado cargando $ancho $modo', (tester) async {
+      testWidgets('listing loading $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
-              '{"bookings": [], "total": 0, "page": 1, "per_page": 20, $contadores}',
+              '{"bookings": [], "total": 0, "page": 1, "per_page": 20, $counters}',
             ),
             'GET /spaces/catalog': (200, catalogJson),
           }),
         );
-        // Un solo cuadro, antes de que el pedido vuelva.
+        // A single frame, before the request returns.
         await tester.pump();
         await expectLater(
           find.byType(MaterialApp),
-          matchesGoldenFile('admin/bookings_loading_${ancho}_$modo.png'),
+          matchesGoldenFile('admin/bookings_loading_${width}_$mode.png'),
         );
       });
 
-      testWidgets('sin resultados $ancho $modo', (tester) async {
+      testWidgets('no results $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -114,15 +114,15 @@ void main() {
           find.bySemanticsLabel('Buscar reserva'),
           'sin coincidencia',
         );
-        await capturar(tester, 'admin/bookings_no_results_${ancho}_$modo.png');
+        await capture(tester, 'admin/bookings_no_results_${width}_$mode.png');
       });
 
-      testWidgets('historial vacío $ancho $modo', (tester) async {
+      testWidgets('empty history $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -133,20 +133,20 @@ void main() {
             'GET /spaces/catalog': (200, catalogJson),
           }),
         );
-        await capturar(tester, 'admin/bookings_empty_${ancho}_$modo.png');
+        await capture(tester, 'admin/bookings_empty_${width}_$mode.png');
       });
 
-      testWidgets('panel de filtros $ancho $modo', (tester) async {
+      testWidgets('filters panel $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
-              '{"bookings": [$reservaActivaJson], "total": 49, "page": 1,'
-                  ' "per_page": 20, $contadores}',
+              '{"bookings": [$activeBookingJson], "total": 49, "page": 1,'
+                  ' "per_page": 20, $counters}',
             ),
             'GET /spaces/catalog': (200, catalogJson),
             'GET /venues': (
@@ -156,15 +156,15 @@ void main() {
           }),
         );
         await tester.tap(find.text('Filtros'));
-        await capturar(tester, 'admin/bookings_filters_${ancho}_$modo.png');
+        await capture(tester, 'admin/bookings_filters_${width}_$mode.png');
       });
 
-      testWidgets('rango de fechas inválido $ancho $modo', (tester) async {
+      testWidgets('invalid date range $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -180,61 +180,61 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.bySemanticsLabel('Desde'), '30112026');
         await tester.enterText(find.bySemanticsLabel('Hasta'), '01112026');
-        await capturar(
+        await capture(
           tester,
-          'admin/bookings_range_invalid_${ancho}_$modo.png',
+          'admin/bookings_range_invalid_${width}_$mode.png',
         );
       });
 
-      testWidgets('detalle de reserva $ancho $modo', (tester) async {
+      testWidgets('booking detail $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
-              '{"bookings": [$reservaActivaJson], "total": 1, "page": 1,'
-                  ' "per_page": 20, $contadores}',
+              '{"bookings": [$activeBookingJson], "total": 1, "page": 1,'
+                  ' "per_page": 20, $counters}',
             ),
             'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await tester.tap(find.text('Moron_Rivadavia_19850_Futbol_F5_1'));
-        await capturar(tester, 'admin/bookings_detail_${ancho}_$modo.png');
+        await capture(tester, 'admin/bookings_detail_${width}_$mode.png');
       });
 
-      testWidgets('detalle de reserva anulada $ancho $modo', (tester) async {
+      testWidgets('voided booking detail $width $mode', (tester) async {
         await mountAdmin(
           tester,
           start: '/admin',
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
-              '{"bookings": [$reservaAnuladaJson], "total": 1, "page": 1,'
-                  ' "per_page": 20, $contadores}',
+              '{"bookings": [$voidedBookingJson], "total": 1, "page": 1,'
+                  ' "per_page": 20, $counters}',
             ),
             'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await tester.tap(find.text('RamosMejia_Belgrano_1240_Hockey_H7_1'));
-        await capturar(
+        await capture(
           tester,
-          'admin/bookings_detail_voided_${ancho}_$modo.png',
+          'admin/bookings_detail_voided_${width}_$mode.png',
         );
       });
 
-      testWidgets('acceso denegado $ancho $modo', (tester) async {
+      testWidgets('access denied $width $mode', (tester) async {
         await mountScreen(
           tester,
           AccessDeniedScreen(session: FakeSession(userProfile)),
-          theme: oscuro ? darkTheme : lightTheme,
-          size: tamano,
+          theme: dark ? darkTheme : lightTheme,
+          size: size,
         );
-        await capturar(tester, 'admin/access_denied_${ancho}_$modo.png');
+        await capture(tester, 'admin/access_denied_${width}_$mode.png');
       });
     }
   }

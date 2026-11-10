@@ -2,55 +2,55 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// El código de un archivo de `lib/`, sin comentarios.
-String _codigo(String ruta) => File(
-  'lib/$ruta',
+/// The code of a `lib/` file, without comments.
+String _code(String route) => File(
+  'lib/$route',
 ).readAsLinesSync().where((l) => !l.trimLeft().startsWith('//')).join('\n');
 
-/// Lo que va sobre una foto no lee la paleta de un modo fijo ni grises escritos a mano.
-void _sinTonosFijos(String ruta) {
-  final codigo = _codigo(ruta);
-  expect(codigo, isNot(contains('Paleta.oscura')), reason: ruta);
-  expect(codigo, isNot(contains('Paleta.clara')), reason: ruta);
-  expect(codigo, isNot(contains('0xFFD4D4D8')), reason: ruta);
+/// What goes over a photo does not read the palette of a fixed mode nor hand-written grays.
+void _noFixedTones(String route) {
+  final code = _code(route);
+  expect(code, isNot(contains('Paleta.oscura')), reason: route);
+  expect(code, isNot(contains('Paleta.clara')), reason: route);
+  expect(code, isNot(contains('0xFFD4D4D8')), reason: route);
 }
 
-void _acentoSobreFoto(String ruta) {
-  _sinTonosFijos(ruta);
-  expect(_codigo(ruta), contains('accentOnMedia'), reason: ruta);
+void _accentOverPhoto(String route) {
+  _noFixedTones(route);
+  expect(_code(route), contains('accentOnMedia'), reason: route);
 }
 
 void main() {
-  test('el botón sobre foto usa accentOnMedia @RED-01-S2', () {
-    _acentoSobreFoto('common/button.dart');
+  test('the button over a photo uses accentOnMedia @RED-01-S2', () {
+    _accentOverPhoto('common/button.dart');
   });
 
-  test('el sobretítulo del inicio usa accentOnMedia @RED-01-S2', () {
-    _acentoSobreFoto('features/home/presentation/home_screen.dart');
+  test('the home overline uses accentOnMedia @RED-01-S2', () {
+    _accentOverPhoto('features/home/presentation/home_screen.dart');
   });
 
-  test('el sobretítulo de la sede usa accentOnMedia @RED-01-S2', () {
-    _acentoSobreFoto('features/venues/presentation/venue_screen.dart');
+  test('the venue overline uses accentOnMedia @RED-01-S2', () {
+    _accentOverPhoto('features/venues/presentation/venue_screen.dart');
   });
 
-  test('el sobretítulo de confirmar reserva usa accentOnMedia @RED-01-S2', () {
-    _acentoSobreFoto(
+  test('the confirm booking overline uses accentOnMedia @RED-01-S2', () {
+    _accentOverPhoto(
       'features/bookings/presentation/confirm_booking_screen.dart',
     );
   });
 
-  test('el sobretítulo de horarios usa accentOnMedia @RED-01-S2', () {
-    _acentoSobreFoto('features/bookings/presentation/availability_screen.dart');
+  test('the schedule overline uses accentOnMedia @RED-01-S2', () {
+    _accentOverPhoto('features/bookings/presentation/availability_screen.dart');
   });
 
-  test('el acento del login usa accentOnMedia @RED-01-S2', () {
-    _acentoSobreFoto('features/session/presentation/login_screen.dart');
+  test('the login accent uses accentOnMedia @RED-01-S2', () {
+    _accentOverPhoto('features/session/presentation/login_screen.dart');
   });
 
   test(
-    'el texto sobre foto de cada pantalla sale de los tokens on-media @RED-01-S3',
+    'the on-photo text of each screen comes from the on-media tokens @RED-01-S3',
     () {
-      for (final ruta in [
+      for (final route in [
         'features/home/presentation/home_screen.dart',
         'features/venues/presentation/venue_screen.dart',
         'features/venues/presentation/venues_screen.dart',
@@ -58,43 +58,40 @@ void main() {
         'features/bookings/presentation/availability_screen.dart',
         'features/session/presentation/login_screen.dart',
       ]) {
-        _sinTonosFijos(ruta);
-        expect(_codigo(ruta), contains('textOnMedia'), reason: ruta);
+        _noFixedTones(route);
+        expect(_code(route), contains('textOnMedia'), reason: route);
       }
     },
   );
 
-  test('el botón de peligro relleno usa stateDangerStrong @RED-01-S4', () {
-    final codigo = _codigo('common/button.dart');
-    expect(codigo, contains('backgroundColor: p.stateDangerStrong'));
+  test('the filled danger button uses stateDangerStrong @RED-01-S4', () {
+    final code = _code('common/button.dart');
+    expect(code, contains('backgroundColor: p.stateDangerStrong'));
   });
 
   test(
-    'la etiqueta sobre foto, como «Fútbol 5», es violeta con texto blanco @RED-01-ASM-03',
+    'the on-photo label, like «Fútbol 5», is violet with white text @RED-01-ASM-03',
     () {
-      _sinTonosFijos('common/label.dart');
+      _noFixedTones('common/label.dart');
       expect(
-        _codigo('common/label.dart'),
+        _code('common/label.dart'),
         contains('(p.accentBase, p.accentOn)'),
       );
     },
   );
 
-  test(
-    'el contador de la tarjeta de sede es violeta con cifra blanca @RED-01-ASM-04',
-    () {
-      final codigo = _codigo('features/venues/presentation/venues_screen.dart');
-      _sinTonosFijos('features/venues/presentation/venues_screen.dart');
-      final contador = RegExp(
-        r"color: p\.accentBase,[\s\S]{0,400}?'\$\{sede\.canchas\}',\s*style: Textos\.\w+\.copyWith\(color: p\.accentOn\)",
-      );
-      expect(contador.hasMatch(codigo), isTrue);
-    },
-  );
+  test('the venue card counter is violet with a white figure @RED-01-ASM-04', () {
+    final code = _code('features/venues/presentation/venues_screen.dart');
+    _noFixedTones('features/venues/presentation/venues_screen.dart');
+    final counter = RegExp(
+      r"color: p\.accentBase,[\s\S]{0,400}?'\$\{sede\.canchas\}',\s*style: Textos\.\w+\.copyWith\(color: p\.accentOn\)",
+    );
+    expect(counter.hasMatch(code), isTrue);
+  });
 
-  test('la cabecera del perfil va de bgHeroFrom a bgHeroTo @RED-01-S5', () {
+  test('the profile header goes from bgHeroFrom to bgHeroTo @RED-01-S5', () {
     expect(
-      _codigo('features/users/presentation/my_profile_screen.dart'),
+      _code('features/users/presentation/my_profile_screen.dart'),
       contains('[p.bgHeroFrom, p.bgHeroTo]'),
     );
   });

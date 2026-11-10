@@ -6,81 +6,77 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/mount.dart';
 
-Future<void> _montar(WidgetTester tester, ThemeData tema, Widget boton) =>
+Future<void> _mount(WidgetTester tester, ThemeData theme, Widget button) =>
     mountScreen(
       tester,
       Scaffold(
-        body: Padding(padding: const EdgeInsets.all(24), child: boton),
+        body: Padding(padding: const EdgeInsets.all(24), child: button),
       ),
-      theme: tema,
+      theme: theme,
     );
 
-/// El color que el botón pinta en [estados], tal como lo resuelve su estilo.
-(Color?, Color?) _colores(WidgetTester tester, Set<WidgetState> estados) {
-  final estilo = tester.widget<FilledButton>(find.byType(FilledButton)).style;
+/// The color the button paints in [states], as its style resolves it.
+(Color?, Color?) _colors(WidgetTester tester, Set<WidgetState> states) {
+  final style = tester.widget<FilledButton>(find.byType(FilledButton)).style;
   return (
-    estilo?.backgroundColor?.resolve(estados),
-    estilo?.foregroundColor?.resolve(estados),
+    style?.backgroundColor?.resolve(states),
+    style?.foregroundColor?.resolve(states),
   );
 }
 
-/// Ninguna opacidad por debajo de 1 entre el botón y la raíz.
-void _sinOpacidad(WidgetTester tester) {
-  final opacidades = tester.widgetList<Opacity>(
+/// No opacity below 1 between the button and the root.
+void _noOpacity(WidgetTester tester) {
+  final opacities = tester.widgetList<Opacity>(
     find.ancestor(
       of: find.byType(FilledButton),
       matching: find.byType(Opacity),
     ),
   );
-  for (final o in opacidades) {
+  for (final o in opacities) {
     expect(o.opacity, 1);
   }
 }
 
 void main() {
   testWidgets(
-    'el botón principal deshabilitado es gris, con texto secundario y sin opacidad @RED-05-S3',
+    'the disabled primary button is gray, with secondary text and no opacity @RED-05-S3',
     (tester) async {
-      for (final (tema, p) in [
+      for (final (theme, p) in [
         (darkTheme, Palette.dark),
         (lightTheme, Palette.light),
       ]) {
-        await _montar(
+        await _mount(
           tester,
-          tema,
+          theme,
           const PrimaryButton(label: 'CONFIRMAR', onTap: null),
         );
-        expect(_colores(tester, {WidgetState.disabled}), (
+        expect(_colors(tester, {WidgetState.disabled}), (
           p.stateDisabled,
           p.textSecondary,
         ));
-        _sinOpacidad(tester);
+        _noOpacity(tester);
       }
     },
   );
 
   testWidgets(
-    'el botón atenuado usa el mismo gris y acepta el toque @RED-05-ASM-03',
+    'the dimmed button uses the same gray and accepts the tap @RED-05-ASM-03',
     (tester) async {
-      for (final (tema, p) in [
+      for (final (theme, p) in [
         (darkTheme, Palette.dark),
         (lightTheme, Palette.light),
       ]) {
-        var toques = 0;
-        await _montar(
+        var taps = 0;
+        await _mount(
           tester,
-          tema,
-          PrimaryButton(
-            label: 'CONFIRMAR',
-            onTap: () => toques++,
-            dimmed: true,
-          ),
+          theme,
+          PrimaryButton(label: 'CONFIRMAR', onTap: () => taps++, dimmed: true),
         );
-        expect(_colores(tester, {}), (p.stateDisabled, p.textSecondary));
-        _sinOpacidad(tester);
+        expect(_colors(tester, {}), (p.stateDisabled, p.textSecondary));
+        _noOpacity(tester);
         await tester.tap(find.text('CONFIRMAR'));
         await tester.pump(const Duration(milliseconds: 200));
-        expect(toques, 1);
+        expect(taps, 1);
       }
     },
   );

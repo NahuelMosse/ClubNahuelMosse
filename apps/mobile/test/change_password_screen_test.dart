@@ -11,49 +11,49 @@ import 'support/mount.dart';
 void main() {
   setUpAll(loadFonts);
 
-  late FakeCredentials credenciales;
-  late List<http.Request> pedidos;
+  late FakeCredentials credentials;
+  late List<http.Request> requests;
 
-  Future<Session> sesionCon((int, String) cambio) async {
-    credenciales = FakeCredentials();
-    pedidos = [];
-    final sesion = Session(
+  Future<Session> sessionWith((int, String) change) async {
+    credentials = FakeCredentials();
+    requests = [];
+    final session = Session(
       repository: SessionRepository(
-        credentials: credenciales,
+        credentials: credentials,
         api: apiRoutes({
           'GET /me': (200, profileJson()),
-          'PUT /me/password': cambio,
-        }, requests: pedidos),
+          'PUT /me/password': change,
+        }, requests: requests),
       ),
     );
-    await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
-    return sesion;
+    await session.signIn('nahuel@correo.com', 'ClubNahuel1');
+    return session;
   }
 
-  Future<void> montarPantalla(WidgetTester tester, Session sesion) =>
+  Future<void> mountChangeScreen(WidgetTester tester, Session session) =>
       mountScreen(
         tester,
-        ChangePasswordScreen(session: sesion),
+        ChangePasswordScreen(session: session),
         theme: darkTheme,
       );
 
-  Future<void> completar(
+  Future<void> fill(
     WidgetTester tester, {
-    String actual = 'ClubNahuel1',
-    String nueva = 'ClubNahuel2',
-    String? repetida,
+    String current = 'ClubNahuel1',
+    String next = 'ClubNahuel2',
+    String? repeated,
   }) async {
-    await tester.enterText(find.bySemanticsLabel('Contraseña actual'), actual);
-    await tester.enterText(find.bySemanticsLabel('Contraseña nueva'), nueva);
+    await tester.enterText(find.bySemanticsLabel('Contraseña actual'), current);
+    await tester.enterText(find.bySemanticsLabel('Contraseña nueva'), next);
     await tester.enterText(
       find.bySemanticsLabel('Repetir contraseña'),
-      repetida ?? nueva,
+      repeated ?? next,
     );
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
   }
 
-  bool habilitado(WidgetTester tester) =>
+  bool enabled(WidgetTester tester) =>
       tester
           .widget<FilledButton>(
             find.widgetWithText(FilledButton, 'GUARDAR CONTRASEÑA'),
@@ -61,17 +61,17 @@ void main() {
           .onPressed !=
       null;
 
-  testWidgets('arranca vacío y con el botón deshabilitado', (tester) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(tester, await sesionCon((204, '')));
-    expect(habilitado(tester), isFalse);
+  testWidgets('starts empty and with the button disabled', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(tester, await sessionWith((204, '')));
+    expect(enabled(tester), isFalse);
     expect(find.text('Al menos 8 caracteres'), findsNothing);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('muestra las reglas mientras falta alguna', (tester) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(tester, await sesionCon((204, '')));
+  testWidgets('shows the rules while any is missing', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(tester, await sessionWith((204, '')));
     await tester.enterText(find.bySemanticsLabel('Contraseña nueva'), 'club');
     await tester.pump();
     expect(
@@ -98,128 +98,126 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Al menos un número'), findsNothing);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('la repetición distinta no deja guardar ni manda nada', (
+  testWidgets('a different repetition cannot be saved and sends nothing', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(tester, await sesionCon((204, '')));
-    await completar(tester, repetida: 'ClubNahuel3');
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(tester, await sessionWith((204, '')));
+    await fill(tester, repeated: 'ClubNahuel3');
     expect(find.text('Las contraseñas no coinciden'), findsOneWidget);
-    expect(habilitado(tester), isFalse);
-    expect(pedidos.where((p) => p.method == 'PUT'), isEmpty);
-    semantica.dispose();
+    expect(enabled(tester), isFalse);
+    expect(requests.where((p) => p.method == 'PUT'), isEmpty);
+    semantics.dispose();
   });
 
-  testWidgets('guarda, vuelve a entrar con la nueva y muestra el éxito', (
+  testWidgets('saves, signs in again with the new one and shows success', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(tester, await sesionCon((204, '')));
-    await completar(tester);
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(tester, await sessionWith((204, '')));
+    await fill(tester);
 
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));
     await tester.pumpAndSettle();
 
     expect(find.text('Contraseña actualizada'), findsOneWidget);
-    expect(credenciales.attempts.last, ('nahuel@correo.com', 'ClubNahuel2'));
-    final put = pedidos.singleWhere((p) => p.method == 'PUT');
+    expect(credentials.attempts.last, ('nahuel@correo.com', 'ClubNahuel2'));
+    final put = requests.singleWhere((p) => p.method == 'PUT');
     expect(put.headers['authorization'], 'Bearer token-falso');
     expect(
       put.body,
       '{"current_password":"ClubNahuel1","new_password":"ClubNahuel2"}',
     );
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('la actual equivocada marca el campo hasta que se corrige', (
+  testWidgets('a wrong current password marks the field until corrected', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(
       tester,
-      await sesionCon((
+      await sessionWith((
         422,
         '{"errors": {"current_password": "La contraseña actual no coincide"}}',
       )),
     );
-    await completar(tester, actual: 'OtraClave9');
+    await fill(tester, current: 'OtraClave9');
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));
     await tester.pumpAndSettle();
 
     expect(find.text('La contraseña actual no coincide'), findsOneWidget);
-    expect(habilitado(tester), isFalse);
+    expect(enabled(tester), isFalse);
 
     await tester.enterText(find.bySemanticsLabel('Contraseña actual'), 'Otra');
     await tester.pump();
     expect(find.text('La contraseña actual no coincide'), findsNothing);
-    expect(habilitado(tester), isTrue);
-    semantica.dispose();
+    expect(enabled(tester), isTrue);
+    semantics.dispose();
   });
 
-  testWidgets('con la sesión vencida avisa y cierra la sesión', (tester) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(tester, await sesionCon((401, '{}')));
-    await completar(tester);
+  testWidgets('with an expired session it warns and signs out', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(tester, await sessionWith((401, '{}')));
+    await fill(tester);
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));
     await tester.pumpAndSettle();
 
     expect(find.text('Tu sesión expiró'), findsOneWidget);
     await tester.tap(find.text('IR AL INICIO DE SESIÓN'));
     await tester.pumpAndSettle();
-    expect(credenciales.signOuts, 1);
-    semantica.dispose();
+    expect(credentials.signOuts, 1);
+    semantics.dispose();
   });
 
-  testWidgets('demasiados intentos se ven como error del servidor', (
-    tester,
-  ) async {
-    // Verifica CU-04-SUP-03.
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(tester, await sesionCon((429, '')));
-    await completar(tester);
+  testWidgets('too many attempts show up as a server error', (tester) async {
+    // Verifies CU-04-SUP-03.
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(tester, await sessionWith((429, '')));
+    await fill(tester);
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));
     await tester.pumpAndSettle();
     expect(find.text('Error del servidor'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('si Firebase ya no refresca la sesión, avisa que venció', (
+  testWidgets('if Firebase no longer refreshes the session, it warns it expired', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final sesion = await sesionCon((204, ''));
-    credenciales.tokenFails = true;
-    await montarPantalla(tester, sesion);
-    await completar(tester);
+    final semantics = tester.ensureSemantics();
+    final session = await sessionWith((204, ''));
+    credentials.tokenFails = true;
+    await mountChangeScreen(tester, session);
+    await fill(tester);
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));
     await tester.pumpAndSettle();
 
     expect(find.text('Tu sesión expiró'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('tocar el campo sin escribir no borra el error del servidor', (
+  testWidgets('tapping the field without typing does not clear the server error', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPantalla(
+    final semantics = tester.ensureSemantics();
+    await mountChangeScreen(
       tester,
-      await sesionCon((
+      await sessionWith((
         422,
         '{"errors": {"current_password": "La contraseña actual no coincide"}}',
       )),
     );
-    await completar(tester, actual: 'OtraClave9');
+    await fill(tester, current: 'OtraClave9');
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Contraseña actual'));
     await tester.pumpAndSettle();
     expect(find.text('La contraseña actual no coincide'), findsOneWidget);
-    expect(habilitado(tester), isFalse);
-    semantica.dispose();
+    expect(enabled(tester), isFalse);
+    semantics.dispose();
   });
 }

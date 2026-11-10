@@ -7,43 +7,43 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/mount.dart';
 
-const _reserva = '00000000-0000-7000-8000-000000000007';
+const _booking = '00000000-0000-7000-8000-000000000007';
 
-AppNotification _aviso(String tipo) => AppNotification.fromJson({
+AppNotification _notice(String kind) => AppNotification.fromJson({
   'id': '00000000-0000-7000-8000-000000000001',
-  'kind': tipo,
+  'kind': kind,
   'title': 'Tu reserva empieza en 5 minutos',
   'body': 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
-  'booking_id': _reserva,
+  'booking_id': _booking,
   'created_at': '2026-11-12T23:55:00Z',
   'read': false,
 })!;
 
 void main() {
   testWidgets(
-    'el aviso de 5 minutos se muestra con el ícono del recordatorio y abre la reserva @NOT-05-S2',
+    'the 5-minute notice shows with the reminder icon and opens the booking @NOT-05-S2',
     (tester) async {
-      final cinco = _aviso('five_minute_reminder');
-      expect(cinco.kind, NotificationKind.fiveMinuteReminder);
+      final fiveMinute = _notice('five_minute_reminder');
+      expect(fiveMinute.kind, NotificationKind.fiveMinuteReminder);
       expect(
-        noticeRoute(cinco.kind, cinco.bookingId),
-        noticeRoute(NotificationKind.reminder, _reserva),
+        noticeRoute(fiveMinute.kind, fiveMinute.bookingId),
+        noticeRoute(NotificationKind.reminder, _booking),
       );
-      var toques = 0;
+      var taps = 0;
       await mountScreen(
         tester,
         Scaffold(
           body: NoticeCard(
-            notification: cinco,
+            notification: fiveMinute,
             now: DateTime.utc(2026, 11, 12, 20),
-            onTap: () => toques++,
+            onTap: () => taps++,
           ),
         ),
         theme: lightTheme,
       );
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
       await tester.tap(find.byType(NoticeCard));
-      expect(toques, 1);
+      expect(taps, 1);
     },
   );
 }

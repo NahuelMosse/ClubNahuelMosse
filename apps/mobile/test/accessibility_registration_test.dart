@@ -9,46 +9,48 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/mount.dart';
 
 void main() {
-  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
+  final themes = {'dark': darkTheme, 'light': lightTheme};
 
-  for (final MapEntry(key: modo, value: tema) in temas.entries) {
-    testWidgets('el registro cumple las guías de accesibilidad en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await mountScreen(
-        tester,
-        RegistrationScreen(registration: RegistrationService(fakeApi())),
-        theme: tema,
-      );
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
-      semantica.dispose();
-    });
+  for (final MapEntry(key: mode, value: theme) in themes.entries) {
+    testWidgets(
+      'the registration meets the accessibility guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountScreen(
+          tester,
+          RegistrationScreen(registration: RegistrationService(fakeApi())),
+          theme: theme,
+        );
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        semantics.dispose();
+      },
+    );
 
-    testWidgets('el éxito cumple las guías de accesibilidad en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await mountScreen(tester, const RegistrationDoneScreen(), theme: tema);
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
-      semantica.dispose();
-    });
+    testWidgets(
+      'the success screen meets the accessibility guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountScreen(tester, const RegistrationDoneScreen(), theme: theme);
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        semantics.dispose();
+      },
+    );
   }
 
   testWidgets(
-    'cada campo anuncia su nombre y el formulario avisa que todo es obligatorio',
+    'each field announces its name and the form says everything is required',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountScreen(
         tester,
         RegistrationScreen(registration: RegistrationService(fakeApi())),
         theme: darkTheme,
       );
-      for (final campo in [
+      for (final field in [
         'Nombre',
         'Apellido',
         'DNI',
@@ -56,14 +58,14 @@ void main() {
         'Correo electrónico',
         'Contraseña',
       ]) {
-        expect(find.bySemanticsLabel(campo), findsOneWidget, reason: campo);
+        expect(find.bySemanticsLabel(field), findsOneWidget, reason: field);
       }
       expect(find.text('Todos los campos son obligatorios.'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('con el texto al 200 % nada se desborda', (tester) async {
+  testWidgets('with text at 200 % nothing overflows', (tester) async {
     await mountScreen(
       tester,
       RegistrationScreen(registration: RegistrationService(fakeApi())),
@@ -80,36 +82,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  group('contraste de los pares tinta y lienzo del tema', () {
-    double luminancia(Color c) => c.computeLuminance();
-    double contraste(Color a, Color b) {
-      final (claro, oscuro) = luminancia(a) > luminancia(b) ? (a, b) : (b, a);
-      return (luminancia(claro) + 0.05) / (luminancia(oscuro) + 0.05);
+  group('contrast of the theme ink and canvas pairs', () {
+    double luminance(Color c) => c.computeLuminance();
+    double contrast(Color a, Color b) {
+      final (light, dark) = luminance(a) > luminance(b) ? (a, b) : (b, a);
+      return (luminance(light) + 0.05) / (luminance(dark) + 0.05);
     }
 
-    for (final MapEntry(key: modo, value: p) in {
-      'oscuro': Palette.dark,
-      'claro': Palette.light,
+    for (final MapEntry(key: mode, value: p) in {
+      'dark': Palette.dark,
+      'light': Palette.light,
     }.entries) {
-      test('modo $modo', () {
-        final pares = {
-          'texto principal sobre el fondo': (p.textPrimary, p.bgBase),
-          'texto secundario sobre el fondo': (p.textSecondary, p.bgBase),
-          'texto secundario sobre la superficie': (
-            p.textSecondary,
-            p.bgSurface,
-          ),
-          'texto apagado sobre la superficie': (p.textMuted, p.bgSurface),
-          'texto del botón sobre el lima': (p.accentOn, p.accentBase),
-          'tinta del acento sobre el fondo': (p.accentInk, p.bgBase),
-          'error sobre el fondo': (p.stateDangerInk, p.bgBase),
+      test('$mode mode', () {
+        final pairs = {
+          'primary text on the background': (p.textPrimary, p.bgBase),
+          'secondary text on the background': (p.textSecondary, p.bgBase),
+          'secondary text on the surface': (p.textSecondary, p.bgSurface),
+          'muted text on the surface': (p.textMuted, p.bgSurface),
+          'button text on the lime': (p.accentOn, p.accentBase),
+          'accent ink on the background': (p.accentInk, p.bgBase),
+          'error on the background': (p.stateDangerInk, p.bgBase),
         };
-        for (final MapEntry(key: par, value: (tinta, lienzo))
-            in pares.entries) {
+        for (final MapEntry(key: pair, value: (ink, canvas)) in pairs.entries) {
           expect(
-            contraste(tinta, lienzo),
+            contrast(ink, canvas),
             greaterThanOrEqualTo(4.5),
-            reason: par,
+            reason: pair,
           );
         }
       });

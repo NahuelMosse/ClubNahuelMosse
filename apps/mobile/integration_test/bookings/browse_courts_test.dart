@@ -9,15 +9,15 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = todayAtClub().add(const Duration(days: 1));
-  final ayer = todayAtClub().subtract(const Duration(days: 1));
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
+  final yesterday = todayAtClub().subtract(const Duration(days: 1));
 
-  /// «29 / 09 / 2026», como la muestra el campo.
-  String fecha(DateTime dia) =>
-      '${dia.day.toString().padLeft(2, '0')} / '
-      '${dia.month.toString().padLeft(2, '0')} / ${dia.year}';
+  /// «29 / 09 / 2026», as the field shows it.
+  String date(DateTime day) =>
+      '${day.day.toString().padLeft(2, '0')} / '
+      '${day.month.toString().padLeft(2, '0')} / ${day.year}';
 
-  const dias = [
+  const days = [
     'Lunes',
     'Martes',
     'Miércoles',
@@ -27,19 +27,19 @@ void main() {
     'Domingo',
   ];
 
-  /// Una sede de 08:00 a 23:00 con dos Fútbol 5 y un Fútbol 7.
-  Future<(String, String, String, String)> sedeConCanchas() async {
-    final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850');
+  /// A venue open 08:00 to 23:00 with two «Fútbol 5» and one «Fútbol 7».
+  Future<(String, String, String, String)> venueWithCourts() async {
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850');
     return (
-      sede,
-      await createSpace(sede),
-      await createSpace(sede),
-      await createSpace(sede, kind: 'F7'),
+      venue,
+      await createSpace(venue),
+      await createSpace(venue),
+      await createSpace(venue, kind: 'F7'),
     );
   }
 
-  Future<void> abrirBusqueda(WidgetTester tester, {String? apiUrl}) async {
+  Future<void> openSearch(WidgetTester tester, {String? apiUrl}) async {
     await signInAsUser(
       tester,
       email: 'socio.${unique()}@correo.com',
@@ -49,37 +49,37 @@ void main() {
     await waitUntil(tester, find.text('Consultar canchas'));
   }
 
-  Future<void> completar(
+  Future<void> fillIn(
     WidgetTester tester,
-    String sede, {
-    String tipo = 'Fútbol 5',
-    DateTime? dia,
-    String desde = '10:00',
-    String hasta = '12:00',
+    String venue, {
+    String kind = 'Fútbol 5',
+    DateTime? day,
+    String from = '10:00',
+    String to = '12:00',
   }) async {
-    await choose(tester, 'Sede', sede);
+    await choose(tester, 'Sede', venue);
     await choose(tester, 'Deporte', 'Fútbol');
-    await choose(tester, 'Tipo de cancha', tipo);
-    await typeInto(tester, 'Fecha', fecha(dia ?? manana));
-    await choose(tester, 'Desde', desde);
-    await choose(tester, 'Hasta', hasta);
+    await choose(tester, 'Tipo de cancha', kind);
+    await typeInto(tester, 'Fecha', date(day ?? tomorrow));
+    await choose(tester, 'Desde', from);
+    await choose(tester, 'Hasta', to);
   }
 
-  SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
-      tester.getSemantics(find.bySemanticsLabel(etiqueta)).flagsCollection;
+  SemanticsFlags flags(WidgetTester tester, String label) =>
+      tester.getSemantics(find.bySemanticsLabel(label)).flagsCollection;
 
   testWidgets(
-    'consulta sede, tipo, fecha y rango y ve sólo las canchas libres en todo ese rango @CU-13-H01-01',
+    'queries venue, type, date and range and sees only the courts free across that whole range @CU-13-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, f5a, f5b, f7) = await sedeConCanchas();
-      await occupy(f5b, manana, 11);
-      await abrirBusqueda(tester);
-      await completar(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, f5a, f5b, f7) = await venueWithCourts();
+      await occupy(f5b, tomorrow, 11);
+      await openSearch(tester);
+      await fillIn(tester, venue);
 
       await tapText(tester, 'CONSULTAR');
 
-      // Verifica: sólo la Fútbol 5 libre de 10 a 12, con el rango consultado.
+      // Verifies: only the Fútbol 5 free from 10 to 12, with the queried range.
       await waitUntil(
         tester,
         find.text('1 CANCHA DISPONIBLE · FÚTBOL 5 · 10:00 – 12:00'),
@@ -87,203 +87,203 @@ void main() {
       expect(find.text(f5a), findsOneWidget);
       expect(find.text(f5b), findsNothing);
       expect(find.text(f7), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'una cancha con una reserva que se superpone con el rango no aparece como disponible @CU-13-H01-02',
+    'a court with a booking that overlaps the range does not show as available @CU-13-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, f5a, f5b, _) = await sedeConCanchas();
-      // La de la Cancha 1 termina cuando empieza el rango; la de la Cancha 2 lo pisa.
-      await occupy(f5a, manana, 9);
-      await occupy(f5b, manana, 11, hours: 2);
-      await abrirBusqueda(tester);
-      await completar(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, f5a, f5b, _) = await venueWithCourts();
+      // The one on «Cancha 1» ends when the range starts; the one on «Cancha 2» overlaps it.
+      await occupy(f5a, tomorrow, 9);
+      await occupy(f5b, tomorrow, 11, hours: 2);
+      await openSearch(tester);
+      await fillIn(tester, venue);
 
       await tapText(tester, 'CONSULTAR');
 
-      // Verifica: la que termina a las 10 queda libre; la que pisa el rango, no.
+      // Verifies: the one ending at 10 is free; the one overlapping the range is not.
       await waitUntil(tester, find.text(f5a));
       expect(find.text(f5b), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'elige una cancha del resultado y pasa a reservarla con el horario consultado @CU-13-H01-03',
+    'picks a court from the result and moves on to book it with the queried time @CU-13-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, f5a, f5b, _) = await sedeConCanchas();
-      // Con la Cancha 2 ocupada, el resultado trae una sola cancha para elegir.
-      await occupy(f5b, manana, 11);
-      await abrirBusqueda(tester);
-      await completar(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, f5a, f5b, _) = await venueWithCourts();
+      // With «Cancha 2» taken, the result brings a single court to pick.
+      await occupy(f5b, tomorrow, 11);
+      await openSearch(tester);
+      await fillIn(tester, venue);
       await tapText(tester, 'CONSULTAR');
       await waitUntil(tester, find.text(f5a));
 
       await tapText(tester, 'VER HORARIOS / RESERVAR');
 
-      // Verifica: la grilla de esa cancha llega con el día, la duración y el horario.
+      // Verifies: the grid of that court arrives with the day, the duration and the time.
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(banderas(tester, 'Cancha 1, Techada').isSelected, isTrue);
+      expect(flags(tester, 'Cancha 1, Techada').isSelected, isTrue);
       expect(
-        banderas(
+        flags(
           tester,
-          '${dias[manana.weekday - 1]} ${manana.day}',
+          '${days[tomorrow.weekday - 1]} ${tomorrow.day}',
         ).isSelected,
         isTrue,
       );
       expect(find.text('2 horas'), findsOneWidget);
-      expect(banderas(tester, '10:00 – 12:00').isSelected, isTrue);
-      expect(banderas(tester, 'CONTINUAR').isEnabled, isTrue);
-      semantica.dispose();
+      expect(flags(tester, '10:00 – 12:00').isSelected, isTrue);
+      expect(flags(tester, 'CONTINUAR').isEnabled, isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'después de consultar, los filtros siguen visibles y se pueden cambiar @CU-13-H01-04',
+    'after querying, the filters stay visible and can be changed @CU-13-H01-04',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, f5a, _, _) = await sedeConCanchas();
-      await abrirBusqueda(tester);
-      await completar(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, f5a, _, _) = await venueWithCourts();
+      await openSearch(tester);
+      await fillIn(tester, venue);
       await tapText(tester, 'CONSULTAR');
       await waitUntil(tester, find.text(f5a));
 
-      // Verifica: lo elegido sigue en los filtros.
-      expect(find.text(sede), findsWidgets);
-      expect(find.text(fecha(manana)), findsOneWidget);
+      // Verifies: what was picked stays in the filters.
+      expect(find.text(venue), findsWidgets);
+      expect(find.text(date(tomorrow)), findsOneWidget);
 
       await choose(tester, 'Hasta', '11:00');
       await tapText(tester, 'CONSULTAR');
 
-      // Verifica: la nueva consulta usa el rango cambiado.
+      // Verifies: the new query uses the changed range.
       await waitUntil(
         tester,
         find.text('2 CANCHAS DISPONIBLES · FÚTBOL 5 · 10:00 – 11:00'),
       );
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'ninguna cancha está libre en el rango y ve el aviso sin perder los filtros @CU-13-H02-01',
+    'no court is free in the range and sees the notice without losing the filters @CU-13-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, f5a, f5b, _) = await sedeConCanchas();
-      await occupy(f5a, manana, 10, hours: 2);
-      await occupy(f5b, manana, 10);
-      await abrirBusqueda(tester);
-      await completar(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, f5a, f5b, _) = await venueWithCourts();
+      await occupy(f5a, tomorrow, 10, hours: 2);
+      await occupy(f5b, tomorrow, 10);
+      await openSearch(tester);
+      await fillIn(tester, venue);
 
       await tapText(tester, 'CONSULTAR');
 
-      // Verifica: el aviso, y los filtros siguen cargados.
+      // Verifies: the notice, and the filters stay filled in.
       await waitUntil(tester, find.text('No hay canchas disponibles'));
       expect(find.text(f5a), findsNothing);
-      expect(find.text(sede), findsWidgets);
-      expect(find.text(fecha(manana)), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(venue), findsWidgets);
+      expect(find.text(date(tomorrow)), findsOneWidget);
+      semantics.dispose();
     },
   );
 
-  testWidgets('elige una fecha pasada y no se consulta @CU-13-H03-01', (
+  testWidgets('picks a past date and no query is made @CU-13-H03-01', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final (sede, _, _, _) = await sedeConCanchas();
-    await abrirBusqueda(tester);
+    final semantics = tester.ensureSemantics();
+    final (venue, _, _, _) = await venueWithCourts();
+    await openSearch(tester);
 
-    await completar(tester, sede, dia: ayer);
+    await fillIn(tester, venue, day: yesterday);
 
-    // Verifica: el error en la fecha y la consulta bloqueada.
+    // Verifies: the error on the date and the query blocked.
     await waitUntil(tester, find.text('La fecha tiene que ser futura'));
-    expect(banderas(tester, 'CONSULTAR').isEnabled, isFalse);
+    expect(flags(tester, 'CONSULTAR').isEnabled, isFalse);
     expect(find.textContaining('DISPONIBLE'), findsNothing);
-    semantica.dispose();
+    semantics.dispose();
   });
 
   testWidgets(
-    'elige un rango de menos de una hora y no se consulta @CU-13-H03-02',
+    'picks a range of less than one hour and no query is made @CU-13-H03-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _, _) = await sedeConCanchas();
-      await abrirBusqueda(tester);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _, _) = await venueWithCourts();
+      await openSearch(tester);
 
-      await completar(tester, sede, desde: '18:00', hasta: '18:00');
+      await fillIn(tester, venue, from: '18:00', to: '18:00');
 
-      // Verifica: el error en el rango y la consulta bloqueada.
+      // Verifies: the error on the range and the query blocked.
       await waitUntil(tester, find.text('La duración mínima es de una hora'));
-      expect(banderas(tester, 'CONSULTAR').isEnabled, isFalse);
-      semantica.dispose();
+      expect(flags(tester, 'CONSULTAR').isEnabled, isFalse);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'elige un rango que termina después del cierre de la sede y no se consulta @CU-13-H03-03',
+    'picks a range that ends after the venue closes and no query is made @CU-13-H03-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _, _) = await sedeConCanchas();
-      await abrirBusqueda(tester);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _, _) = await venueWithCourts();
+      await openSearch(tester);
 
-      await completar(tester, sede, desde: '22:00', hasta: '00:00');
+      await fillIn(tester, venue, from: '22:00', to: '00:00');
 
-      // Verifica: el error con la hora de cierre y la consulta bloqueada.
+      // Verifies: the error with the closing time and the query blocked.
       await waitUntil(tester, find.text('La sede cierra a las 23:00'));
-      expect(banderas(tester, 'CONSULTAR').isEnabled, isFalse);
-      semantica.dispose();
+      expect(flags(tester, 'CONSULTAR').isEnabled, isFalse);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión al consultar, ve el error y conserva los filtros @CU-13-H04-01',
+    'with no connection on querying, sees the error and keeps the filters @CU-13-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _, _) = await sedeConCanchas();
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _, _) = await venueWithCourts();
       final api = await ProxyApi.open();
-      await abrirBusqueda(tester, apiUrl: api.url);
-      await completar(tester, sede);
+      await openSearch(tester, apiUrl: api.url);
+      await fillIn(tester, venue);
 
       api.state = ApiState.offline;
       await tapText(tester, 'CONSULTAR');
 
-      // Verifica: el error con reintento, y los filtros siguen cargados.
+      // Verifies: the error with retry, and the filters stay filled in.
       await waitUntil(
         tester,
         find.text('No se pudo consultar la disponibilidad'),
       );
       expect(find.textContaining('Revisá tu conexión'), findsOneWidget);
       expect(find.text('REINTENTAR'), findsOneWidget);
-      expect(find.text(sede), findsWidgets);
-      expect(find.text(fecha(manana)), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(venue), findsWidgets);
+      expect(find.text(date(tomorrow)), findsOneWidget);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el servidor falla al consultar y no se muestran resultados viejos @CU-13-H05-01',
+    'the server fails on querying and no stale results are shown @CU-13-H05-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, f5a, _, _) = await sedeConCanchas();
+      final semantics = tester.ensureSemantics();
+      final (venue, f5a, _, _) = await venueWithCourts();
       final api = await ProxyApi.open();
-      await abrirBusqueda(tester, apiUrl: api.url);
-      await completar(tester, sede);
+      await openSearch(tester, apiUrl: api.url);
+      await fillIn(tester, venue);
       await tapText(tester, 'CONSULTAR');
       await waitUntil(tester, find.text(f5a));
 
       api.state = ApiState.failing;
       await tapText(tester, 'CONSULTAR');
 
-      // Verifica: el error, y el resultado anterior ya no está.
+      // Verifies: the error, and the previous result is gone.
       await waitUntil(
         tester,
         find.text('No se pudo consultar la disponibilidad'),
       );
       expect(find.text(f5a), findsNothing);
       expect(find.textContaining('CANCHAS DISPONIBLES'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

@@ -49,14 +49,14 @@ import 'package:clubnahuelmosse/features/users/presentation/registration_done_sc
 
 Duration _ms(int n) => Duration(milliseconds: n);
 
-final _cero = closeTo(0, 1e-6);
-final _uno = closeTo(1, 1e-6);
+final _zero = closeTo(0, 1e-6);
+final _one = closeTo(1, 1e-6);
 
-/// Lo que desplaza el temblor a los 60, 120, 180, 240, 300 y 360 ms.
-const _temblor = [-9.0, 9.0, -6.0, 6.0, -3.0, 0.0];
+/// What the shake displaces at 60, 120, 180, 240, 300 and 360 ms.
+const _shakeOffsets = [-9.0, 9.0, -6.0, 6.0, -3.0, 0.0];
 
-/// La pantalla con el tema y el idioma de la app, sin esperar a que termine ninguna animación.
-Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
+/// The screen with the app's theme and language, without waiting for any animation to finish.
+Future<void> _mountFree(WidgetTester tester, Widget screen) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -67,110 +67,111 @@ Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
       locale: const Locale('es', 'AR'),
       supportedLocales: const [Locale('es', 'AR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: pantalla,
+      home: screen,
     ),
   );
 }
 
-Future<void> _desmontar(WidgetTester tester) async {
+Future<void> _unmount(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpAndSettle();
 }
 
-void _reducirMovimiento(WidgetTester tester) {
+void _reduceMotion(WidgetTester tester) {
   tester.platformDispatcher.accessibilityFeaturesTestValue =
       const FakeAccessibilityFeatures(disableAnimations: true);
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 }
 
-/// Pasa cuadros sin avanzar el reloj, para que arranque lo que se disparó.
-Future<void> _arrancar(WidgetTester tester) async {
+/// Pumps frames without advancing the clock, so that whatever was triggered starts.
+Future<void> _start(WidgetTester tester) async {
   for (var i = 0; i < 3; i++) {
     await tester.pump();
   }
 }
 
-/// Pasa cuadros sin avanzar el reloj hasta que se cumple [condicion].
-Future<void> _hastaQue(WidgetTester tester, bool Function() condicion) async {
-  for (var i = 0; i < 20 && !condicion(); i++) {
+/// Pumps frames without advancing the clock until [condition] holds.
+Future<void> _until(WidgetTester tester, bool Function() condition) async {
+  for (var i = 0; i < 20 && !condition(); i++) {
     await tester.pump();
   }
-  expect(condicion(), isTrue);
+  expect(condition(), isTrue);
 }
 
-/// Los `FadeIn` que envuelven a [f], del más cercano al más lejano.
-List<FadeIn> _aparecedores(WidgetTester tester, Finder f) => tester
+/// The `FadeIn`s that wrap [f], from the closest to the farthest.
+List<FadeIn> _appearances(WidgetTester tester, Finder f) => tester
     .widgetList<FadeIn>(find.ancestor(of: f, matching: find.byType(FadeIn)))
     .toList();
 
-/// El `FadeIn` que envuelve a [f] y cumple [cumple].
-Finder _aparecerQue(Finder f, bool Function(FadeIn) cumple) => find.ancestor(
-  of: f,
-  matching: find.byWidgetPredicate((w) => w is FadeIn && cumple(w)),
-);
+/// The `FadeIn` that wraps [f] and satisfies [matches].
+Finder _appearanceWhere(Finder f, bool Function(FadeIn) matches) =>
+    find.ancestor(
+      of: f,
+      matching: find.byWidgetPredicate((w) => w is FadeIn && matches(w)),
+    );
 
-double _opacidad(WidgetTester tester, Finder aparecer) => tester
+double _opacity(WidgetTester tester, Finder appearance) => tester
     .widget<FadeTransition>(
       find
-          .descendant(of: aparecer, matching: find.byType(FadeTransition))
+          .descendant(of: appearance, matching: find.byType(FadeTransition))
           .first,
     )
     .opacity
     .value;
 
-/// Cuánto se ve [f]: el producto de todas las opacidades que lo envuelven.
-double _visibilidad(WidgetTester tester, Finder f) {
+/// How much of [f] is visible: the product of all the opacities that wrap it.
+double _visibility(WidgetTester tester, Finder f) {
   if (f.evaluate().isEmpty) return 0;
   var visible = 1.0;
-  for (final fundido in tester.widgetList<FadeTransition>(
+  for (final fade in tester.widgetList<FadeTransition>(
     find.ancestor(of: f, matching: find.byType(FadeTransition)),
   )) {
-    visible *= fundido.opacity.value;
+    visible *= fade.opacity.value;
   }
   return visible;
 }
 
-bool _todasEnSuFinal(WidgetTester tester) {
-  final cuantas = find.byType(FadeIn).evaluate().length;
-  return cuantas > 0 &&
+bool _allAtEnd(WidgetTester tester) {
+  final count = find.byType(FadeIn).evaluate().length;
+  return count > 0 &&
       [
-        for (var i = 0; i < cuantas; i++)
-          _opacidad(tester, find.byType(FadeIn).at(i)),
+        for (var i = 0; i < count; i++)
+          _opacity(tester, find.byType(FadeIn).at(i)),
       ].every((o) => o == 1);
 }
 
-/// El ancho que se ve de [f], con la escala de lo que lo envuelve.
-double _ancho(WidgetTester tester, Finder f) =>
+/// The visible width of [f], with the scale of whatever wraps it.
+double _width(WidgetTester tester, Finder f) =>
     tester.getBottomRight(f).dx - tester.getTopLeft(f).dx;
 
-/// Cuánto se corrió [f] a los 60, 120, 180, 240, 300 y 360 ms respecto de su reposo.
-Future<List<double>> _recorrido(WidgetTester tester, Finder f) async {
-  final posiciones = <double>[];
+/// How far [f] moved at 60, 120, 180, 240, 300 and 360 ms relative to its rest position.
+Future<List<double>> _path(WidgetTester tester, Finder f) async {
+  final positions = <double>[];
   for (var t = 0; t < 360; t += 60) {
     await tester.pump(_ms(60));
-    posiciones.add(tester.getTopLeft(f).dx);
+    positions.add(tester.getTopLeft(f).dx);
   }
   await tester.pumpAndSettle();
-  final reposo = tester.getTopLeft(f).dx;
-  return [for (final x in posiciones) x - reposo];
+  final rest = tester.getTopLeft(f).dx;
+  return [for (final x in positions) x - rest];
 }
 
-void _tiembla(List<double> recorrido, {String? motivo}) {
-  expect(recorrido, hasLength(_temblor.length));
-  for (var i = 0; i < _temblor.length; i++) {
+void _expectShakes(List<double> path, {String? reason}) {
+  expect(path, hasLength(_shakeOffsets.length));
+  for (var i = 0; i < _shakeOffsets.length; i++) {
     expect(
-      recorrido[i],
-      closeTo(_temblor[i], 0.01),
-      reason: '$motivo a los ${60 * (i + 1)} ms',
+      path[i],
+      closeTo(_shakeOffsets[i], 0.01),
+      reason: '$reason at ${60 * (i + 1)} ms',
     );
   }
 }
 
-void _noTiembla(List<double> recorrido, {String? motivo}) {
-  expect(recorrido, everyElement(closeTo(0, 0.01)), reason: motivo);
+void _doesNotShake(List<double> path, {String? reason}) {
+  expect(path, everyElement(closeTo(0, 0.01)), reason: reason);
 }
 
-Iterable<Shake> _temblores(WidgetTester tester, Finder f) => [
+Iterable<Shake> _shakes(WidgetTester tester, Finder f) => [
   ...tester.widgetList<Shake>(
     find.descendant(of: f, matching: find.byType(Shake)),
   ),
@@ -179,28 +180,28 @@ Iterable<Shake> _temblores(WidgetTester tester, Finder f) => [
   ),
 ];
 
-/// El radio del recorte que revela el ícono de [dentro].
-double _radioDeRecorte(WidgetTester tester, Finder dentro) {
-  final recortes = find.descendant(
-    of: dentro,
+/// The radius of the clip that reveals the icon of [inside].
+double _clipRadius(WidgetTester tester, Finder inside) {
+  final clips = find.descendant(
+    of: inside,
     matching: find.byWidgetPredicate((w) => w is ClipOval || w is ClipPath),
   );
-  expect(recortes, findsWidgets);
-  final objeto = tester.renderObject(recortes.first);
-  if (objeto is RenderClipPath) {
-    final recortador = objeto.clipper;
-    if (recortador == null) fail('el recorte no tiene un recortador propio');
-    return recortador.getClip(objeto.size).getBounds().width / 2;
+  expect(clips, findsWidgets);
+  final object = tester.renderObject(clips.first);
+  if (object is RenderClipPath) {
+    final clipper = object.clipper;
+    if (clipper == null) fail('the clip has no clipper of its own');
+    return clipper.getClip(object.size).getBounds().width / 2;
   }
-  if (objeto is RenderClipOval) {
-    final recortador = objeto.clipper;
-    if (recortador == null) fail('el recorte no tiene un recortador propio');
-    return recortador.getClip(objeto.size).width / 2;
+  if (object is RenderClipOval) {
+    final clipper = object.clipper;
+    if (clipper == null) fail('the clip has no clipper of its own');
+    return clipper.getClip(object.size).width / 2;
   }
-  fail('el recorte no es un ClipPath ni un ClipOval');
+  fail('the clip is neither a ClipPath nor a ClipOval');
 }
 
-double _escalaDelPulso(WidgetTester tester) => tester
+double _pulseScale(WidgetTester tester) => tester
     .widget<ScaleTransition>(
       find
           .descendant(
@@ -212,80 +213,80 @@ double _escalaDelPulso(WidgetTester tester) => tester
     .scale
     .value;
 
-/// El `AnimatedSwitcher` de 150 ms que cambia sólo la lista.
-Finder get _fundidoDeLaLista => find.byWidgetPredicate(
+/// The 150 ms `AnimatedSwitcher` that changes only the list.
+Finder get _listFade => find.byWidgetPredicate(
   (w) =>
       w is AnimatedSwitcher && w.duration == const Duration(milliseconds: 150),
 );
 
-Future<void> _tocarSinEsperar(WidgetTester tester, Finder f) async {
+Future<void> _tapWithoutWaiting(WidgetTester tester, Finder f) async {
   await tester.ensureVisible(f);
   await tester.pumpAndSettle();
   await tester.tap(f);
 }
 
-// ---- las apis ----
+// ---- the apis ----
 
-ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
-  final rutas = venueRoutes();
+ApiClient _myBookingsApi(Completer<void>? historyPending) {
+  final routes = venueRoutes();
   return ApiClient(
     'http://api.falsa',
-    cliente: MockClient((pedido) async {
-      final historial = pedido.url.queryParameters['when'] == 'history';
-      if (pedido.url.path == '/bookings' && historial) {
-        await esperaHistorial?.future;
+    cliente: MockClient((request) async {
+      final historial = request.url.queryParameters['when'] == 'history';
+      if (request.url.path == '/bookings' && historial) {
+        await historyPending?.future;
       }
-      final (codigo, cuerpo) = pedido.url.path == '/bookings'
+      final (code, body) = request.url.path == '/bookings'
           ? (
               200,
               '{"bookings": [${historial ? bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed') : bookingJson()}]}',
             )
-          : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+          : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
-        utf8.encode(cuerpo),
-        codigo,
+        utf8.encode(body),
+        code,
         headers: {'content-type': 'application/json; charset=utf-8'},
       );
     }),
   );
 }
 
-ApiClient _apiSede(Completer<void>? espera) {
-  final rutas = venueRoutes();
+ApiClient _venueApi(Completer<void>? pending) {
+  final routes = venueRoutes();
   return ApiClient(
     'http://api.falsa',
-    cliente: MockClient((pedido) async {
-      final filtrado =
-          pedido.url.path == '/spaces' &&
-          pedido.url.queryParameters.containsKey('sport');
-      if (filtrado) await espera?.future;
-      final (codigo, cuerpo) = filtrado
+    cliente: MockClient((request) async {
+      final filtered =
+          request.url.path == '/spaces' &&
+          request.url.queryParameters.containsKey('sport');
+      if (filtered) await pending?.future;
+      final (code, body) = filtered
           ? (200, '{"spaces": [$spaceF5Json]}')
-          : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+          : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
-        utf8.encode(cuerpo),
-        codigo,
+        utf8.encode(body),
+        code,
         headers: {'content-type': 'application/json; charset=utf-8'},
       );
     }),
   );
 }
 
-// ---- las pantallas ----
+// ---- the screens ----
 
-Widget _login({FakeCredentials? credenciales}) => LoginScreen(
+Widget _login({FakeCredentials? credentials}) => LoginScreen(
   session: Session(
     repository: SessionRepository(
-      credentials: credenciales ?? FakeCredentials(),
+      credentials: credentials ?? FakeCredentials(),
       api: fakeApi(status: 200, body: profileJson()),
     ),
   ),
   pending: PendingBooking(),
 );
 
-Widget _resultado(ResultTone tono) => ResultScreen(
+Widget _result(ResultTone tone) => ResultScreen(
   icon: Icons.check_circle_outline_rounded,
-  tone: tono,
+  tone: tone,
   title: 'Contraseña actualizada',
   text: 'Ya podés iniciar sesión con tu contraseña nueva.',
   primary: 'VOLVER AL INICIO',
@@ -294,24 +295,24 @@ Widget _resultado(ResultTone tono) => ResultScreen(
   onSecondaryTap: () {},
 );
 
-Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(bookingJson()));
-  if (reserva == null) fail('la reserva de prueba no se lee');
-  return reserva;
+Booking _confirmedBooking() {
+  final booking = bookingFromJson(jsonDecode(bookingJson()));
+  if (booking == null) fail('the test booking cannot be read');
+  return booking;
 }
 
-/// Un botón que abre lo que haga [abrir].
-class _Anfitrion extends StatelessWidget {
-  const _Anfitrion({required this.abrir});
+/// A button that opens whatever [open] builds.
+class _Host extends StatelessWidget {
+  const _Host({required this.open});
 
-  final void Function(BuildContext context) abrir;
+  final void Function(BuildContext context) open;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     body: Center(
       child: Builder(
         builder: (context) => TextButton(
-          onPressed: () => abrir(context),
+          onPressed: () => open(context),
           child: const Text('ABRIR'),
         ),
       ),
@@ -319,148 +320,148 @@ class _Anfitrion extends StatelessWidget {
   );
 }
 
-Widget _cancelacion() => _Anfitrion(
-  abrir: (context) =>
+Widget _cancellation() => _Host(
+  open: (context) =>
       unawaited(confirmarCancelacion(context, 'Fútbol 5 · Sede Morón')),
 );
 
 void main() {
   setUpAll(loadFonts);
 
-  // ---- T3: la lista cambia en su lugar ----
+  // ---- T3: the list changes in place ----
 
   testWidgets(
-    'cambiar a Historial cambia sólo la lista con un fundido de 150 ms @RED-04-S5',
+    'switching to «Historial» changes only the list with a 150 ms fade @RED-04-S5',
     (tester) async {
-      final espera = Completer<void>();
-      await mountUser(tester, api: _apiMisReservas(espera), start: '/reservas');
-      final titulo = tester.element(find.text('Mis reservas'));
+      final pending = Completer<void>();
+      await mountUser(tester, api: _myBookingsApi(pending), start: '/reservas');
+      final title = tester.element(find.text('Mis reservas'));
       final selector = tester.element(find.text('Historial'));
-      final lista = _fundidoDeLaLista;
+      final list = _listFade;
 
-      // El fundido es de la lista: el título y el selector quedan afuera.
-      expect(lista, findsOneWidget);
+      // The fade belongs to the list: the title and the selector stay outside.
+      expect(list, findsOneWidget);
       expect(
-        find.ancestor(of: find.text('Mis reservas'), matching: lista),
+        find.ancestor(of: find.text('Mis reservas'), matching: list),
         findsNothing,
       );
       expect(
-        find.ancestor(of: find.text('Historial'), matching: lista),
+        find.ancestor(of: find.text('Historial'), matching: list),
         findsNothing,
       );
       expect(
-        find.descendant(of: lista, matching: find.text('ACTIVA')),
+        find.descendant(of: list, matching: find.text('ACTIVA')),
         findsOneWidget,
       );
 
       await tester.tap(find.text('Historial'));
-      await _arrancar(tester);
+      await _start(tester);
       await tester.pump(_ms(200));
-      expect(tester.element(find.text('Mis reservas')), same(titulo));
+      expect(tester.element(find.text('Mis reservas')), same(title));
       expect(tester.element(find.text('Historial')), same(selector));
       expect(
-        find.descendant(of: lista, matching: find.byType(Skeleton)),
+        find.descendant(of: list, matching: find.byType(Skeleton)),
         findsWidgets,
       );
 
-      espera.complete();
-      await _arrancar(tester);
+      pending.complete();
+      await _start(tester);
       await tester.pump(_ms(75));
-      final nueva = find.text('COMPLETADA');
-      expect(find.descendant(of: lista, matching: nueva), findsOneWidget);
-      expect(_visibilidad(tester, nueva), allOf(greaterThan(0), lessThan(1)));
+      final fresh = find.text('COMPLETADA');
+      expect(find.descendant(of: list, matching: fresh), findsOneWidget);
+      expect(_visibility(tester, fresh), allOf(greaterThan(0), lessThan(1)));
       await tester.pump(_ms(200));
-      expect(_visibilidad(tester, nueva), _uno);
-      expect(tester.element(find.text('Mis reservas')), same(titulo));
+      expect(_visibility(tester, fresh), _one);
+      expect(tester.element(find.text('Mis reservas')), same(title));
       expect(tester.element(find.text('Historial')), same(selector));
     },
   );
 
   testWidgets(
-    'filtrar por deporte en una sede cambia sólo la lista con un fundido @RED-04-S5',
+    'filtering by sport in a venue changes only the list with a fade @RED-04-S5',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final espera = Completer<void>();
+      final semantics = tester.ensureSemantics();
+      final pending = Completer<void>();
       await mountUser(
         tester,
-        api: _apiSede(espera),
+        api: _venueApi(pending),
         start: '/sedes/00000000-0000-7000-8000-000000000001',
       );
-      const tenis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
-      const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
-      final titulo = tester.element(find.text('SEDE MORÓN'));
-      final filtro = tester.element(find.text('DEPORTE'));
-      final lista = _fundidoDeLaLista;
+      const tennis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
+      const football = 'Moron_Rivadavia_19850_Futbol_F5_1';
+      final title = tester.element(find.text('SEDE MORÓN'));
+      final filter = tester.element(find.text('DEPORTE'));
+      final list = _listFade;
 
-      expect(lista, findsOneWidget);
+      expect(list, findsOneWidget);
       expect(
-        find.ancestor(of: find.text('SEDE MORÓN'), matching: lista),
+        find.ancestor(of: find.text('SEDE MORÓN'), matching: list),
         findsNothing,
       );
       expect(
-        find.ancestor(of: find.text('DEPORTE'), matching: lista),
+        find.ancestor(of: find.text('DEPORTE'), matching: list),
         findsNothing,
       );
       expect(
-        find.descendant(of: lista, matching: find.text(tenis)),
+        find.descendant(of: list, matching: find.text(tennis)),
         findsOneWidget,
       );
 
-      await _tocarSinEsperar(tester, find.bySemanticsLabel('Deporte Fútbol'));
-      await _arrancar(tester);
+      await _tapWithoutWaiting(tester, find.bySemanticsLabel('Deporte Fútbol'));
+      await _start(tester);
       await tester.pump(_ms(200));
-      expect(tester.element(find.text('SEDE MORÓN')), same(titulo));
-      expect(tester.element(find.text('DEPORTE')), same(filtro));
-      expect(_fundidoDeLaLista, findsOneWidget);
+      expect(tester.element(find.text('SEDE MORÓN')), same(title));
+      expect(tester.element(find.text('DEPORTE')), same(filter));
+      expect(_listFade, findsOneWidget);
 
-      espera.complete();
-      await _arrancar(tester);
+      pending.complete();
+      await _start(tester);
       await tester.pump(_ms(200));
-      expect(find.text(tenis), findsNothing);
+      expect(find.text(tennis), findsNothing);
       expect(
-        find.descendant(of: lista, matching: find.text(futbol)),
+        find.descendant(of: list, matching: find.text(football)),
         findsOneWidget,
       );
-      expect(tester.element(find.text('SEDE MORÓN')), same(titulo));
-      expect(tester.element(find.text('DEPORTE')), same(filtro));
-      semantica.dispose();
+      expect(tester.element(find.text('SEDE MORÓN')), same(title));
+      expect(tester.element(find.text('DEPORTE')), same(filter));
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'con reducir movimiento la lista cambia en el primer cuadro @RED-04-S14',
+    'with reduce motion the list changes on the first frame @RED-04-S14',
     (tester) async {
-      _reducirMovimiento(tester);
-      await mountUser(tester, api: _apiMisReservas(null), start: '/reservas');
+      _reduceMotion(tester);
+      await mountUser(tester, api: _myBookingsApi(null), start: '/reservas');
       expect(find.text('ACTIVA'), findsOneWidget);
 
       await tester.tap(find.text('Historial'));
-      await _arrancar(tester);
+      await _start(tester);
 
       expect(find.text('COMPLETADA'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNothing);
-      expect(_visibilidad(tester, find.text('COMPLETADA')), _uno);
+      expect(_visibility(tester, find.text('COMPLETADA')), _one);
     },
   );
 
   testWidgets(
-    'la lista de la otra pestaña no queda a la vista mientras carga @RED-04-ASM-07',
+    'the list of the other tab is not visible while loading @RED-04-ASM-07',
     (tester) async {
-      final espera = Completer<void>();
-      await mountUser(tester, api: _apiMisReservas(espera), start: '/reservas');
+      final pending = Completer<void>();
+      await mountUser(tester, api: _myBookingsApi(pending), start: '/reservas');
       expect(find.text('ACTIVA'), findsOneWidget);
 
       await tester.tap(find.text('Historial'));
-      await _arrancar(tester);
+      await _start(tester);
       await tester.pump(_ms(200));
 
-      // La lista vieja es de Próximas: con Historial elegido no puede verse.
+      // The old list belongs to «Próximas»: with «Historial» selected it cannot be seen.
       expect(find.text('ACTIVA'), findsNothing);
       expect(find.byType(Skeleton), findsWidgets);
       expect(find.text('COMPLETADA'), findsNothing);
 
-      espera.complete();
-      await _arrancar(tester);
+      pending.complete();
+      await _start(tester);
       await tester.pump(_ms(200));
       expect(find.text('COMPLETADA'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNothing);
@@ -468,250 +469,240 @@ void main() {
     },
   );
 
-  // ---- T4: las entradas, los errores y los éxitos ----
+  // ---- T4: the entrances, the errors and the successes ----
 
   testWidgets(
-    'el login entra escalonado: isotipo, formulario, botón y pie @RED-04-S6',
+    'the login enters staggered: logo mark, form, button and footer @RED-04-S6',
     (tester) async {
-      await _montarLibre(tester, _login());
-      Iterable<Duration> retrasos(Finder f) =>
-          _aparecedores(tester, f).map((a) => a.delay);
+      await _mountFree(tester, _login());
+      Iterable<Duration> delays(Finder f) =>
+          _appearances(tester, f).map((a) => a.delay);
 
       expect(
-        _aparecedores(
+        _appearances(
           tester,
           find.byType(LogoMark),
         ).any((a) => a.turn != 0 && a.fromY < 0),
         isTrue,
-        reason: 'el isotipo cae y gira',
+        reason: 'the logo mark drops and spins',
       );
-      expect(retrasos(find.byType(FormTextField).first), contains(_ms(460)));
-      expect(retrasos(find.text('INICIAR SESIÓN')), contains(_ms(540)));
-      expect(retrasos(find.text('¿No tenés cuenta?')), contains(_ms(620)));
+      expect(delays(find.byType(FormTextField).first), contains(_ms(460)));
+      expect(delays(find.text('INICIAR SESIÓN')), contains(_ms(540)));
+      expect(delays(find.text('¿No tenés cuenta?')), contains(_ms(620)));
 
-      final formulario = _aparecerQue(
+      final form = _appearanceWhere(
         find.byType(FormTextField).first,
         (a) => a.delay == _ms(460),
       ).first;
-      expect(_opacidad(tester, formulario), 0);
+      expect(_opacity(tester, form), 0);
       await tester.pump(_ms(400));
-      expect(_opacidad(tester, formulario), 0);
+      expect(_opacity(tester, form), 0);
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, formulario), allOf(greaterThan(0), lessThan(1)));
+      expect(_opacity(tester, form), allOf(greaterThan(0), lessThan(1)));
       await tester.pumpAndSettle();
-      expect(_opacidad(tester, formulario), 1);
+      expect(_opacity(tester, form), 1);
     },
   );
 
   testWidgets(
-    'el inicio entra escalonado: saludo, marcador, próxima reserva y tiles @RED-04-S6',
+    'the home screen enters staggered: greeting, marker, next booking and tiles @RED-04-S6',
     (tester) async {
-      await _montarLibre(tester, fakeHome(FakeSession(userProfile)));
-      await _hastaQue(
-        tester,
-        () => find.byType(SportTile).evaluate().isNotEmpty,
-      );
+      await _mountFree(tester, fakeHome(FakeSession(userProfile)));
+      await _until(tester, () => find.byType(SportTile).evaluate().isNotEmpty);
 
       expect(
-        _aparecedores(tester, find.text(HomeGreeting.forHour(clubNow()))),
+        _appearances(tester, find.text(HomeGreeting.forHour(clubNow()))),
         isNotEmpty,
       );
       expect(
-        _aparecedores(
+        _appearances(
           tester,
           find.byType(AppMarker),
         ).any((a) => a.delay == _ms(250) && a.scaleFrom == 0.85),
         isTrue,
-        reason: 'el marcador a los 250 ms, creciendo de 0,85 a 1',
+        reason: 'the marker at 250 ms, growing from 0.85 to 1',
       );
       expect(
-        _aparecedores(
+        _appearances(
           tester,
           find.text('TU PRÓXIMA RESERVA'),
         ).any((a) => a.delay == _ms(450) && a.fromY > 0),
         isTrue,
-        reason: 'la próxima reserva a los 450 ms, bajando desde abajo',
+        reason: 'the next booking at 450 ms, dropping from below',
       );
-      expect(_aparecedores(tester, find.text('Buscar cancha')), isNotEmpty);
+      expect(_appearances(tester, find.text('Buscar cancha')), isNotEmpty);
 
       final tiles = find.byType(SportTile).evaluate().length;
       expect(tiles, greaterThan(1));
-      final retrasos = <Duration>[];
+      final delays = <Duration>[];
       for (var i = 0; i < tiles; i++) {
-        final tile = _aparecedores(tester, find.byType(SportTile).at(i)).first;
+        final tile = _appearances(tester, find.byType(SportTile).at(i)).first;
         expect(tile.fromX, 120, reason: 'tile $i');
         expect(tile.turn, isNot(0), reason: 'tile $i');
-        retrasos.add(tile.delay);
+        delays.add(tile.delay);
       }
-      expect(retrasos.first, greaterThanOrEqualTo(_ms(700)));
-      for (var i = 1; i < retrasos.length; i++) {
-        expect(retrasos[i], greaterThan(retrasos[i - 1]), reason: 'tile $i');
+      expect(delays.first, greaterThanOrEqualTo(_ms(700)));
+      for (var i = 1; i < delays.length; i++) {
+        expect(delays[i], greaterThan(delays[i - 1]), reason: 'tile $i');
       }
 
-      // El reloj arrancó con los datos: el marcador espera sus 250 ms.
-      final marcador = _aparecerQue(
+      // The clock started with the data: the marker waits its 250 ms.
+      final marker = _appearanceWhere(
         find.byType(AppMarker),
         (a) => a.delay == _ms(250),
       ).first;
-      expect(_opacidad(tester, marcador), 0);
+      expect(_opacity(tester, marker), 0);
       await tester.pump(_ms(200));
-      expect(_opacidad(tester, marcador), 0);
+      expect(_opacity(tester, marker), 0);
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, marcador), allOf(greaterThan(0), lessThan(1)));
+      expect(_opacity(tester, marker), allOf(greaterThan(0), lessThan(1)));
       await tester.pumpAndSettle();
-      expect(_opacidad(tester, marcador), 1);
+      expect(_opacity(tester, marker), 1);
     },
   );
 
-  testWidgets('mi perfil entra escalonado: ficha y tarjetas @RED-04-S6', (
+  testWidgets('my profile enters staggered: card and cards @RED-04-S6', (
     tester,
   ) async {
-    await _montarLibre(
+    await _mountFree(
       tester,
       MyProfileScreen(
         session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
       ),
     );
-    await _hastaQue(
+    await _until(
       tester,
       () => find.byType(MemberProfile).evaluate().isNotEmpty,
     );
 
-    final ficha = _aparecedores(tester, find.byType(MemberProfile));
+    final card = _appearances(tester, find.byType(MemberProfile));
     expect(
-      ficha.any(
+      card.any(
         (a) => a.fromY == -24 && a.turn != 0 && a.curve == AppMotion.smooth,
       ),
       isTrue,
-      reason: 'la ficha baja 24 girando, con la curva suave',
+      reason: 'the card drops 24 while spinning, with the soft curve',
     );
 
-    final retrasos = <Duration>[];
-    for (final titulo in ['DATOS PERSONALES', 'SEGURIDAD', 'APARIENCIA']) {
-      final envolventes = _aparecedores(tester, find.text(titulo));
-      expect(envolventes, isNotEmpty, reason: titulo);
-      retrasos.add(envolventes.first.delay);
+    final delays = <Duration>[];
+    for (final title in ['DATOS PERSONALES', 'SEGURIDAD', 'APARIENCIA']) {
+      final wrappers = _appearances(tester, find.text(title));
+      expect(wrappers, isNotEmpty, reason: title);
+      delays.add(wrappers.first.delay);
     }
-    final cierre = _aparecedores(tester, find.text('CERRAR SESIÓN'));
-    expect(cierre, isNotEmpty);
-    retrasos.add(cierre.first.delay);
-    for (var i = 1; i < retrasos.length; i++) {
-      expect(retrasos[i], greaterThan(retrasos[i - 1]), reason: 'bloque $i');
+    final signOut = _appearances(tester, find.text('CERRAR SESIÓN'));
+    expect(signOut, isNotEmpty);
+    delays.add(signOut.first.delay);
+    for (var i = 1; i < delays.length; i++) {
+      expect(delays[i], greaterThan(delays[i - 1]), reason: 'block $i');
     }
     expect(
-      ficha.map((a) => a.delay).reduce((a, b) => a < b ? a : b),
-      lessThanOrEqualTo(retrasos.first),
+      card.map((a) => a.delay).reduce((a, b) => a < b ? a : b),
+      lessThanOrEqualTo(delays.first),
     );
   });
 
   testWidgets(
-    'recargar el inicio desde cero no repite la entrada @RED-04-ASM-04',
+    'reloading home from scratch does not repeat the entrance @RED-04-ASM-04',
     (tester) async {
-      final datos = ValueNotifier<int>(0);
-      addTearDown(datos.dispose);
-      final sesion = FakeSession(userProfile);
-      await _montarLibre(
+      final data = ValueNotifier<int>(0);
+      addTearDown(data.dispose);
+      final session = FakeSession(userProfile);
+      await _mountFree(
         tester,
         ValueListenableBuilder<int>(
-          valueListenable: datos,
-          builder: (context, n, _) => fakeHome(sesion, withBooking: n.isEven),
+          valueListenable: data,
+          builder: (context, n, _) => fakeHome(session, withBooking: n.isEven),
         ),
       );
-      await _hastaQue(
-        tester,
-        () => find.byType(SportTile).evaluate().isNotEmpty,
-      );
+      await _until(tester, () => find.byType(SportTile).evaluate().isNotEmpty);
       expect(
-        _todasEnSuFinal(tester),
+        _allAtEnd(tester),
         isFalse,
-        reason: 'la primera vez sí entra',
+        reason: 'the first time it does enter',
       );
       await tester.pumpAndSettle();
-      expect(_todasEnSuFinal(tester), isTrue);
+      expect(_allAtEnd(tester), isTrue);
 
-      // Otros datos: la pantalla se vacía y vuelve a leer.
-      datos.value = 1;
+      // Other data: the screen empties and reads again.
+      data.value = 1;
       await tester.pump();
       expect(find.byType(SportTile), findsNothing);
-      await _hastaQue(
-        tester,
-        () => find.byType(SportTile).evaluate().isNotEmpty,
-      );
+      await _until(tester, () => find.byType(SportTile).evaluate().isNotEmpty);
 
-      // Los bloques nuevos ya están en su final, sin volver a entrar.
+      // The new blocks are already at their end state, without entering again.
       expect(find.byType(FadeIn), findsWidgets);
-      expect(_todasEnSuFinal(tester), isTrue);
+      expect(_allAtEnd(tester), isTrue);
       expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
     },
   );
 
-  testWidgets(
-    'un campo de texto que pasa a tener error tiembla una vez @RED-04-S7',
-    (tester) async {
-      final controlador = TextEditingController();
-      addTearDown(controlador.dispose);
-      String? error;
-      late StateSetter reconstruir;
-      await _montarLibre(
-        tester,
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: StatefulBuilder(
-            builder: (context, set) {
-              reconstruir = set;
-              return FormTextField(
-                semanticLabel: 'Correo',
-                controller: controlador,
-                error: error,
-              );
-            },
-          ),
-        ),
-      );
-      final campo = find.descendant(
-        of: find.byType(FormTextField),
-        matching: find.byType(TextField),
-      );
-      final reposo = tester.getTopLeft(campo).dx;
-
-      // Sin error no tiembla.
-      await tester.pump(_ms(500));
-      expect(tester.getTopLeft(campo).dx, reposo);
-
-      reconstruir(() => error = 'Completá tu correo electrónico');
-      await _arrancar(tester);
-      expect(
-        _temblores(
-          tester,
-          find.byType(FormTextField),
-        ).any((t) => t.trigger == error),
-        isTrue,
-        reason: 'el disparador es el error',
-      );
-      _tiembla(await _recorrido(tester, campo), motivo: 'el campo');
-      expect(tester.getTopLeft(campo).dx, closeTo(reposo, 0.01));
-
-      // Una sola vez: el mismo error, aunque se reconstruya, no lo repite.
-      reconstruir(() => error = 'Completá tu correo electrónico');
-      await _arrancar(tester);
-      _noTiembla(await _recorrido(tester, campo), motivo: 'el mismo error');
-      expect(tester.binding.hasScheduledFrame, isFalse);
-    },
-  );
-
-  testWidgets('un selector que pasa a tener error tiembla una vez @RED-04-S7', (
+  testWidgets('a text field that gets an error shakes once @RED-04-S7', (
     tester,
   ) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
     String? error;
-    late StateSetter reconstruir;
-    await _montarLibre(
+    late StateSetter rebuild;
+    await _mountFree(
       tester,
       Padding(
         padding: const EdgeInsets.all(24),
         child: StatefulBuilder(
           builder: (context, set) {
-            reconstruir = set;
+            rebuild = set;
+            return FormTextField(
+              semanticLabel: 'Correo',
+              controller: controller,
+              error: error,
+            );
+          },
+        ),
+      ),
+    );
+    final field = find.descendant(
+      of: find.byType(FormTextField),
+      matching: find.byType(TextField),
+    );
+    final rest = tester.getTopLeft(field).dx;
+
+    // Without an error it does not shake.
+    await tester.pump(_ms(500));
+    expect(tester.getTopLeft(field).dx, rest);
+
+    rebuild(() => error = 'Completá tu correo electrónico');
+    await _start(tester);
+    expect(
+      _shakes(
+        tester,
+        find.byType(FormTextField),
+      ).any((t) => t.trigger == error),
+      isTrue,
+      reason: 'the trigger is the error',
+    );
+    _expectShakes(await _path(tester, field), reason: 'el campo');
+    expect(tester.getTopLeft(field).dx, closeTo(rest, 0.01));
+
+    // Only once: the same error, even if rebuilt, does not repeat it.
+    rebuild(() => error = 'Completá tu correo electrónico');
+    await _start(tester);
+    _doesNotShake(await _path(tester, field), reason: 'el mismo error');
+    expect(tester.binding.hasScheduledFrame, isFalse);
+  });
+
+  testWidgets('a selector that gets an error shakes once @RED-04-S7', (
+    tester,
+  ) async {
+    String? error;
+    late StateSetter rebuild;
+    await _mountFree(
+      tester,
+      Padding(
+        padding: const EdgeInsets.all(24),
+        child: StatefulBuilder(
+          builder: (context, set) {
+            rebuild = set;
             return SelectorField(
               label: 'DEPORTE',
               semanticLabel: 'Deporte',
@@ -729,193 +720,196 @@ void main() {
       of: find.byType(SelectorField),
       matching: find.byType(InkWell),
     );
-    final reposo = tester.getTopLeft(selector).dx;
+    final rest = tester.getTopLeft(selector).dx;
 
     await tester.pump(_ms(500));
-    expect(tester.getTopLeft(selector).dx, reposo);
+    expect(tester.getTopLeft(selector).dx, rest);
 
-    reconstruir(() => error = 'Elegí un deporte');
-    await _arrancar(tester);
+    rebuild(() => error = 'Elegí un deporte');
+    await _start(tester);
     expect(
-      _temblores(
+      _shakes(
         tester,
         find.byType(SelectorField),
       ).any((t) => t.trigger == error),
       isTrue,
-      reason: 'el disparador es el error',
+      reason: 'the trigger is the error',
     );
-    _tiembla(await _recorrido(tester, selector), motivo: 'el selector');
-    expect(tester.getTopLeft(selector).dx, closeTo(reposo, 0.01));
+    _expectShakes(await _path(tester, selector), reason: 'el selector');
+    expect(tester.getTopLeft(selector).dx, closeTo(rest, 0.01));
 
-    reconstruir(() => error = 'Elegí un deporte');
-    await _arrancar(tester);
-    _noTiembla(await _recorrido(tester, selector), motivo: 'el mismo error');
+    rebuild(() => error = 'Elegí un deporte');
+    await _start(tester);
+    _doesNotShake(await _path(tester, selector), reason: 'el mismo error');
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
   testWidgets(
-    'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
+    'the invalid-credentials notice shakes every time it appears and the same error does not shake the field again @RED-04-ASM-10',
     (tester) async {
-      final credenciales = FakeCredentials(
+      final credentials = FakeCredentials(
         onSignIn: (_, _) async => throw const InvalidCredentials(),
       );
-      await _montarLibre(tester, _login(credenciales: credenciales));
+      await _mountFree(tester, _login(credentials: credentials));
       await tester.pumpAndSettle();
-      final campo = find.byType(TextField).first;
+      final field = find.byType(TextField).first;
 
-      // Reenviar vacío con el mismo error: tiembla la primera vez y no la segunda.
+      // Resubmitting empty with the same error: it shakes the first time and not the second.
       await tester.tap(find.text('INICIAR SESIÓN'));
-      await _arrancar(tester);
+      await _start(tester);
       expect(find.text('Completá tu correo electrónico'), findsOneWidget);
-      _tiembla(await _recorrido(tester, campo), motivo: 'el campo, 1.ª vez');
+      _expectShakes(await _path(tester, field), reason: 'el campo, 1.ª vez');
       await tester.tap(find.text('INICIAR SESIÓN'));
-      await _arrancar(tester);
+      await _start(tester);
       expect(find.text('Completá tu correo electrónico'), findsOneWidget);
-      _noTiembla(await _recorrido(tester, campo), motivo: 'el mismo error');
+      _doesNotShake(await _path(tester, field), reason: 'el mismo error');
 
-      // Con los datos completos y mal, el aviso tiembla al aparecer, cada vez.
+      // With complete but wrong data, the notice shakes when it appears, every time.
       await tester.enterText(find.byType(TextField).first, 'nahuel@correo.com');
       await tester.enterText(find.byType(TextField).last, 'Mala1234');
-      for (var vez = 1; vez <= 2; vez++) {
+      for (var time = 1; time <= 2; time++) {
         await tester.tap(find.text('INICIAR SESIÓN'));
-        await _hastaQue(
+        await _until(
           tester,
           () => find.text(invalidCredentialsMessage).evaluate().isNotEmpty,
         );
-        await _arrancar(tester);
-        _tiembla(
-          await _recorrido(tester, find.byType(ErrorSnackbar)),
-          motivo: 'el aviso, $vez.ª vez',
+        await _start(tester);
+        _expectShakes(
+          await _path(tester, find.byType(ErrorSnackbar)),
+          reason: 'el aviso, $time.ª vez',
         );
         await tester.tap(find.byTooltip('Cerrar aviso'));
         await tester.pumpAndSettle();
         expect(find.text(invalidCredentialsMessage), findsNothing);
       }
-      expect(credenciales.attempts, hasLength(2));
+      expect(credentials.attempts, hasLength(2));
     },
   );
 
   testWidgets(
-    'el resultado de éxito anima su círculo y escalona su texto @RED-04-S8',
+    'the success result animates its circle and staggers its text @RED-04-S8',
     (tester) async {
-      await _montarLibre(tester, _resultado(ResultTone.success));
-      final paleta = tester.element(find.byType(ResultScreen)).palette;
+      await _mountFree(tester, _result(ResultTone.success));
+      final palette = tester.element(find.byType(ResultScreen)).palette;
 
-      final pulso = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
-      expect(pulso.icon, Icons.check_circle_outline_rounded);
-      expect(pulso.background, paleta.stateSuccessMuted);
-      expect(pulso.ink, paleta.stateSuccessInk);
-      expect(_escalaDelPulso(tester), closeTo(0.4, 1e-6));
+      final pulse = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
+      expect(pulse.icon, Icons.check_circle_outline_rounded);
+      expect(pulse.background, palette.stateSuccessMuted);
+      expect(pulse.ink, palette.stateSuccessInk);
+      expect(_pulseScale(tester), closeTo(0.4, 1e-6));
       await tester.pump(_ms(550));
-      expect(_escalaDelPulso(tester), closeTo(1, 1e-3));
+      expect(_pulseScale(tester), closeTo(1, 1e-3));
 
-      // Título, texto y acción bajan 14, escalonados.
-      for (final (finder, retraso) in [
+      // Title, text and action drop 14, staggered.
+      for (final (finder, delay) in [
         (find.text('Contraseña actualizada'), 370),
         (find.text('Ya podés iniciar sesión con tu contraseña nueva.'), 460),
         (find.text('VOLVER AL INICIO'), 550),
       ]) {
-        final entrada = _aparecedores(tester, finder);
+        final entrance = _appearances(tester, finder);
         expect(
-          entrada.any((a) => a.delay == _ms(retraso) && a.fromY == 14),
+          entrance.any((a) => a.delay == _ms(delay) && a.fromY == 14),
           isTrue,
-          reason: 'a los $retraso ms',
+          reason: 'at $delay ms',
         );
       }
       await tester.pumpAndSettle();
-      expect(_todasEnSuFinal(tester), isTrue);
+      expect(_allAtEnd(tester), isTrue);
     },
   );
 
   testWidgets(
-    'el resultado de aviso y el de peligro también animan su círculo @RED-04-S8',
+    'the notice result and the danger result also animate their circle @RED-04-S8',
     (tester) async {
-      for (final tono in [ResultTone.warning, ResultTone.danger]) {
-        await _montarLibre(tester, _resultado(tono));
-        final paleta = tester.element(find.byType(ResultScreen)).palette;
-        final (fondo, tinta) = switch (tono) {
-          ResultTone.warning => (paleta.bgSurfaceRaised, paleta.textSecondary),
-          _ => (paleta.stateDangerMuted, paleta.stateDangerInk),
+      for (final tone in [ResultTone.warning, ResultTone.danger]) {
+        await _mountFree(tester, _result(tone));
+        final palette = tester.element(find.byType(ResultScreen)).palette;
+        final (background, ink) = switch (tone) {
+          ResultTone.warning => (
+            palette.bgSurfaceRaised,
+            palette.textSecondary,
+          ),
+          _ => (palette.stateDangerMuted, palette.stateDangerInk),
         };
 
-        final pulso = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
-        expect(pulso.background, fondo, reason: '$tono');
-        expect(pulso.ink, tinta, reason: '$tono');
-        expect(_escalaDelPulso(tester), closeTo(0.4, 1e-6), reason: '$tono');
-        expect(_radioDeRecorte(tester, find.byType(SuccessPulse)), _cero);
+        final pulse = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
+        expect(pulse.background, background, reason: '$tone');
+        expect(pulse.ink, ink, reason: '$tone');
+        expect(_pulseScale(tester), closeTo(0.4, 1e-6), reason: '$tone');
+        expect(_clipRadius(tester, find.byType(SuccessPulse)), _zero);
         await tester.pump(_ms(550));
-        expect(_escalaDelPulso(tester), closeTo(1, 1e-3), reason: '$tono');
+        expect(_pulseScale(tester), closeTo(1, 1e-3), reason: '$tone');
         await tester.pumpAndSettle();
-        await _desmontar(tester);
+        await _unmount(tester);
       }
     },
   );
 
   testWidgets(
-    '«el tilde se dibuja»: el registro exitoso revela su ícono con la misma pieza @RED-04-ASM-08',
+    '«el tilde se dibuja»: the successful sign-up reveals its icon with the same piece @RED-04-ASM-08',
     (tester) async {
-      await _montarLibre(tester, const RegistrationDoneScreen());
-      final paleta = tester
+      await _mountFree(tester, const RegistrationDoneScreen());
+      final palette = tester
           .element(find.byType(RegistrationDoneScreen))
           .palette;
 
-      final pulso = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
-      expect(pulso.icon, Icons.check_circle_outline_rounded);
-      expect(pulso.background, paleta.stateSuccessMuted);
-      expect(pulso.ink, paleta.stateSuccessInk);
-      expect(_escalaDelPulso(tester), closeTo(0.4, 1e-6));
+      final pulse = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
+      expect(pulse.icon, Icons.check_circle_outline_rounded);
+      expect(pulse.background, palette.stateSuccessMuted);
+      expect(pulse.ink, palette.stateSuccessInk);
+      expect(_pulseScale(tester), closeTo(0.4, 1e-6));
 
-      // El ícono se revela con un recorte que crece.
-      final icono = find.byType(SuccessPulse);
-      expect(_radioDeRecorte(tester, icono), _cero);
+      // The icon is revealed with a growing clip.
+      final icon = find.byType(SuccessPulse);
+      expect(_clipRadius(tester, icon), _zero);
       await tester.pump(_ms(150));
-      expect(_radioDeRecorte(tester, icono), _cero);
+      expect(_clipRadius(tester, icon), _zero);
       await tester.pump(_ms(250));
-      expect(_radioDeRecorte(tester, icono), greaterThan(0));
+      expect(_clipRadius(tester, icon), greaterThan(0));
       await tester.pump(_ms(250));
-      final completo = _radioDeRecorte(tester, icono);
+      final full = _clipRadius(tester, icon);
       await tester.pumpAndSettle();
-      expect(_radioDeRecorte(tester, icono), closeTo(completo, 1e-6));
-      expect(_escalaDelPulso(tester), _uno);
+      expect(_clipRadius(tester, icon), closeTo(full, 1e-6));
+      expect(_pulseScale(tester), _one);
 
-      // El título y el texto escalonan como en ResultScreen.
-      expect(_aparecedores(tester, find.text('¡Cuenta creada!')), isNotEmpty);
+      // The title and the text stagger as in ResultScreen.
+      expect(_appearances(tester, find.text('¡Cuenta creada!')), isNotEmpty);
     },
   );
 
-  testWidgets('la reserva confirmada festeja una vez @RED-04-S9', (
+  testWidgets('the confirmed booking celebrates once @RED-04-S9', (
     tester,
   ) async {
-    await _montarLibre(
+    await _mountFree(
       tester,
-      BookingConfirmedScreen(reserva: _reservaConfirmada()),
+      BookingConfirmedScreen(reserva: _confirmedBooking()),
     );
     expect(find.byType(Celebration), findsOneWidget);
-    final titulo = find.text('¡Reserva confirmada!');
-    final comprobante = find.text('Horario');
+    final title = find.text('¡Reserva confirmada!');
+    final receipt = find.text('Horario');
 
-    final alPrincipio = _ancho(tester, titulo);
+    final atStart = _width(tester, title);
     await tester.pump(_ms(500));
-    final aMitad = _ancho(tester, titulo);
+    final halfway = _width(tester, title);
     await tester.pump(_ms(300));
-    expect(_visibilidad(tester, comprobante), 0, reason: 'antes de los 870 ms');
+    expect(_visibility(tester, receipt), 0, reason: 'before 870 ms');
 
-    // Termina sola: si el festejo se repitiera, esto no terminaría.
+    // It ends by itself: if the celebration repeated, this would not finish.
     await tester.pumpAndSettle();
-    final entero = _ancho(tester, titulo);
-    expect(alPrincipio / entero, lessThan(1));
-    expect(aMitad / entero, allOf(greaterThan(0.5), lessThan(1)));
-    expect(_visibilidad(tester, comprobante), _uno);
+    final whole = _width(tester, title);
+    expect(atStart / whole, lessThan(1));
+    expect(halfway / whole, allOf(greaterThan(0.5), lessThan(1)));
+    expect(_visibility(tester, receipt), _one);
     expect(tester.binding.hasScheduledFrame, isFalse);
 
     await tester.pump(const Duration(seconds: 10));
-    expect(_ancho(tester, titulo), closeTo(entero, 1e-6));
-    expect(_visibilidad(tester, comprobante), _uno);
+    expect(_width(tester, title), closeTo(whole, 1e-6));
+    expect(_visibility(tester, receipt), _one);
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
   testWidgets(
-    'cambiar la duración hace latir la línea del día y elegir una franja la hace crecer @RED-04-S10',
+    'changing the duration makes the day timeline beat and choosing a slot makes it grow @RED-04-S10',
     (tester) async {
       await mountUser(
         tester,
@@ -923,51 +917,51 @@ void main() {
         start:
             '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
-      final linea = find.byType(DayTimeline);
+      final line = find.byType(DayTimeline);
       expect(
-        find.ancestor(of: linea, matching: find.byType(Heartbeat)),
+        find.ancestor(of: line, matching: find.byType(Heartbeat)),
         findsOneWidget,
       );
-      final base = _ancho(tester, linea);
-      double escala() => _ancho(tester, linea) / base;
+      final base = _width(tester, line);
+      double scale() => _width(tester, line) / base;
 
-      await _tocarSinEsperar(tester, find.byIcon(Icons.add_rounded));
+      await _tapWithoutWaiting(tester, find.byIcon(Icons.add_rounded));
       await tester.pump();
-      expect(escala(), closeTo(1, 1e-3));
+      expect(scale(), closeTo(1, 1e-3));
       await tester.pump(_ms(200));
-      expect(escala(), allOf(greaterThan(1), lessThanOrEqualTo(1.0301)));
+      expect(scale(), allOf(greaterThan(1), lessThanOrEqualTo(1.0301)));
       await tester.pump(_ms(50));
-      expect(escala(), closeTo(1.03, 3e-3));
+      expect(scale(), closeTo(1.03, 3e-3));
       await tester.pump(_ms(250));
-      expect(escala(), closeTo(1, 1e-3));
+      expect(scale(), closeTo(1, 1e-3));
       await tester.pumpAndSettle();
-      expect(escala(), closeTo(1, 1e-3));
+      expect(scale(), closeTo(1, 1e-3));
 
-      // La franja elegida crece de 0,88 a 1.
-      final franja = find.text('18:00 – 19:00').first;
-      final entera = _ancho(tester, franja);
-      await _tocarSinEsperar(tester, franja);
+      // The chosen slot grows from 0.88 to 1.
+      final slot = find.text('18:00 – 19:00').first;
+      final wholeWidth = _width(tester, slot);
+      await _tapWithoutWaiting(tester, slot);
       await tester.pump();
-      expect(_ancho(tester, franja) / entera, closeTo(0.88, 0.02));
+      expect(_width(tester, slot) / wholeWidth, closeTo(0.88, 0.02));
       await tester.pump(_ms(200));
-      expect(_ancho(tester, franja) / entera, greaterThan(0.88));
+      expect(_width(tester, slot) / wholeWidth, greaterThan(0.88));
       await tester.pumpAndSettle();
-      expect(_ancho(tester, franja) / entera, closeTo(1, 1e-3));
+      expect(_width(tester, slot) / wholeWidth, closeTo(1, 1e-3));
     },
   );
 
-  testWidgets('el aviso dentro de la app baja desde arriba @RED-04-S12', (
+  testWidgets('the in-app notice drops from the top @RED-04-S12', (
     tester,
   ) async {
     final api = FakeApi();
-    final sesion = FakeSession(userProfile);
-    final centro = centerOf(api, sesion);
+    final session = FakeSession(userProfile);
+    final center = centerOf(api, session);
     await mountScreen(
       tester,
       Stack(
         children: [
           const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-          NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
+          NoticePanel(center: center, now: () => noticesNow, onOpen: (_) {}),
         ],
       ),
       theme: darkTheme,
@@ -975,174 +969,166 @@ void main() {
     api
       ..avisos = [reminderNotice]
       ..unread = 1;
-    await tester.runAsync(centro.load);
+    await tester.runAsync(center.load);
     await tester.pump();
     await tester.pump();
 
-    final titulo = find.text('NOTIFICACIONES');
-    expect(titulo, findsOneWidget);
+    final title = find.text('NOTIFICACIONES');
+    expect(title, findsOneWidget);
     expect(
-      _aparecedores(
+      _appearances(
         tester,
-        titulo,
+        title,
       ).any((a) => a.fromY == -150 && a.curve == AppMotion.bounce),
       isTrue,
-      reason: 'baja desde −150 con rebote',
+      reason: 'drops from −150 with a bounce',
     );
-    final arriba = tester.getTopLeft(titulo).dy;
+    final top = tester.getTopLeft(title).dy;
     await tester.pump(_ms(100));
-    expect(tester.getTopLeft(titulo).dy, greaterThan(arriba));
+    expect(tester.getTopLeft(title).dy, greaterThan(top));
     await tester.pumpAndSettle();
-    expect(tester.getTopLeft(titulo).dy - arriba, closeTo(150, 0.5));
+    expect(tester.getTopLeft(title).dy - top, closeTo(150, 0.5));
+  });
+
+  testWidgets('the buttons of button.dart shrink while pressed @RED-04-S13', (
+    tester,
+  ) async {
+    await mountScreen(
+      tester,
+      Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PrimaryButton(label: 'PRIMARIO', onTap: () {}),
+              TextActionButton(label: 'TEXTO', onTap: () {}),
+              OutlineButton(label: 'CONTORNO', onTap: () {}),
+              DangerButton(label: 'PELIGRO', onTap: () {}),
+            ],
+          ),
+        ),
+      ),
+      theme: darkTheme,
+    );
+
+    for (final text in ['PRIMARIO', 'TEXTO', 'CONTORNO', 'PELIGRO']) {
+      final label = find.text(text);
+      final released = _width(tester, label);
+      final finger = await tester.startGesture(tester.getCenter(label));
+      await tester.pump();
+      await tester.pump(_ms(40));
+      expect(_width(tester, label) / released, lessThan(1), reason: text);
+      await tester.pump(_ms(40));
+      expect(
+        _width(tester, label) / released,
+        closeTo(0.97, 3e-3),
+        reason: text,
+      );
+      await finger.up();
+      await tester.pump();
+      await tester.pump(_ms(80));
+      expect(_width(tester, label) / released, closeTo(1, 3e-3), reason: text);
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets(
-    'los botones de boton.dart se achican mientras se presionan @RED-04-S13',
+    'with reduce motion the celebration, the notice and the entrance show their end state on the first frame @RED-04-S14',
     (tester) async {
-      await mountScreen(
+      _reduceMotion(tester);
+
+      // The celebration.
+      await _mountFree(
         tester,
-        Scaffold(
-          body: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PrimaryButton(label: 'PRIMARIO', onTap: () {}),
-                TextActionButton(label: 'TEXTO', onTap: () {}),
-                OutlineButton(label: 'CONTORNO', onTap: () {}),
-                DangerButton(label: 'PELIGRO', onTap: () {}),
-              ],
-            ),
-          ),
-        ),
-        theme: darkTheme,
+        BookingConfirmedScreen(reserva: _confirmedBooking()),
       );
-
-      for (final texto in ['PRIMARIO', 'TEXTO', 'CONTORNO', 'PELIGRO']) {
-        final etiqueta = find.text(texto);
-        final suelto = _ancho(tester, etiqueta);
-        final dedo = await tester.startGesture(tester.getCenter(etiqueta));
-        await tester.pump();
-        await tester.pump(_ms(40));
-        expect(_ancho(tester, etiqueta) / suelto, lessThan(1), reason: texto);
-        await tester.pump(_ms(40));
-        expect(
-          _ancho(tester, etiqueta) / suelto,
-          closeTo(0.97, 3e-3),
-          reason: texto,
-        );
-        await dedo.up();
-        await tester.pump();
-        await tester.pump(_ms(80));
-        expect(
-          _ancho(tester, etiqueta) / suelto,
-          closeTo(1, 3e-3),
-          reason: texto,
-        );
-        await tester.pumpAndSettle();
-      }
-    },
-  );
-
-  testWidgets(
-    'con reducir movimiento el festejo, el aviso y la entrada muestran su final en el primer cuadro @RED-04-S14',
-    (tester) async {
-      _reducirMovimiento(tester);
-
-      // El festejo.
-      await _montarLibre(
-        tester,
-        BookingConfirmedScreen(reserva: _reservaConfirmada()),
-      );
-      final titulo = find.text('¡Reserva confirmada!');
-      final comprobante = find.text('Horario');
+      final title = find.text('¡Reserva confirmada!');
+      final receipt = find.text('Horario');
       expect(find.byType(Celebration), findsOneWidget);
-      final ancho = _ancho(tester, titulo);
-      expect(_visibilidad(tester, comprobante), _uno);
+      final width = _width(tester, title);
+      expect(_visibility(tester, receipt), _one);
       expect(tester.binding.hasScheduledFrame, isFalse);
       await tester.pumpAndSettle();
-      expect(_ancho(tester, titulo), closeTo(ancho, 1e-6));
-      await _desmontar(tester);
+      expect(_width(tester, title), closeTo(width, 1e-6));
+      await _unmount(tester);
 
-      // El aviso dentro de la app.
+      // The in-app notice.
       final api = FakeApi();
-      final sesion = FakeSession(userProfile);
-      final centro = centerOf(api, sesion);
-      await _montarLibre(
+      final session = FakeSession(userProfile);
+      final center = centerOf(api, session);
+      await _mountFree(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
+            NoticePanel(center: center, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
       );
       api
         ..avisos = [reminderNotice]
         ..unread = 1;
-      await tester.runAsync(centro.load);
+      await tester.runAsync(center.load);
       await tester.pump();
       await tester.pump();
-      final aviso = find.text('NOTIFICACIONES');
-      expect(aviso, findsOneWidget);
-      final arriba = tester.getTopLeft(aviso).dy;
+      final notice = find.text('NOTIFICACIONES');
+      expect(notice, findsOneWidget);
+      final top = tester.getTopLeft(notice).dy;
       await tester.pumpAndSettle();
-      expect(tester.getTopLeft(aviso).dy, closeTo(arriba, 1e-6));
-      await _desmontar(tester);
+      expect(tester.getTopLeft(notice).dy, closeTo(top, 1e-6));
+      await _unmount(tester);
 
-      // La entrada escalonada del inicio.
-      await _montarLibre(tester, fakeHome(FakeSession(userProfile)));
-      await _hastaQue(
-        tester,
-        () => find.byType(SportTile).evaluate().isNotEmpty,
-      );
-      expect(_todasEnSuFinal(tester), isTrue);
+      // The staggered entrance of the home screen.
+      await _mountFree(tester, fakeHome(FakeSession(userProfile)));
+      await _until(tester, () => find.byType(SportTile).evaluate().isNotEmpty);
+      expect(_allAtEnd(tester), isTrue);
     },
   );
 
-  // ---- T5: diálogos y tarjeta de la cuenta ----
+  // ---- T5: dialogs and account card ----
 
   testWidgets(
-    'un diálogo de DialogFrame entra con fundido y escala de 0,88 a 1 @RED-04-S11',
+    'a DialogFrame dialog enters with a fade and a scale from 0.88 to 1 @RED-04-S11',
     (tester) async {
-      await mountScreen(tester, _cancelacion(), theme: darkTheme);
+      await mountScreen(tester, _cancellation(), theme: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
-      final titulo = find.text('¿Cancelar la reserva?');
-      expect(titulo, findsOneWidget);
+      final title = find.text('¿Cancelar la reserva?');
+      expect(title, findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(DialogFrame),
           matching: find.byWidgetPredicate((w) => w is FadeIn),
         ),
         findsWidgets,
-        reason: 'el diálogo se anima dentro del marco',
+        reason: 'the dialog animates inside the frame',
       );
-      final entrada = _aparecerQue(titulo, (a) => a.scaleFrom == 0.88);
-      expect(entrada, findsOneWidget);
-      final aparecer = tester.widget<FadeIn>(entrada);
-      expect(aparecer.fromY, 0);
-      expect(aparecer.curve, AppMotion.fast);
+      final entrance = _appearanceWhere(title, (a) => a.scaleFrom == 0.88);
+      expect(entrance, findsOneWidget);
+      final appearance = tester.widget<FadeIn>(entrance);
+      expect(appearance.fromY, 0);
+      expect(appearance.curve, AppMotion.fast);
 
-      final alPrincipio = _ancho(tester, titulo);
-      expect(_opacidad(tester, entrada), 0);
+      final atStart = _width(tester, title);
+      expect(_opacity(tester, entrance), 0);
       await tester.pump(_ms(100));
-      expect(_opacidad(tester, entrada), allOf(greaterThan(0), lessThan(1)));
+      expect(_opacity(tester, entrance), allOf(greaterThan(0), lessThan(1)));
       await tester.pumpAndSettle();
-      final entero = _ancho(tester, titulo);
-      expect(alPrincipio / entero, closeTo(0.88, 0.02));
-      expect(_opacidad(tester, entrada), 1);
+      final whole = _width(tester, title);
+      expect(atStart / whole, closeTo(0.88, 0.02));
+      expect(_opacity(tester, entrance), 1);
     },
   );
 
   testWidgets(
-    'el selector de opciones entra con la misma escala @RED-04-ASM-01',
+    'the options selector enters with the same scale @RED-04-ASM-01',
     (tester) async {
       await mountScreen(
         tester,
-        _Anfitrion(
-          abrir: (context) => unawaited(
+        _Host(
+          open: (context) => unawaited(
             pickOption<int>(
               context,
               title: 'Elegí el deporte',
@@ -1155,110 +1141,104 @@ void main() {
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
-      final titulo = find.text('Elegí el deporte');
-      expect(titulo, findsOneWidget);
-      final entrada = _aparecerQue(titulo, (a) => a.scaleFrom == 0.88);
-      expect(entrada, findsOneWidget);
-      final aparecer = tester.widget<FadeIn>(entrada);
-      expect(aparecer.fromY, 0);
-      expect(aparecer.curve, AppMotion.fast);
+      final title = find.text('Elegí el deporte');
+      expect(title, findsOneWidget);
+      final entrance = _appearanceWhere(title, (a) => a.scaleFrom == 0.88);
+      expect(entrance, findsOneWidget);
+      final appearance = tester.widget<FadeIn>(entrance);
+      expect(appearance.fromY, 0);
+      expect(appearance.curve, AppMotion.fast);
 
-      final alPrincipio = _ancho(tester, titulo);
+      final atStart = _width(tester, title);
       await tester.pumpAndSettle();
-      expect(alPrincipio / _ancho(tester, titulo), closeTo(0.88, 0.02));
+      expect(atStart / _width(tester, title), closeTo(0.88, 0.02));
     },
   );
 
-  testWidgets(
-    'la tarjeta de la cuenta baja 16 y aparece en 350 ms @RED-04-S11',
-    (tester) async {
-      await mountScreen(
-        tester,
-        Scaffold(
-          body: Center(child: AccountButton(session: FakeSession(userProfile))),
-        ),
-        theme: darkTheme,
-      );
-      await tester.tap(find.byType(AccountButton));
+  testWidgets('the account card drops 16 and appears in 350 ms @RED-04-S11', (
+    tester,
+  ) async {
+    await mountScreen(
+      tester,
+      Scaffold(
+        body: Center(child: AccountButton(session: FakeSession(userProfile))),
+      ),
+      theme: darkTheme,
+    );
+    await tester.tap(find.byType(AccountButton));
+    await tester.pump();
+
+    final name = find.text('Nahuel Mosse');
+    expect(name, findsOneWidget);
+    final entrance = _appearanceWhere(
+      name,
+      (a) => a.fromY == -16 && a.duration == _ms(350),
+    );
+    expect(entrance, findsOneWidget);
+
+    final top = tester.getTopLeft(name).dy;
+    expect(_opacity(tester, entrance), 0);
+    await tester.pump(_ms(175));
+    final halfway = tester.getTopLeft(name).dy;
+    expect(_opacity(tester, entrance), allOf(greaterThan(0), lessThan(1)));
+    await tester.pump(_ms(175));
+    final below = tester.getTopLeft(name).dy;
+    expect(below - top, closeTo(16, 0.01));
+    expect(halfway, allOf(greaterThan(top), lessThan(below)));
+    expect(_opacity(tester, entrance), 1);
+  });
+
+  testWidgets('the buttons of a dialog shrink while pressed @RED-04-S13', (
+    tester,
+  ) async {
+    await mountScreen(tester, _cancellation(), theme: darkTheme);
+    await tester.tap(find.text('ABRIR'));
+    await tester.pumpAndSettle();
+
+    for (final text in ['CANCELAR RESERVA', 'NO CANCELAR']) {
+      final label = find.text(text);
+      final released = _width(tester, label);
+      final finger = await tester.startGesture(tester.getCenter(label));
       await tester.pump();
-
-      final nombre = find.text('Nahuel Mosse');
-      expect(nombre, findsOneWidget);
-      final entrada = _aparecerQue(
-        nombre,
-        (a) => a.fromY == -16 && a.duration == _ms(350),
+      await tester.pump(_ms(40));
+      expect(_width(tester, label) / released, lessThan(1), reason: text);
+      await tester.pump(_ms(40));
+      expect(
+        _width(tester, label) / released,
+        closeTo(0.97, 3e-3),
+        reason: text,
       );
-      expect(entrada, findsOneWidget);
-
-      final arriba = tester.getTopLeft(nombre).dy;
-      expect(_opacidad(tester, entrada), 0);
-      await tester.pump(_ms(175));
-      final aMitad = tester.getTopLeft(nombre).dy;
-      expect(_opacidad(tester, entrada), allOf(greaterThan(0), lessThan(1)));
-      await tester.pump(_ms(175));
-      final abajo = tester.getTopLeft(nombre).dy;
-      expect(abajo - arriba, closeTo(16, 0.01));
-      expect(aMitad, allOf(greaterThan(arriba), lessThan(abajo)));
-      expect(_opacidad(tester, entrada), 1);
-    },
-  );
+      await finger.cancel();
+      await tester.pump();
+      await tester.pump(_ms(80));
+      expect(_width(tester, label) / released, closeTo(1, 3e-3), reason: text);
+    }
+  });
 
   testWidgets(
-    'los botones de un diálogo se achican mientras se presionan @RED-04-S13',
+    'with reduce motion the dialog appears whole on the first frame @RED-04-S14',
     (tester) async {
-      await mountScreen(tester, _cancelacion(), theme: darkTheme);
-      await tester.tap(find.text('ABRIR'));
-      await tester.pumpAndSettle();
-
-      for (final texto in ['CANCELAR RESERVA', 'NO CANCELAR']) {
-        final etiqueta = find.text(texto);
-        final suelto = _ancho(tester, etiqueta);
-        final dedo = await tester.startGesture(tester.getCenter(etiqueta));
-        await tester.pump();
-        await tester.pump(_ms(40));
-        expect(_ancho(tester, etiqueta) / suelto, lessThan(1), reason: texto);
-        await tester.pump(_ms(40));
-        expect(
-          _ancho(tester, etiqueta) / suelto,
-          closeTo(0.97, 3e-3),
-          reason: texto,
-        );
-        await dedo.cancel();
-        await tester.pump();
-        await tester.pump(_ms(80));
-        expect(
-          _ancho(tester, etiqueta) / suelto,
-          closeTo(1, 3e-3),
-          reason: texto,
-        );
-      }
-    },
-  );
-
-  testWidgets(
-    'con reducir movimiento el diálogo aparece entero en el primer cuadro @RED-04-S14',
-    (tester) async {
-      _reducirMovimiento(tester);
-      await mountScreen(tester, _cancelacion(), theme: darkTheme);
+      _reduceMotion(tester);
+      await mountScreen(tester, _cancellation(), theme: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
-      final titulo = find.text('¿Cancelar la reserva?');
-      final entrada = _aparecerQue(titulo, (a) => a.scaleFrom == 0.88);
-      expect(entrada, findsOneWidget);
-      expect(_opacidad(tester, entrada), 1);
-      final alPrincipio = _ancho(tester, titulo);
+      final title = find.text('¿Cancelar la reserva?');
+      final entrance = _appearanceWhere(title, (a) => a.scaleFrom == 0.88);
+      expect(entrance, findsOneWidget);
+      expect(_opacity(tester, entrance), 1);
+      final atStart = _width(tester, title);
       await tester.pumpAndSettle();
-      expect(_ancho(tester, titulo), closeTo(alPrincipio, 1e-6));
+      expect(_width(tester, title), closeTo(atStart, 1e-6));
     },
   );
 
-  // ---- T6: las capturas ----
+  // ---- T6: the screenshots ----
 
   testWidgets(
-    'las capturas se toman con las animaciones terminadas @RED-04-ASM-12',
+    'screenshots are taken with the animations finished @RED-04-ASM-12',
     (tester) async {
-      final pantallas = <String, Widget>{
+      final screens = <String, Widget>{
         'login': _login(),
         'starts_at': fakeHome(FakeSession(userProfile)),
         'mi perfil': MyProfileScreen(
@@ -1266,16 +1246,16 @@ void main() {
           appearance: Appearance.inMemory(),
         ),
         'reserva confirmada': BookingConfirmedScreen(
-          reserva: _reservaConfirmada(),
+          reserva: _confirmedBooking(),
         ),
       };
-      for (final MapEntry(key: nombre, value: pantalla) in pantallas.entries) {
-        // Como los helpers de test/screenshots: `montar` termina con pumpAndSettle.
-        await mountScreen(tester, pantalla, theme: darkTheme);
-        expect(find.byType(FadeIn), findsWidgets, reason: nombre);
-        expect(_todasEnSuFinal(tester), isTrue, reason: nombre);
-        expect(tester.binding.hasScheduledFrame, isFalse, reason: nombre);
-        await _desmontar(tester);
+      for (final MapEntry(key: name, value: screen) in screens.entries) {
+        // Like the helpers of test/screenshots: `mountScreen` ends with pumpAndSettle.
+        await mountScreen(tester, screen, theme: darkTheme);
+        expect(find.byType(FadeIn), findsWidgets, reason: name);
+        expect(_allAtEnd(tester), isTrue, reason: name);
+        expect(tester.binding.hasScheduledFrame, isFalse, reason: name);
+        await _unmount(tester);
       }
     },
   );

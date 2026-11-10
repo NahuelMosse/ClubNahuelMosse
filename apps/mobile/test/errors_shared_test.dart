@@ -15,26 +15,26 @@ import 'package:http/testing.dart';
 import 'support/admin.dart';
 import 'support/mount.dart';
 
-/// La API respondiendo siempre 403, como con un rol que ya no alcanza.
+/// The API always answering 403, as with a role that is no longer enough.
 ApiClient _api403() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) async => http.Response('{}', 403)),
 );
 
-/// Una sesión que abrió como administrador y, al volver a leer el perfil, ya es usuario.
-class _SesionDegradada extends FakeSession {
-  _SesionDegradada() : super(adminProfile);
+/// A session that opened as an administrator and, on re-reading the profile, is now a user.
+class _DowngradedSession extends FakeSession {
+  _DowngradedSession() : super(adminProfile);
 
-  int lecturas = 0;
-  Profile? _rebajado;
+  int reads = 0;
+  Profile? _downgraded;
 
   @override
-  Profile? get profile => _rebajado ?? super.profile;
+  Profile? get profile => _downgraded ?? super.profile;
 
   @override
   Future<Profile> refresh() async {
-    lecturas++;
-    _rebajado = userProfile;
+    reads++;
+    _downgraded = userProfile;
     notifyListeners();
     return userProfile;
   }
@@ -43,7 +43,7 @@ class _SesionDegradada extends FakeSession {
 void main() {
   setUpAll(loadFonts);
 
-  final avisos = <String, (String, Future<void> Function(BuildContext))>{
+  final notices = <String, (String, Future<void> Function(BuildContext))>{
     'error de conexión': (
       'REINTENTAR',
       (c) => showNetworkError(c, const SinConexion()),
@@ -56,18 +56,18 @@ void main() {
     'esto cambió mientras tanto': ('VER LO ACTUALIZADO', showChangedMeanwhile),
   };
 
-  for (final MapEntry(key: nombre, value: (boton, abrir)) in avisos.entries) {
-    testWidgets('el aviso de $nombre entra en 360 con el texto al 200 %', (
+  for (final MapEntry(key: name, value: (button, open)) in notices.entries) {
+    testWidgets('the «$name» notice fits at 360 with text at 200 %', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(
             body: Center(
               child: TextButton(
-                onPressed: () => abrir(context),
+                onPressed: () => open(context),
                 child: const Text('ABRIR'),
               ),
             ),
@@ -81,14 +81,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      await tester.ensureVisible(find.text(boton));
+      await tester.ensureVisible(find.text(button));
       await tester.pumpAndSettle();
-      expect(find.text(boton), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(button), findsOneWidget);
+      semantics.dispose();
     });
   }
 
-  testWidgets('«Acceso denegado» entra en 360 con el texto al 200 %', (
+  testWidgets('«Acceso denegado» fits at 360 with text at 200 %', (
     tester,
   ) async {
     await mountScreen(
@@ -104,7 +104,7 @@ void main() {
   });
 
   testWidgets(
-    'un usuario que entra al panel ve «Acceso denegado» y llega a Mis reservas',
+    'a user entering the panel sees «Acceso denegado» and reaches «Mis reservas»',
     (tester) async {
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
@@ -129,25 +129,25 @@ void main() {
   );
 
   testWidgets(
-    'un administrador degradado sale de «Acceso denegado» a Mis reservas sin volver al panel',
+    'a downgraded administrator leaves «Acceso denegado» for «Mis reservas» without returning to the panel',
     (tester) async {
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
-      final sesion = _SesionDegradada();
+      final session = _DowngradedSession();
       await tester.pumpWidget(
         App(
           api: ApiClient(
             'http://api.falsa',
             cliente: MockClient(
-              (pedido) async => switch (pedido.url.path) {
+              (request) async => switch (request.url.path) {
                 '/bookings' => http.Response('{"bookings": []}', 200),
                 '/spaces/catalog' => http.Response(catalogJson, 200),
                 _ => http.Response('{}', 403),
               },
             ),
           ),
-          session: sesion,
+          session: session,
           appearance: Appearance.inMemory(),
           initialLocation: '/admin/sedes',
         ),
@@ -158,22 +158,22 @@ void main() {
       await tester.tap(find.text('IR A MIS RESERVAS'));
       await tester.pumpAndSettle();
 
-      expect(sesion.lecturas, greaterThan(0));
+      expect(session.reads, greaterThan(0));
       expect(find.text('Acceso denegado'), findsNothing);
       expect(find.text('PANEL ADMIN'), findsNothing);
       expect(find.text('Mis reservas'), findsWidgets);
     },
   );
 
-  testWidgets('«Acceso denegado» ofrece cerrar la sesión', (tester) async {
+  testWidgets('«Acceso denegado» offers to sign out', (tester) async {
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
-    final sesion = FakeSession(userProfile);
+    final session = FakeSession(userProfile);
     await tester.pumpWidget(
       App(
         api: apiRoutes({}),
-        session: sesion,
+        session: session,
         appearance: Appearance.inMemory(),
         initialLocation: '/admin',
       ),
@@ -183,12 +183,12 @@ void main() {
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
 
-    expect(sesion.closes, 1);
+    expect(session.closes, 1);
     expect(find.text('Acceso denegado'), findsNothing);
   });
 
   testWidgets(
-    'un 403 al cargar el alta de espacio no navega sobre «Acceso denegado»',
+    'a 403 when loading the space creation does not navigate over «Acceso denegado»',
     (tester) async {
       await mountAdmin(tester, api: _api403(), start: '/admin/espacios/nuevo');
       await tester.pumpAndSettle();
@@ -198,7 +198,7 @@ void main() {
     },
   );
 
-  testWidgets('un 403 al cargar una sede no navega sobre «Acceso denegado»', (
+  testWidgets('a 403 when loading a venue does not navigate over «Acceso denegado»', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(393, 852) * 3;
@@ -218,7 +218,7 @@ void main() {
   });
 
   test(
-    'una API que no responde en el límite se trata como sin respuesta del servidor',
+    'an API that does not answer within the limit is treated as the server not responding',
     () async {
       final api = ApiClient(
         'http://api.falsa',

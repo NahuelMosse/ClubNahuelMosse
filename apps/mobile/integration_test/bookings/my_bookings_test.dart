@@ -7,10 +7,10 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final hoy = todayAtClub();
-  DateTime dia(int dias) => hoy.add(Duration(days: dias));
+  final today = todayAtClub();
+  DateTime day(int days) => today.add(Duration(days: days));
 
-  const meses = [
+  const months = [
     'enero',
     'febrero',
     'marzo',
@@ -24,140 +24,140 @@ void main() {
     'noviembre',
     'diciembre',
   ];
-  const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const weekdays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   /// «Jue 12 de noviembre».
-  String fecha(DateTime d) =>
-      '${dias[d.weekday - 1]} ${d.day} de ${meses[d.month - 1]}';
+  String dateLabel(DateTime d) =>
+      '${weekdays[d.weekday - 1]} ${d.day} de ${months[d.month - 1]}';
 
-  /// Una sede con un Fútbol 5 y un Tenis de polvo de ladrillo.
-  Future<(String, String, String)> sedeConCanchas() async {
-    final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850');
+  /// A venue with a «Fútbol 5» and a clay «Tenis» court.
+  Future<(String, String, String)> venueWithCourts() async {
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850');
     return (
-      sede,
-      await createSpace(sede),
-      await createSpace(sede, sport: 'Tenis', kind: 'PDL'),
+      venue,
+      await createSpace(venue),
+      await createSpace(venue, sport: 'Tenis', kind: 'PDL'),
     );
   }
 
-  Future<String> cuenta() async {
-    final correo = 'socio.${unique()}@correo.com';
-    await createAccount(email: correo, password: 'ClubNahuel1');
-    return correo;
+  Future<String> account() async {
+    final email = 'socio.${unique()}@correo.com';
+    await createAccount(email: email, password: 'ClubNahuel1');
+    return email;
   }
 
-  Future<void> entrar(
+  Future<void> signIn(
     WidgetTester tester,
-    String correo, {
+    String email, {
     String? apiUrl,
   }) async {
     await openApp(tester, apiUrl: apiUrl);
-    await typeInto(tester, 'Correo', correo);
+    await typeInto(tester, 'Correo', email);
     await typeInto(tester, 'Contraseña', 'ClubNahuel1');
     await tapText(tester, 'INICIAR SESIÓN');
     await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
-  Future<void> abrirMisReservas(WidgetTester tester) async {
+  Future<void> openMyBookings(WidgetTester tester) async {
     await tapText(tester, 'RESERVAS');
     await waitUntil(tester, find.text('Mis reservas'));
   }
 
-  Future<void> verHistorial(WidgetTester tester) async {
+  Future<void> openHistory(WidgetTester tester) async {
     await tapText(tester, 'Historial');
   }
 
-  /// El orden en pantalla, de arriba abajo, de los textos que se encuentran.
-  List<String> enOrden(WidgetTester tester, List<String> textos) {
+  /// The on-screen order, top to bottom, of the texts that are found.
+  List<String> inOrder(WidgetTester tester, List<String> texts) {
     final y = {
-      for (final t in textos) t: tester.getTopLeft(find.text(t).first).dy,
+      for (final t in texts) t: tester.getTopLeft(find.text(t).first).dy,
     };
-    return [...textos]..sort((a, b) => y[a]!.compareTo(y[b]!));
+    return [...texts]..sort((a, b) => y[a]!.compareTo(y[b]!));
   }
 
   testWidgets(
-    'abre Mis reservas y ve sus próximas reservas con sede, espacio, fecha, horario y precio @CU-08-H01-01',
+    'opens «Mis reservas» and sees its upcoming bookings with venue, space, date, time and price @CU-08-H01-01',
     (tester) async {
-      final (sede, f5, tenis) = await sedeConCanchas();
-      final correo = await cuenta();
-      await occupy(tenis, dia(3), 10, email: correo);
-      await occupy(f5, dia(1), 18, hours: 2, email: correo);
-      await entrar(tester, correo);
+      final (venue, f5, tennis) = await venueWithCourts();
+      final email = await account();
+      await occupy(tennis, day(3), 10, email: email);
+      await occupy(f5, day(1), 18, hours: 2, email: email);
+      await signIn(tester, email);
 
-      await abrirMisReservas(tester);
+      await openMyBookings(tester);
 
-      // Verifica: cada próxima con sus datos, la más cercana primero.
+      // Verifies: each upcoming one with its data, the nearest first.
       await waitUntil(tester, find.text(f5));
-      expect(find.text(tenis), findsOneWidget);
-      expect(find.text('$sede · Av. Vergara 1850'), findsNWidgets(2));
-      expect(find.text(fecha(dia(1))), findsOneWidget);
+      expect(find.text(tennis), findsOneWidget);
+      expect(find.text('$venue · Av. Vergara 1850'), findsNWidgets(2));
+      expect(find.text(dateLabel(day(1))), findsOneWidget);
       expect(find.text('18:00 – 20:00'), findsOneWidget);
       expect(find.textContaining('86.000'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNWidgets(2));
-      expect(enOrden(tester, [f5, tenis]), [f5, tenis]);
+      expect(inOrder(tester, [f5, tennis]), [f5, tennis]);
     },
   );
 
-  testWidgets('una reserva recién hecha aparece en Próximas @CU-08-H01-02', (
+  testWidgets('a booking just made shows up in «Próximas» @CU-08-H01-02', (
     tester,
   ) async {
-    final (_, f5, _) = await sedeConCanchas();
-    final correo = await cuenta();
-    await entrar(tester, correo);
-    await abrirMisReservas(tester);
+    final (_, f5, _) = await venueWithCourts();
+    final email = await account();
+    await signIn(tester, email);
+    await openMyBookings(tester);
     await waitUntil(tester, find.text('No hay próximas reservas'));
 
-    await occupy(f5, dia(2), 9, email: correo);
+    await occupy(f5, day(2), 9, email: email);
     await tapText(tester, 'INICIO');
-    await abrirMisReservas(tester);
+    await openMyBookings(tester);
 
-    // Verifica: al volver a la sección ya está.
+    // Verifies: on returning to the section it is there.
     await waitUntil(tester, find.text(f5));
     expect(find.text('09:00 – 10:00'), findsOneWidget);
   });
 
   testWidgets(
-    'abre Historial y ve sus reservas ya finalizadas, ordenadas por fecha @CU-08-H01-03',
+    'opens «Historial» and sees its already finished bookings, ordered by date @CU-08-H01-03',
     (tester) async {
-      final (_, f5, tenis) = await sedeConCanchas();
-      final correo = await cuenta();
-      await occupy(f5, dia(-6), 10, email: correo);
-      await occupy(tenis, dia(-2), 19, email: correo);
-      await entrar(tester, correo);
-      await abrirMisReservas(tester);
+      final (_, f5, tennis) = await venueWithCourts();
+      final email = await account();
+      await occupy(f5, day(-6), 10, email: email);
+      await occupy(tennis, day(-2), 19, email: email);
+      await signIn(tester, email);
+      await openMyBookings(tester);
 
-      await verHistorial(tester);
+      await openHistory(tester);
 
-      // Verifica: las dos completadas, la más reciente primero.
-      await waitUntil(tester, find.text(tenis));
+      // Verifies: both completed, the most recent first.
+      await waitUntil(tester, find.text(tennis));
       expect(find.text(f5), findsOneWidget);
       expect(find.text('COMPLETADA'), findsNWidgets(2));
-      expect(enOrden(tester, [f5, tenis]), [tenis, f5]);
+      expect(inOrder(tester, [f5, tennis]), [tennis, f5]);
     },
   );
 
   testWidgets(
-    'una reserva cancelada o anulada aparece en el historial con su estado @CU-08-H01-04',
+    'a cancelled or voided booking shows in the history with its status @CU-08-H01-04',
     (tester) async {
-      final (_, f5, tenis) = await sedeConCanchas();
-      final correo = await cuenta();
-      await occupy(f5, dia(2), 20, email: correo, status: 'canceled');
+      final (_, f5, tennis) = await venueWithCourts();
+      final email = await account();
+      await occupy(f5, day(2), 20, email: email, status: 'canceled');
       await occupy(
-        tenis,
-        dia(-1),
+        tennis,
+        day(-1),
         19,
-        email: correo,
+        email: email,
         status: 'voided',
         reason: 'mantenimiento de la cancha',
       );
-      await entrar(tester, correo);
-      await abrirMisReservas(tester);
+      await signIn(tester, email);
+      await openMyBookings(tester);
       await waitUntil(tester, find.text('No hay próximas reservas'));
 
-      await verHistorial(tester);
+      await openHistory(tester);
 
-      // Verifica: las dos con su estado y el porqué.
+      // Verifies: both with their status and the reason.
       await waitUntil(tester, find.text('CANCELADA'));
       expect(find.text('ANULADA'), findsOneWidget);
       expect(
@@ -171,36 +171,38 @@ void main() {
     },
   );
 
-  testWidgets('no ve reservas de otros usuarios @CU-08-H01-05', (tester) async {
-    final (_, f5, tenis) = await sedeConCanchas();
-    final correo = await cuenta();
-    final otra = await cuenta();
-    await occupy(f5, dia(1), 10, email: correo);
-    await occupy(tenis, dia(1), 10, email: otra);
-    await occupy(tenis, dia(-1), 10, email: otra);
-    await entrar(tester, correo);
+  testWidgets('does not see other users\' bookings @CU-08-H01-05', (
+    tester,
+  ) async {
+    final (_, f5, tennis) = await venueWithCourts();
+    final email = await account();
+    final other = await account();
+    await occupy(f5, day(1), 10, email: email);
+    await occupy(tennis, day(1), 10, email: other);
+    await occupy(tennis, day(-1), 10, email: other);
+    await signIn(tester, email);
 
-    await abrirMisReservas(tester);
+    await openMyBookings(tester);
 
-    // Verifica: sólo la suya, en las dos pestañas.
+    // Verifies: only its own, in both tabs.
     await waitUntil(tester, find.text(f5));
-    expect(find.text(tenis), findsNothing);
-    await verHistorial(tester);
+    expect(find.text(tennis), findsNothing);
+    await openHistory(tester);
     await waitUntil(tester, find.text('No hay reservas pasadas'));
-    expect(find.text(tenis), findsNothing);
+    expect(find.text(tennis), findsNothing);
   });
 
   testWidgets(
-    'sin reservas próximas, ve el aviso de que no tiene @CU-08-H02-01',
+    'with no upcoming bookings, sees the notice that it has none @CU-08-H02-01',
     (tester) async {
-      final (_, f5, _) = await sedeConCanchas();
-      final correo = await cuenta();
-      await occupy(f5, dia(-3), 10, email: correo);
-      await entrar(tester, correo);
+      final (_, f5, _) = await venueWithCourts();
+      final email = await account();
+      await occupy(f5, day(-3), 10, email: email);
+      await signIn(tester, email);
 
-      await abrirMisReservas(tester);
+      await openMyBookings(tester);
 
-      // Verifica: el aviso de Próximas.
+      // Verifies: the «Próximas» notice.
       await waitUntil(tester, find.text('No hay próximas reservas'));
       expect(
         find.text('No se encontraron próximas reservas asociadas a tu cuenta.'),
@@ -210,18 +212,18 @@ void main() {
   );
 
   testWidgets(
-    'sin reservas pasadas, ve el aviso de que no tiene @CU-08-H02-02',
+    'with no past bookings, sees the notice that it has none @CU-08-H02-02',
     (tester) async {
-      final (_, f5, _) = await sedeConCanchas();
-      final correo = await cuenta();
-      await occupy(f5, dia(3), 10, email: correo);
-      await entrar(tester, correo);
-      await abrirMisReservas(tester);
+      final (_, f5, _) = await venueWithCourts();
+      final email = await account();
+      await occupy(f5, day(3), 10, email: email);
+      await signIn(tester, email);
+      await openMyBookings(tester);
       await waitUntil(tester, find.text(f5));
 
-      await verHistorial(tester);
+      await openHistory(tester);
 
-      // Verifica: el aviso del Historial.
+      // Verifies: the «Historial» notice.
       await waitUntil(tester, find.text('No hay reservas pasadas'));
       expect(
         find.text('No se encontraron reservas pasadas asociadas a tu cuenta.'),
@@ -230,46 +232,45 @@ void main() {
     },
   );
 
-  testWidgets('sin conexión, ve el error de conexión @CU-08-H03-01', (
+  testWidgets('with no connection, sees the connection error @CU-08-H03-01', (
     tester,
   ) async {
-    final (_, f5, _) = await sedeConCanchas();
-    final correo = await cuenta();
-    await occupy(f5, dia(1), 10, email: correo);
+    final (_, f5, _) = await venueWithCourts();
+    final email = await account();
+    await occupy(f5, day(1), 10, email: email);
     final api = await ProxyApi.open();
-    await entrar(tester, correo, apiUrl: api.url);
+    await signIn(tester, email, apiUrl: api.url);
 
     api.state = ApiState.offline;
     await tapText(tester, 'RESERVAS');
 
-    // Verifica: el aviso de conexión y, al cerrarlo, ninguna reserva.
+    // Verifies: the connection notice and, once closed, no booking.
     await waitUntil(tester, find.text('Error de conexión'));
     await tapText(tester, 'Volver');
     expect(find.text(f5), findsNothing);
     expect(find.text('REINTENTAR'), findsOneWidget);
   });
 
-  testWidgets(
-    'el servidor falla y no se muestran datos parciales @CU-08-H03-02',
-    (tester) async {
-      final (_, f5, _) = await sedeConCanchas();
-      final correo = await cuenta();
-      await occupy(f5, dia(1), 10, email: correo);
-      await occupy(f5, dia(-1), 10, email: correo);
-      final api = await ProxyApi.open();
-      await entrar(tester, correo, apiUrl: api.url);
-      await abrirMisReservas(tester);
-      await waitUntil(tester, find.text(f5));
+  testWidgets('the server fails and no partial data is shown @CU-08-H03-02', (
+    tester,
+  ) async {
+    final (_, f5, _) = await venueWithCourts();
+    final email = await account();
+    await occupy(f5, day(1), 10, email: email);
+    await occupy(f5, day(-1), 10, email: email);
+    final api = await ProxyApi.open();
+    await signIn(tester, email, apiUrl: api.url);
+    await openMyBookings(tester);
+    await waitUntil(tester, find.text(f5));
 
-      api.state = ApiState.failing;
-      await verHistorial(tester);
+    api.state = ApiState.failing;
+    await openHistory(tester);
 
-      // Verifica: el error del servidor y ninguna tarjeta del historial.
-      await waitUntil(tester, find.text('Error del servidor'));
-      await tapText(tester, 'ACEPTAR');
-      expect(find.text('COMPLETADA'), findsNothing);
-      expect(find.text(f5), findsNothing);
-      expect(find.text('REINTENTAR'), findsOneWidget);
-    },
-  );
+    // Verifies: the server error and no history card.
+    await waitUntil(tester, find.text('Error del servidor'));
+    await tapText(tester, 'ACEPTAR');
+    expect(find.text('COMPLETADA'), findsNothing);
+    expect(find.text(f5), findsNothing);
+    expect(find.text('REINTENTAR'), findsOneWidget);
+  });
 }

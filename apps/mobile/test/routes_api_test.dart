@@ -8,33 +8,30 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
-  test(
-    'cada ruta que la app declara está publicada en el contrato de la API @REV-08-S4 '
-    '@assumption:REV-08-ASM-04',
-    () {
-      // El contrato que publica la API (apps/api/openapi.json); los tests corren en apps/mobile.
-      final contrato =
-          jsonDecode(File('../api/openapi.json').readAsStringSync())
-              as Map<String, Object?>;
-      final caminos = contrato['paths']! as Map<String, Object?>;
-      final publicadas = {
-        for (final MapEntry(key: ruta, value: metodos) in caminos.entries)
-          for (final metodo in (metodos! as Map<String, Object?>).keys)
-            '${metodo.toUpperCase()} $ruta',
-      };
+  test('every route the app declares is published in the API contract @REV-08-S4 '
+      '@assumption:REV-08-ASM-04', () {
+    // The contract the API publishes (apps/api/openapi.json); the tests run in apps/mobile.
+    final contract =
+        jsonDecode(File('../api/openapi.json').readAsStringSync())
+            as Map<String, Object?>;
+    final paths = contract['paths']! as Map<String, Object?>;
+    final published = {
+      for (final MapEntry(key: route, value: methods) in paths.entries)
+        for (final method in (methods! as Map<String, Object?>).keys)
+          '${method.toUpperCase()} $route',
+    };
 
-      expect(rutasDeLaApi, isNotEmpty);
-      expect(
-        [
-          for (final r in rutasDeLaApi) '${r.metodo} ${r.ruta}',
-        ].where((r) => !publicadas.contains(r)),
-        isEmpty,
-      );
-    },
-  );
+    expect(rutasDeLaApi, isNotEmpty);
+    expect(
+      [
+        for (final r in rutasDeLaApi) '${r.metodo} ${r.ruta}',
+      ].where((r) => !published.contains(r)),
+      isEmpty,
+    );
+  });
 
   test(
-    'un pedido a una ruta que la app no declara falla en sus propios tests @REV-08-S4 '
+    'a request to a route the app does not declare fails in its own tests @REV-08-S4 '
     '@assumption:REV-08-ASM-04',
     () async {
       final api = ApiClient(
@@ -47,8 +44,7 @@ void main() {
         throwsA(isA<AssertionError>()),
       );
       await expectLater(
-        () =>
-            api.post('/venues/00000000-0000-7000-8000-000000000001/void', {}),
+        () => api.post('/venues/00000000-0000-7000-8000-000000000001/void', {}),
         throwsA(isA<AssertionError>()),
       );
       await expectLater(api.get('/venues', token: 'token'), completes);
@@ -56,25 +52,28 @@ void main() {
     },
   );
 
-  test('en release un pedido a una ruta no declarada sale como hoy @REV-08-S4 '
-      '@assumption:REV-08-ASM-07', () async {
-    final pedidos = <http.Request>[];
-    final api = ApiClient(
-      'http://api.falsa',
-      verificarRutas: false,
-      cliente: MockClient((p) async {
-        pedidos.add(p);
-        return http.Response('{}', 200);
-      }),
-    );
+  test(
+    'in release a request to an undeclared route goes out as before @REV-08-S4 '
+    '@assumption:REV-08-ASM-07',
+    () async {
+      final requests = <http.Request>[];
+      final api = ApiClient(
+        'http://api.falsa',
+        verificarRutas: false,
+        cliente: MockClient((p) async {
+          requests.add(p);
+          return http.Response('{}', 200);
+        }),
+      );
 
-    final r = await api.get('/ruta-inventada');
+      final r = await api.get('/ruta-inventada');
 
-    expect(r.codigo, 200);
-    expect(pedidos.single.url.path, '/ruta-inventada');
-  });
+      expect(r.codigo, 200);
+      expect(requests.single.url.path, '/ruta-inventada');
+    },
+  );
 
-  test('el manifiesto se compara por método y por plantilla de ruta @REV-08-S4 '
+  test('the manifest is compared by method and by route template @REV-08-S4 '
       '@assumption:REV-08-ASM-12', () {
     expect(
       rutaDeclarada(
@@ -91,7 +90,7 @@ void main() {
       isTrue,
     );
     expect(rutaDeclarada('GET', '/bookings?when=history'), isTrue);
-    // El método cuenta: la ruta existe pero con otro método.
+    // The method counts: the route exists but with another method.
     expect(rutaDeclarada('DELETE', '/bookings'), isFalse);
     expect(
       rutaDeclarada(
@@ -100,7 +99,7 @@ void main() {
       ),
       isFalse,
     );
-    // La plantilla cuenta: un segmento de más o de menos no coincide.
+    // The template counts: one segment more or less does not match.
     expect(
       rutaDeclarada(
         'POST',

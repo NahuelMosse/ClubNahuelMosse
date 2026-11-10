@@ -9,8 +9,8 @@ Map<String, String> _lib() => {
           .readAsStringSync(),
 };
 
-/// El código sin comentarios ni contenido de strings, con los saltos de línea intactos.
-String _limpiar(String s) {
+/// The code without comments or string contents, with line breaks intact.
+String _clean(String s) {
   final out = StringBuffer();
   var i = 0;
   while (i < s.length) {
@@ -20,16 +20,16 @@ String _limpiar(String s) {
         i++;
       }
     } else if (s.startsWith('/*', i)) {
-      final fin = s.indexOf('*/', i + 2);
-      final hasta = fin < 0 ? s.length : fin + 2;
-      out.write('\n' * '\n'.allMatches(s.substring(i, hasta)).length);
-      i = hasta;
+      final end = s.indexOf('*/', i + 2);
+      final upTo = end < 0 ? s.length : end + 2;
+      out.write('\n' * '\n'.allMatches(s.substring(i, upTo)).length);
+      i = upTo;
     } else if (c == "'" || c == '"') {
       final raw = i > 0 && s[i - 1] == 'r';
-      final fin = _finDeString(s, i, raw);
+      final end = _stringEnd(s, i, raw);
       out.write("''");
-      out.write('\n' * '\n'.allMatches(s.substring(i, fin)).length);
-      i = fin;
+      out.write('\n' * '\n'.allMatches(s.substring(i, end)).length);
+      i = end;
     } else {
       out.write(c);
       i++;
@@ -38,17 +38,17 @@ String _limpiar(String s) {
   return out.toString();
 }
 
-int _finDeString(String s, int inicio, bool raw) {
-  final q = s[inicio];
-  final triple = s.startsWith(q * 3, inicio);
-  final cierre = triple ? q * 3 : q;
-  var i = inicio + cierre.length;
+int _stringEnd(String s, int start, bool raw) {
+  final q = s[start];
+  final triple = s.startsWith(q * 3, start);
+  final closing = triple ? q * 3 : q;
+  var i = start + closing.length;
   while (i < s.length) {
-    if (s.startsWith(cierre, i)) return i + cierre.length;
+    if (s.startsWith(closing, i)) return i + closing.length;
     if (!raw && s[i] == r'\') {
       i += 2;
     } else if (!raw && s.startsWith(r'${', i)) {
-      i = _finDeInterpolacion(s, i + 2);
+      i = _interpolationEnd(s, i + 2);
     } else {
       i++;
     }
@@ -56,139 +56,140 @@ int _finDeString(String s, int inicio, bool raw) {
   return s.length;
 }
 
-int _finDeInterpolacion(String s, int desde) {
-  var prof = 1;
-  var i = desde;
-  while (i < s.length && prof > 0) {
+int _interpolationEnd(String s, int from) {
+  var depth = 1;
+  var i = from;
+  while (i < s.length && depth > 0) {
     final c = s[i];
     if (c == "'" || c == '"') {
-      i = _finDeString(s, i, false);
+      i = _stringEnd(s, i, false);
       continue;
     }
-    if (c == '{') prof++;
-    if (c == '}') prof--;
+    if (c == '{') depth++;
+    if (c == '}') depth--;
     i++;
   }
   return i;
 }
 
-enum _Cuerpo { tipo, funcion, interno }
+enum _Body { type, function, inner }
 
-/// Largo en líneas de cada función, método o constructor con cuerpo de `lib`,
-/// con `build` incluido: la clave es `archivo:línea`.
-Map<String, int> _largos(String archivo, String texto) {
-  final s = _limpiar(texto);
-  final largos = <String, int>{};
-  final pila = <(_Cuerpo, int)>[];
-  var parentesis = 0;
-  var segmento = -1;
-  var linea = 1;
-  bool admite() => pila.isEmpty || pila.last.$1 == _Cuerpo.tipo;
+/// Length in lines of each function, method or constructor with a body in `lib`,
+/// `build` included: the key is `file:line`.
+Map<String, int> _lengths(String file, String text) {
+  final s = _clean(text);
+  final lengths = <String, int>{};
+  final stack = <(_Body, int)>[];
+  var parens = 0;
+  var segment = -1;
+  var line = 1;
+  bool accepts() => stack.isEmpty || stack.last.$1 == _Body.type;
   var i = 0;
   while (i < s.length) {
     final c = s[i];
     if (c == '\n') {
-      linea++;
-    } else if (segmento < 0 && admite() && c.trim().isNotEmpty) {
-      segmento = i;
+      line++;
+    } else if (segment < 0 && accepts() && c.trim().isNotEmpty) {
+      segment = i;
     }
-    if ('([<'.contains(c) && c != '<') parentesis++;
-    if (')]'.contains(c)) parentesis--;
+    if ('([<'.contains(c) && c != '<') parens++;
+    if (')]'.contains(c)) parens--;
     if (c == '=' &&
         s.startsWith('=>', i) &&
-        parentesis == 0 &&
-        admite() &&
-        segmento >= 0) {
-      final fin = _finDeFlecha(s, i + 2);
-      final lineas = '\n'.allMatches(s.substring(segmento, fin)).length + 1;
-      final inicio = linea - '\n'.allMatches(s.substring(segmento, i)).length;
-      largos['$archivo:$inicio'] = lineas;
-      linea += '\n'.allMatches(s.substring(i, fin)).length;
-      i = fin;
-      segmento = -1;
+        parens == 0 &&
+        accepts() &&
+        segment >= 0) {
+      final end = _arrowEnd(s, i + 2);
+      final lines = '\n'.allMatches(s.substring(segment, end)).length + 1;
+      final start = line - '\n'.allMatches(s.substring(segment, i)).length;
+      lengths['$file:$start'] = lines;
+      line += '\n'.allMatches(s.substring(i, end)).length;
+      i = end;
+      segment = -1;
       continue;
     }
     if (c == '{') {
-      if (admite() && parentesis == 0 && segmento >= 0) {
-        final previo = s.substring(segmento, i).trimRight();
-        final esFuncion = RegExp(r'(\)|\basync\*?|\bsync\*)$').hasMatch(previo);
-        final inicio = linea - '\n'.allMatches(s.substring(segmento, i)).length;
-        pila.add((esFuncion ? _Cuerpo.funcion : _Cuerpo.tipo, inicio));
+      if (accepts() && parens == 0 && segment >= 0) {
+        final previous = s.substring(segment, i).trimRight();
+        final isFunction = RegExp(
+          r'(\)|\basync\*?|\bsync\*)$',
+        ).hasMatch(previous);
+        final start = line - '\n'.allMatches(s.substring(segment, i)).length;
+        stack.add((isFunction ? _Body.function : _Body.type, start));
       } else {
-        pila.add((_Cuerpo.interno, linea));
+        stack.add((_Body.inner, line));
       }
-      if (pila.last.$1 != _Cuerpo.interno) segmento = -1;
-    } else if (c == '}' && pila.isNotEmpty) {
-      final (tipo, inicio) = pila.removeLast();
-      if (tipo == _Cuerpo.funcion)
-        largos['$archivo:$inicio'] = linea - inicio + 1;
-      if (admite()) segmento = -1;
-    } else if (c == ';' && parentesis == 0 && admite()) {
-      segmento = -1;
+      if (stack.last.$1 != _Body.inner) segment = -1;
+    } else if (c == '}' && stack.isNotEmpty) {
+      final (kind, start) = stack.removeLast();
+      if (kind == _Body.function) lengths['$file:$start'] = line - start + 1;
+      if (accepts()) segment = -1;
+    } else if (c == ';' && parens == 0 && accepts()) {
+      segment = -1;
     }
     i++;
   }
-  return largos;
+  return lengths;
 }
 
-/// El índice del `;` que cierra la expresión que empieza en [desde].
-int _finDeFlecha(String s, int desde) {
-  var nivel = 0;
-  for (var i = desde; i < s.length; i++) {
+/// The index of the `;` that closes the expression starting at [from].
+int _arrowEnd(String s, int from) {
+  var level = 0;
+  for (var i = from; i < s.length; i++) {
     final c = s[i];
-    if ('([{'.contains(c)) nivel++;
-    if (')]}'.contains(c)) nivel--;
-    if (c == ';' && nivel <= 0) return i + 1;
+    if ('([{'.contains(c)) level++;
+    if (')]}'.contains(c)) level--;
+    if (c == ';' && level <= 0) return i + 1;
   }
   return s.length;
 }
 
 void main() {
   test(
-    'el análisis de la app pide imports ordenados y ningún booleano posicional, y no excluye tests arreglados @SIM-03-S2 @SIM-03-S3',
+    'the app analysis requires ordered imports and no positional booleans, and does not exclude fixed tests @SIM-03-S2 @SIM-03-S3',
     () {
-      final opciones = File('analysis_options.yaml').readAsStringSync();
-      expect(opciones, contains('- directives_ordering'));
-      expect(opciones, contains('- avoid_positional_boolean_parameters'));
-      expect(opciones, isNot(contains('anular_desde_el_detalle_test')));
+      final options = File('analysis_options.yaml').readAsStringSync();
+      expect(options, contains('- directives_ordering'));
+      expect(options, contains('- avoid_positional_boolean_parameters'));
+      expect(options, isNot(contains('anular_desde_el_detalle_test')));
     },
   );
 
   test(
-    'ninguna función de lib pasa de 80 líneas, build incluido @SIM-03-S2 @assumption:SIM-03-ASM-03',
+    'no lib function goes over 80 lines, build included @SIM-03-S2 @assumption:SIM-03-ASM-03',
     () {
-      final largas = <String, int>{};
-      for (final MapEntry(key: ruta, value: texto) in _lib().entries) {
-        _largos(ruta, texto).forEach((donde, largo) {
-          if (largo > 80) largas[donde] = largo;
+      final long = <String, int>{};
+      for (final MapEntry(key: path, value: text) in _lib().entries) {
+        _lengths(path, text).forEach((where, length) {
+          if (length > 80) long[where] = length;
         });
       }
-      expect(largas, isEmpty);
+      expect(long, isEmpty);
     },
   );
 
-  test('no queda paginaQueSube ni otro código sin uso en lib @SIM-03-S3', () {
-    final usan = [
-      for (final MapEntry(key: ruta, value: texto) in _lib().entries)
-        if (texto.contains('paginaQueSube')) ruta,
+  test('no leftover paginaQueSube or other unused code in lib @SIM-03-S3', () {
+    final users = [
+      for (final MapEntry(key: path, value: text) in _lib().entries)
+        if (text.contains('paginaQueSube')) path,
     ];
-    expect(usan, isEmpty);
+    expect(users, isEmpty);
   });
 
   test(
-    'movimiento.dart reexporta sus widgets desde common/motion sin cambiar los imports @assumption:SIM-03-ASM-02',
+    'motion.dart re-exports its widgets from common/motion without changing the imports @assumption:SIM-03-ASM-02',
     () {
-      final indice = File('lib/common/motion.dart').readAsStringSync();
+      final index = File('lib/common/motion.dart').readAsStringSync();
       final exports = RegExp(
         r'^export .*$',
         multiLine: true,
-      ).allMatches(indice).map((m) => m.group(0)!).toList();
+      ).allMatches(index).map((m) => m.group(0)!).toList();
       expect(exports, isNotEmpty);
       for (final e in exports) {
         expect(e, contains("'motion/"));
         expect(e, contains(' show '), reason: e);
       }
-      expect(indice, isNot(contains('Widget')));
+      expect(index, isNot(contains('Widget')));
       for (final widget in [
         'FadeIn',
         'StaggeredEntrance',
@@ -199,16 +200,16 @@ void main() {
         'Celebration',
         'AppMotion',
       ]) {
-        expect(indice, contains(widget), reason: widget);
+        expect(index, contains(widget), reason: widget);
       }
-      final piezas = Directory(
+      final pieces = Directory(
         'lib/common/motion',
       ).listSync().whereType<File>().where((f) => f.path.endsWith('.dart'));
-      expect(piezas.length, greaterThanOrEqualTo(6));
+      expect(pieces.length, greaterThanOrEqualTo(6));
     },
   );
 
-  test('el router de la app vive fuera de app.dart @SIM-03-S2', () {
+  test('the app router lives outside app.dart @SIM-03-S2', () {
     final lib = _lib();
     expect(lib['app.dart'], isNot(contains('GoRoute(')));
     expect(lib['app.dart'], isNot(contains('GoRouter(')));
@@ -216,10 +217,10 @@ void main() {
   });
 
   test(
-    'las piezas de un build largo viven en archivos propios del módulo @assumption:SIM-03-ASM-01',
+    'the pieces of a long build live in files of their own in the module @assumption:SIM-03-ASM-01',
     () {
       final lib = _lib();
-      for (final ruta in [
+      for (final path in [
         'features/bookings/presentation/booking_card.dart',
         'features/admin/presentation/booking_filters_screen.dart',
         'features/admin/presentation/admin_panel_screen.dart',
@@ -227,37 +228,37 @@ void main() {
         'features/session/presentation/account_card.dart',
         'features/admin/presentation/new_space_screen.dart',
       ]) {
-        final texto = lib[ruta]!;
-        final clases = RegExp(
+        final text = lib[path]!;
+        final classes = RegExp(
           r'^class (\w+)',
           multiLine: true,
-        ).allMatches(texto).map((m) => m.group(1)!).toList();
-        expect(clases.length, lessThanOrEqualTo(2), reason: '$ruta $clases');
+        ).allMatches(text).map((m) => m.group(1)!).toList();
+        expect(classes.length, lessThanOrEqualTo(2), reason: '$path $classes');
         expect(
-          '\n'.allMatches(texto).length,
+          '\n'.allMatches(text).length,
           lessThan(250),
-          reason: '$ruta es larga',
+          reason: '$path is long',
         );
       }
     },
   );
 
   test(
-    'la app muestra lo mismo: las capturas se comparan sin regenerarlas @SIM-03-S1',
+    'the app shows the same: the screenshots are compared without regenerating them @SIM-03-S1',
     () {
-      final capturas = Directory('test/screenshots')
+      final screenshots = Directory('test/screenshots')
           .listSync()
           .whereType<File>()
           .where((f) => f.path.endsWith('_screenshots.dart'))
           .toList();
-      expect(capturas, isNotEmpty);
-      for (final archivo in capturas) {
-        final texto = archivo.readAsStringSync();
-        expect(texto, contains('matchesGoldenFile'), reason: archivo.path);
+      expect(screenshots, isNotEmpty);
+      for (final file in screenshots) {
+        final text = file.readAsStringSync();
+        expect(text, contains('matchesGoldenFile'), reason: file.path);
         expect(
-          texto,
+          text,
           isNot(contains('autoUpdateGoldenFiles')),
-          reason: archivo.path,
+          reason: file.path,
         );
       }
     },

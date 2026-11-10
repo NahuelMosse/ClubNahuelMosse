@@ -12,132 +12,132 @@ import 'package:http/testing.dart';
 import 'support/mount.dart';
 
 void main() {
-  group('retomar la sesión guardada', () {
-    test('sin cuenta en el dispositivo no consulta nada', () async {
-      final sesion = Session(
+  group('resume the saved session', () {
+    test('without an account on the device it queries nothing', () async {
+      final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
           api: fakeApi(status: 500),
         ),
       );
-      expect(await sesion.resume(), isNull);
+      expect(await session.resume(), isNull);
     });
 
-    test('con la cuenta vigente entra con su rol', () async {
-      final sesion = Session(
+    test('with a valid account it signs in with its role', () async {
+      final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(withAccount: true),
           api: fakeApi(status: 200, body: profileJson(role: 'admin')),
         ),
       );
-      final perfil = await sesion.resume();
-      expect(perfil?.role, Role.admin);
-      expect(perfil?.home, '/admin');
-      expect(sesion.profile, same(perfil));
+      final profile = await session.resume();
+      expect(profile?.role, Role.admin);
+      expect(profile?.home, '/admin');
+      expect(session.profile, same(profile));
     });
 
-    test('si la API ya no la reconoce, la cierra', () async {
-      final credenciales = FakeCredentials(withAccount: true);
-      final sesion = Session(
+    test('if the API no longer recognizes it, it closes it', () async {
+      final credentials = FakeCredentials(withAccount: true);
+      final session = Session(
         repository: SessionRepository(
-          credentials: credenciales,
+          credentials: credentials,
           api: fakeApi(status: 401, body: '{}'),
         ),
       );
-      expect(await sesion.resume(), isNull);
-      expect(credenciales.signOuts, 1);
+      expect(await session.resume(), isNull);
+      expect(credentials.signOuts, 1);
     });
 
-    test('sin red o con la API caída la conserva para la próxima', () async {
-      final credenciales = FakeCredentials(withAccount: true);
-      final sesion = Session(
+    test('with no network or the API down it keeps it for next time', () async {
+      final credentials = FakeCredentials(withAccount: true);
+      final session = Session(
         repository: SessionRepository(
-          credentials: credenciales,
+          credentials: credentials,
           api: fakeApi(status: 503),
         ),
       );
-      await expectLater(sesion.resume(), throwsA(isA<ErrorDelServidor>()));
-      expect(credenciales.signOuts, 0);
+      await expectLater(session.resume(), throwsA(isA<ErrorDelServidor>()));
+      expect(credentials.signOuts, 0);
     });
   });
 
-  test('avisa a quien escucha cuando cambia el perfil', () async {
-    final sesion = Session(
+  test('notifies whoever listens when the profile changes', () async {
+    final session = Session(
       repository: SessionRepository(
         credentials: FakeCredentials(),
         api: fakeApi(status: 200, body: profileJson()),
       ),
     );
-    var avisos = 0;
-    sesion.addListener(() => avisos++);
-    await sesion.signIn('a@b.com', 'Clave1234');
-    await sesion.close();
-    expect(avisos, 2);
+    var notices = 0;
+    session.addListener(() => notices++);
+    await session.signIn('a@b.com', 'Clave1234');
+    await session.close();
+    expect(notices, 2);
   });
 
-  test('un perfil con un rol desconocido es un error del servidor', () async {
-    final credenciales = FakeCredentials();
-    final sesion = Session(
+  test('a profile with an unknown role is a server error', () async {
+    final credentials = FakeCredentials();
+    final session = Session(
       repository: SessionRepository(
-        credentials: credenciales,
+        credentials: credentials,
         api: fakeApi(status: 200, body: profileJson(role: 'dueño')),
       ),
     );
     await expectLater(
-      sesion.signIn('a@b.com', 'Clave1234'),
+      session.signIn('a@b.com', 'Clave1234'),
       throwsA(isA<ErrorDelServidor>()),
     );
-    expect(credenciales.hasAccount, isFalse);
+    expect(credentials.hasAccount, isFalse);
   });
 
-  test('si Firebase no puede cerrar la sesión, el perfil sigue', () async {
-    final sesion = Session(
+  test('if Firebase cannot sign out, the profile stays', () async {
+    final session = Session(
       repository: SessionRepository(
-        credentials: _SalirFalla(),
+        credentials: _SignOutFails(),
         api: fakeApi(status: 200, body: profileJson()),
       ),
     );
-    await sesion.signIn('a@b.com', 'Clave1234');
-    await expectLater(sesion.close(), throwsA(isA<StateError>()));
-    expect(sesion.profile, isNotNull);
+    await session.signIn('a@b.com', 'Clave1234');
+    await expectLater(session.close(), throwsA(isA<StateError>()));
+    expect(session.profile, isNotNull);
   });
 
   test(
-    'una edición que vuelve después de cerrar la sesión no la revive',
+    'an edit that returns after the session was closed does not revive it',
     () async {
-      final respuesta = Completer<http.Response>();
-      var pedidos = 0;
-      final sesion = Session(
+      final response = Completer<http.Response>();
+      var requests = 0;
+      final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient((pedido) async {
-              pedidos++;
-              if (pedido.method == 'PUT') return respuesta.future;
+            cliente: MockClient((request) async {
+              requests++;
+              if (request.method == 'PUT') return response.future;
               return http.Response(profileJson(), 200);
             }),
           ),
         ),
       );
-      await sesion.signIn('a@b.com', 'Clave1234');
-      final edicion = sesion.updateProfile(
+      await session.signIn('a@b.com', 'Clave1234');
+      final edit = session.updateProfile(
         firstName: 'Agustín',
         lastName: 'Mosse',
         dni: '42118507',
         birthDate: '2000-03-14',
       );
-      await sesion.close();
-      respuesta.complete(http.Response(profileJson(), 200));
+      await session.close();
+      response.complete(http.Response(profileJson(), 200));
 
-      await expectLater(edicion, throwsA(isA<SessionExpired>()));
-      expect(sesion.profile, isNull);
-      expect(pedidos, 2);
+      await expectLater(edit, throwsA(isA<SessionExpired>()));
+      expect(session.profile, isNull);
+      expect(requests, 2);
     },
   );
 
-  test('un 409 de la edición se marca como dato repetido', () async {
-    final sesion = Session(
+  test('a 409 on the edit is flagged as a duplicate value', () async {
+    final session = Session(
       repository: SessionRepository(
         credentials: FakeCredentials(),
         api: apiRoutes({
@@ -149,36 +149,36 @@ void main() {
         }),
       ),
     );
-    await sesion.signIn('a@b.com', 'Clave1234');
+    await session.signIn('a@b.com', 'Clave1234');
     await expectLater(
-      sesion.updateProfile(
+      session.updateProfile(
         firstName: 'N',
         lastName: 'M',
         dni: '30111222',
         birthDate: '2000-03-14',
       ),
       throwsA(
-        isA<DataRejected>().having((e) => e.duplicate, 'repetido', isTrue),
+        isA<DataRejected>().having((e) => e.duplicate, 'duplicate', isTrue),
       ),
     );
   });
 
-  test('cerrar la sesión olvida el perfil', () async {
-    final credenciales = FakeCredentials();
-    final sesion = Session(
+  test('closing the session forgets the profile', () async {
+    final credentials = FakeCredentials();
+    final session = Session(
       repository: SessionRepository(
-        credentials: credenciales,
+        credentials: credentials,
         api: fakeApi(status: 200, body: profileJson()),
       ),
     );
-    await sesion.signIn('a@b.com', 'Clave1234');
-    await sesion.close();
-    expect(sesion.profile, isNull);
-    expect(credenciales.hasAccount, isFalse);
+    await session.signIn('a@b.com', 'Clave1234');
+    await session.close();
+    expect(session.profile, isNull);
+    expect(credentials.hasAccount, isFalse);
   });
 }
 
-class _SalirFalla extends FakeCredentials {
+class _SignOutFails extends FakeCredentials {
   @override
-  Future<void> signOut() async => throw StateError('signOut falló');
+  Future<void> signOut() async => throw StateError('signOut failed');
 }

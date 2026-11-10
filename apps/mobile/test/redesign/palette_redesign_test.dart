@@ -4,17 +4,17 @@ import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// El contraste WCAG de [texto] sobre [fondo]; un texto translúcido se compone primero sobre el fondo.
-double contraste(Color texto, Color fondo) {
-  final compuesto = Color.alphaBlend(texto, fondo);
-  final (claro, oscuro) = (
-    math.max(compuesto.computeLuminance(), fondo.computeLuminance()),
-    math.min(compuesto.computeLuminance(), fondo.computeLuminance()),
+/// The WCAG contrast of [text] over [background]; a translucent text is composited first over the background.
+double contrast(Color text, Color background) {
+  final composite = Color.alphaBlend(text, background);
+  final (light, dark) = (
+    math.max(composite.computeLuminance(), background.computeLuminance()),
+    math.min(composite.computeLuminance(), background.computeLuminance()),
   );
-  return (claro + 0.05) / (oscuro + 0.05);
+  return (light + 0.05) / (dark + 0.05);
 }
 
-/// Las 32 variables de la colección `Color` del Figma: nombre, campo de [Palette], oscuro, claro.
+/// The 32 variables of the Figma `Color` collection: name, [Palette] field, dark, light.
 final List<(String, Color Function(Palette), int, int)> _figma = [
   ('bg/base', (p) => p.bgBase, 0xFF0B0A12, 0xFFFFFFFF),
   ('bg/surface', (p) => p.bgSurface, 0xFF17152A, 0xFFF4F4F6),
@@ -51,70 +51,71 @@ final List<(String, Color Function(Palette), int, int)> _figma = [
 ];
 
 void main() {
-  test('la tabla del Figma tiene sus 32 variables', () {
+  test('the Figma table has its 32 variables', () {
     expect(_figma.map((v) => v.$1).toSet(), hasLength(32));
   });
 
   test(
-    'cada color de la paleta oscura es el del Figma, salvo textMuted @RED-01-S1',
+    'every color of the dark palette is the Figma one, except textMuted @RED-01-S1',
     () {
-      for (final (nombre, campo, oscuro, _) in _figma) {
-        if (nombre == 'text/muted') continue;
-        expect(campo(Palette.dark), Color(oscuro), reason: nombre);
+      for (final (name, field, dark, _) in _figma) {
+        if (name == 'text/muted') continue;
+        expect(field(Palette.dark), Color(dark), reason: name);
       }
     },
   );
 
-  test('cada color de la paleta clara es el del Figma @RED-01-S1', () {
-    for (final (nombre, campo, _, claro) in _figma) {
-      expect(campo(Palette.light), Color(claro), reason: nombre);
+  test('every color of the light palette is the Figma one @RED-01-S1', () {
+    for (final (name, field, _, light) in _figma) {
+      expect(field(Palette.light), Color(light), reason: name);
     }
   });
 
   test(
-    'el textMuted oscuro es #8C86A4 y llega a 4,5:1 sobre las tres superficies @RED-01-ASM-01',
+    'the dark textMuted is #8C86A4 and reaches 4.5:1 over the three surfaces @RED-01-ASM-01',
     () {
       const p = Palette.dark;
       expect(p.textMuted, const Color(0xFF8C86A4));
-      for (final fondo in [p.bgBase, p.bgSurface, p.bgSurfaceRaised]) {
-        expect(contraste(p.textMuted, fondo), greaterThanOrEqualTo(4.5));
+      for (final background in [p.bgBase, p.bgSurface, p.bgSurfaceRaised]) {
+        expect(contrast(p.textMuted, background), greaterThanOrEqualTo(4.5));
       }
     },
   );
 
   test(
-    'cada par de contraste de la paleta llega a 4,5:1 en los dos modos @RED-01-ASM-02',
+    'every contrast pair of the palette reaches 4.5:1 in both modes @RED-01-ASM-02',
     () {
-      const negro = Color(0xFF000000);
-      const blanco = Color(0xFFFFFFFF);
-      for (final (modo, p) in [
+      const black = Color(0xFF000000);
+      const white = Color(0xFFFFFFFF);
+      for (final (mode, p) in [
         ('oscuro', Palette.dark),
         ('claro', Palette.light),
       ]) {
-        final pares = <String, (Color, Color)>{
-          for (final (texto, t) in [
+        final pairs = <String, (Color, Color)>{
+          for (final (text, t) in [
             ('textPrimary', p.textPrimary),
             ('textSecondary', p.textSecondary),
             ('textMuted', p.textMuted),
             ('accentInk', p.accentInk),
           ])
-            for (final (fondo, f) in [
+            for (final (background, f) in [
               ('bgBase', p.bgBase),
               ('bgSurface', p.bgSurface),
               ('bgSurfaceRaised', p.bgSurfaceRaised),
             ])
-              '$texto sobre $fondo': (t, f),
+              '$text sobre $background': (t, f),
           'accentOn sobre accentBase': (p.accentOn, p.accentBase),
           'stateDangerInk sobre bgBase': (p.stateDangerInk, p.bgBase),
-          'blanco sobre stateDangerStrong': (blanco, p.stateDangerStrong),
-          'textOnMedia sobre negro': (p.textOnMedia, negro),
-          'accentOnMedia sobre negro': (p.accentOnMedia, negro),
+          'blanco sobre stateDangerStrong': (white, p.stateDangerStrong),
+          'textOnMedia sobre negro': (p.textOnMedia, black),
+          'accentOnMedia sobre negro': (p.accentOnMedia, black),
         };
-        for (final MapEntry(key: par, value: (texto, fondo)) in pares.entries) {
+        for (final MapEntry(key: pair, value: (text, background))
+            in pairs.entries) {
           expect(
-            contraste(texto, fondo),
+            contrast(text, background),
             greaterThanOrEqualTo(4.5),
-            reason: '$par en modo $modo',
+            reason: '$pair in mode $mode',
           );
         }
       }

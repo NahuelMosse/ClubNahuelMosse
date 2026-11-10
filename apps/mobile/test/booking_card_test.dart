@@ -11,7 +11,7 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'el panel admin y Mis reservas muestran la reserva con la misma tarjeta @REV-06-S5 @assumption:REV-06-ASM-04',
+    'the admin panel and «Mis reservas» show the booking with the same card @REV-06-S5 @assumption:REV-06-ASM-04',
     (tester) async {
       await mountScreen(
         tester,
@@ -26,14 +26,14 @@ void main() {
       expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
 
-      for (final ruta in [
+      for (final path in [
         'lib/features/admin/presentation/booking_detail.dart',
         'lib/features/bookings/presentation/booking_detail.dart',
       ]) {
-        final codigo = File(ruta).readAsStringSync();
-        expect(codigo, contains('common/booking_card.dart'), reason: ruta);
-        expect(codigo, contains('BookingDateAndTime('), reason: ruta);
-        expect(codigo, isNot(contains('Icons.schedule_rounded')), reason: ruta);
+        final code = File(path).readAsStringSync();
+        expect(code, contains('common/booking_card.dart'), reason: path);
+        expect(code, contains('BookingDateAndTime('), reason: path);
+        expect(code, isNot(contains('Icons.schedule_rounded')), reason: path);
       }
     },
   );

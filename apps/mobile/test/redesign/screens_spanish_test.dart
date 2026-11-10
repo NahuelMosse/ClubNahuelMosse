@@ -16,17 +16,17 @@ void main() {
   setUpAll(loadFonts);
 
   group('login', () {
-    testWidgets('la marca del login lleva el isotipo decorativo @RED-03-S6', (
+    testWidgets('the login brand has the decorative logo mark @RED-03-S6', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
           api: fakeApi(status: 200, body: profileJson()),
         ),
       );
-      final rutas = GoRouter(
+      final routes = GoRouter(
         routes: [
           GoRoute(
             path: '/',
@@ -35,7 +35,7 @@ void main() {
           ),
         ],
       );
-      addTearDown(rutas.dispose);
+      addTearDown(routes.dispose);
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -45,7 +45,7 @@ void main() {
           localeListResolutionCallback: resolveLanguage,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          routerConfig: rutas,
+          routerConfig: routes,
         ),
       );
       await tester.pumpAndSettle();
@@ -57,7 +57,7 @@ void main() {
         lessThan(tester.getTopLeft(find.text('BIENVENIDO A')).dy),
       );
       expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
   });
 }

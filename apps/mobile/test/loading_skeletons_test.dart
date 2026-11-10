@@ -14,82 +14,82 @@ import 'package:http/testing.dart';
 
 import 'support/mount.dart';
 
-/// Una API que nunca contesta: la pantalla se queda cargando.
-ApiClient _apiColgada() => ApiClient(
+/// An API that never answers: the screen stays loading.
+ApiClient _hungApi() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) => Completer<http.Response>().future),
 );
 
-Future<void> _cargando(
+Future<void> _loading(
   WidgetTester tester, {
-  required String inicio,
+  required String start,
   bool admin = false,
-  bool oscuro = true,
+  bool dark = true,
 }) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     App(
-      api: _apiColgada(),
+      api: _hungApi(),
       session: FakeSession(admin ? adminProfile : userProfile),
-      appearance: Appearance.inMemory(dark: oscuro),
-      initialLocation: inicio,
+      appearance: Appearance.inMemory(dark: dark),
+      initialLocation: start,
     ),
   );
   await tester.pump();
   await tester.pump();
 }
 
-Future<void> _forma(
+Future<void> _shape(
   WidgetTester tester,
-  SkeletonShape forma, {
-  ThemeData? tema,
+  SkeletonShape shape, {
+  ThemeData? theme,
 }) => tester.pumpWidget(
   MaterialApp(
-    theme: tema ?? darkTheme,
-    home: Scaffold(body: SkeletonList(shape: forma)),
+    theme: theme ?? darkTheme,
+    home: Scaffold(body: SkeletonList(shape: shape)),
   ),
 );
 
 void main() {
-  group('esqueletos de carga', () {
-    for (final (ruta, admin) in [
+  group('loading skeletons', () {
+    for (final (route, admin) in [
       ('/sedes', false),
       ('/reservas', false),
       ('/inicio', false),
       ('/admin/sedes', true),
     ]) {
       testWidgets(
-        'cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $ruta',
+        'every loading screen shows skeletons shaped like its content, not a spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $route',
         (tester) async {
-          await _cargando(tester, inicio: ruta, admin: admin);
+          await _loading(tester, start: route, admin: admin);
           expect(find.byType(Skeleton), findsWidgets);
           expect(find.byType(CircularProgressIndicator), findsNothing);
         },
       );
     }
 
-    for (final forma in SkeletonShape.values) {
-      for (final tema in [darkTheme, lightTheme]) {
+    for (final shape in SkeletonShape.values) {
+      for (final theme in [darkTheme, lightTheme]) {
         testWidgets(
-          'cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 forma ${forma.name} ${tema.brightness.name}',
+          'every loading screen shows skeletons shaped like its content, not a spinner @VIS-02-S1 shape ${shape.name} ${theme.brightness.name}',
           (tester) async {
-            await _forma(tester, forma, tema: tema);
+            await _shape(tester, shape, theme: theme);
             expect(find.byType(Skeleton), findsWidgets);
             expect(find.byType(CircularProgressIndicator), findsNothing);
-            final bloque = tester.widget<Skeleton>(find.byType(Skeleton).first);
-            expect(bloque.height, greaterThan(0));
+            final block = tester.widget<Skeleton>(find.byType(Skeleton).first);
+            expect(block.height, greaterThan(0));
           },
         );
       }
     }
 
     testWidgets(
-      'el brillo se detiene con reducir movimiento y el lector anuncia Cargando una vez @VIS-02-S2',
+      'the shimmer stops with reduced motion and the screen reader announces «Cargando» once @VIS-02-S2',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await _forma(tester, SkeletonShape.booking);
+        final semantics = tester.ensureSemantics();
+        await _shape(tester, SkeletonShape.booking);
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.hasRunningAnimations, isTrue);
         expect(find.bySemanticsLabel('Cargando'), findsOneWidget);
@@ -100,17 +100,17 @@ void main() {
         addTearDown(
           tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
         );
-        await _forma(tester, SkeletonShape.notice);
+        await _shape(tester, SkeletonShape.notice);
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.hasRunningAnimations, isFalse);
         expect(find.byType(Skeleton), findsWidgets);
         expect(find.bySemanticsLabel('Cargando'), findsOneWidget);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
     testWidgets(
-      'los spinners de botones y la espera de arranque siguen igual @assumption:VIS-02-ASM-01',
+      'button spinners and the startup wait stay the same @assumption:VIS-02-ASM-01',
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(

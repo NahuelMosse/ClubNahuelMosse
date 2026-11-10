@@ -25,7 +25,7 @@ String _uuid(int n) =>
 void main() {
   setUpAll(loadFonts);
 
-  const reservaJson =
+  const bookingJson =
       '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
       ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
       ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
@@ -34,31 +34,31 @@ void main() {
       ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
       ' "canceled_by_name": null, "space_deactivated": false}';
 
-  Widget pantalla({required ApiClient api}) {
-    final sesion = FakeSession(adminProfile);
+  Widget screen({required ApiClient api}) {
+    final session = FakeSession(adminProfile);
     return AdminPanelScreen(
-      history: BookingHistory(api: api, sesion: sesion),
+      history: BookingHistory(api: api, sesion: session),
       venues: Venues(
-        repository: VenuesRepository(api: api, session: sesion),
+        repository: VenuesRepository(api: api, session: session),
       ),
       spaces: Spaces(
-        repository: SpacesRepository(api: api, session: sesion),
+        repository: SpacesRepository(api: api, session: session),
       ),
-      session: sesion,
+      session: session,
       pending: PendingPanelFilters(),
     );
   }
 
-  testWidgets('muestra el listado con el total y el contador de cada pestaña', (
+  testWidgets('shows the listing with the total and the count of each tab', (
     tester,
   ) async {
     await mountScreen(
       tester,
-      pantalla(
+      screen(
         api: apiRoutes({
           'GET /bookings/all': (
             200,
-            '{"bookings": [$reservaJson], "total": 1, "page": 1,'
+            '{"bookings": [$bookingJson], "total": 1, "page": 1,'
                 ' "per_page": 20, "counters": {"all": 1, "active": 1,'
                 ' "completed": 0, "voided": 0}}',
           ),
@@ -75,12 +75,12 @@ void main() {
     expect(find.text('ACTIVA'), findsOneWidget);
   });
 
-  testWidgets('sin reservas en el sistema muestra «No hay reservas»', (
+  testWidgets('with no bookings in the system it shows «No hay reservas»', (
     tester,
   ) async {
     await mountScreen(
       tester,
-      pantalla(
+      screen(
         api: apiRoutes({
           'GET /bookings/all': (
             200,
@@ -100,15 +100,15 @@ void main() {
   });
 
   testWidgets(
-    'con el texto al 200% en 360 de ancho no hay overflow ni excepciones',
+    'with text at 200% at 360 width there is no overflow or exceptions',
     (tester) async {
       await mountScreen(
         tester,
-        pantalla(
+        screen(
           api: apiRoutes({
             'GET /bookings/all': (
               200,
-              '{"bookings": [$reservaJson], "total": 1, "page": 1,'
+              '{"bookings": [$bookingJson], "total": 1, "page": 1,'
                   ' "per_page": 20, "counters": {"all": 1, "active": 1,'
                   ' "completed": 0, "voided": 0}}',
             ),
@@ -126,49 +126,49 @@ void main() {
     },
   );
 
-  String reservaN(int id) => reservaJson
+  String bookingN(int id) => bookingJson
       .replaceFirst(
         '"id": "00000000-0000-7000-8000-000000000001",',
         '"id": "${_uuid(id)}",',
       )
       .replaceFirst('Nahuel Mosse', 'Socio $id');
 
-  String pagina(Iterable<int> ids, int numero) =>
-      '{"bookings": [${ids.map(reservaN).join(',')}], "total": 40,'
-      ' "page": $numero, "per_page": 20, "counters": {"all": 40,'
+  String page(Iterable<int> ids, int number) =>
+      '{"bookings": [${ids.map(bookingN).join(',')}], "total": 40,'
+      ' "page": $number, "per_page": 20, "counters": {"all": 40,'
       ' "active": 40, "completed": 0, "voided": 0}}';
 
   testWidgets(
-    'un cambio de filtro con la página siguiente en camino no traba el scroll '
-    'y la página siguiente no repite reservas',
+    'a filter change with the next page in flight does not lock the scroll '
+    'and the next page does not repeat bookings',
     (tester) async {
-      final segundas = <Completer<http.Response>>[];
+      final secondPages = <Completer<http.Response>>[];
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          final cabeceras = {'content-type': 'application/json; charset=utf-8'};
-          if (pedido.url.path == '/bookings/all') {
-            if (pedido.url.queryParameters['page'] == '2') {
+        cliente: MockClient((request) async {
+          final headers = {'content-type': 'application/json; charset=utf-8'};
+          if (request.url.path == '/bookings/all') {
+            if (request.url.queryParameters['page'] == '2') {
               final c = Completer<http.Response>();
-              segundas.add(c);
+              secondPages.add(c);
               return c.future;
             }
             return http.Response.bytes(
-              utf8.encode(pagina(List.generate(20, (i) => i + 1), 1)),
+              utf8.encode(page(List.generate(20, (i) => i + 1), 1)),
               200,
-              headers: cabeceras,
+              headers: headers,
             );
           }
           return http.Response.bytes(
             utf8.encode(catalogJson),
-            pedido.url.path == '/spaces/catalog' ? 200 : 404,
-            headers: cabeceras,
+            request.url.path == '/spaces/catalog' ? 200 : 404,
+            headers: headers,
           );
         }),
       );
       await mountScreen(
         tester,
-        pantalla(api: api),
+        screen(api: api),
         theme: darkTheme,
         size: const Size(393, 852),
       );
@@ -177,7 +177,7 @@ void main() {
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
       await tester.pump();
       await tester.pump();
-      expect(segundas, hasLength(1));
+      expect(secondPages, hasLength(1));
       expect(find.byType(Skeleton, skipOffstage: false), findsOneWidget);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 20000));
@@ -188,12 +188,12 @@ void main() {
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
       await tester.pump();
-      expect(segundas, hasLength(2));
+      expect(secondPages, hasLength(2));
 
-      // La página siguiente repite la última reserva de la primera.
-      segundas.last.complete(
+      // The next page repeats the last booking of the first.
+      secondPages.last.complete(
         http.Response.bytes(
-          utf8.encode(pagina([20, 21], 2)),
+          utf8.encode(page([20, 21], 2)),
           200,
           headers: {'content-type': 'application/json; charset=utf-8'},
         ),

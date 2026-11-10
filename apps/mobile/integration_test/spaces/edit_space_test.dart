@@ -9,10 +9,10 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = todayAtClub().add(const Duration(days: 1));
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
 
-  Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
-    final control = find.bySemanticsLabel(etiqueta);
+  Future<void> tapLabel(WidgetTester tester, String label) async {
+    final control = find.bySemanticsLabel(label);
     await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
@@ -20,36 +20,36 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
-      tester.getSemantics(find.bySemanticsLabel(etiqueta)).flagsCollection;
+  SemanticsFlags flags(WidgetTester tester, String label) =>
+      tester.getSemantics(find.bySemanticsLabel(label)).flagsCollection;
 
-  /// Una sede con una Fútbol 5 techada e iluminada a $ 43.000 la hora.
-  Future<String> unEspacio() async {
-    final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850');
-    return createSpace(sede);
+  /// A venue with a covered, lit Fútbol 5 at $ 43.000 an hour.
+  Future<String> oneSpace() async {
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850');
+    return createSpace(venue);
   }
 
-  /// Del panel a la edición del espacio [nombre].
-  Future<void> abrirEdicion(WidgetTester tester, String nombre) async {
+  /// From the panel to the edit screen of the space [name].
+  Future<void> openEdit(WidgetTester tester, String name) async {
     await tapText(tester, 'ESPACIOS');
     await waitUntil(tester, find.text('ALTA ESPACIO'));
-    await tocarEtiqueta(tester, 'Editar $nombre');
+    await tapLabel(tester, 'Editar $name');
     await waitUntil(tester, find.text('Editar espacio deportivo'));
   }
 
   testWidgets(
-    'cambia el precio de un espacio y el listado y la sede muestran el nuevo @CU-22-H01-01',
+    'changes the price of a space and the listing and the venue show the new one @CU-22-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final cancha = await unEspacio();
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, cancha);
+      await openEdit(tester, court);
 
       await typeInto(tester, 'Precio por hora', '45000');
       await tapText(tester, 'GUARDAR ESPACIO');
 
-      // Verifica: el aviso, el listado con el precio nuevo y los usuarios lo ven.
+      // Verifies: the notice, the listing with the new price and users see it.
       await waitUntil(
         tester,
         find.text('Los cambios se guardaron correctamente'),
@@ -57,24 +57,24 @@ void main() {
       await waitUntil(
         tester,
         find.bySemanticsLabel(
-          RegExp('45\\.000 por hora, .*${RegExp.escape(cancha)}\$'),
+          RegExp('45\\.000 por hora, .*${RegExp.escape(court)}\$'),
         ),
       );
-      expect((await spaceAUserSees(cancha))?['price_per_hour'], 45000);
-      semantica.dispose();
+      expect((await spaceAUserSees(court))?['price_per_hour'], 45000);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'una reserva hecha antes del cambio conserva su precio y una nueva usa el nuevo @CU-22-H01-02',
+    'a booking made before the change keeps its price and a new one uses the new one @CU-22-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final cancha = await unEspacio();
-      final correo = 'socio.${unique()}@correo.com';
-      await createAccount(email: correo, password: 'ClubNahuel1');
-      expect(await bookThroughApi(correo, cancha, manana, 20), 43000);
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
+      final email = 'socio.${unique()}@correo.com';
+      await createAccount(email: email, password: 'ClubNahuel1');
+      expect(await bookThroughApi(email, court, tomorrow, 20), 43000);
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, cancha);
+      await openEdit(tester, court);
 
       await typeInto(tester, 'Precio por hora', '45000');
       await tapText(tester, 'GUARDAR ESPACIO');
@@ -83,158 +83,161 @@ void main() {
         find.text('Los cambios se guardaron correctamente'),
       );
 
-      // Verifica: la de antes sigue a $ 43.000 y la nueva sale a $ 45.000.
-      expect(await bookThroughApi(correo, cancha, manana, 21), 45000);
-      expect(await bookingTotals(correo), {'20:00': 43000, '21:00': 45000});
-      semantica.dispose();
+      // Verifies: the earlier one stays at $ 43.000 and the new one comes out at $ 45.000.
+      expect(await bookThroughApi(email, court, tomorrow, 21), 45000);
+      expect(await bookingTotals(email), {'20:00': 43000, '21:00': 45000});
+      semantics.dispose();
     },
   );
 
-  testWidgets('sede, deporte y tipo no se pueden editar @CU-22-H01-03', (
+  testWidgets('venue, sport and kind cannot be edited @CU-22-H01-03', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final cancha = await unEspacio();
+    final semantics = tester.ensureSemantics();
+    final court = await oneSpace();
     await signInAsAdmin(tester);
 
-    await abrirEdicion(tester, cancha);
+    await openEdit(tester, court);
 
-    // Verifica: los tres deshabilitados, con sus valores, y el nombre confirmado.
-    expect(banderas(tester, 'Sede').isEnabled, isFalse);
-    expect(banderas(tester, 'Deporte').isEnabled, isFalse);
-    expect(banderas(tester, 'Tipo').isEnabled, isFalse);
+    // Verifies: the three disabled, with their values, and the name confirmed.
+    expect(flags(tester, 'Sede').isEnabled, isFalse);
+    expect(flags(tester, 'Deporte').isEnabled, isFalse);
+    expect(flags(tester, 'Tipo').isEnabled, isFalse);
     expect(find.text('Fútbol 5'), findsWidgets);
-    expect(find.text(cancha), findsOneWidget);
-    semantica.dispose();
+    expect(find.text(court), findsOneWidget);
+    semantics.dispose();
   });
 
-  testWidgets('cancela y el precio no cambia @CU-22-H02-01', (tester) async {
-    final semantica = tester.ensureSemantics();
-    final cancha = await unEspacio();
+  testWidgets('cancels and the price does not change @CU-22-H02-01', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final court = await oneSpace();
     await signInAsAdmin(tester);
-    await abrirEdicion(tester, cancha);
+    await openEdit(tester, court);
     await typeInto(tester, 'Precio por hora', '45000');
 
     await tapText(tester, 'CANCELAR');
 
-    // Verifica: vuelve al listado y el precio sigue siendo el de antes.
+    // Verifies: it returns to the listing and the price is still the earlier one.
     await waitUntil(tester, find.text('ALTA ESPACIO'));
-    expect((await spaceAUserSees(cancha))?['price_per_hour'], 43000);
-    semantica.dispose();
+    expect((await spaceAUserSees(court))?['price_per_hour'], 43000);
+    semantics.dispose();
   });
 
   testWidgets(
-    'deja el precio vacío, en cero o con letras y no puede guardar @CU-22-H03-01',
+    'leaves the price empty, zero or with letters and cannot save @CU-22-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final cancha = await unEspacio();
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, cancha);
+      await openEdit(tester, court);
 
-      // Verifica: vacío, el aviso de obligatorio y sin poder guardar.
+      // Verifies: empty, the required notice and unable to save.
       await typeInto(tester, 'Precio por hora', '');
       expect(find.text('Este campo es obligatorio'), findsOneWidget);
-      expect(banderas(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
 
-      // Verifica: en cero, el aviso del rango.
+      // Verifies: zero, the range notice.
       await typeInto(tester, 'Precio por hora', '0');
       expect(
         find.text('Ingresá un precio entre \$ 1 y \$ 9.999.999'),
         findsOneWidget,
       );
-      expect(banderas(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
 
-      // Verifica: las letras no se escriben.
+      // Verifies: letters are not typed.
       await typeInto(tester, 'Precio por hora', 'abc');
       expect(find.text('abc'), findsNothing);
-      expect(banderas(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
-      expect((await spaceAUserSees(cancha))?['price_per_hour'], 43000);
-      semantica.dispose();
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect((await spaceAUserSees(court))?['price_per_hour'], 43000);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin modificar nada, el botón de guardar sigue deshabilitado @CU-22-H04-01',
+    'without modifying anything, the save button stays disabled @CU-22-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final cancha = await unEspacio();
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
       await signInAsAdmin(tester);
 
-      await abrirEdicion(tester, cancha);
+      await openEdit(tester, court);
 
-      // Verifica: sin cambios no se puede guardar; con un cambio, sí.
-      expect(banderas(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      // Verifies: without changes it cannot save; with a change, it can.
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
       await choose(tester, 'Condición', 'Al aire libre');
-      expect(banderas(tester, 'GUARDAR ESPACIO').isEnabled, isTrue);
-      semantica.dispose();
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el espacio fue dado de baja en otra sesión y se le avisa al guardar @CU-22-H05-01',
+    'the space was deactivated in another session and it is warned on saving @CU-22-H05-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final cancha = await unEspacio();
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, cancha);
+      await openEdit(tester, court);
       await typeInto(tester, 'Precio por hora', '45000');
 
-      await deactivateSpaceFromAnotherSession(cancha);
+      await deactivateSpaceFromAnotherSession(court);
       await tapText(tester, 'GUARDAR ESPACIO');
 
-      // Verifica: el aviso y el listado sin ese espacio.
+      // Verifies: the notice and the listing without that space.
       await waitUntil(tester, find.text('Esto cambió mientras tanto'));
       await tapText(tester, 'VER LO ACTUALIZADO');
       await waitUntil(tester, find.text('ALTA ESPACIO'));
-      expect(find.text(cancha), findsNothing);
-      semantica.dispose();
+      expect(find.text(court), findsNothing);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión al guardar, ve el error y conserva el precio escrito @CU-22-H06-01',
+    'offline on saving, it sees the error and keeps the typed price @CU-22-H06-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final cancha = await unEspacio();
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
       final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
-      await abrirEdicion(tester, cancha);
+      await openEdit(tester, court);
       await typeInto(tester, 'Precio por hora', '45000');
 
       api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR ESPACIO');
 
-      // Verifica: el aviso, el precio escrito sigue y el espacio no cambió.
+      // Verifies: the notice, the typed price stays and the space did not change.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
       expect(find.textContaining('45.000'), findsOneWidget);
-      expect((await spaceAUserSees(cancha))?['price_per_hour'], 43000);
+      expect((await spaceAUserSees(court))?['price_per_hour'], 43000);
 
-      // Verifica: con la red de vuelta, guardar funciona.
+      // Verifies: with the network back, saving works.
       api.state = ApiState.normal;
       await tapText(tester, 'GUARDAR ESPACIO');
       await waitUntil(
         tester,
         find.text('Los cambios se guardaron correctamente'),
       );
-      expect((await spaceAUserSees(cancha))?['price_per_hour'], 45000);
-      semantica.dispose();
+      expect((await spaceAUserSees(court))?['price_per_hour'], 45000);
+      semantics.dispose();
     },
   );
 
-  testWidgets('desde la edición pasa a dar de baja el espacio @CU-22-H07-01', (
-    tester,
-  ) async {
-    final semantica = tester.ensureSemantics();
-    final cancha = await unEspacio();
-    await signInAsAdmin(tester);
-    await abrirEdicion(tester, cancha);
+  testWidgets(
+    'from the edit screen it goes on to deactivate the space @CU-22-H07-01',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final court = await oneSpace();
+      await signInAsAdmin(tester);
+      await openEdit(tester, court);
 
-    await tapText(tester, 'DAR DE BAJA EL ESPACIO');
+      await tapText(tester, 'DAR DE BAJA EL ESPACIO');
 
-    // Verifica: la confirmación de la baja, con el espacio que se está editando.
-    await waitUntil(tester, find.text('¿Dar de baja el espacio?'));
-    expect(find.text('$cancha. La acción es permanente.'), findsOneWidget);
-    semantica.dispose();
-  });
+      // Verifies: the deactivation confirmation, with the space being edited.
+      await waitUntil(tester, find.text('¿Dar de baja el espacio?'));
+      expect(find.text('$court. La acción es permanente.'), findsOneWidget);
+      semantics.dispose();
+    },
+  );
 }

@@ -17,26 +17,26 @@ import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 String _uuid(int n) =>
     '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
 
-String _reserva(int n) {
-  final desde = DateTime.utc(2026, 11, 12, 21).add(Duration(days: n));
-  final hasta = desde.add(const Duration(hours: 1));
+String _booking(int n) {
+  final start = DateTime.utc(2026, 11, 12, 21).add(Duration(days: n));
+  final end = start.add(const Duration(hours: 1));
   return '{"id": "${_uuid(n)}", "space_id": "${_uuid(9)}", "venue_id": "${_uuid(2)}", '
       '"space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", '
       '"kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850", '
-      '"starts_at": "${desde.toIso8601String()}", "ends_at": "${hasta.toIso8601String()}", '
+      '"starts_at": "${start.toIso8601String()}", "ends_at": "${end.toIso8601String()}", '
       '"price_per_hour": 38000, "total": 38000, "status": "active", '
       '"reason": null, "cancelable": true}';
 }
 
 void main() {
   testWidgets(
-    'con veinte próximas el marcador dice 20 en su celda PRÓXIMAS, en el color del texto sobre foto @RED-03-ASM-13',
+    'with twenty upcoming the marker says 20 in its «PRÓXIMAS» cell, in the on-photo text color @RED-03-ASM-13',
     (tester) async {
-      final sesion = FakeSession(userProfile);
+      final session = FakeSession(userProfile);
       final api = apiRoutes({
         'GET /bookings': (
           200,
-          '{"bookings": [${[for (var i = 1; i <= 20; i++) _reserva(i)].join(', ')}]}',
+          '{"bookings": [${[for (var i = 1; i <= 20; i++) _booking(i)].join(', ')}]}',
         ),
         'GET /spaces/catalog': (200, '{"sports": []}'),
         'GET /venues': (200, '{"venues": []}'),
@@ -44,27 +44,27 @@ void main() {
       await mountScreen(
         tester,
         HomeScreen(
-          sesion: sesion,
-          reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+          sesion: session,
+          reservas: Bookings(BookingsApi(api: api, sesion: session)),
           espacios: Spaces(
-            repository: SpacesRepository(api: api, session: sesion),
+            repository: SpacesRepository(api: api, session: session),
           ),
           venues: Venues(
-            repository: VenuesRepository(api: api, session: sesion),
+            repository: VenuesRepository(api: api, session: session),
           ),
         ),
         theme: darkTheme,
         size: const Size(393, 852),
       );
 
-      final cifra = find.descendant(
+      final figure = find.descendant(
         of: find.byType(AppMarker),
         matching: find.text('20'),
       );
-      expect(cifra, findsOneWidget);
+      expect(figure, findsOneWidget);
       expect(find.text('20+'), findsNothing);
       expect(
-        tester.widget<Text>(cifra).style?.color,
+        tester.widget<Text>(figure).style?.color,
         Palette.dark.accentOnMedia,
       );
     },

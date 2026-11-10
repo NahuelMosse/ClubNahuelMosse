@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'void_booking_test.dart' as anular show listing, bookingJson;
+import 'void_booking_test.dart' as voidTest show listing, bookingJson;
 import 'my_bookings_test.dart' show bookingJson;
 import 'support/admin.dart';
 import 'support/mount.dart';
@@ -21,31 +21,30 @@ import 'support/user.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-/// Contesta [respuestas] en orden a cada POST a [ruta] (la última se repite); un `null` es
-/// un corte de red. Lo que no es ese POST lo contesta [resto].
-MockClient _conCorte(
-  String ruta,
-  List<(int, String)?> respuestas,
-  (int, String) Function(http.Request) resto, {
-  void Function()? alLlegar,
+/// Answers [responses] in order to each POST to [route] (the last one repeats); a `null` is
+/// a network outage. Anything that is not that POST is answered by [rest].
+MockClient _withOutage(
+  String route,
+  List<(int, String)?> responses,
+  (int, String) Function(http.Request) rest, {
+  void Function()? onArrive,
 }) {
   var n = 0;
-  return MockClient((pedido) async {
-    final (int, String) respuesta;
-    if (pedido.url.path == ruta && pedido.method == 'POST') {
-      final siguiente =
-          respuestas[n < respuestas.length ? n : respuestas.length - 1];
+  return MockClient((request) async {
+    final (int, String) response;
+    if (request.url.path == route && request.method == 'POST') {
+      final next = responses[n < responses.length ? n : responses.length - 1];
       n++;
-      // El servidor recibió el pedido aunque la respuesta no haya vuelto.
-      alLlegar?.call();
-      if (siguiente == null) throw const SocketException('sin red');
-      respuesta = siguiente;
+      // The server received the request even though the response did not come back.
+      onArrive?.call();
+      if (next == null) throw const SocketException('sin red');
+      response = next;
     } else {
-      respuesta = resto(pedido);
+      response = rest(request);
     }
     return http.Response.bytes(
-      utf8.encode(respuesta.$2),
-      respuesta.$1,
+      utf8.encode(response.$2),
+      response.$1,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
   });
@@ -54,35 +53,36 @@ MockClient _conCorte(
 void main() {
   setUpAll(loadFonts);
 
-  testWidgets('cancelar: un 409 después de un corte cuenta como cancelada', (
+  testWidgets('cancel: a 409 after an outage counts as canceled', (
     tester,
   ) async {
-    final futura = DateTime.now().toUtc().add(const Duration(days: 2));
-    final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
-    final proxima = bookingJson(
-      inicio: inicio.toIso8601String(),
-      fin: inicio.add(const Duration(hours: 1)).toIso8601String(),
+    final future = DateTime.now().toUtc().add(const Duration(days: 2));
+    final start = DateTime.utc(future.year, future.month, future.day, 21);
+    final upcoming = bookingJson(
+      inicio: start.toIso8601String(),
+      fin: start.add(const Duration(hours: 1)).toIso8601String(),
     );
-    final rutas = venueRoutes();
-    var cancelada = false;
+    final routes = venueRoutes();
+    var canceled = false;
     await mountUser(
       tester,
       start: '/reservas',
       api: ApiClient(
         'http://api.falsa',
-        cliente: _conCorte(
+        cliente: _withOutage(
           '/bookings/00000000-0000-7000-8000-000000000001/cancel',
           [
             null,
             (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}'),
           ],
-          (pedido) {
-            if (pedido.method == 'GET' && pedido.url.path == '/bookings') {
-              return (200, '{"bookings": ${cancelada ? '[]' : '[$proxima]'}}');
+          (request) {
+            if (request.method == 'GET' && request.url.path == '/bookings') {
+              return (200, '{"bookings": ${canceled ? '[]' : '[$upcoming]'}}');
             }
-            return rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+            return routes['${request.method} ${request.url.path}'] ??
+                (404, '{}');
           },
-          alLlegar: () => cancelada = true,
+          onArrive: () => canceled = true,
         ),
       ),
     );
@@ -102,33 +102,31 @@ void main() {
     expect(find.text('Esto cambió mientras tanto'), findsNothing);
   });
 
-  testWidgets('anular: un 409 después de un corte cuenta como anulada', (
-    tester,
-  ) async {
+  testWidgets('void: a 409 after an outage counts as voided', (tester) async {
     final api = ApiClient(
       'http://api.falsa',
-      cliente: _conCorte(
+      cliente: _withOutage(
         '/bookings/00000000-0000-7000-8000-000000000001/void',
         [null, (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}')],
-        (pedido) => switch (pedido.url.path) {
-          '/bookings/all' => (200, anular.listing(anular.bookingJson())),
+        (request) => switch (request.url.path) {
+          '/bookings/all' => (200, voidTest.listing(voidTest.bookingJson())),
           '/spaces/catalog' => (200, catalogJson),
           _ => (404, '{}'),
         },
       ),
     );
-    final sesion = FakeSession(adminProfile);
+    final session = FakeSession(adminProfile);
     await mountScreen(
       tester,
       AdminPanelScreen(
-        history: BookingHistory(api: api, sesion: sesion),
+        history: BookingHistory(api: api, sesion: session),
         venues: Venues(
-          repository: VenuesRepository(api: api, session: sesion),
+          repository: VenuesRepository(api: api, session: session),
         ),
         spaces: Spaces(
-          repository: SpacesRepository(api: api, session: sesion),
+          repository: SpacesRepository(api: api, session: session),
         ),
-        session: sesion,
+        session: session,
         pending: PendingPanelFilters(),
       ),
       theme: darkTheme,

@@ -21,7 +21,7 @@ import 'support/held_api.dart';
 import 'support/mount.dart';
 import 'support/user.dart';
 
-/// Un perfil cuya lectura espera a [release]: Mi perfil queda cargando.
+/// A profile whose read waits for [release]: «Mi perfil» stays loading.
 class _HeldSession extends FakeSession {
   _HeldSession() : super(userProfile);
 
@@ -86,7 +86,7 @@ Future<void> _open(
   await tester.pump();
 }
 
-/// Desmonta y deja pasar el límite de espera del cliente para que no quede un Timer.
+/// Unmounts and lets the client's wait limit pass so that no Timer is left.
 Future<void> _close(WidgetTester tester, HeldApi api) async {
   await tester.pumpWidget(const SizedBox());
   api.release();
@@ -97,7 +97,7 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'Mi perfil carga con skeleton de su cabecera y sus datos, no un spinner @VIS-03-S2',
+    '«Mi perfil» loads with a skeleton of its header and its data, not a spinner @VIS-03-S2',
     (tester) async {
       final api = HeldApi({});
       final session = _HeldSession();
@@ -131,7 +131,7 @@ void main() {
   );
 
   testWidgets(
-    'los skeletons de cuenta brillan, se detienen con reducir movimiento y dicen Cargando una vez @assumption:VIS-03-ASM-05 @VIS-03-ASM-05',
+    'the account skeletons shimmer, stop with reduce motion and say «Cargando» once @assumption:VIS-03-ASM-05 @VIS-03-ASM-05',
     (tester) async {
       final semantics = tester.ensureSemantics();
       final screens = <(String, HeldApi, Session?)>[
@@ -147,7 +147,7 @@ void main() {
       for (final (route, api, session) in screens) {
         await _open(tester, api, route, session: session);
         await tester.pump(const Duration(milliseconds: 100));
-        expect(tester.hasRunningAnimations, isTrue, reason: '$route brilla');
+        expect(tester.hasRunningAnimations, isTrue, reason: '$route shimmers');
         expect(
           find.bySemanticsLabel('Cargando'),
           findsOneWidget,
@@ -166,7 +166,7 @@ void main() {
         await _open(tester, api, route, session: session);
         await tester.pump(const Duration(seconds: 3));
         expect(find.byType(Skeleton), findsWidgets, reason: route);
-        expect(tester.hasRunningAnimations, isFalse, reason: '$route quieto');
+        expect(tester.hasRunningAnimations, isFalse, reason: '$route still');
         expect(
           find.bySemanticsLabel('Cargando'),
           findsOneWidget,

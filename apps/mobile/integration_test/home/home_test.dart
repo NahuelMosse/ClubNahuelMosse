@@ -9,20 +9,20 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = todayAtClub().add(const Duration(days: 1));
-  final enCincoDias = todayAtClub().add(const Duration(days: 5));
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
+  final inFiveDays = todayAtClub().add(const Duration(days: 5));
 
-  /// Espera a que [texto] deje de estar en pantalla: el Home recién recargó.
-  Future<void> esperarQueDesaparezca(WidgetTester tester, String texto) async {
-    final fin = DateTime.now().add(const Duration(seconds: 20));
-    while (DateTime.now().isBefore(fin) &&
-        find.text(texto).evaluate().isNotEmpty) {
+  /// Waits for [text] to leave the screen: the Home has just reloaded.
+  Future<void> waitUntilGone(WidgetTester tester, String text) async {
+    final end = DateTime.now().add(const Duration(seconds: 20));
+    while (DateTime.now().isBefore(end) &&
+        find.text(text).evaluate().isNotEmpty) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text(texto), findsNothing);
+    expect(find.text(text), findsNothing);
   }
 
-  testWidgets('al iniciar sesión ve el Home con el saludo y su nombre'
+  testWidgets('on signing in it sees the Home with the greeting and its name'
       ' @TP-01-H01-01', (tester) async {
     await signInAsUser(
       tester,
@@ -30,97 +30,98 @@ void main() {
       name: 'Valentina',
     );
 
-    // Verifica: el saludo de la hora del club y el nombre de quien inició sesión.
+    // Verifies: the greeting for the club's hour and the name of whoever signed in.
     expect(find.text(HomeGreeting.forHour(clubNow())), findsOneWidget);
     expect(find.text('Valentina'), findsOneWidget);
   });
 
   testWidgets(
-    'el Home muestra su próxima reserva activa, la más cercana, con fecha,'
-    ' horario y sede @TP-01-H01-02 @supuesto:TP-01-SUP-05',
+    'the Home shows its next active booking, the closest one, with date,'
+    ' time and venue @TP-01-H01-02 @assumption:TP-01-SUP-05',
     (tester) async {
-      final sede = 'Sede Haedo ${unique()}';
-      await createVenue(sede, 'Av. Vergara 1850');
-      final cancha = await createSpace(sede);
-      final otraCancha = await createSpace(sede, kind: 'F7');
-      final correo = 'socio.${unique()}@correo.com';
-      await createAccount(email: correo, password: 'ClubNahuel1');
-      // Dos próximas reservas: la de mañana tiene que ganarle a la de en cinco días.
-      await occupy(otraCancha, enCincoDias, 10, email: correo);
-      await occupy(cancha, manana, 21, email: correo);
+      final venue = 'Sede Haedo ${unique()}';
+      await createVenue(venue, 'Av. Vergara 1850');
+      final court = await createSpace(venue);
+      final otherCourt = await createSpace(venue, kind: 'F7');
+      final email = 'socio.${unique()}@correo.com';
+      await createAccount(email: email, password: 'ClubNahuel1');
+      // Two upcoming bookings: tomorrow's has to beat the one in five days.
+      await occupy(otherCourt, inFiveDays, 10, email: email);
+      await occupy(court, tomorrow, 21, email: email);
 
-      await signInAsUser(tester, email: correo);
+      await signInAsUser(tester, email: email);
 
-      // Verifica: se muestra la más cercana (mañana), con su sede y horario.
+      // Verifies: the closest one (tomorrow) is shown, with its venue and time.
       await waitUntil(tester, find.text('TU PRÓXIMA RESERVA'));
-      expect(find.text(cancha), findsOneWidget);
-      expect(find.textContaining(sede), findsWidgets);
+      expect(find.text(court), findsOneWidget);
+      expect(find.textContaining(venue), findsWidgets);
       expect(find.textContaining('21:00 – 22:00'), findsWidgets);
-      expect(find.text(otraCancha), findsNothing);
+      expect(find.text(otherCourt), findsNothing);
     },
   );
 
-  testWidgets(
-    'desde la próxima reserva puede modificarla o cancelarla @TP-01-H01-03',
-    (tester) async {
-      final sede = 'Sede Haedo ${unique()}';
-      await createVenue(sede, 'Av. Vergara 1850');
-      final cancha = await createSpace(sede);
-      final correo = 'socio.${unique()}@correo.com';
-      await createAccount(email: correo, password: 'ClubNahuel1');
-      await occupy(cancha, manana, 21, email: correo);
+  testWidgets('from the next booking it can modify or cancel it @TP-01-H01-03', (
+    tester,
+  ) async {
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850');
+    final court = await createSpace(venue);
+    final email = 'socio.${unique()}@correo.com';
+    await createAccount(email: email, password: 'ClubNahuel1');
+    await occupy(court, tomorrow, 21, email: email);
 
-      await signInAsUser(tester, email: correo);
-      await waitUntil(tester, find.text('MODIFICAR'));
-      expect(find.text('CANCELAR'), findsOneWidget);
+    await signInAsUser(tester, email: email);
+    await waitUntil(tester, find.text('MODIFICAR'));
+    expect(find.text('CANCELAR'), findsOneWidget);
 
-      await tapText(tester, 'CANCELAR');
-      await waitUntil(tester, find.text('¿Cancelar la reserva?'));
-      await tapText(tester, 'CANCELAR RESERVA');
+    await tapText(tester, 'CANCELAR');
+    await waitUntil(tester, find.text('¿Cancelar la reserva?'));
+    await tapText(tester, 'CANCELAR RESERVA');
 
-      // Verifica: el éxito y que el bloque de la próxima reserva desaparece del Home.
-      await waitUntil(tester, find.text('Reserva cancelada con éxito'));
-      await tapText(tester, 'ACEPTAR');
-      await esperarQueDesaparezca(tester, 'TU PRÓXIMA RESERVA');
-      expect(await bookingsOf(correo), isEmpty);
-    },
-  );
+    // Verifies: the success and that the next booking block disappears from the Home.
+    await waitUntil(tester, find.text('Reserva cancelada con éxito'));
+    await tapText(tester, 'ACEPTAR');
+    await waitUntilGone(tester, 'TU PRÓXIMA RESERVA');
+    expect(await bookingsOf(email), isEmpty);
+  });
 
-  testWidgets('«Ver todas» lleva a Mis reservas @TP-01-H01-04', (tester) async {
-    final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850');
-    final cancha = await createSpace(sede);
-    final correo = 'socio.${unique()}@correo.com';
-    await createAccount(email: correo, password: 'ClubNahuel1');
-    await occupy(cancha, manana, 21, email: correo);
+  testWidgets('«Ver todas» leads to «Mis reservas» @TP-01-H01-04', (
+    tester,
+  ) async {
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850');
+    final court = await createSpace(venue);
+    final email = 'socio.${unique()}@correo.com';
+    await createAccount(email: email, password: 'ClubNahuel1');
+    await occupy(court, tomorrow, 21, email: email);
 
-    await signInAsUser(tester, email: correo);
+    await signInAsUser(tester, email: email);
     await waitUntil(tester, find.text('VER TODAS →'));
     await tapText(tester, 'VER TODAS →');
 
     await waitUntil(tester, find.text('Mis reservas'));
-    expect(find.text(cancha), findsOneWidget);
+    expect(find.text(court), findsOneWidget);
   });
 
   testWidgets(
-    'la cantidad de sedes y canchas del hero sale de los datos cargados @TP-01-H01-05',
+    'the number of venues and courts in the hero comes from the loaded data @TP-01-H01-05',
     (tester) async {
-      final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, email: correo);
+      final email = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, email: email);
       await waitUntil(
         tester,
         find.textContaining('disponibilidad en tiempo real'),
       );
 
-      final sedes = await venuesAUserSees();
-      final total = sedes.values.fold(0, (a, b) => a + b);
+      final venues = await venuesAUserSees();
+      final total = venues.values.fold(0, (a, b) => a + b);
 
-      // Verifica: el hero muestra exactamente lo que la API devuelve, no un valor fijo.
-      final cuantasSedes = sedes.length == 1 ? 'sede' : 'sedes';
-      final cuantasCanchas = total == 1 ? 'cancha' : 'canchas';
+      // Verifies: the hero shows exactly what the API returns, not a fixed value.
+      final howManyVenues = venues.length == 1 ? 'sede' : 'sedes';
+      final howManyCourts = total == 1 ? 'cancha' : 'canchas';
       expect(
         find.text(
-          '${sedes.length} $cuantasSedes · $total $cuantasCanchas'
+          '${venues.length} $howManyVenues · $total $howManyCourts'
           ' · disponibilidad en tiempo real',
         ),
         findsOneWidget,
@@ -129,7 +130,7 @@ void main() {
   );
 
   testWidgets(
-    '«Buscar cancha» lleva a Consultar canchas y «Ver sedes» al listado de sedes'
+    '«Buscar cancha» leads to «Consultar canchas» and «Ver sedes» to the venue listing'
     ' @TP-01-H01-06',
     (tester) async {
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
@@ -146,7 +147,7 @@ void main() {
   );
 
   testWidgets(
-    'la barra inferior lleva a Inicio, Sedes, Reservas y Perfil @TP-01-H01-07',
+    'the bottom bar leads to Home, Venues, Bookings and Profile @TP-01-H01-07',
     (tester) async {
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
@@ -162,7 +163,7 @@ void main() {
   );
 
   testWidgets(
-    'desde la tarjeta del avatar llega a su perfil y a Mis reservas @TP-01-H01-08',
+    'from the avatar card it reaches its profile and «Mis reservas» @TP-01-H01-08',
     (tester) async {
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
@@ -180,12 +181,12 @@ void main() {
   );
 
   testWidgets(
-    'sin reservas próximas, el Home no muestra la tarjeta de próxima reserva'
-    ' @TP-01-H02-01 @supuesto:TP-01-SUP-01',
+    'with no upcoming bookings, the Home does not show the next booking card'
+    ' @TP-01-H02-01 @assumption:TP-01-SUP-01',
     (tester) async {
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
-      // Verifica: el Home terminó de cargar y el bloque de la próxima reserva no está.
+      // Verifies: the Home finished loading and the next booking block is not there.
       await waitUntil(
         tester,
         find.textContaining('disponibilidad en tiempo real'),
@@ -196,12 +197,12 @@ void main() {
   );
 
   testWidgets(
-    'un administrador, al iniciar sesión, llega al panel de administración'
+    'an administrator, on signing in, reaches the administration panel'
     ' @TP-01-H03-01',
     (tester) async {
       await signInAsAdmin(tester);
 
-      // Verifica: llega directo al panel, no al Home de usuario.
+      // Verifies: it goes straight to the panel, not to the user Home.
       expect(find.text('PANEL ADMIN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
     },

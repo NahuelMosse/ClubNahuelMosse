@@ -10,9 +10,9 @@ import 'package:go_router/go_router.dart';
 
 import 'support/mount.dart';
 
-/// La app en castellano sobre [rutas].
-Widget _app(GoRouter rutas) => MaterialApp.router(
-  routerConfig: rutas,
+/// The app in Spanish on [routes].
+Widget _app(GoRouter routes) => MaterialApp.router(
+  routerConfig: routes,
   theme: darkTheme,
   localeListResolutionCallback: resolveLanguage,
   supportedLocales: AppLocalizations.supportedLocales,
@@ -23,9 +23,9 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'un 403 de la API muestra «Acceso denegado» y lleva a Mis reservas',
+    'a 403 from the API shows «Acceso denegado» and leads to «Mis reservas»',
     (tester) async {
-      final rutas = GoRouter(
+      final routes = GoRouter(
         routes: [
           GoRoute(
             path: '/',
@@ -48,8 +48,8 @@ void main() {
           ),
         ],
       );
-      addTearDown(rutas.dispose);
-      await tester.pumpWidget(_app(rutas));
+      addTearDown(routes.dispose);
+      await tester.pumpWidget(_app(routes));
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
 
@@ -62,15 +62,15 @@ void main() {
     },
   );
 
-  testWidgets('un 403 devuelve su propio resultado', (tester) async {
-    ErrorOutcome? resultado;
-    final rutas = GoRouter(
+  testWidgets('a 403 returns its own outcome', (tester) async {
+    ErrorOutcome? outcome;
+    final routes = GoRouter(
       routes: [
         GoRoute(
           path: '/',
           builder: (context, _) => Scaffold(
             body: TextButton(
-              onPressed: () async => resultado = await handleNetworkError(
+              onPressed: () async => outcome = await handleNetworkError(
                 context,
                 const ErrorDelServidor(403),
               ),
@@ -85,11 +85,11 @@ void main() {
         ),
       ],
     );
-    addTearDown(rutas.dispose);
-    await tester.pumpWidget(_app(rutas));
+    addTearDown(routes.dispose);
+    await tester.pumpWidget(_app(routes));
     await tester.tap(find.text('ABRIR'));
     await tester.pumpAndSettle();
 
-    expect(resultado, ErrorOutcome.accessDenied);
+    expect(outcome, ErrorOutcome.accessDenied);
   });
 }

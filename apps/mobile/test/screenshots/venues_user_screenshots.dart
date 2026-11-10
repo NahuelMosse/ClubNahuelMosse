@@ -7,26 +7,26 @@ import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 import '../support/user.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
+/// Asserts nothing: produces the step-9 strip to compare against the prototype.
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  const modos = {'dark': true, 'light': false};
-  // La portada de cada sede sale de la suma de los caracteres de su id: el cuarto grupo
-  // (8001) deja a Morón, Ramos Mejía y Haedo con las mismas portadas que tenían con ids numéricos.
-  const sedeMoron = '00000000-0000-7000-8001-000000000001';
-  const sedeRamos = '00000000-0000-7000-8001-000000000002';
-  const sedeHaedo = '00000000-0000-7000-8001-000000000005';
-  const idMoron = '00000000-0000-7000-8000-000000000001';
-  const idHaedo = '00000000-0000-7000-8000-000000000005';
-  final sedes =
-      '[${venueMoronWithSports.replaceAll(idMoron, sedeMoron)}, '
-      '{"id": "$sedeRamos", "name": "Sede Ramos Mejía", "address": "Calle Belgrano 1240", '
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  const modes = {'dark': true, 'light': false};
+  // Each venue's cover comes from the sum of the characters of its id: the fourth group
+  // (8001) leaves Moron, Ramos Mejia and Haedo with the same covers they had with numeric ids.
+  const venueMoron = '00000000-0000-7000-8001-000000000001';
+  const venueRamos = '00000000-0000-7000-8001-000000000002';
+  const venueHaedo = '00000000-0000-7000-8001-000000000005';
+  const moronId = '00000000-0000-7000-8000-000000000001';
+  const haedoId = '00000000-0000-7000-8000-000000000005';
+  final venues =
+      '[${venueMoronWithSports.replaceAll(moronId, venueMoron)}, '
+      '{"id": "$venueRamos", "name": "Sede Ramos Mejía", "address": "Calle Belgrano 1240", '
       '"opens_at": "09:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6], '
       '"space_count": 2, "sports": ["Hockey", "Voley"]}, '
-      '${venueHaedoWithoutCourts.replaceAll(idHaedo, sedeHaedo)}]';
-  const catalogoCompleto =
+      '${venueHaedoWithoutCourts.replaceAll(haedoId, venueHaedo)}]';
+  const fullCatalog =
       '{"sports": ['
       '{"key": "Futbol", "name": "Fútbol", "kinds": ['
       '{"key": "F5", "name": "Fútbol 5"}]},'
@@ -37,115 +37,112 @@ void main() {
       '{"key": "Hockey", "name": "Hockey", "kinds": ['
       '{"key": "H7", "name": "Hockey 7"}]}]}';
 
-  Future<void> capturar(WidgetTester tester, String archivo) async {
+  Future<void> capture(WidgetTester tester, String file) async {
     await tester.runAsync(() async {
-      for (final elemento in find.byType(Image).evaluate()) {
-        final imagen = elemento.widget;
-        if (imagen is Image) await precacheImage(imagen.image, elemento);
+      for (final element in find.byType(Image).evaluate()) {
+        final image = element.widget;
+        if (image is Image) await precacheImage(image.image, element);
       }
     });
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
   }
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
-      Future<void> abrir(
-        WidgetTester tester,
-        String inicio, {
-        String? espacios,
-      }) => mountUser(
-        tester,
-        dark: oscuro,
-        size: tamano,
-        start: inicio,
-        api: apiRoutes({
-          ...venueRoutes(
-            venues: sedes,
-            spaces:
-                espacios ??
-                '[$spaceF5Json, $spaceTennisJson]'.replaceAll(
-                  idMoron,
-                  sedeMoron,
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: dark) in modes.entries) {
+      Future<void> open(WidgetTester tester, String start, {String? spaces}) =>
+          mountUser(
+            tester,
+            dark: dark,
+            size: size,
+            start: start,
+            api: apiRoutes({
+              ...venueRoutes(
+                venues: venues,
+                spaces:
+                    spaces ??
+                    '[$spaceF5Json, $spaceTennisJson]'.replaceAll(
+                      moronId,
+                      venueMoron,
+                    ),
+              ),
+              'GET /spaces/catalog': (200, fullCatalog),
+              'POST /bookings': (
+                201,
+                bookingJson(
+                  inicio: '2026-11-12T21:00:00+00:00',
+                  fin: '2026-11-12T22:00:00+00:00',
                 ),
-          ),
-          'GET /spaces/catalog': (200, catalogoCompleto),
-          'POST /bookings': (
-            201,
-            bookingJson(
-              inicio: '2026-11-12T21:00:00+00:00',
-              fin: '2026-11-12T22:00:00+00:00',
-            ),
-          ),
-        }),
-      );
+              ),
+            }),
+          );
 
-      testWidgets('todas las sedes $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes');
-        await capturar(tester, 'venues/all_${ancho}_$modo.png');
+      testWidgets('all venues $width $mode', (tester) async {
+        await open(tester, '/sedes');
+        await capture(tester, 'venues/all_${width}_$mode.png');
       });
 
-      testWidgets('sede con canchas $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes/$sedeMoron');
-        await capturar(tester, 'venues/venue_${ancho}_$modo.png');
+      testWidgets('venue with courts $width $mode', (tester) async {
+        await open(tester, '/sedes/$venueMoron');
+        await capture(tester, 'venues/venue_${width}_$mode.png');
       });
 
-      testWidgets('sede filtrada por deporte $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester, '/sedes/$sedeMoron');
+      testWidgets('venue filtered by sport $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester, '/sedes/$venueMoron');
         await tester.tap(find.bySemanticsLabel('Deporte Fútbol'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'venues/venue_filtered_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'venues/venue_filtered_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('sede sin canchas $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes/$sedeHaedo', espacios: '[]');
-        await capturar(tester, 'venues/venue_empty_${ancho}_$modo.png');
+      testWidgets('venue without courts $width $mode', (tester) async {
+        await open(tester, '/sedes/$venueHaedo', spaces: '[]');
+        await capture(tester, 'venues/venue_empty_${width}_$mode.png');
       });
 
-      testWidgets('horarios $ancho $modo', (tester) async {
-        await abrir(
+      testWidgets('schedule $width $mode', (tester) async {
+        await open(
           tester,
-          '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
+          '/sedes/$venueMoron/canchas/00000000-0000-7000-8000-000000000009',
         );
-        await capturar(tester, 'venues/availability_${ancho}_$modo.png');
+        await capture(tester, 'venues/availability_${width}_$mode.png');
       });
 
-      testWidgets('horarios con franja elegida $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(
+      testWidgets('schedule with a chosen slot $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(
           tester,
-          '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
+          '/sedes/$venueMoron/canchas/00000000-0000-7000-8000-000000000009',
         );
-        final franja = find.bySemanticsLabel('18:00 – 19:00');
-        await tester.ensureVisible(franja);
+        final slot = find.bySemanticsLabel('18:00 – 19:00');
+        await tester.ensureVisible(slot);
         await tester.pumpAndSettle();
-        await tester.tap(franja);
+        await tester.tap(slot);
         await tester.pumpAndSettle();
-        await capturar(tester, 'venues/availability_chosen_${ancho}_$modo.png');
+        await capture(tester, 'venues/availability_chosen_${width}_$mode.png');
         await tester.tap(find.text('CONTINUAR'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'venues/confirm_${ancho}_$modo.png');
+        await capture(tester, 'venues/confirm_${width}_$mode.png');
         await tester.tap(find.text('CONFIRMAR RESERVA'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'venues/confirmed_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'venues/confirmed_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('horarios sin turnos $ancho $modo', (tester) async {
+      testWidgets('schedule without slots $width $mode', (tester) async {
         await mountUser(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start:
-              '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
+              '/sedes/$venueMoron/canchas/00000000-0000-7000-8000-000000000009',
           api: apiRoutes({
-            ...venueRoutes(venues: sedes, grid: gridJson(opens: false)),
-            'GET /spaces/catalog': (200, catalogoCompleto),
+            ...venueRoutes(venues: venues, grid: gridJson(opens: false)),
+            'GET /spaces/catalog': (200, fullCatalog),
           }),
         );
-        await capturar(tester, 'venues/availability_empty_${ancho}_$modo.png');
+        await capture(tester, 'venues/availability_empty_${width}_$mode.png');
       });
     }
   }

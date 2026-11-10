@@ -11,17 +11,17 @@ import 'package:http/testing.dart';
 
 import 'support/mount.dart';
 
-/// Una API que nunca contesta: la pantalla se queda cargando.
-ApiClient _apiColgada() => ApiClient(
+/// An API that never answers: the screen stays loading.
+ApiClient _hungApi() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) => Completer<http.Response>().future),
 );
 
-/// Monta la app con la API colgada y, al terminar, la desmonta y deja pasar
-/// el límite de espera para que no quede el Timer del cliente pendiente.
-Future<void> _cargando(
+/// Mounts the app with the hung API and, when done, unmounts it and lets the
+/// wait limit pass so the client's Timer is not left pending.
+Future<void> _loading(
   WidgetTester tester, {
-  required String inicio,
+  required String start,
   required bool admin,
 }) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
@@ -29,10 +29,10 @@ Future<void> _cargando(
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     App(
-      api: _apiColgada(),
+      api: _hungApi(),
       session: FakeSession(admin ? adminProfile : userProfile),
       appearance: Appearance.inMemory(dark: true),
-      initialLocation: inicio,
+      initialLocation: start,
     ),
   );
   await tester.pump();
@@ -40,17 +40,17 @@ Future<void> _cargando(
 }
 
 void main() {
-  group('esqueletos de carga con la API colgada', () {
-    for (final (ruta, admin) in [
+  group('loading skeletons with a hung API', () {
+    for (final (route, admin) in [
       ('/sedes', false),
       ('/reservas', false),
       ('/inicio', false),
       ('/admin/sedes', true),
     ]) {
       testWidgets(
-        'cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $ruta',
+        'every loading screen shows skeletons shaped like its content, not a spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $route',
         (tester) async {
-          await _cargando(tester, inicio: ruta, admin: admin);
+          await _loading(tester, start: route, admin: admin);
           expect(find.byType(Skeleton), findsWidgets);
           expect(find.byType(CircularProgressIndicator), findsNothing);
 

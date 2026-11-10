@@ -17,58 +17,58 @@ import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
+/// Asserts nothing: produces the step-9 strip to compare against the prototype.
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  final temas = {'dark': darkTheme, 'light': lightTheme};
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  final themes = {'dark': darkTheme, 'light': lightTheme};
 
-  Future<void> capturar(WidgetTester tester, String archivo) async {
-    // La foto del fondo se decodifica fuera del reloj falso del test.
+  Future<void> capture(WidgetTester tester, String file) async {
+    // The background photo is decoded outside the test's fake clock.
     await tester.runAsync(() async {
-      for (final elemento in find.byType(Image).evaluate()) {
-        final imagen = elemento.widget;
-        if (imagen is Image) await precacheImage(imagen.image, elemento);
+      for (final element in find.byType(Image).evaluate()) {
+        final image = element.widget;
+        if (image is Image) await precacheImage(image.image, element);
       }
     });
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
   }
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: tema) in temas.entries) {
-      testWidgets('login vacío $ancho $modo', (tester) async {
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: theme) in themes.entries) {
+      testWidgets('empty login $width $mode', (tester) async {
         await mountScreen(
           tester,
           loginRejectingCredentials(),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
-        await capturar(tester, 'session/login_empty_${ancho}_$modo.png');
+        await capture(tester, 'session/login_empty_${width}_$mode.png');
       });
 
-      testWidgets('login campos incompletos $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('login incomplete fields $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountScreen(
           tester,
           loginRejectingCredentials(),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.tap(find.text('INICIAR SESIÓN'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'session/login_incomplete_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'session/login_incomplete_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('login credenciales inválidas $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('login invalid credentials $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountScreen(
           tester,
           loginRejectingCredentials(),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.enterText(
           find.bySemanticsLabel('Correo'),
@@ -80,56 +80,56 @@ void main() {
         );
         await tester.tap(find.text('INICIAR SESIÓN'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'session/login_invalid_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'session/login_invalid_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('home $ancho $modo', (tester) async {
+      testWidgets('home $width $mode', (tester) async {
         await mountScreen(
           tester,
           fakeHome(FakeSession(userProfile)),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
-        await capturar(tester, 'session/home_${ancho}_$modo.png');
+        await capture(tester, 'session/home_${width}_$mode.png');
       });
 
-      testWidgets('tarjeta de la cuenta $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('account card $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountScreen(
           tester,
           fakeHome(FakeSession(userProfile)),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.tap(find.bySemanticsLabel('Tu cuenta'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'session/account_card_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'session/account_card_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('mi perfil $ancho $modo', (tester) async {
+      testWidgets('my profile $width $mode', (tester) async {
         await mountScreen(
           tester,
           MyProfileScreen(
             session: FakeSession(userProfile),
-            appearance: Appearance.inMemory(dark: modo == 'dark'),
+            appearance: Appearance.inMemory(dark: mode == 'dark'),
           ),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
-        await capturar(tester, 'session/my_profile_${ancho}_$modo.png');
+        await capture(tester, 'session/my_profile_${width}_$mode.png');
       });
 
-      testWidgets('recuperar correo inválido $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('recover invalid email $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountScreen(
           tester,
           ForgotPasswordScreen(
             recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
           ),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.enterText(
           find.bySemanticsLabel('Correo electrónico'),
@@ -137,19 +137,19 @@ void main() {
         );
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
-        await capturar(tester, 'session/recover_invalid_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'session/recover_invalid_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('recuperar enviado $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('recover sent $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountScreen(
           tester,
           ForgotPasswordScreen(
             recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
           ),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.enterText(
           find.bySemanticsLabel('Correo electrónico'),
@@ -158,47 +158,41 @@ void main() {
         await tester.pump();
         await tester.tap(find.text('ENVIAR ENLACE'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'session/recover_sent_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'session/recover_sent_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      for (final (nombre, codigo) in [('new', 204), ('link_invalid', 410)]) {
-        testWidgets('recuperar $nombre $ancho $modo', (tester) async {
+      for (final (name, status) in [('new', 204), ('link_invalid', 410)]) {
+        testWidgets('recover $name $width $mode', (tester) async {
           await mountScreen(
             tester,
             NewPasswordScreen(
-              recovery: PasswordRecovery(fakeApi(status: codigo, body: '')),
+              recovery: PasswordRecovery(fakeApi(status: status, body: '')),
               session: FakeSession(null),
               code: 'abc',
             ),
-            theme: tema,
-            size: tamano,
+            theme: theme,
+            size: size,
           );
-          await capturar(
-            tester,
-            'session/recover_${nombre}_${ancho}_$modo.png',
-          );
+          await capture(tester, 'session/recover_${name}_${width}_$mode.png');
         });
       }
 
-      for (final (nombre, invalido) in [
-        ('edit', false),
-        ('edit_invalid', true),
-      ]) {
-        testWidgets('mi perfil $nombre $ancho $modo', (tester) async {
-          final semantica = tester.ensureSemantics();
+      for (final (name, invalid) in [('edit', false), ('edit_invalid', true)]) {
+        testWidgets('my profile $name $width $mode', (tester) async {
+          final semantics = tester.ensureSemantics();
           await mountScreen(
             tester,
             MyProfileScreen(
               session: FakeSession(userProfile),
-              appearance: Appearance.inMemory(dark: modo == 'dark'),
+              appearance: Appearance.inMemory(dark: mode == 'dark'),
             ),
-            theme: tema,
-            size: tamano,
+            theme: theme,
+            size: size,
           );
           await tester.tap(find.text('Editar'));
           await tester.pumpAndSettle();
-          if (invalido) {
+          if (invalid) {
             await tester.enterText(find.bySemanticsLabel('DNI'), '42118');
             await tester.enterText(
               find.bySemanticsLabel('Fecha de nacimiento'),
@@ -211,34 +205,36 @@ void main() {
             await tester.ensureVisible(find.text('DATOS PERSONALES'));
             await tester.pumpAndSettle();
           }
-          await capturar(
+          await capture(
             tester,
-            'session/my_profile_${nombre}_${ancho}_$modo.png',
+            'session/my_profile_${name}_${width}_$mode.png',
           );
-          semantica.dispose();
+          semantics.dispose();
         });
       }
 
-      testWidgets('mi perfil confirmar baja $ancho $modo', (tester) async {
+      testWidgets('my profile confirm deactivation $width $mode', (
+        tester,
+      ) async {
         await mountScreen(
           tester,
           MyProfileScreen(
             session: FakeSession(userProfile),
-            appearance: Appearance.inMemory(dark: modo == 'dark'),
+            appearance: Appearance.inMemory(dark: mode == 'dark'),
           ),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('ELIMINAR CUENTA'));
         await tester.pumpAndSettle();
-        await capturar(tester, 'session/confirm_deactivate_${ancho}_$modo.png');
+        await capture(tester, 'session/confirm_deactivate_${width}_$mode.png');
       });
 
-      testWidgets('panel admin $ancho $modo', (tester) async {
-        final sesionAdmin = FakeSession(adminProfile);
-        final apiPanel = apiRoutes({
+      testWidgets('admin panel $width $mode', (tester) async {
+        final adminSession = FakeSession(adminProfile);
+        final panelApi = apiRoutes({
           'GET /bookings/all': (
             200,
             '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
@@ -249,32 +245,38 @@ void main() {
         await mountScreen(
           tester,
           AdminPanelScreen(
-            history: BookingHistory(api: apiPanel, sesion: sesionAdmin),
+            history: BookingHistory(api: panelApi, sesion: adminSession),
             venues: Venues(
-              repository: VenuesRepository(api: apiPanel, session: sesionAdmin),
+              repository: VenuesRepository(
+                api: panelApi,
+                session: adminSession,
+              ),
             ),
             spaces: Spaces(
-              repository: SpacesRepository(api: apiPanel, session: sesionAdmin),
+              repository: SpacesRepository(
+                api: panelApi,
+                session: adminSession,
+              ),
             ),
-            session: sesionAdmin,
+            session: adminSession,
             pending: PendingPanelFilters(),
           ),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
-        await capturar(tester, 'session/panel_admin_${ancho}_$modo.png');
+        await capture(tester, 'session/panel_admin_${width}_$mode.png');
       });
 
-      testWidgets('recuperar contraseña $ancho $modo', (tester) async {
+      testWidgets('recover password $width $mode', (tester) async {
         await mountScreen(
           tester,
           ForgotPasswordScreen(
             recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
           ),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
-        await capturar(tester, 'session/recover_${ancho}_$modo.png');
+        await capture(tester, 'session/recover_${width}_$mode.png');
       });
     }
   }

@@ -9,20 +9,20 @@ import '../support/user.dart';
 
 void main() {
   testWidgets(
-    'el contador de la tarjeta de sede es el dorsal sobre la foto, en el color del texto sobre foto @RED-01-ASM-04 @RED-03-ASM-14',
+    'the venue card counter is the bib over the photo, in the on-photo text color @RED-01-ASM-04 @RED-03-ASM-14',
     (tester) async {
       await mountUser(
         tester,
         api: apiRoutes(venueRoutes(venues: '[$venueMoronWithSports]')),
       );
 
-      final dorsal = find.descendant(
+      final bib = find.descendant(
         of: find.byType(VenueCard),
         matching: find.byType(GiantBib),
       );
-      final contador = tester.widget<GiantBib>(dorsal);
-      expect(contador.text, '02');
-      expect(contador.color, Palette.dark.textOnMedia);
+      final counter = tester.widget<GiantBib>(bib);
+      expect(counter.text, '02');
+      expect(counter.color, Palette.dark.textOnMedia);
     },
   );
 }

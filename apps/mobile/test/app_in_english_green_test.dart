@@ -29,7 +29,7 @@ String _segment(Directory d) => d.path.replaceAll('\\', '/').split('/').last;
 
 void main() {
   test(
-    'ningún archivo de lib queda en una carpeta en castellano @ENG-16-S1 @assumption:ENG-16-ASM-01',
+    'no file of lib is left in a Spanish-named folder @ENG-16-S1 @assumption:ENG-16-ASM-01',
     () {
       final spanish = [
         for (final d in _dirs('lib'))
@@ -40,7 +40,7 @@ void main() {
   );
 
   test(
-    'cada funcionalidad de lib/features tiene sus capas data, domain y presentation @ENG-16-S2',
+    'each feature of lib/features has its data, domain and presentation layers @ENG-16-S2',
     () {
       final features = Directory(
         'lib/features',

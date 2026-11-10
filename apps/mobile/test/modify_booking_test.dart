@@ -10,30 +10,30 @@ import 'my_bookings_test.dart' show bookingJson;
 import 'support/user.dart';
 
 void main() {
-  // La reserva es del jueves 12 a las 21 en el club; la grilla ya la da por libre.
-  final grilla = gridJson(taken: {9, 12});
+  // The booking is Thursday the 12th at 21:00 at the club; the grid already shows it as free.
+  final grid = gridJson(taken: {9, 12});
 
-  Future<List<http.Request>> abrir(
+  Future<List<http.Request>> open(
     WidgetTester tester, {
-    (int, String)? alModificar,
-    Size tamano = const Size(393, 852),
+    (int, String)? onModify,
+    Size size = const Size(393, 852),
   }) async {
-    final pedidos = <http.Request>[];
-    var modificada = false;
-    final rutas = venueRoutes(grid: grilla);
+    final requests = <http.Request>[];
+    var modified = false;
+    final routes = venueRoutes(grid: grid);
     await mountUser(
       tester,
       start: '/reservas',
-      size: tamano,
+      size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+        cliente: MockClient((request) async {
+          requests.add(request);
+          final (code, body) = switch ((request.method, request.url.path)) {
             ('POST', '/bookings/00000000-0000-7000-8000-000000000001/modify') =>
               () {
                 final r =
-                    alModificar ??
+                    onModify ??
                     (
                       200,
                       bookingJson(
@@ -41,58 +41,55 @@ void main() {
                         fin: '2026-11-12T23:00:00+00:00',
                       ),
                     );
-                modificada = r.$1 == 200;
+                modified = r.$1 == 200;
                 return r;
               }(),
             ('GET', '/bookings') => (
               200,
-              '{"bookings": [${modificada ? bookingJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : bookingJson()}]}',
+              '{"bookings": [${modified ? bookingJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : bookingJson()}]}',
             ),
-            _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
+            _ => routes['${request.method} ${request.url.path}'] ?? (404, '{}'),
           };
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            codigo,
+            utf8.encode(body),
+            code,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       ),
     );
-    return pedidos;
+    return requests;
   }
 
-  Future<void> tocar(WidgetTester tester, Finder f) async {
+  Future<void> tap(WidgetTester tester, Finder f) async {
     await tester.ensureVisible(f);
     await tester.pumpAndSettle();
     await tester.tap(f);
     await tester.pumpAndSettle();
   }
 
-  Future<void> hastaConfirmar(WidgetTester tester) async {
-    await tocar(tester, find.text('MODIFICAR'));
-    await tocar(tester, find.text('19:00 – 20:00'));
-    await tocar(tester, find.text('CONTINUAR CON EL CAMBIO'));
+  Future<void> upToConfirm(WidgetTester tester) async {
+    await tap(tester, find.text('MODIFICAR'));
+    await tap(tester, find.text('19:00 – 20:00'));
+    await tap(tester, find.text('CONTINUAR CON EL CAMBIO'));
   }
 
   testWidgets(
-    'MODIFICAR abre la grilla del día de la reserva, sin duración y con su horario marcado',
+    '«MODIFICAR» opens the grid of the booking\'s day, without duration and with its time marked',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
+      final semantics = tester.ensureSemantics();
+      final requests = await open(tester);
 
-      await tocar(tester, find.text('MODIFICAR'));
+      await tap(tester, find.text('MODIFICAR'));
 
-      final consulta = pedidos.last.url;
+      final query = requests.last.url;
+      expect(query.path, '/spaces/00000000-0000-7000-8000-000000000009/slots');
       expect(
-        consulta.path,
-        '/spaces/00000000-0000-7000-8000-000000000009/slots',
-      );
-      expect(
-        consulta.queryParameters['booking_id'],
+        query.queryParameters['booking_id'],
         '00000000-0000-7000-8000-000000000001',
       );
-      expect(consulta.queryParameters['date'], '2026-11-12');
-      expect(consulta.queryParameters['hours'], '1');
+      expect(query.queryParameters['date'], '2026-11-12');
+      expect(query.queryParameters['hours'], '1');
       expect(
         find.textContaining(
           'Estás modificando tu reserva del Jue 12, 21:00 – 22:00',
@@ -102,115 +99,117 @@ void main() {
       expect(find.text('DURACIÓN'), findsNothing);
       expect(find.text('(actual)'), findsOneWidget);
       expect(find.bySemanticsLabel('21:00 – 22:00 (actual)'), findsOneWidget);
-      final boton = find.bySemanticsLabel('CONTINUAR CON EL CAMBIO');
-      expect(tester.getSemantics(boton).flagsCollection.isEnabled, isFalse);
+      final button = find.bySemanticsLabel('CONTINUAR CON EL CAMBIO');
+      expect(tester.getSemantics(button).flagsCollection.isEnabled, isFalse);
 
-      await tocar(tester, find.text('19:00 – 20:00'));
-      expect(tester.getSemantics(boton).flagsCollection.isEnabled, isTrue);
-      semantica.dispose();
+      await tap(tester, find.text('19:00 – 20:00'));
+      expect(tester.getSemantics(button).flagsCollection.isEnabled, isTrue);
+      semantics.dispose();
     },
   );
 
-  testWidgets('guardar mueve la reserva y vuelve a Mis reservas con el aviso', (
+  testWidgets(
+    'saving moves the booking and returns to «Mis reservas» with the notice',
+    (tester) async {
+      final requests = await open(tester);
+      await upToConfirm(tester);
+
+      expect(find.text('Confirmá el cambio'), findsOneWidget);
+      expect(find.text('ANTES'), findsOneWidget);
+      expect(find.text('Jue 12 · 21:00 – 22:00'), findsOneWidget);
+      expect(find.text('AHORA'), findsOneWidget);
+      expect(find.text('Jue 12 · 19:00 – 20:00'), findsOneWidget);
+
+      await tap(tester, find.text('GUARDAR EL CAMBIO'));
+
+      final post = requests.singleWhere((p) => p.method == 'POST');
+      expect(jsonDecode(post.body), {
+        'space_id': '00000000-0000-7000-8000-000000000009',
+        'date': '2026-11-12',
+        'start_hour': '19:00',
+      });
+      expect(find.text('Reserva modificada'), findsOneWidget);
+      expect(find.text('19:00 – 20:00'), findsOneWidget);
+      expect(find.text('21:00 – 22:00'), findsNothing);
+    },
+  );
+
+  testWidgets('leaving the booking as it is returns without sending anything', (
     tester,
   ) async {
-    final pedidos = await abrir(tester);
-    await hastaConfirmar(tester);
+    final requests = await open(tester);
+    await upToConfirm(tester);
 
-    expect(find.text('Confirmá el cambio'), findsOneWidget);
-    expect(find.text('ANTES'), findsOneWidget);
-    expect(find.text('Jue 12 · 21:00 – 22:00'), findsOneWidget);
-    expect(find.text('AHORA'), findsOneWidget);
-    expect(find.text('Jue 12 · 19:00 – 20:00'), findsOneWidget);
+    await tap(tester, find.text('DEJAR LA RESERVA COMO ESTÁ'));
 
-    await tocar(tester, find.text('GUARDAR EL CAMBIO'));
-
-    final post = pedidos.singleWhere((p) => p.method == 'POST');
-    expect(jsonDecode(post.body), {
-      'space_id': '00000000-0000-7000-8000-000000000009',
-      'date': '2026-11-12',
-      'start_hour': '19:00',
-    });
-    expect(find.text('Reserva modificada'), findsOneWidget);
-    expect(find.text('19:00 – 20:00'), findsOneWidget);
-    expect(find.text('21:00 – 22:00'), findsNothing);
-  });
-
-  testWidgets('dejar la reserva como está vuelve sin pedir nada', (
-    tester,
-  ) async {
-    final pedidos = await abrir(tester);
-    await hastaConfirmar(tester);
-
-    await tocar(tester, find.text('DEJAR LA RESERVA COMO ESTÁ'));
-
-    expect(pedidos.where((p) => p.method == 'POST'), isEmpty);
+    expect(requests.where((p) => p.method == 'POST'), isEmpty);
     expect(find.text('21:00 – 22:00'), findsOneWidget);
     expect(find.text('MODIFICAR'), findsOneWidget);
   });
 
-  testWidgets('el horario se ocupó: el aviso y la grilla vuelta a leer', (
+  testWidgets('the time slot was taken: the notice and the grid read again', (
     tester,
   ) async {
-    final pedidos = await abrir(
+    final requests = await open(
       tester,
-      alModificar: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
+      onModify: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
     );
-    await hastaConfirmar(tester);
-    final antes = pedidos.where((p) => p.url.path.endsWith('/slots')).length;
+    await upToConfirm(tester);
+    final before = requests.where((p) => p.url.path.endsWith('/slots')).length;
 
-    await tocar(tester, find.text('GUARDAR EL CAMBIO'));
+    await tap(tester, find.text('GUARDAR EL CAMBIO'));
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tocar(tester, find.text('VER LO ACTUALIZADO'));
+    await tap(tester, find.text('VER LO ACTUALIZADO'));
 
     expect(find.textContaining('Estás modificando tu reserva'), findsOneWidget);
     expect(
-      pedidos.where((p) => p.url.path.endsWith('/slots')).length,
-      antes + 1,
+      requests.where((p) => p.url.path.endsWith('/slots')).length,
+      before + 1,
     );
   });
 
-  testWidgets('la reserva ya no se puede modificar: el aviso y Mis reservas', (
+  testWidgets(
+    'the booking can no longer be modified: the notice and «Mis reservas»',
+    (tester) async {
+      await open(
+        tester,
+        onModify: (
+          409,
+          '{"errors": {"reserva": "Esto cambió mientras tanto"}}',
+        ),
+      );
+      await upToConfirm(tester);
+
+      await tap(tester, find.text('GUARDAR EL CAMBIO'));
+      expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+      await tap(tester, find.text('VER LO ACTUALIZADO'));
+
+      expect(find.text('Próximas'), findsOneWidget);
+      expect(find.textContaining('Estás modificando'), findsNothing);
+    },
+  );
+
+  testWidgets('the server fails: the notice and the confirmation stays open', (
     tester,
   ) async {
-    await abrir(
-      tester,
-      alModificar: (
-        409,
-        '{"errors": {"reserva": "Esto cambió mientras tanto"}}',
-      ),
-    );
-    await hastaConfirmar(tester);
+    await open(tester, onModify: (500, '{}'));
+    await upToConfirm(tester);
 
-    await tocar(tester, find.text('GUARDAR EL CAMBIO'));
-    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tocar(tester, find.text('VER LO ACTUALIZADO'));
-
-    expect(find.text('Próximas'), findsOneWidget);
-    expect(find.textContaining('Estás modificando'), findsNothing);
-  });
-
-  testWidgets('el servidor falla: el aviso y la confirmación sigue abierta', (
-    tester,
-  ) async {
-    await abrir(tester, alModificar: (500, '{}'));
-    await hastaConfirmar(tester);
-
-    await tocar(tester, find.text('GUARDAR EL CAMBIO'));
+    await tap(tester, find.text('GUARDAR EL CAMBIO'));
     expect(find.text('Error del servidor'), findsOneWidget);
-    await tocar(tester, find.text('ACEPTAR'));
+    await tap(tester, find.text('ACEPTAR'));
 
     expect(find.text('Confirmá el cambio'), findsOneWidget);
   });
 
-  testWidgets('con el texto al 200 % en un teléfono chico no se corta nada', (
+  testWidgets('with text at 200 % on a small phone nothing is cut off', (
     tester,
   ) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await abrir(tester, tamano: const Size(360, 800));
+    await open(tester, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
-    await hastaConfirmar(tester);
+    await upToConfirm(tester);
     expect(tester.takeException(), isNull);
   });
 }

@@ -7,126 +7,126 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-  final manana = todayAtClub().add(const Duration(days: 1));
-  const titulo = 'El club anuló tu reserva';
-  const motivo = 'mantenimiento de la cancha';
+  const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
+  const title = 'El club anuló tu reserva';
+  const reason = 'mantenimiento de la cancha';
 
-  String cuerpo(String sede, {String hora = '21:00'}) =>
-      'Fútbol 5 · $sede · ${dias[manana.weekday - 1]} ${manana.day}, $hora. '
-      'Motivo: $motivo.';
+  String body(String venue, {String hour = '21:00'}) =>
+      'Fútbol 5 · $venue · ${days[tomorrow.weekday - 1]} ${tomorrow.day}, $hour. '
+      'Motivo: $reason.';
 
-  /// Una sede nueva con un Fútbol 5 y una reserva de [correo] mañana a las [hora].
-  Future<(String, String)> otraReserva(String correo, {int hora = 21}) async {
-    final sede = 'Sede Morón ${unique()}';
-    await createVenue(sede, 'Av. Rivadavia 19850');
-    final cancha = await createSpace(sede);
-    await occupy(cancha, manana, hora, email: correo);
-    return (sede, cancha);
+  /// A new venue with a Fútbol 5 and a booking of [email] tomorrow at [hour].
+  Future<(String, String)> anotherBooking(String email, {int hour = 21}) async {
+    final venue = 'Sede Morón ${unique()}';
+    await createVenue(venue, 'Av. Rivadavia 19850');
+    final court = await createSpace(venue);
+    await occupy(court, tomorrow, hour, email: email);
+    return (venue, court);
   }
 
-  /// Una cuenta nueva con una reserva mañana a las 21.
-  Future<(String, String, String)> reservaDeManana() async {
-    final correo = 'socio.${unique()}@correo.com';
-    await createAccount(email: correo, password: 'ClubNahuel1');
-    final (sede, cancha) = await otraReserva(correo);
-    return (correo, sede, cancha);
+  /// A new account with a booking tomorrow at 21.
+  Future<(String, String, String)> tomorrowBooking() async {
+    final email = 'socio.${unique()}@correo.com';
+    await createAccount(email: email, password: 'ClubNahuel1');
+    final (venue, court) = await anotherBooking(email);
+    return (email, venue, court);
   }
 
-  Future<void> entrar(
+  Future<void> signIn(
     WidgetTester tester,
-    String correo, {
-    bool permiso = true,
+    String email, {
+    bool permission = true,
   }) async {
     await openApp(tester);
-    await setNotificationPermission(granted: permiso);
-    await typeInto(tester, 'Correo', correo);
+    await setNotificationPermission(granted: permission);
+    await typeInto(tester, 'Correo', email);
     await typeInto(tester, 'Contraseña', 'ClubNahuel1');
     await tapText(tester, 'INICIAR SESIÓN');
     await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
-  Finder campana(int sinLeer) => find.bySemanticsLabel(
-    sinLeer == 0 ? 'Notificaciones' : 'Notificaciones, $sinLeer sin leer',
+  Finder bell(int unread) => find.bySemanticsLabel(
+    unread == 0 ? 'Notificaciones' : 'Notificaciones, $unread sin leer',
   );
 
-  Future<void> abrirCentro(WidgetTester tester, {int sinLeer = 0}) async {
-    await waitUntil(tester, campana(sinLeer));
-    await tester.tap(campana(sinLeer));
+  Future<void> openCenter(WidgetTester tester, {int unread = 0}) async {
+    await waitUntil(tester, bell(unread));
+    await tester.tap(bell(unread));
     await tester.pumpAndSettle();
     await waitUntil(tester, find.text('Notificaciones'));
   }
 
-  bool resaltada(WidgetTester tester, String sede) => tester
+  bool highlighted(WidgetTester tester, String venue) => tester
       .getSemantics(
-        find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(sede)},')),
+        find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(venue)},')),
       )
       .flagsCollection
       .isSelected;
 
   testWidgets(
-    'el administrador anula la reserva y el usuario ve el aviso con deporte, sede, fecha y motivo @CU-24.2-H01-01 @supuesto:CU-24.2-SUP-06',
+    'the administrator voids the booking and the user sees the notice with sport, venue, date and reason @CU-24.2-H01-01 @assumption:CU-24.2-SUP-06',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, _) = await reservaDeManana();
-      await entrar(tester, correo);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, _) = await tomorrowBooking();
+      await signIn(tester, email);
 
-      // La anulación llega desde el club: acá la persona está en el Home.
-      final [reserva] = await upcomingOf(correo);
-      expect(await voidFromAdmin(reserva), 200);
-      await waitUntil(tester, find.text(titulo));
+      // The voiding comes from the club: here the person is on the Home.
+      final [booking] = await upcomingOf(email);
+      expect(await voidFromAdmin(booking), 200);
+      await waitUntil(tester, find.text(title));
 
-      // Verifica: la tarjeta superior trae la reserva y el motivo, sobre la pantalla en la
-      // que estaba.
-      expect(find.text(cuerpo(sede)), findsOneWidget);
+      // Verifies: the top card has the booking and the reason, over the screen it
+      // was on.
+      expect(find.text(body(venue)), findsOneWidget);
       expect(find.text('MARCAR TODAS'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'al tocar el aviso la app abre el historial con la reserva anulada y su motivo @CU-24.2-H01-02 @supuesto:CU-24.2-SUP-04',
+    'on tapping the notice the app opens the history with the voided booking and its reason @CU-24.2-H01-02 @assumption:CU-24.2-SUP-04',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, cancha) = await reservaDeManana();
-      await entrar(tester, correo);
-      final [reserva] = await upcomingOf(correo);
-      expect(await voidFromAdmin(reserva), 200);
-      await waitUntil(tester, find.text(titulo));
+      final semantics = tester.ensureSemantics();
+      final (email, venue, court) = await tomorrowBooking();
+      await signIn(tester, email);
+      final [booking] = await upcomingOf(email);
+      expect(await voidFromAdmin(booking), 200);
+      await waitUntil(tester, find.text(title));
 
-      await tester.tap(find.text(titulo));
+      await tester.tap(find.text(title));
       await tester.pumpAndSettle();
 
-      // Verifica: Mis reservas en el historial, con la reserva anulada, su motivo y resaltada.
+      // Verifies: «Mis reservas» on the history, with the voided booking, its reason and highlighted.
       await waitUntil(tester, find.text('ANULADA'));
       expect(find.text('Mis reservas'), findsOneWidget);
-      expect(find.text(cancha), findsOneWidget);
+      expect(find.text(court), findsOneWidget);
       expect(
-        find.text('Anulada por el administrador · $motivo'),
+        find.text('Anulada por el administrador · $reason'),
         findsOneWidget,
       );
-      expect(resaltada(tester, sede), isTrue);
+      expect(highlighted(tester, venue), isTrue);
       expect(find.text('MARCAR TODAS'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el envío del aviso consta en la trazabilidad de la reserva que ve el administrador @CU-24.2-H01-03 @supuesto:CU-24.2-SUP-07',
+    'the notice delivery is recorded in the traceability of the booking the administrator sees @CU-24.2-H01-03 @assumption:CU-24.2-SUP-07',
     (tester) async {
-      final (correo, sede, cancha) = await reservaDeManana();
-      final [reserva] = await upcomingOf(correo);
-      expect(await voidFromAdmin(reserva), 200);
-      // La corrida no tiene servicio de notificaciones: el aviso queda en el centro.
-      expect(await waitForNoticeDelivery(cancha), 'sin_canal');
+      final (email, venue, court) = await tomorrowBooking();
+      final [booking] = await upcomingOf(email);
+      expect(await voidFromAdmin(booking), 200);
+      // The run has no notification service: the notice stays in the center.
+      expect(await waitForNoticeDelivery(court), 'sin_canal');
 
       await signInAsAdmin(tester);
-      await typeInto(tester, 'Buscar reserva', sede);
-      await waitUntil(tester, find.text(cancha));
-      await tapText(tester, cancha);
+      await typeInto(tester, 'Buscar reserva', venue);
+      await waitUntil(tester, find.text(court));
+      await tapText(tester, court);
 
-      // Verifica: el detalle deja el aviso en la trazabilidad, junto con la anulación.
+      // Verifies: the detail leaves the notice in the traceability, along with the voiding.
       await waitUntil(tester, find.text('Detalle de reserva'));
       expect(find.text('Anulada por el administrador'), findsOneWidget);
       expect(find.text('Aviso en el centro del usuario'), findsOneWidget);
@@ -135,19 +135,19 @@ void main() {
   );
 
   testWidgets(
-    'varias reservas anuladas a la misma persona llegan en un solo aviso con la cantidad @CU-24.2-H03-01 @supuesto:CU-24.2-SUP-02 @supuesto:CU-24.2-SUP-06',
+    'several bookings voided for the same person arrive in a single notice with the count @CU-24.2-H03-01 @assumption:CU-24.2-SUP-02 @assumption:CU-24.2-SUP-06',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, _, _) = await reservaDeManana();
-      await otraReserva(correo, hora: 22);
-      await entrar(tester, correo, permiso: false);
+      final semantics = tester.ensureSemantics();
+      final (email, _, _) = await tomorrowBooking();
+      await anotherBooking(email, hour: 22);
+      await signIn(tester, email, permission: false);
 
-      for (final reserva in await upcomingOf(correo)) {
-        expect(await voidFromAdmin(reserva), 200);
+      for (final booking in await upcomingOf(email)) {
+        expect(await voidFromAdmin(booking), 200);
       }
-      await abrirCentro(tester, sinLeer: 1);
+      await openCenter(tester, unread: 1);
 
-      // Verifica: un solo aviso, que dice cuántas son; tocarlo lleva al historial.
+      // Verifies: a single notice, which says how many there are; tapping it leads to the history.
       expect(find.text('El club anuló 2 de tus reservas'), findsOneWidget);
       expect(
         find.text(
@@ -159,42 +159,42 @@ void main() {
       await tester.pumpAndSettle();
       await waitUntil(tester, find.text('Mis reservas'));
       expect(find.text('ANULADA'), findsNWidgets(2));
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin permiso de notificaciones no llega el push pero el aviso está en el centro @CU-24.2-H04-01 @supuesto:CU-24.2-SUP-07',
+    'without notification permission the push does not arrive but the notice is in the center @CU-24.2-H04-01 @assumption:CU-24.2-SUP-07',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, cancha) = await reservaDeManana();
-      await entrar(tester, correo, permiso: false);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, court) = await tomorrowBooking();
+      await signIn(tester, email, permission: false);
 
-      final [reserva] = await upcomingOf(correo);
-      expect(await voidFromAdmin(reserva), 200);
-      await abrirCentro(tester, sinLeer: 1);
+      final [booking] = await upcomingOf(email);
+      expect(await voidFromAdmin(booking), 200);
+      await openCenter(tester, unread: 1);
 
-      // Verifica: el centro avisa que están desactivadas y trae la anulación igual; la API
-      // sabe que el push no salió.
+      // Verifies: the center says they are turned off and has the voiding anyway; the API
+      // knows the push did not go out.
       expect(find.text('Notificaciones desactivadas'), findsOneWidget);
-      expect(find.text(titulo), findsOneWidget);
-      expect(find.text(cuerpo(sede)), findsOneWidget);
+      expect(find.text(title), findsOneWidget);
+      expect(find.text(body(venue)), findsOneWidget);
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(await waitForNoticeDelivery(cancha), 'sin_permiso');
-      semantica.dispose();
+      expect(await waitForNoticeDelivery(court), 'sin_permiso');
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'si el usuario ya había cancelado la reserva no recibe el aviso del club @CU-24.2-H05-01',
+    'if the user had already canceled the booking it does not receive the club notice @CU-24.2-H05-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, cancha) = await reservaDeManana();
-      final [reserva] = await upcomingOf(correo);
-      // Sin permiso el panel no se abre solo en el Home y la campana abre el centro.
-      await entrar(tester, correo, permiso: false);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, court) = await tomorrowBooking();
+      final [booking] = await upcomingOf(email);
+      // Without permission the panel does not open by itself on the Home and the bell opens the center.
+      await signIn(tester, email, permission: false);
       await tapText(tester, 'RESERVAS');
-      await waitUntil(tester, find.text(cancha));
+      await waitUntil(tester, find.text(court));
       await tapText(tester, 'CANCELAR');
       await waitUntil(tester, find.text('¿Cancelar la reserva?'));
       await tapText(tester, 'CANCELAR RESERVA');
@@ -202,15 +202,15 @@ void main() {
       await tapText(tester, 'ACEPTAR');
       await tapText(tester, 'INICIO');
 
-      // El club intenta anularla después: la reserva ya no está activa.
-      expect(await voidFromAdmin(reserva), 409);
-      await abrirCentro(tester, sinLeer: 1);
+      // The club tries to void it afterwards: the booking is no longer active.
+      expect(await voidFromAdmin(booking), 409);
+      await openCenter(tester, unread: 1);
 
-      // Verifica: el centro sólo trae la confirmación de su propia cancelación.
+      // Verifies: the center only has the confirmation of its own cancellation.
       expect(find.text('Reserva cancelada'), findsOneWidget);
-      expect(find.text(titulo), findsNothing);
-      expect(find.text(cuerpo(sede)), findsNothing);
-      semantica.dispose();
+      expect(find.text(title), findsNothing);
+      expect(find.text(body(venue)), findsNothing);
+      semantics.dispose();
     },
   );
 }

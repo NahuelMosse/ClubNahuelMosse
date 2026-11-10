@@ -7,43 +7,43 @@ import '../support/actions.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> abrirTarjeta(WidgetTester tester) async {
+  Future<void> openCard(WidgetTester tester) async {
     await tester.tap(find.bySemanticsLabel('Tu cuenta'));
     await tester.pumpAndSettle();
   }
 
   testWidgets(
-    'cierra la sesión desde la tarjeta del avatar y vuelve al login @CU-02-H01-01',
+    'signs out from the avatar card and returns to the login @CU-02-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, email: correo);
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, email: email);
 
-      await abrirTarjeta(tester);
-      // Verifica: la tarjeta muestra quién tiene la sesión abierta y sus opciones.
+      await openCard(tester);
+      // Verifies: the card shows who has the session open and their options.
       expect(find.text('Nahuel Mosse'), findsOneWidget);
-      expect(find.text(correo), findsOneWidget);
+      expect(find.text(email), findsOneWidget);
       expect(find.text('Perfil completo'), findsOneWidget);
       expect(find.text('Mis reservas'), findsOneWidget);
 
       await tapText(tester, 'Cerrar sesión');
 
-      // Verifica: vuelve al login. Si falla, la sesión queda abierta en un teléfono ajeno.
+      // Verifies: it returns to the login. If it fails, the session stays open on someone else's phone.
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'después de cerrar la sesión, volver atrás no reabre una pantalla con sesión @CU-02-H01-02',
+    'after signing out, going back does not reopen a signed-in screen @CU-02-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await abrirTarjeta(tester);
+      await openCard(tester);
       await tapText(tester, 'Cerrar sesión');
 
-      // Verifica: ir de nuevo al Home sin sesión termina en el login.
+      // Verifies: going to the Home again without a session ends on the login.
       final login = tester.element(find.text('INICIAR SESIÓN'));
       expect(GoRouter.of(login).canPop(), isFalse);
       GoRouter.of(login).go('/inicio');
@@ -51,49 +51,49 @@ void main() {
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
 
-      // Verifica: al reabrir la app la sesión sigue cerrada.
+      // Verifies: on reopening the app the session is still closed.
       await reopenApp(tester);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'cierra la sesión desde Mi perfil y vuelve al login @CU-02-H02-01',
+    'signs out from «Mi perfil» and returns to the login @CU-02-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await abrirTarjeta(tester);
+      await openCard(tester);
       await tapText(tester, 'Perfil completo');
       expect(find.text('MIEMBRO ACTIVO'), findsOneWidget);
 
       await tapText(tester, 'CERRAR SESIÓN');
 
-      // Verifica: desde el perfil también se sale al login.
+      // Verifies: from the profile it also leaves to the login.
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('MIEMBRO ACTIVO'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'abre la tarjeta del avatar, toca afuera y la tarjeta se cierra sin cerrar la sesión @CU-02-H03-01',
+    'opens the avatar card, taps outside and the card closes without signing out @CU-02-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await abrirTarjeta(tester);
+      await openCard(tester);
       expect(find.text('Cerrar sesión'), findsOneWidget);
 
-      // Un punto de la pantalla lejos de la tarjeta, que está arriba a la derecha.
-      final pantalla = tester.view.physicalSize / tester.view.devicePixelRatio;
-      await tester.tapAt(Offset(pantalla.width / 4, pantalla.height * 0.8));
+      // A point on the screen far from the card, which is at the top right.
+      final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+      await tester.tapAt(Offset(screen.width / 4, screen.height * 0.8));
       await tester.pumpAndSettle();
 
-      // Verifica: la tarjeta se va y la persona sigue en el Home con su sesión.
+      // Verifies: the card goes away and the person stays on the Home with their session.
       expect(find.text('Cerrar sesión'), findsNothing);
       expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

@@ -10,103 +10,100 @@ import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  // Siempre en el futuro, así la tarjeta ofrece CANCELAR.
-  final futura = DateTime.now().toUtc().add(const Duration(days: 2));
-  final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
-  final proxima = bookingJson(
-    inicio: inicio.toIso8601String(),
-    fin: inicio.add(const Duration(hours: 1)).toIso8601String(),
+  // Always in the future, so the card offers CANCELAR.
+  final future = DateTime.now().toUtc().add(const Duration(days: 2));
+  final start = DateTime.utc(future.year, future.month, future.day, 21);
+  final upcoming = bookingJson(
+    inicio: start.toIso8601String(),
+    fin: start.add(const Duration(hours: 1)).toIso8601String(),
   );
 
-  Future<List<http.Request>> abrir(
+  Future<List<http.Request>> open(
     WidgetTester tester, {
-    (int, String)? alCancelar,
-    String proximasDespues = '[]',
+    (int, String)? onCancel,
+    String upcomingAfter = '[]',
   }) async {
-    final pedidos = <http.Request>[];
-    var cancelada = false;
-    final rutas = venueRoutes();
+    final requests = <http.Request>[];
+    var canceled = false;
+    final routes = venueRoutes();
     await mountUser(
       tester,
       start: '/reservas',
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+        cliente: MockClient((request) async {
+          requests.add(request);
+          final (status, body) = switch ((request.method, request.url.path)) {
             ('POST', '/bookings/00000000-0000-7000-8000-000000000001/cancel') =>
               () {
-                final respuesta =
-                    alCancelar ?? (200, bookingJson(estado: 'canceled'));
-                // Un 409 también deja la lista sin esa reserva: ya no estaba activa.
-                cancelada = respuesta.$1 == 200 || respuesta.$1 == 409;
-                return respuesta;
+                final response =
+                    onCancel ?? (200, bookingJson(estado: 'canceled'));
+                // A 409 also leaves the list without that booking: it was no longer active.
+                canceled = response.$1 == 200 || response.$1 == 409;
+                return response;
               }(),
             ('GET', '/bookings') => (
               200,
-              '{"bookings": ${cancelada ? proximasDespues : '[$proxima]'}}',
+              '{"bookings": ${canceled ? upcomingAfter : '[$upcoming]'}}',
             ),
-            _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
+            _ => routes['${request.method} ${request.url.path}'] ?? (404, '{}'),
           };
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            codigo,
+            utf8.encode(body),
+            status,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       ),
     );
-    return pedidos;
+    return requests;
   }
 
-  Future<void> pedirCancelar(WidgetTester tester) async {
+  Future<void> askToCancel(WidgetTester tester) async {
     await tester.ensureVisible(find.text('CANCELAR'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('CANCELAR'));
     await tester.pumpAndSettle();
   }
 
-  testWidgets('confirmar cancela, avisa y vuelve a leer la lista', (
+  testWidgets('confirming cancels, notifies and re-reads the list', (
     tester,
   ) async {
-    final pedidos = await abrir(tester);
+    final requests = await open(tester);
 
-    await pedirCancelar(tester);
+    await askToCancel(tester);
     expect(find.text('¿Cancelar la reserva?'), findsOneWidget);
     expect(find.textContaining('Fútbol 5 · Sede Morón ·'), findsOneWidget);
     await tester.tap(find.text('CANCELAR RESERVA'));
     await tester.pumpAndSettle();
 
-    expect(pedidos.where((p) => p.method == 'POST'), hasLength(1));
+    expect(requests.where((p) => p.method == 'POST'), hasLength(1));
     expect(find.text('Reserva cancelada con éxito'), findsOneWidget);
     await tester.tap(find.text('ACEPTAR'));
     await tester.pumpAndSettle();
     expect(find.text('No hay próximas reservas'), findsOneWidget);
   });
 
-  testWidgets('NO CANCELAR cierra sin pedir nada', (tester) async {
-    final pedidos = await abrir(tester);
+  testWidgets('NO CANCELAR closes without sending anything', (tester) async {
+    final requests = await open(tester);
 
-    await pedirCancelar(tester);
+    await askToCancel(tester);
     await tester.tap(find.text('NO CANCELAR'));
     await tester.pumpAndSettle();
 
-    expect(pedidos.where((p) => p.method == 'POST'), isEmpty);
+    expect(requests.where((p) => p.method == 'POST'), isEmpty);
     expect(find.text('ACTIVA'), findsOneWidget);
   });
 
-  testWidgets('si la reserva cambió, el aviso y la lista actualizada', (
+  testWidgets('if the booking changed, the notice and the updated list', (
     tester,
   ) async {
-    await abrir(
+    await open(
       tester,
-      alCancelar: (
-        409,
-        '{"errors": {"reserva": "Esto cambió mientras tanto"}}',
-      ),
+      onCancel: (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}'),
     );
 
-    await pedirCancelar(tester);
+    await askToCancel(tester);
     await tester.tap(find.text('CANCELAR RESERVA'));
     await tester.pumpAndSettle();
 
@@ -116,10 +113,12 @@ void main() {
     expect(find.text('No hay próximas reservas'), findsOneWidget);
   });
 
-  testWidgets('el servidor falla: el aviso y la reserva sigue', (tester) async {
-    await abrir(tester, alCancelar: (500, '{}'));
+  testWidgets('the server fails: the notice shows and the booking stays', (
+    tester,
+  ) async {
+    await open(tester, onCancel: (500, '{}'));
 
-    await pedirCancelar(tester);
+    await askToCancel(tester);
     await tester.tap(find.text('CANCELAR RESERVA'));
     await tester.pumpAndSettle();
 
@@ -130,12 +129,12 @@ void main() {
   });
 
   testWidgets(
-    'una reserva que el servidor no da por cancelable no ofrece CANCELAR',
+    'a booking the server does not report as cancelable does not offer CANCELAR',
     (tester) async {
-      final ahora = DateTime.now().toUtc();
-      final empezada = bookingJson(
-        inicio: ahora.subtract(const Duration(minutes: 10)).toIso8601String(),
-        fin: ahora.add(const Duration(minutes: 50)).toIso8601String(),
+      final now = DateTime.now().toUtc();
+      final started = bookingJson(
+        inicio: now.subtract(const Duration(minutes: 10)).toIso8601String(),
+        fin: now.add(const Duration(minutes: 50)).toIso8601String(),
         cancelable: false,
       );
       await mountUser(
@@ -143,7 +142,7 @@ void main() {
         start: '/reservas',
         api: apiRoutes({
           ...venueRoutes(),
-          'GET /bookings': (200, '{"bookings": [$empezada]}'),
+          'GET /bookings': (200, '{"bookings": [$started]}'),
         }),
       );
 

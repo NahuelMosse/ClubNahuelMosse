@@ -27,7 +27,7 @@ void main() {
   const root = 'lib/features/admin';
 
   test(
-    'el panel de administración vive en features/admin con nombres en inglés y no queda lib/admin @ENG-09-S1 @assumption:ENG-09-ASM-02',
+    'the admin panel lives in features/admin with English names and lib/admin no longer exists @ENG-09-S1 @assumption:ENG-09-ASM-02',
     () {
       expect(Directory('lib/admin').existsSync(), isFalse);
       final files = _dartFiles(root).toList();
@@ -49,7 +49,7 @@ void main() {
   );
 
   test(
-    'features/admin está partido en data, domain y presentación y cumple la regla de capas @ENG-09-S2 @assumption:ENG-09-ASM-03',
+    'features/admin is split into data, domain and presentation and follows the layer rule @ENG-09-S2 @assumption:ENG-09-ASM-03',
     () {
       for (final layer in ['data', 'domain', 'presentation']) {
         expect(_dartFiles('$root/$layer'), isNotEmpty, reason: layer);
@@ -92,7 +92,7 @@ void main() {
     },
   );
 
-  test('ningún test importa lib/admin @assumption:ENG-09-ASM-01', () {
+  test('no test imports lib/admin @assumption:ENG-09-ASM-01', () {
     final problems = <String>[];
     for (final f in _dartFiles('test')) {
       if (_slash(f.path).endsWith('test/admin_in_english_test.dart')) continue;

@@ -9,7 +9,7 @@ Iterable<File> _dartFiles(String dir) => Directory(dir)
 
 void main() {
   test(
-    'los textos, rutas de la API, claves JSON y rutas de pantalla son los de antes @ENG-11-S3 @assumption:ENG-11-ASM-03',
+    'the texts, API routes, JSON keys and screen routes are the same as before @ENG-11-S3 @assumption:ENG-11-ASM-03',
     () {
       final features = _dartFiles(
         'lib/features',

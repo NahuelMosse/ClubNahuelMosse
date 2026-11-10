@@ -7,128 +7,128 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> abrirSedes(WidgetTester tester) async {
+  Future<void> openVenues(WidgetTester tester) async {
     await tapText(tester, 'SEDES');
     await waitUntil(tester, find.text('Sedes'));
   }
 
-  /// La tarjeta de la sede [nombre] en el listado, por su etiqueta accesible.
-  Finder tarjeta(String nombre) =>
-      find.bySemanticsLabel(RegExp('^${RegExp.escape(nombre)},'));
+  /// The card of the venue [name] in the listing, by its accessible label.
+  Finder card(String name) =>
+      find.bySemanticsLabel(RegExp('^${RegExp.escape(name)},'));
 
-  Future<void> entrarA(WidgetTester tester, String nombre) async {
-    await waitUntil(tester, tarjeta(nombre));
-    await tester.ensureVisible(tarjeta(nombre));
+  Future<void> enter(WidgetTester tester, String name) async {
+    await waitUntil(tester, card(name));
+    await tester.ensureVisible(card(name));
     await tester.pumpAndSettle();
-    await tester.tap(tarjeta(nombre));
+    await tester.tap(card(name));
     await tester.pumpAndSettle();
   }
 
   testWidgets(
-    've el listado de sedes con nombre, dirección, horario, cantidad de canchas y deportes @CU-16-H01-01',
+    'sees the venue listing with name, address, schedule, number of courts and sports @CU-16-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Ituzaingó ${unique()}';
-      await createVenue(nombre, 'Av. Ratti 1400');
-      await createSpace(nombre);
-      await createSpace(nombre, sport: 'Tenis', kind: 'PDL');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Ituzaingó ${unique()}';
+      await createVenue(name, 'Av. Ratti 1400');
+      await createSpace(name);
+      await createSpace(name, sport: 'Tenis', kind: 'PDL');
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
-      await abrirSedes(tester);
+      await openVenues(tester);
 
-      // Verifica: la tarjeta muestra la sede con su horario, sus canchas y sus deportes.
+      // Verifies: the card shows the venue with its schedule, its courts and its sports.
       await waitUntil(
         tester,
         find.bySemanticsLabel(
-          '$nombre, Av. Ratti 1400, Lunes a domingo de 08:00 a 23:00, '
+          '$name, Av. Ratti 1400, Lunes a domingo de 08:00 a 23:00, '
           '2 canchas: Fútbol, Tenis',
         ),
       );
-      expect(find.text(nombre.toUpperCase()), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(name.toUpperCase()), findsOneWidget);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'entra a una sede y ve todas sus canchas con el contador total y los datos de cada una @CU-16-H01-02',
+    'enters a venue and sees all its courts with the total counter and the data of each @CU-16-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Ituzaingó ${unique()}';
-      await createVenue(nombre, 'Av. Ratti 1400');
-      final futbol = await createSpace(nombre);
-      final tenis = await createSpace(nombre, sport: 'Tenis', kind: 'PDL');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Ituzaingó ${unique()}';
+      await createVenue(name, 'Av. Ratti 1400');
+      final football = await createSpace(name);
+      final tennis = await createSpace(name, sport: 'Tenis', kind: 'PDL');
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await abrirSedes(tester);
+      await openVenues(tester);
 
-      await entrarA(tester, nombre);
+      await enter(tester, name);
 
-      // Verifica: la sede muestra su portada con el contador y cada cancha con sus datos.
+      // Verifies: the venue shows its cover with the counter and each court with its data.
       await waitUntil(tester, find.text('2 CANCHAS · TODOS LOS DEPORTES'));
-      expect(find.text(nombre.toUpperCase()), findsOneWidget);
+      expect(find.text(name.toUpperCase()), findsOneWidget);
       expect(
         find.bySemanticsLabel(
-          'Fútbol 5, $futbol, Techada, Iluminada, 43.000 pesos por hora',
+          'Fútbol 5, $football, Techada, Iluminada, 43.000 pesos por hora',
         ),
         findsOneWidget,
       );
       expect(
         find.bySemanticsLabel(
-          'Tenis, $tenis, Techada, Iluminada, 43.000 pesos por hora',
+          'Tenis, $tennis, Techada, Iluminada, 43.000 pesos por hora',
         ),
         findsOneWidget,
       );
       expect(find.text('VER HORARIOS / RESERVAR'), findsNWidgets(2));
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'una sede recién cargada con su cancha aparece en el listado con esa cancha @CU-16-H01-03',
+    'a venue just loaded with its court shows in the listing with that court @CU-16-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Ituzaingó ${unique()}';
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Ituzaingó ${unique()}';
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await abrirSedes(tester);
-      expect(tarjeta(nombre), findsNothing);
+      await openVenues(tester);
+      expect(card(name), findsNothing);
 
-      // El administrador la carga mientras el usuario ya tiene la app abierta.
-      await createVenue(nombre, 'Av. Ratti 1400');
-      final cancha = await createSpace(nombre);
+      // The administrator loads it while the user already has the app open.
+      await createVenue(name, 'Av. Ratti 1400');
+      final court = await createSpace(name);
       await tapText(tester, 'INICIO');
-      await abrirSedes(tester);
+      await openVenues(tester);
 
-      // Verifica: aparece con su cancha, y adentro está esa cancha.
+      // Verifies: it shows with its court, and inside is that court.
       await waitUntil(
         tester,
         find.bySemanticsLabel(
-          '$nombre, Av. Ratti 1400, Lunes a domingo de 08:00 a 23:00, '
+          '$name, Av. Ratti 1400, Lunes a domingo de 08:00 a 23:00, '
           '1 cancha: Fútbol',
         ),
       );
-      await entrarA(tester, nombre);
+      await enter(tester, name);
       await waitUntil(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
-      expect(find.text(cancha), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(court), findsOneWidget);
+      semantics.dispose();
     },
   );
 
-  testWidgets('desde una cancha pasa a consultar sus horarios @CU-16-H01-04', (
+  testWidgets('from a court goes on to look up its times @CU-16-H01-04', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final nombre = 'Sede Ituzaingó ${unique()}';
-    await createVenue(nombre, 'Av. Ratti 1400');
-    await createSpace(nombre);
+    final semantics = tester.ensureSemantics();
+    final name = 'Sede Ituzaingó ${unique()}';
+    await createVenue(name, 'Av. Ratti 1400');
+    await createSpace(name);
     await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-    await abrirSedes(tester);
-    await entrarA(tester, nombre);
+    await openVenues(tester);
+    await enter(tester, name);
     await waitUntil(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
 
     await tapText(tester, 'VER HORARIOS / RESERVAR');
 
-    // Verifica: llega a los horarios de esa sede con esa cancha elegida.
+    // Verifies: reaches the times of that venue with that court picked.
     await waitUntil(tester, find.text('SELECCIONÁ CANCHA'));
-    expect(find.text(nombre.toUpperCase()), findsOneWidget);
+    expect(find.text(name.toUpperCase()), findsOneWidget);
     expect(
       tester
           .getSemantics(find.bySemanticsLabel('Cancha 1, Techada'))
@@ -136,104 +136,103 @@ void main() {
           .isSelected,
       isTrue,
     );
-    semantica.dispose();
+    semantics.dispose();
   });
 
   testWidgets(
-    'entra a una sede sin canchas y ve el aviso con el contador en cero @CU-16-H02-01',
+    'enters a venue with no courts and sees the notice with the counter at zero @CU-16-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await abrirSedes(tester);
+      await openVenues(tester);
 
-      await entrarA(tester, nombre);
+      await enter(tester, name);
 
-      // Verifica: la portada con el contador en cero y el aviso en lugar del listado.
+      // Verifies: the cover with the counter at zero and the notice in place of the listing.
       await waitUntil(tester, find.text('0 CANCHAS'));
-      expect(find.text(nombre.toUpperCase()), findsOneWidget);
+      expect(find.text(name.toUpperCase()), findsOneWidget);
       expect(find.text('Todavía no hay canchas'), findsOneWidget);
       expect(
         find.text('Esta sede no tiene canchas disponibles por el momento.'),
         findsOneWidget,
       );
       expect(find.text('VER HORARIOS / RESERVAR'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('vuelve a «Todas las sedes» desde una sede @CU-16-H03-01', (
+  testWidgets('goes back to «Todas las sedes» from a venue @CU-16-H03-01', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final nombre = 'Sede Haedo ${unique()}';
-    await createVenue(nombre, 'Av. Vergara 1850');
+    final semantics = tester.ensureSemantics();
+    final name = 'Sede Haedo ${unique()}';
+    await createVenue(name, 'Av. Vergara 1850');
     await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-    await abrirSedes(tester);
-    await entrarA(tester, nombre);
+    await openVenues(tester);
+    await enter(tester, name);
     await waitUntil(tester, find.text('0 CANCHAS'));
 
     await tapText(tester, 'Todas las sedes');
 
-    // Verifica: vuelve al listado, con la sede que estaba mirando.
+    // Verifies: back to the listing, with the venue it was looking at.
     await waitUntil(tester, find.text('Sedes'));
     expect(find.text('0 CANCHAS'), findsNothing);
-    expect(tarjeta(nombre), findsOneWidget);
-    semantica.dispose();
+    expect(card(name), findsOneWidget);
+    semantics.dispose();
   });
 
   testWidgets(
-    'sin conexión, ve el error con opción de reintentar y sigue en la misma pantalla @CU-16-H04-01',
+    'with no connection, sees the error with a retry option and stays on the same screen @CU-16-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
-      final cancha = await createSpace(nombre);
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
+      final court = await createSpace(name);
       final api = await ProxyApi.open();
       await signInAsUser(
         tester,
         email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
-      await abrirSedes(tester);
-      await waitUntil(tester, tarjeta(nombre));
+      await openVenues(tester);
+      await waitUntil(tester, card(name));
 
       api.state = ApiState.offline;
-      await entrarA(tester, nombre);
+      await enter(tester, name);
 
-      // Verifica: avisa sin conexión, y al reintentar con la red de vuelta muestra la sede.
+      // Verifies: warns of no connection, and on retrying with the network back shows the venue.
       await waitUntil(tester, find.text('Error de conexión'));
       api.state = ApiState.normal;
       await tapText(tester, 'REINTENTAR');
       await waitUntil(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
-      expect(find.text(cancha), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(court), findsOneWidget);
+      semantics.dispose();
     },
   );
 
-  testWidgets(
-    'el servidor falla y no se muestran datos parciales @CU-16-H05-01',
-    (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
-      final api = await ProxyApi.open();
-      await signInAsUser(
-        tester,
-        email: 'socio.${unique()}@correo.com',
-        apiUrl: api.url,
-      );
+  testWidgets('the server fails and no partial data is shown @CU-16-H05-01', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final name = 'Sede Haedo ${unique()}';
+    await createVenue(name, 'Av. Vergara 1850');
+    final api = await ProxyApi.open();
+    await signInAsUser(
+      tester,
+      email: 'socio.${unique()}@correo.com',
+      apiUrl: api.url,
+    );
 
-      api.state = ApiState.failing;
-      await tapText(tester, 'SEDES');
+    api.state = ApiState.failing;
+    await tapText(tester, 'SEDES');
 
-      // Verifica: avisa del servidor y no queda ninguna sede a la vista.
-      await waitUntil(tester, find.text('Error del servidor'));
-      await tapText(tester, 'ACEPTAR');
-      expect(tarjeta(nombre), findsNothing);
-      expect(find.text('Ver canchas'), findsNothing);
-      semantica.dispose();
-    },
-  );
+    // Verifies: warns of the server and no venue is left in view.
+    await waitUntil(tester, find.text('Error del servidor'));
+    await tapText(tester, 'ACEPTAR');
+    expect(card(name), findsNothing);
+    expect(find.text('Ver canchas'), findsNothing);
+    semantics.dispose();
+  });
 }

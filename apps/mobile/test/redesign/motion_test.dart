@@ -8,11 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 Duration _ms(int n) => Duration(milliseconds: n);
 
-final _cero = closeTo(0, 1e-6);
-final _uno = closeTo(1, 1e-6);
+final _zero = closeTo(0, 1e-6);
+final _one = closeTo(1, 1e-6);
 
-/// Una pieza sola, arriba a la izquierda de una pantalla de 400 × 800.
-Future<void> _montar(WidgetTester tester, Widget hijo) async {
+/// A single piece, at the top left of a 400 × 800 screen.
+Future<void> _mount(WidgetTester tester, Widget child) async {
   tester.view.physicalSize = const Size(400, 800) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -20,99 +20,99 @@ Future<void> _montar(WidgetTester tester, Widget hijo) async {
     MaterialApp(
       theme: darkTheme,
       home: Scaffold(
-        body: Align(alignment: Alignment.topLeft, child: hijo),
+        body: Align(alignment: Alignment.topLeft, child: child),
       ),
     ),
   );
 }
 
-void _reducirMovimiento(WidgetTester tester) {
+void _reduceMotion(WidgetTester tester) {
   tester.platformDispatcher.accessibilityFeaturesTestValue =
       const FakeAccessibilityFeatures(disableAnimations: true);
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 }
 
-/// La opacidad de [aparecer], leída de su `FadeTransition`.
-double _opacidad(WidgetTester tester, Finder aparecer) => tester
+/// The opacity of [appearance], read from its `FadeTransition`.
+double _opacity(WidgetTester tester, Finder appearance) => tester
     .widget<FadeTransition>(
       find
-          .descendant(of: aparecer, matching: find.byType(FadeTransition))
+          .descendant(of: appearance, matching: find.byType(FadeTransition))
           .first,
     )
     .opacity
     .value;
 
-Finder _aparecerDe(Finder hijo) =>
-    find.ancestor(of: hijo, matching: find.byType(FadeIn)).first;
+Finder _appearanceOf(Finder child) =>
+    find.ancestor(of: child, matching: find.byType(FadeIn)).first;
 
-Offset _posicion(WidgetTester tester, Finder f) => tester.getTopLeft(f);
+Offset _position(WidgetTester tester, Finder f) => tester.getTopLeft(f);
 
-/// El ancho que se ve de [f], con la escala de las piezas que lo envuelven.
-double _anchoVisible(WidgetTester tester, Finder f) =>
+/// The visible width of [f], with the scale of the pieces that wrap it.
+double _visibleWidth(WidgetTester tester, Finder f) =>
     tester.getBottomRight(f).dx - tester.getTopLeft(f).dx;
 
-/// El radio del recorte que revela el ícono de [dentro].
-double _radioDeRecorte(WidgetTester tester, Finder dentro) {
-  final recortes = find.descendant(
-    of: dentro,
+/// The radius of the clip that reveals the icon of [inside].
+double _clipRadius(WidgetTester tester, Finder inside) {
+  final clips = find.descendant(
+    of: inside,
     matching: find.byWidgetPredicate((w) => w is ClipOval || w is ClipPath),
   );
-  expect(recortes, findsWidgets);
-  final objeto = tester.renderObject(recortes.first);
-  if (objeto is RenderClipPath) {
-    final recortador = objeto.clipper;
-    if (recortador == null) fail('el recorte no tiene un recortador propio');
-    return recortador.getClip(objeto.size).getBounds().width / 2;
+  expect(clips, findsWidgets);
+  final object = tester.renderObject(clips.first);
+  if (object is RenderClipPath) {
+    final clipper = object.clipper;
+    if (clipper == null) fail('the clip has no clipper of its own');
+    return clipper.getClip(object.size).getBounds().width / 2;
   }
-  if (objeto is RenderClipOval) {
-    final recortador = objeto.clipper;
-    if (recortador == null) fail('el recorte no tiene un recortador propio');
-    return recortador.getClip(objeto.size).width / 2;
+  if (object is RenderClipOval) {
+    final clipper = object.clipper;
+    if (clipper == null) fail('the clip has no clipper of its own');
+    return clipper.getClip(object.size).width / 2;
   }
-  fail('el recorte no es un ClipPath ni un ClipOval');
+  fail('the clip is neither a ClipPath nor a ClipOval');
 }
 
-/// Lo que desplaza el temblor [milisegundos] después de empezar.
-double _temblorEsperado(int milisegundos) {
-  const puntos = [0.0, -9.0, 9.0, -6.0, 6.0, -3.0, 0.0];
-  final i = math.min((milisegundos / 60).floor(), puntos.length - 2);
-  final fraccion = (milisegundos - i * 60) / 60;
-  return puntos[i] + (puntos[i + 1] - puntos[i]) * fraccion;
+/// What the shake displaces [milliseconds] after starting.
+double _expectedShake(int milliseconds) {
+  const points = [0.0, -9.0, 9.0, -6.0, 6.0, -3.0, 0.0];
+  final i = math.min((milliseconds / 60).floor(), points.length - 2);
+  final fraction = (milliseconds - i * 60) / 60;
+  return points[i] + (points[i + 1] - points[i]) * fraction;
 }
 
-/// Todas las piezas juntas, con un disparador común para el temblor y el latido.
-class _Piezas {
-  static const aparecer = Key('aparecer');
-  static const bloque0 = Key('bloque-0');
-  static const bloque1 = Key('bloque-1');
-  static const temblor = Key('temblor');
-  static const latido = Key('latido');
-  static const presion = Key('presion');
+/// All the pieces together, with a common trigger for the shake and the heartbeat.
+class _Pieces {
+  static const appearance = Key('aparecer');
+  static const block0 = Key('bloque-0');
+  static const block1 = Key('bloque-1');
+  static const shake = Key('temblor');
+  static const heartbeat = Key('latido');
+  static const pressKey = Key('presion');
 
-  final disparo = ValueNotifier<int>(0);
-  final redibujar = ValueNotifier<int>(0);
+  final firing = ValueNotifier<int>(0);
+  final repaint = ValueNotifier<int>(0);
 
   Widget get widget => ListenableBuilder(
-    listenable: Listenable.merge([disparo, redibujar]),
+    listenable: Listenable.merge([firing, repaint]),
     builder: (context, _) {
-      final disparador = disparo.value == 0 ? null : disparo.value;
+      final trigger = firing.value == 0 ? null : firing.value;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const FadeIn(
             delay: Duration(milliseconds: 200),
             fromY: 30,
-            child: SizedBox(key: aparecer, width: 100, height: 30),
+            child: SizedBox(key: appearance, width: 100, height: 30),
           ),
           const StaggeredEntrance(
             children: [
-              SizedBox(key: bloque0, width: 100, height: 30),
-              SizedBox(key: bloque1, width: 100, height: 30),
+              SizedBox(key: block0, width: 100, height: 30),
+              SizedBox(key: block1, width: 100, height: 30),
             ],
           ),
           Shake(
-            trigger: disparador,
-            child: const SizedBox(key: temblor, width: 100, height: 30),
+            trigger: trigger,
+            child: const SizedBox(key: shake, width: 100, height: 30),
           ),
           const SuccessPulse(
             icon: Icons.check_rounded,
@@ -120,13 +120,13 @@ class _Piezas {
             ink: Color(0xFFFFFFFF),
           ),
           Heartbeat(
-            trigger: disparador,
-            child: const SizedBox(key: latido, width: 100, height: 30),
+            trigger: trigger,
+            child: const SizedBox(key: heartbeat, width: 100, height: 30),
           ),
           const Pressable(
             child: ColoredBox(
               color: Color(0xFFFF0000),
-              child: SizedBox(key: presion, width: 100, height: 30),
+              child: SizedBox(key: pressKey, width: 100, height: 30),
             ),
           ),
         ],
@@ -134,195 +134,194 @@ class _Piezas {
     },
   );
 
-  List<Offset> posiciones(WidgetTester tester) => [
-    for (final clave in const [
-      aparecer,
-      bloque0,
-      bloque1,
-      temblor,
-      latido,
-      presion,
+  List<Offset> positions(WidgetTester tester) => [
+    for (final key in const [
+      appearance,
+      block0,
+      block1,
+      shake,
+      heartbeat,
+      pressKey,
     ])
-      tester.getTopLeft(find.byKey(clave)),
+      tester.getTopLeft(find.byKey(key)),
   ];
 
-  List<double> anchos(WidgetTester tester) => [
-    for (final clave in const [aparecer, bloque0, bloque1, temblor, latido])
-      _anchoVisible(tester, find.byKey(clave)),
+  List<double> widths(WidgetTester tester) => [
+    for (final key in const [appearance, block0, block1, shake, heartbeat])
+      _visibleWidth(tester, find.byKey(key)),
   ];
 }
 
 void main() {
   testWidgets(
-    'aparecer va de transparente y corrido a su lugar con easeOut @RED-04-S6',
+    'appearance goes from transparent and offset to its place with easeOut @RED-04-S6',
     (tester) async {
-      const hijo = Key('hijo');
-      await _montar(
+      const child = Key('hijo');
+      await _mount(
         tester,
         const FadeIn(
           fromX: 30,
           fromY: 20,
           duration: Duration(milliseconds: 400),
-          child: SizedBox(key: hijo, width: 100, height: 40),
+          child: SizedBox(key: child, width: 100, height: 40),
         ),
       );
-      final inicial = _posicion(tester, find.byKey(hijo));
-      expect(_opacidad(tester, find.byType(FadeIn)), 0);
+      final initial = _position(tester, find.byKey(child));
+      expect(_opacity(tester, find.byType(FadeIn)), 0);
 
       await tester.pump(_ms(200));
-      final medio = _posicion(tester, find.byKey(hijo));
-      final opacidadMedia = _opacidad(tester, find.byType(FadeIn));
+      final middle = _position(tester, find.byKey(child));
+      final halfOpacity = _opacity(tester, find.byType(FadeIn));
 
       await tester.pumpAndSettle();
-      final fin = _posicion(tester, find.byKey(hijo));
+      final fin = _position(tester, find.byKey(child));
 
-      expect(inicial.dx - fin.dx, closeTo(30, 0.01));
-      expect(inicial.dy - fin.dy, closeTo(20, 0.01));
-      final avance = Curves.easeOut.transform(0.5);
-      expect(medio.dx - fin.dx, closeTo(30 * (1 - avance), 0.05));
-      expect(medio.dy - fin.dy, closeTo(20 * (1 - avance), 0.05));
-      expect(opacidadMedia, allOf(greaterThan(0), lessThan(1)));
-      expect(_opacidad(tester, find.byType(FadeIn)), _uno);
-      expect(fin.dx, _cero);
-      expect(fin.dy, _cero);
+      expect(initial.dx - fin.dx, closeTo(30, 0.01));
+      expect(initial.dy - fin.dy, closeTo(20, 0.01));
+      final progress = Curves.easeOut.transform(0.5);
+      expect(middle.dx - fin.dx, closeTo(30 * (1 - progress), 0.05));
+      expect(middle.dy - fin.dy, closeTo(20 * (1 - progress), 0.05));
+      expect(halfOpacity, allOf(greaterThan(0), lessThan(1)));
+      expect(_opacity(tester, find.byType(FadeIn)), _one);
+      expect(fin.dx, _zero);
+      expect(fin.dy, _zero);
 
-      await _montar(tester, const SizedBox.shrink());
-      await _montar(
+      await _mount(tester, const SizedBox.shrink());
+      await _mount(
         tester,
         const FadeIn(
           turn: 0.25,
           scaleFrom: 0.5,
           fromY: 0,
-          child: SizedBox(key: hijo, width: 100, height: 40),
+          child: SizedBox(key: child, width: 100, height: 40),
         ),
       );
-      // Un cuarto de vuelta a media escala: el rectángulo se ve de lado y a la mitad.
-      final esquina =
-          tester.getBottomRight(find.byKey(hijo)) -
-          tester.getTopLeft(find.byKey(hijo));
-      expect(esquina.dx.abs(), closeTo(20, 0.05));
-      expect(esquina.dy.abs(), closeTo(50, 0.05));
+      // A quarter turn at half scale: the rectangle is seen sideways and at half size.
+      final corner =
+          tester.getBottomRight(find.byKey(child)) -
+          tester.getTopLeft(find.byKey(child));
+      expect(corner.dx.abs(), closeTo(20, 0.05));
+      expect(corner.dy.abs(), closeTo(50, 0.05));
       await tester.pumpAndSettle();
-      final entera =
-          tester.getBottomRight(find.byKey(hijo)) -
-          tester.getTopLeft(find.byKey(hijo));
-      expect(entera.dx, closeTo(100, 0.01));
-      expect(entera.dy, closeTo(40, 0.01));
+      final wholeWidth =
+          tester.getBottomRight(find.byKey(child)) -
+          tester.getTopLeft(find.byKey(child));
+      expect(wholeWidth.dx, closeTo(100, 0.01));
+      expect(wholeWidth.dy, closeTo(40, 0.01));
     },
   );
 
-  testWidgets(
-    'la entrada escalonada arranca cada bloque a su tiempo @RED-04-S6',
-    (tester) async {
-      const bloques = [Key('b0'), Key('b1'), Key('b2')];
-      await _montar(
-        tester,
-        const StaggeredEntrance(
-          start: Duration(milliseconds: 100),
-          step: Duration(milliseconds: 50),
-          children: [
-            SizedBox(key: Key('b0'), width: 100, height: 30),
-            SizedBox(key: Key('b1'), width: 100, height: 30),
-            SizedBox(key: Key('b2'), width: 100, height: 30),
-          ],
-        ),
+  testWidgets('the staggered entrance starts each block at its time @RED-04-S6', (
+    tester,
+  ) async {
+    const blocks = [Key('b0'), Key('b1'), Key('b2')];
+    await _mount(
+      tester,
+      const StaggeredEntrance(
+        start: Duration(milliseconds: 100),
+        step: Duration(milliseconds: 50),
+        children: [
+          SizedBox(key: Key('b0'), width: 100, height: 30),
+          SizedBox(key: Key('b1'), width: 100, height: 30),
+          SizedBox(key: Key('b2'), width: 100, height: 30),
+        ],
+      ),
+    );
+    double opacity(int i) =>
+        _opacity(tester, _appearanceOf(find.byKey(blocks[i])));
+
+    for (var i = 0; i < blocks.length; i++) {
+      expect(
+        tester.widget<FadeIn>(_appearanceOf(find.byKey(blocks[i]))).delay,
+        _ms(100 + 50 * i),
       );
-      double opacidad(int i) =>
-          _opacidad(tester, _aparecerDe(find.byKey(bloques[i])));
+      expect(opacity(i), 0, reason: 'block $i at 0 ms');
+    }
 
-      for (var i = 0; i < bloques.length; i++) {
-        expect(
-          tester.widget<FadeIn>(_aparecerDe(find.byKey(bloques[i]))).delay,
-          _ms(100 + 50 * i),
-        );
-        expect(opacidad(i), 0, reason: 'bloque $i en 0 ms');
-      }
+    // Before its delay each block is still transparent; after it, it has started.
+    await tester.pump(_ms(90));
+    expect([opacity(0), opacity(1), opacity(2)], [0, 0, 0]);
+    await tester.pump(_ms(60));
+    expect(opacity(0), greaterThan(0));
+    expect(opacity(1), 0);
+    expect(opacity(2), 0);
+    await tester.pump(_ms(50));
+    expect(opacity(1), greaterThan(0));
+    expect(opacity(2), 0);
+    await tester.pump(_ms(50));
+    expect(opacity(2), greaterThan(0));
 
-      // Antes de su retraso, cada bloque sigue transparente; después, ya empezó.
-      await tester.pump(_ms(90));
-      expect([opacidad(0), opacidad(1), opacidad(2)], [0, 0, 0]);
-      await tester.pump(_ms(60));
-      expect(opacidad(0), greaterThan(0));
-      expect(opacidad(1), 0);
-      expect(opacidad(2), 0);
-      await tester.pump(_ms(50));
-      expect(opacidad(1), greaterThan(0));
-      expect(opacidad(2), 0);
-      await tester.pump(_ms(50));
-      expect(opacidad(2), greaterThan(0));
-
-      await tester.pumpAndSettle();
-      expect([opacidad(0), opacidad(1), opacidad(2)], [1, 1, 1]);
-    },
-  );
+    await tester.pumpAndSettle();
+    expect([opacity(0), opacity(1), opacity(2)], [1, 1, 1]);
+  });
 
   testWidgets(
-    'el temblor pasa por −9, 9, −6, 6, −3 y vuelve a 0 en 360 ms @RED-04-S7',
+    'the shake goes through −9, 9, −6, 6, −3 and returns to 0 in 360 ms @RED-04-S7',
     (tester) async {
-      const hijo = Key('hijo');
-      Object? disparador;
-      late StateSetter reconstruir;
-      await _montar(
+      const child = Key('hijo');
+      Object? trigger;
+      late StateSetter rebuild;
+      await _mount(
         tester,
         StatefulBuilder(
           builder: (context, set) {
-            reconstruir = set;
+            rebuild = set;
             return Shake(
-              trigger: disparador,
-              child: const SizedBox(key: hijo, width: 100, height: 40),
+              trigger: trigger,
+              child: const SizedBox(key: child, width: 100, height: 40),
             );
           },
         ),
       );
-      double desplazamiento() => tester.getTopLeft(find.byKey(hijo)).dx;
-      expect(desplazamiento(), _cero);
+      double displacement() => tester.getTopLeft(find.byKey(child)).dx;
+      expect(displacement(), _zero);
 
-      // Sin disparador no tiembla.
+      // Without a trigger it does not shake.
       await tester.pump(_ms(500));
-      expect(desplazamiento(), _cero);
+      expect(displacement(), _zero);
 
-      reconstruir(() => disparador = 'primero');
+      rebuild(() => trigger = 'primero');
       await tester.pump();
-      expect(desplazamiento(), closeTo(0, 0.01));
+      expect(displacement(), closeTo(0, 0.01));
       for (var t = 30; t <= 360; t += 30) {
         await tester.pump(_ms(30));
         expect(
-          desplazamiento(),
-          closeTo(_temblorEsperado(t), 0.01),
-          reason: 'a los $t ms',
+          displacement(),
+          closeTo(_expectedShake(t), 0.01),
+          reason: 'at $t ms',
         );
       }
       await tester.pump(_ms(500));
-      expect(desplazamiento(), _cero);
+      expect(displacement(), _zero);
 
-      // El mismo disparador, aunque se reconstruya, no tiembla.
-      reconstruir(() => disparador = 'primero');
+      // The same trigger, even if rebuilt, does not shake.
+      rebuild(() => trigger = 'primero');
       await tester.pump();
       await tester.pump(_ms(60));
-      expect(desplazamiento(), _cero);
+      expect(displacement(), _zero);
       await tester.pump(_ms(300));
-      expect(desplazamiento(), _cero);
+      expect(displacement(), _zero);
 
-      // Otro valor no nulo vuelve a hacerlo temblar.
-      reconstruir(() => disparador = 'segundo');
+      // Another non-null value makes it shake again.
+      rebuild(() => trigger = 'segundo');
       await tester.pump();
       await tester.pump(_ms(60));
-      expect(desplazamiento(), closeTo(-9, 0.01));
+      expect(displacement(), closeTo(-9, 0.01));
       await tester.pumpAndSettle();
-      expect(desplazamiento(), _cero);
+      expect(displacement(), _zero);
 
-      // Quitar el disparador no es un temblor.
-      reconstruir(() => disparador = null);
+      // Removing the trigger is not a shake.
+      rebuild(() => trigger = null);
       await tester.pump();
       await tester.pump(_ms(60));
-      expect(desplazamiento(), _cero);
+      expect(displacement(), _zero);
     },
   );
 
   testWidgets(
-    'el pulso de éxito escala el círculo de 0,4 a 1 y revela el ícono @RED-04-S8',
+    'the success pulse scales the circle from 0.4 to 1 and reveals the icon @RED-04-S8',
     (tester) async {
-      await _montar(
+      await _mount(
         tester,
         const SuccessPulse(
           icon: Icons.check_rounded,
@@ -330,131 +329,132 @@ void main() {
           ink: Color(0xFFFFFFFF),
         ),
       );
-      final pulso = find.byType(SuccessPulse);
-      double escala() => tester
+      final pulse = find.byType(SuccessPulse);
+      double scale() => tester
           .widget<ScaleTransition>(
             find
-                .descendant(of: pulso, matching: find.byType(ScaleTransition))
+                .descendant(of: pulse, matching: find.byType(ScaleTransition))
                 .first,
           )
           .scale
           .value;
 
       expect(find.byIcon(Icons.check_rounded), findsOneWidget);
-      expect(escala(), closeTo(0.4, 1e-6));
-      expect(_radioDeRecorte(tester, pulso), _cero);
+      expect(scale(), closeTo(0.4, 1e-6));
+      expect(_clipRadius(tester, pulse), _zero);
 
-      // El ícono empieza a revelarse a los 170 ms.
+      // The icon starts to be revealed at 170 ms.
       await tester.pump(_ms(150));
-      expect(_radioDeRecorte(tester, pulso), _cero);
+      expect(_clipRadius(tester, pulse), _zero);
       await tester.pump(_ms(245));
-      final radioMedio = _radioDeRecorte(tester, pulso);
-      expect(escala(), greaterThan(0.4));
+      final halfRadius = _clipRadius(tester, pulse);
+      expect(scale(), greaterThan(0.4));
 
       await tester.pump(_ms(155));
-      expect(escala(), closeTo(1, 1e-3));
+      expect(scale(), closeTo(1, 1e-3));
 
       await tester.pump(_ms(100));
-      final radioCompleto = _radioDeRecorte(tester, pulso);
+      final fullRadius = _clipRadius(tester, pulse);
       await tester.pumpAndSettle();
-      expect(_radioDeRecorte(tester, pulso), closeTo(radioCompleto, 1e-6));
-      expect(radioCompleto, greaterThan(0));
-      expect(radioMedio, greaterThan(0));
-      expect(escala(), closeTo(1, 1e-6));
+      expect(_clipRadius(tester, pulse), closeTo(fullRadius, 1e-6));
+      expect(fullRadius, greaterThan(0));
+      expect(halfRadius, greaterThan(0));
+      expect(scale(), closeTo(1, 1e-6));
     },
   );
 
-  testWidgets('el latido va a 1,03 y vuelve a 1 en 500 ms @RED-04-S10', (
-    tester,
-  ) async {
-    const hijo = Key('hijo');
-    Object? disparador;
-    late StateSetter reconstruir;
-    await _montar(
-      tester,
-      StatefulBuilder(
-        builder: (context, set) {
-          reconstruir = set;
-          return Heartbeat(
-            trigger: disparador,
-            child: const SizedBox(key: hijo, width: 100, height: 40),
-          );
-        },
-      ),
-    );
-    double escala() => _anchoVisible(tester, find.byKey(hijo)) / 100;
-    expect(escala(), _uno);
-    await tester.pump(_ms(600));
-    expect(escala(), _uno);
+  testWidgets(
+    'the heartbeat goes to 1.03 and returns to 1 in 500 ms @RED-04-S10',
+    (tester) async {
+      const child = Key('hijo');
+      Object? trigger;
+      late StateSetter rebuild;
+      await _mount(
+        tester,
+        StatefulBuilder(
+          builder: (context, set) {
+            rebuild = set;
+            return Heartbeat(
+              trigger: trigger,
+              child: const SizedBox(key: child, width: 100, height: 40),
+            );
+          },
+        ),
+      );
+      double scale() => _visibleWidth(tester, find.byKey(child)) / 100;
+      expect(scale(), _one);
+      await tester.pump(_ms(600));
+      expect(scale(), _one);
 
-    reconstruir(() => disparador = 1);
-    await tester.pump();
-    expect(escala(), closeTo(1, 1e-3));
-    await tester.pump(_ms(200));
-    expect(escala(), allOf(greaterThan(1), lessThanOrEqualTo(1.0301)));
-    await tester.pump(_ms(50));
-    expect(escala(), closeTo(1.03, 2e-3));
-    await tester.pump(_ms(250));
-    expect(escala(), closeTo(1, 1e-3));
+      rebuild(() => trigger = 1);
+      await tester.pump();
+      expect(scale(), closeTo(1, 1e-3));
+      await tester.pump(_ms(200));
+      expect(scale(), allOf(greaterThan(1), lessThanOrEqualTo(1.0301)));
+      await tester.pump(_ms(50));
+      expect(scale(), closeTo(1.03, 2e-3));
+      await tester.pump(_ms(250));
+      expect(scale(), closeTo(1, 1e-3));
 
-    // El mismo disparador no late de nuevo.
-    reconstruir(() => disparador = 1);
-    await tester.pump();
-    await tester.pump(_ms(250));
-    expect(escala(), _uno);
+      // The same trigger does not beat again.
+      rebuild(() => trigger = 1);
+      await tester.pump();
+      await tester.pump(_ms(250));
+      expect(scale(), _one);
 
-    reconstruir(() => disparador = 2);
-    await tester.pump();
-    await tester.pump(_ms(250));
-    expect(escala(), greaterThan(1));
-    await tester.pumpAndSettle();
-    expect(escala(), _uno);
-  });
+      rebuild(() => trigger = 2);
+      await tester.pump();
+      await tester.pump(_ms(250));
+      expect(scale(), greaterThan(1));
+      await tester.pumpAndSettle();
+      expect(scale(), _one);
+    },
+  );
 
   testWidgets(
-    'presionar achica a 0,97 en 80 ms y soltar vuelve a 1 @RED-04-S13',
+    'pressing shrinks to 0.97 in 80 ms and releasing returns to 1 @RED-04-S13',
     (tester) async {
-      const hijo = Key('hijo');
-      await _montar(
+      const child = Key('hijo');
+      await _mount(
         tester,
         const Pressable(
           child: ColoredBox(
             color: Color(0xFFFF0000),
-            child: SizedBox(key: hijo, width: 120, height: 40),
+            child: SizedBox(key: child, width: 120, height: 40),
           ),
         ),
       );
-      double escala() => _anchoVisible(tester, find.byKey(hijo)) / 120;
-      expect(escala(), _uno);
+      double scale() => _visibleWidth(tester, find.byKey(child)) / 120;
+      expect(scale(), _one);
 
-      final dedo = await tester.startGesture(
-        tester.getCenter(find.byKey(hijo)),
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byKey(child)),
       );
       await tester.pump();
       await tester.pump(_ms(40));
-      expect(escala(), allOf(greaterThan(0.97), lessThan(1)));
+      expect(scale(), allOf(greaterThan(0.97), lessThan(1)));
       await tester.pump(_ms(40));
-      expect(escala(), closeTo(0.97, 1e-3));
+      expect(scale(), closeTo(0.97, 1e-3));
       await tester.pump(_ms(500));
-      expect(escala(), closeTo(0.97, 1e-3));
+      expect(scale(), closeTo(0.97, 1e-3));
 
-      await dedo.up();
+      await finger.up();
       await tester.pump();
       await tester.pump(_ms(80));
-      expect(escala(), closeTo(1, 1e-3));
+      expect(scale(), closeTo(1, 1e-3));
     },
   );
 
   testWidgets(
-    'con reducir movimiento cada pieza muestra su estado final en el primer cuadro @RED-04-S14',
+    'with reduce motion each piece shows its end state on the first frame @RED-04-S14',
     (tester) async {
-      final piezas = _Piezas();
-      addTearDown(piezas.disparo.dispose);
-      addTearDown(piezas.redibujar.dispose);
-      _reducirMovimiento(tester);
-      await _montar(tester, piezas.widget);
+      final pieces = _Pieces();
+      addTearDown(pieces.firing.dispose);
+      addTearDown(pieces.repaint.dispose);
+      _reduceMotion(tester);
+      await _mount(tester, pieces.widget);
 
-      double escalaDelPulso() => tester
+      double pulseScale() => tester
           .widget<ScaleTransition>(
             find
                 .descendant(
@@ -466,70 +466,67 @@ void main() {
           .scale
           .value;
 
-      // El primer cuadro ya es el final de cada pieza.
-      expect(_opacidad(tester, find.byType(FadeIn).first), 1);
-      expect(_opacidad(tester, _aparecerDe(find.byKey(_Piezas.bloque0))), 1);
-      expect(_opacidad(tester, _aparecerDe(find.byKey(_Piezas.bloque1))), 1);
-      expect(escalaDelPulso(), 1);
-      final radioEnElPrimerCuadro = _radioDeRecorte(
-        tester,
-        find.byType(SuccessPulse),
-      );
-      final desplazadas = piezas.posiciones(tester);
+      // The first frame is already the end of each piece.
+      expect(_opacity(tester, find.byType(FadeIn).first), 1);
+      expect(_opacity(tester, _appearanceOf(find.byKey(_Pieces.block0))), 1);
+      expect(_opacity(tester, _appearanceOf(find.byKey(_Pieces.block1))), 1);
+      expect(pulseScale(), 1);
+      final radiusAtFirstFrame = _clipRadius(tester, find.byType(SuccessPulse));
+      final displaced = pieces.positions(tester);
 
-      piezas.disparo.value = 1;
+      pieces.firing.value = 1;
       await tester.pump();
-      expect(piezas.posiciones(tester), desplazadas);
-      expect(piezas.anchos(tester), everyElement(closeTo(100, 1e-6)));
+      expect(pieces.positions(tester), displaced);
+      expect(pieces.widths(tester), everyElement(closeTo(100, 1e-6)));
       expect(tester.binding.hasScheduledFrame, isFalse);
 
       await tester.pumpAndSettle();
-      expect(piezas.posiciones(tester), desplazadas);
-      expect(escalaDelPulso(), 1);
+      expect(pieces.positions(tester), displaced);
+      expect(pulseScale(), 1);
       expect(
-        _radioDeRecorte(tester, find.byType(SuccessPulse)),
-        closeTo(radioEnElPrimerCuadro, 1e-6),
+        _clipRadius(tester, find.byType(SuccessPulse)),
+        closeTo(radiusAtFirstFrame, 1e-6),
       );
-      expect(radioEnElPrimerCuadro, greaterThan(0));
-      expect(piezas.posiciones(tester)[0], Offset.zero);
+      expect(radiusAtFirstFrame, greaterThan(0));
+      expect(pieces.positions(tester)[0], Offset.zero);
     },
   );
 
-  testWidgets('ninguna pieza se repite sola después de terminar @RED-04-S15', (
+  testWidgets('no piece repeats on its own after finishing @RED-04-S15', (
     tester,
   ) async {
-    final piezas = _Piezas();
-    addTearDown(piezas.disparo.dispose);
-    addTearDown(piezas.redibujar.dispose);
-    await _montar(tester, piezas.widget);
+    final pieces = _Pieces();
+    addTearDown(pieces.firing.dispose);
+    addTearDown(pieces.repaint.dispose);
+    await _mount(tester, pieces.widget);
 
-    piezas.disparo.value = 1;
+    pieces.firing.value = 1;
     await tester.pump();
     await tester.pump(_ms(100));
-    // Si alguna se repitiera, esto no terminaría nunca.
+    // If any repeated, this would never finish.
     await tester.pumpAndSettle();
     expect(tester.binding.hasScheduledFrame, isFalse);
-    final quietas = piezas.posiciones(tester);
-    final anchos = piezas.anchos(tester);
-    expect(_opacidad(tester, find.byType(FadeIn).first), 1);
+    final still = pieces.positions(tester);
+    final widths = pieces.widths(tester);
+    expect(_opacity(tester, find.byType(FadeIn).first), 1);
 
     await tester.pump(const Duration(seconds: 5));
-    expect(piezas.posiciones(tester), quietas);
-    expect(piezas.anchos(tester), anchos);
+    expect(pieces.positions(tester), still);
+    expect(pieces.widths(tester), widths);
     expect(tester.binding.hasScheduledFrame, isFalse);
 
-    // Reconstruir sin cambiar el disparador tampoco las vuelve a mover.
-    piezas.redibujar.value++;
+    // Rebuilding without changing the trigger does not move them again either.
+    pieces.repaint.value++;
     await tester.pump();
     await tester.pump(_ms(1000));
-    expect(piezas.posiciones(tester), quietas);
-    expect(piezas.anchos(tester), anchos);
-    expect(_opacidad(tester, find.byType(FadeIn).first), 1);
+    expect(pieces.positions(tester), still);
+    expect(pieces.widths(tester), widths);
+    expect(_opacity(tester, find.byType(FadeIn).first), 1);
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
   test(
-    'las curvas son easeOut, easeOutCubic, easeOutQuart y easeOutBack @RED-04-ASM-02',
+    'the curves are easeOut, easeOutCubic, easeOutQuart and easeOutBack @RED-04-ASM-02',
     () {
       expect(AppMotion.out, same(Curves.easeOut));
       expect(AppMotion.smooth, same(Curves.easeOutCubic));
@@ -549,24 +546,24 @@ void main() {
   );
 
   testWidgets(
-    'al salir a mitad de una animación no queda ningún temporizador pendiente @RED-04-ASM-03',
+    'leaving in the middle of an animation leaves no pending timer @RED-04-ASM-03',
     (tester) async {
-      final piezas = _Piezas();
-      addTearDown(piezas.disparo.dispose);
-      addTearDown(piezas.redibujar.dispose);
-      await _montar(tester, piezas.widget);
+      final pieces = _Pieces();
+      addTearDown(pieces.firing.dispose);
+      addTearDown(pieces.repaint.dispose);
+      await _mount(tester, pieces.widget);
 
-      piezas.disparo.value = 1;
+      pieces.firing.value = 1;
       await tester.pump();
       await tester.pump(_ms(100));
-      final dedo = await tester.startGesture(
-        tester.getCenter(find.byKey(_Piezas.presion)),
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byKey(_Pieces.pressKey)),
       );
       await tester.pump(_ms(20));
 
-      // Se sale con todo a mitad: el retraso del aparecer, el temblor, el latido y el pulso.
+      // It leaves with everything half-way: the appearance delay, the shake, the heartbeat and the pulse.
       await tester.pumpWidget(const SizedBox.shrink());
-      await dedo.cancel();
+      await finger.cancel();
       await tester.pump(const Duration(seconds: 5));
       expect(tester.binding.transientCallbackCount, 0);
       expect(tester.binding.hasScheduledFrame, isFalse);
@@ -574,10 +571,10 @@ void main() {
   );
 
   testWidgets(
-    'un bloque que entra ya está en el árbol del lector @RED-04-ASM-11',
+    'a block that enters is already in the screen reader tree @RED-04-ASM-11',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await _montar(
+      final semantics = tester.ensureSemantics();
+      await _mount(
         tester,
         FadeIn(
           delay: const Duration(milliseconds: 500),
@@ -588,8 +585,8 @@ void main() {
         ),
       );
 
-      // Transparente y todavía sin empezar, pero el lector ya lo ve.
-      expect(_opacidad(tester, find.byType(FadeIn)), 0);
+      // Transparent and not yet started, but the screen reader already sees it.
+      expect(_opacity(tester, find.byType(FadeIn)), 0);
       expect(find.bySemanticsLabel('Bloque de prueba'), findsOneWidget);
       expect(
         tester.getSemantics(find.bySemanticsLabel('Bloque de prueba')).label,
@@ -597,13 +594,13 @@ void main() {
       );
 
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, find.byType(FadeIn)), 0);
+      expect(_opacity(tester, find.byType(FadeIn)), 0);
       expect(find.bySemanticsLabel('Bloque de prueba'), findsOneWidget);
 
       await tester.pump(_ms(400));
-      expect(_opacidad(tester, find.byType(FadeIn)), greaterThan(0));
+      expect(_opacity(tester, find.byType(FadeIn)), greaterThan(0));
       expect(find.bySemanticsLabel('Bloque de prueba'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

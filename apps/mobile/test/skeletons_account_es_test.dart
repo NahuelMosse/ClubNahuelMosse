@@ -36,8 +36,8 @@ final _noticeAnswers = {
   ),
 };
 
-/// Monta la app en [route] con la API de [api] y la deja cargando: el brillo corre sin parar,
-/// así que no se espera a que se asiente.
+/// Mounts the app at [route] with the API of [api] and leaves it loading: the shimmer runs
+/// non-stop, so it does not wait for it to settle.
 Future<void> _open(
   WidgetTester tester,
   HeldApi api,
@@ -74,7 +74,7 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'el inicio carga con la forma de la próxima reserva y los deportes @VIS-03-S1',
+    'the home loads with the shape of the next booking and the sports @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_homeAnswers);
       await _open(tester, api, '/inicio');
@@ -103,7 +103,7 @@ void main() {
   );
 
   testWidgets(
-    'Notificaciones carga con la forma de la tarjeta de aviso @VIS-03-S1',
+    '«Notificaciones» loads with the shape of the notice card @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
       await _open(tester, api, '/notificaciones');
@@ -115,7 +115,7 @@ void main() {
       expect(
         last.bottom,
         greaterThanOrEqualTo(852),
-        reason: 'las tarjetas llenan la pantalla',
+        reason: 'the cards fill the screen',
       );
 
       api.release();

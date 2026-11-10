@@ -25,12 +25,12 @@ import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 void main() {
   setUpAll(loadFonts);
 
-  Widget login({bool rechaza = false}) => LoginScreen(
+  Widget login({bool rejects = false}) => LoginScreen(
     pending: PendingBooking(),
     session: Session(
       repository: SessionRepository(
         credentials: FakeCredentials(
-          onSignIn: rechaza
+          onSignIn: rejects
               ? (_, _) async => throw const InvalidCredentials()
               : null,
         ),
@@ -39,18 +39,18 @@ void main() {
     ),
   );
 
-  Future<void> cumpleLasGuias(WidgetTester tester) async {
+  Future<void> meetsGuidelines(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
   }
 
-  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
-  final pantallas = <String, Widget Function()>{
-    'el login': login,
-    'el Home': () => fakeHome(FakeSession(userProfile)),
-    'el panel de administración': () {
-      final sesion = FakeSession(adminProfile);
+  final themes = {'dark': darkTheme, 'light': lightTheme};
+  final screens = <String, Widget Function()>{
+    'the login': login,
+    'the Home': () => fakeHome(FakeSession(userProfile)),
+    'the admin panel': () {
+      final session = FakeSession(adminProfile);
       final api = apiRoutes({
         'GET /bookings/all': (
           200,
@@ -60,124 +60,126 @@ void main() {
         ),
       });
       return AdminPanelScreen(
-        history: BookingHistory(api: api, sesion: sesion),
+        history: BookingHistory(api: api, sesion: session),
         venues: Venues(
-          repository: VenuesRepository(api: api, session: sesion),
+          repository: VenuesRepository(api: api, session: session),
         ),
         spaces: Spaces(
-          repository: SpacesRepository(api: api, session: sesion),
+          repository: SpacesRepository(api: api, session: session),
         ),
-        session: sesion,
+        session: session,
         pending: PendingPanelFilters(),
       );
     },
-    'recuperar contraseña': () => ForgotPasswordScreen(
+    'password recovery': () => ForgotPasswordScreen(
       recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
     ),
-    'Mi perfil': () => MyProfileScreen(
+    'My profile': () => MyProfileScreen(
       session: FakeSession(userProfile),
       appearance: Appearance.inMemory(),
     ),
-    'la contraseña nueva': () => NewPasswordScreen(
+    'the new password': () => NewPasswordScreen(
       recovery: PasswordRecovery(fakeApi(status: 204, body: '')),
       session: FakeSession(null),
       code: 'abc',
     ),
-    'el enlace inválido': () => NewPasswordScreen(
+    'the invalid link': () => NewPasswordScreen(
       recovery: PasswordRecovery(fakeApi(status: 410, body: '')),
       session: FakeSession(null),
       code: 'abc',
     ),
-    'cambiar contraseña': () =>
+    'change password': () =>
         ChangePasswordScreen(session: FakeSession(userProfile)),
   };
 
-  for (final MapEntry(key: modo, value: tema) in temas.entries) {
-    for (final MapEntry(key: nombre, value: pantalla) in pantallas.entries) {
-      testWidgets('$nombre cumple las guías de accesibilidad en modo $modo', (
+  for (final MapEntry(key: mode, value: theme) in themes.entries) {
+    for (final MapEntry(key: name, value: screen) in screens.entries) {
+      testWidgets('$name meets the accessibility guidelines in $mode mode', (
         tester,
       ) async {
-        final semantica = tester.ensureSemantics();
-        await mountScreen(tester, pantalla(), theme: tema);
-        await cumpleLasGuias(tester);
-        semantica.dispose();
+        final semantics = tester.ensureSemantics();
+        await mountScreen(tester, screen(), theme: theme);
+        await meetsGuidelines(tester);
+        semantics.dispose();
       });
     }
 
-    testWidgets('el login con errores y aviso cumple las guías en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await mountScreen(tester, login(rechaza: true), theme: tema);
-      await tester.tap(find.text('INICIAR SESIÓN'));
-      await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      await tester.enterText(find.bySemanticsLabel('Correo'), 'n@correo.com');
-      await tester.enterText(find.bySemanticsLabel('Contraseña'), 'Mala1234');
-      await tester.tap(find.text('INICIAR SESIÓN'));
-      await tester.pumpAndSettle();
-      expect(find.text(invalidCredentialsMessage), findsOneWidget);
-      await cumpleLasGuias(tester);
-      semantica.dispose();
-    });
+    testWidgets(
+      'the login with errors and notice meets the guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountScreen(tester, login(rejects: true), theme: theme);
+        await tester.tap(find.text('INICIAR SESIÓN'));
+        await tester.pumpAndSettle();
+        await meetsGuidelines(tester);
+        await tester.enterText(find.bySemanticsLabel('Correo'), 'n@correo.com');
+        await tester.enterText(find.bySemanticsLabel('Contraseña'), 'Mala1234');
+        await tester.tap(find.text('INICIAR SESIÓN'));
+        await tester.pumpAndSettle();
+        expect(find.text(invalidCredentialsMessage), findsOneWidget);
+        await meetsGuidelines(tester);
+        semantics.dispose();
+      },
+    );
   }
 
-  for (final MapEntry(key: modo, value: tema) in temas.entries) {
-    testWidgets('el perfil en edición cumple las guías en modo $modo', (
+  for (final MapEntry(key: mode, value: theme) in themes.entries) {
+    testWidgets('the profile being edited meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountScreen(
         tester,
         MyProfileScreen(
           session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
-        theme: tema,
+        theme: theme,
       );
       await tester.tap(find.text('Editar'));
       await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
   }
 
-  for (final MapEntry(key: modo, value: tema) in temas.entries) {
-    testWidgets('la confirmación de la baja cumple las guías en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await mountScreen(
-        tester,
-        MyProfileScreen(
-          session: FakeSession(userProfile),
-          appearance: Appearance.inMemory(),
-        ),
-        theme: tema,
-      );
-      await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('ELIMINAR CUENTA'));
-      await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      semantica.dispose();
-    });
+  for (final MapEntry(key: mode, value: theme) in themes.entries) {
+    testWidgets(
+      'the account deletion confirmation meets the guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountScreen(
+          tester,
+          MyProfileScreen(
+            session: FakeSession(userProfile),
+            appearance: Appearance.inMemory(),
+          ),
+          theme: theme,
+        );
+        await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ELIMINAR CUENTA'));
+        await tester.pumpAndSettle();
+        await meetsGuidelines(tester);
+        semantics.dispose();
+      },
+    );
   }
 
-  testWidgets('los campos del login anuncian su nombre', (tester) async {
-    final semantica = tester.ensureSemantics();
+  testWidgets('the login fields announce their name', (tester) async {
+    final semantics = tester.ensureSemantics();
     await mountScreen(tester, login(), theme: darkTheme);
     expect(find.bySemanticsLabel('Correo'), findsOneWidget);
     expect(find.bySemanticsLabel('Contraseña'), findsOneWidget);
     expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('con el texto al 200 % nada se desborda', (tester) async {
-    for (final pantalla in pantallas.values) {
+  testWidgets('with text at 200 % nothing overflows', (tester) async {
+    for (final screen in screens.values) {
       await mountScreen(
         tester,
-        pantalla(),
+        screen(),
         theme: darkTheme,
         size: const Size(360, 800),
         textScale: 2,

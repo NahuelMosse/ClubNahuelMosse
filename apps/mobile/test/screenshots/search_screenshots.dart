@@ -7,74 +7,74 @@ import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 import '../support/user.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
+/// Asserts nothing: produces the step-9 strip to compare against the prototype.
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  const modos = {'dark': true, 'light': false};
-  const disponibles =
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  const modes = {'dark': true, 'light': false};
+  const available =
       '{"spaces": [$spaceF5Json, '
       '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
       '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
       '"covered": true, "lit": true, "price_per_hour": 43000}]}';
 
-  Future<void> capturar(WidgetTester tester, String archivo) async {
+  Future<void> capture(WidgetTester tester, String file) async {
     await tester.runAsync(() async {
-      for (final elemento in find.byType(Image).evaluate()) {
-        final imagen = elemento.widget;
-        if (imagen is Image) await precacheImage(imagen.image, elemento);
+      for (final element in find.byType(Image).evaluate()) {
+        final image = element.widget;
+        if (image is Image) await precacheImage(image.image, element);
       }
     });
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
   }
 
-  Future<void> choose(WidgetTester tester, String campo, String opcion) async {
-    await tester.ensureVisible(find.bySemanticsLabel(campo));
+  Future<void> choose(WidgetTester tester, String field, String option) async {
+    await tester.ensureVisible(find.bySemanticsLabel(field));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel(campo));
+    await tester.tap(find.bySemanticsLabel(field));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.descendant(of: find.byType(Dialog), matching: find.text(opcion)),
+      find.descendant(of: find.byType(Dialog), matching: find.text(option)),
     );
     await tester.pumpAndSettle();
   }
 
-  Future<void> completar(WidgetTester tester, {String hasta = '19:00'}) async {
+  Future<void> fill(WidgetTester tester, {String until = '19:00'}) async {
     await choose(tester, 'Sede', 'Sede Morón');
     await choose(tester, 'Deporte', 'Fútbol');
     final d = clubNow().add(const Duration(days: 1));
-    String dos(int n) => n.toString().padLeft(2, '0');
+    String two(int n) => n.toString().padLeft(2, '0');
     await tester.enterText(
       find.descendant(
         of: find.bySemanticsLabel('Fecha'),
         matching: find.byType(EditableText),
       ),
-      '${dos(d.day)} / ${dos(d.month)} / ${d.year}',
+      '${two(d.day)} / ${two(d.month)} / ${d.year}',
     );
     await tester.pumpAndSettle();
-    if (hasta != '19:00') await choose(tester, 'Hasta', hasta);
+    if (until != '19:00') await choose(tester, 'Hasta', until);
   }
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
-      Future<void> abrir(
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: dark) in modes.entries) {
+      Future<void> open(
         WidgetTester tester, {
-        (int, String) respuesta = (200, disponibles),
+        (int, String) response = (200, available),
       }) => mountUser(
         tester,
-        dark: oscuro,
-        size: tamano,
+        dark: dark,
+        size: size,
         start: '/inicio/buscar',
-        api: apiRoutes({...venueRoutes(), 'GET /spaces/available': respuesta}),
+        api: apiRoutes({...venueRoutes(), 'GET /spaces/available': response}),
       );
 
-      testWidgets('inicio con accesos $ancho $modo', (tester) async {
+      testWidgets('home with shortcuts $width $mode', (tester) async {
         await mountUser(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/inicio',
           api: apiRoutes({
             ...venueRoutes(),
@@ -82,57 +82,57 @@ void main() {
             'GET /notifications': (200, '{"notifications": [], "unread": 0}'),
           }),
         );
-        await capturar(tester, 'search/home_${ancho}_$modo.png');
+        await capture(tester, 'search/home_${width}_$mode.png');
       });
 
-      testWidgets('filtros $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester);
-        await capturar(tester, 'search/filters_${ancho}_$modo.png');
-        semantica.dispose();
+      testWidgets('filters $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester);
+        await capture(tester, 'search/filters_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('rango inválido $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester);
-        await completar(tester, hasta: '18:00');
-        await capturar(tester, 'search/invalid_${ancho}_$modo.png');
-        semantica.dispose();
+      testWidgets('invalid range $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester);
+        await fill(tester, until: '18:00');
+        await capture(tester, 'search/invalid_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('resultados $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester);
-        await completar(tester);
+      testWidgets('results $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester);
+        await fill(tester);
         await tester.tap(find.text('CONSULTAR'));
         await tester.pumpAndSettle();
         await tester.ensureVisible(find.textContaining('CANCHAS DISPONIBLES'));
-        await capturar(tester, 'search/results_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'search/results_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('sin resultados $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester, respuesta: (200, '{"spaces": []}'));
-        await completar(tester);
+      testWidgets('no results $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester, response: (200, '{"spaces": []}'));
+        await fill(tester);
         await tester.tap(find.text('CONSULTAR'));
         await tester.pumpAndSettle();
         await tester.ensureVisible(find.text('No hay canchas disponibles'));
-        await capturar(tester, 'search/empty_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'search/empty_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('error $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester, respuesta: (500, '{}'));
-        await completar(tester);
+      testWidgets('error $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await open(tester, response: (500, '{}'));
+        await fill(tester);
         await tester.tap(find.text('CONSULTAR'));
         await tester.pumpAndSettle();
         await tester.ensureVisible(
           find.text('No se pudo consultar la disponibilidad'),
         );
-        await capturar(tester, 'search/error_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'search/error_${width}_$mode.png');
+        semantics.dispose();
       });
     }
   }

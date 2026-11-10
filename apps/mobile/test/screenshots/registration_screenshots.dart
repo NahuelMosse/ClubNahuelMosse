@@ -8,64 +8,64 @@ import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
+/// Asserts nothing: produces the step-9 strip to compare against the prototype.
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  final temas = {'dark': darkTheme, 'light': lightTheme};
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  final themes = {'dark': darkTheme, 'light': lightTheme};
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: tema) in temas.entries) {
-      testWidgets('registro vacío $ancho $modo', (tester) async {
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: theme) in themes.entries) {
+      testWidgets('empty registration $width $mode', (tester) async {
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(fakeApi())),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await expectLater(
           find.byType(RegistrationScreen),
-          matchesGoldenFile('registration/empty_${ancho}_$modo.png'),
+          matchesGoldenFile('registration/empty_${width}_$mode.png'),
         );
       });
 
-      testWidgets('registro con errores $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('registration with errors $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(fakeApi())),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await tester.enterText(
           find.bySemanticsLabel('Nombre'),
           'Nahuel Agustín',
         );
         await tester.enterText(find.bySemanticsLabel('DNI'), '123');
-        for (final campo in ['DNI', 'Fecha de nacimiento', 'Contraseña']) {
-          await tester.tap(find.bySemanticsLabel(campo));
+        for (final field in ['DNI', 'Fecha de nacimiento', 'Contraseña']) {
+          await tester.tap(find.bySemanticsLabel(field));
           await tester.pump();
         }
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
         await expectLater(
           find.byType(RegistrationScreen),
-          matchesGoldenFile('registration/errors_${ancho}_$modo.png'),
+          matchesGoldenFile('registration/errors_${width}_$mode.png'),
         );
-        semantica.dispose();
+        semantics.dispose();
       });
 
-      testWidgets('registro exitoso $ancho $modo', (tester) async {
+      testWidgets('successful registration $width $mode', (tester) async {
         await mountScreen(
           tester,
           const RegistrationDoneScreen(),
-          theme: tema,
-          size: tamano,
+          theme: theme,
+          size: size,
         );
         await expectLater(
           find.byType(RegistrationDoneScreen),
-          matchesGoldenFile('registration/successful_${ancho}_$modo.png'),
+          matchesGoldenFile('registration/successful_${width}_$mode.png'),
         );
       });
     }

@@ -7,231 +7,231 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-  final manana = todayAtClub().add(const Duration(days: 1));
-  const titulo = 'Reserva cancelada';
+  const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
+  const title = 'Reserva cancelada';
 
-  String cuerpo(String sede, {String hora = '21:00'}) =>
-      'Fútbol 5 · $sede · ${dias[manana.weekday - 1]} ${manana.day}, $hora. '
+  String body(String venue, {String hour = '21:00'}) =>
+      'Fútbol 5 · $venue · ${days[tomorrow.weekday - 1]} ${tomorrow.day}, $hour. '
       'El horario quedó liberado.';
 
-  /// Una sede nueva con un Fútbol 5 y una reserva de [correo] mañana a las [hora].
-  Future<(String, String)> otraReserva(String correo, {int hora = 21}) async {
-    final sede = 'Sede Morón ${unique()}';
-    await createVenue(sede, 'Av. Rivadavia 19850');
-    final cancha = await createSpace(sede);
-    await occupy(cancha, manana, hora, email: correo);
-    return (sede, cancha);
+  /// A new venue with a Fútbol 5 and a booking of [email] tomorrow at [hour].
+  Future<(String, String)> anotherBooking(String email, {int hour = 21}) async {
+    final venue = 'Sede Morón ${unique()}';
+    await createVenue(venue, 'Av. Rivadavia 19850');
+    final court = await createSpace(venue);
+    await occupy(court, tomorrow, hour, email: email);
+    return (venue, court);
   }
 
-  /// Una cuenta nueva con una reserva mañana a las 21.
-  Future<(String, String, String)> reservaDeManana() async {
-    final correo = 'socio.${unique()}@correo.com';
-    await createAccount(email: correo, password: 'ClubNahuel1');
-    final (sede, cancha) = await otraReserva(correo);
-    return (correo, sede, cancha);
+  /// A new account with a booking tomorrow at 21.
+  Future<(String, String, String)> tomorrowBooking() async {
+    final email = 'socio.${unique()}@correo.com';
+    await createAccount(email: email, password: 'ClubNahuel1');
+    final (venue, court) = await anotherBooking(email);
+    return (email, venue, court);
   }
 
-  Future<void> entrar(
+  Future<void> signIn(
     WidgetTester tester,
-    String correo, {
-    bool permiso = true,
+    String email, {
+    bool permission = true,
   }) async {
     await openApp(tester);
-    await setNotificationPermission(granted: permiso);
-    await typeInto(tester, 'Correo', correo);
+    await setNotificationPermission(granted: permission);
+    await typeInto(tester, 'Correo', email);
     await typeInto(tester, 'Contraseña', 'ClubNahuel1');
     await tapText(tester, 'INICIAR SESIÓN');
     await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
-  Finder campana(int sinLeer) => find.bySemanticsLabel(
-    sinLeer == 0 ? 'Notificaciones' : 'Notificaciones, $sinLeer sin leer',
+  Finder bell(int unread) => find.bySemanticsLabel(
+    unread == 0 ? 'Notificaciones' : 'Notificaciones, $unread sin leer',
   );
 
-  Future<void> abrirCentro(WidgetTester tester, {int sinLeer = 0}) async {
-    await waitUntil(tester, campana(sinLeer));
-    await tester.tap(campana(sinLeer));
+  Future<void> openCenter(WidgetTester tester, {int unread = 0}) async {
+    await waitUntil(tester, bell(unread));
+    await tester.tap(bell(unread));
     await tester.pumpAndSettle();
     await waitUntil(tester, find.text('Notificaciones'));
   }
 
-  Future<void> cerrarPanel(WidgetTester tester) async {
+  Future<void> closePanel(WidgetTester tester) async {
     await tester.tap(find.bySemanticsLabel('Cerrar las notificaciones'));
     await tester.pumpAndSettle();
   }
 
-  /// Cancela la reserva de [cancha] de mañana a las [hora] desde Mis reservas, con el botón de
-  /// su tarjeta, y acepta el mensaje de éxito; la app queda en Mis reservas, ya sin esa tarjeta.
-  Future<void> cancelarEnLaApp(
+  /// Cancels the booking of [court] tomorrow at [hour] from «Mis reservas», with the button of
+  /// its card, and accepts the success message; the app stays on «Mis reservas», without that card.
+  Future<void> cancelInApp(
     WidgetTester tester,
-    String cancha, {
-    int hora = 21,
+    String court, {
+    int hour = 21,
   }) async {
     await tapText(tester, 'RESERVAS');
-    await waitUntil(tester, find.text(cancha));
-    final boton = find.bySemanticsLabel(
+    await waitUntil(tester, find.text(court));
+    final button = find.bySemanticsLabel(
       'Cancelar la reserva de Fútbol 5, '
-      '${dias[manana.weekday - 1]} ${manana.day}, $hora:00 – ${hora + 1}:00',
+      '${days[tomorrow.weekday - 1]} ${tomorrow.day}, $hour:00 – ${hour + 1}:00',
     );
-    await tester.ensureVisible(boton);
+    await tester.ensureVisible(button);
     await tester.pumpAndSettle();
-    await tester.tap(boton);
+    await tester.tap(button);
     await tester.pumpAndSettle();
     await waitUntil(tester, find.text('¿Cancelar la reserva?'));
     await tapText(tester, 'CANCELAR RESERVA');
     await waitUntil(tester, find.text('Reserva cancelada con éxito'));
     await tapText(tester, 'ACEPTAR');
-    final fin = DateTime.now().add(const Duration(seconds: 20));
-    while (find.text(cancha).evaluate().isNotEmpty &&
-        DateTime.now().isBefore(fin)) {
+    final end = DateTime.now().add(const Duration(seconds: 20));
+    while (find.text(court).evaluate().isNotEmpty &&
+        DateTime.now().isBefore(end)) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text(cancha), findsNothing);
+    expect(find.text(court), findsNothing);
   }
 
-  bool resaltada(WidgetTester tester, String sede) => tester
+  bool highlighted(WidgetTester tester, String venue) => tester
       .getSemantics(
-        find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(sede)},')),
+        find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(venue)},')),
       )
       .flagsCollection
       .isSelected;
 
   testWidgets(
-    'cancela una reserva y recibe la confirmación con la reserva y el horario liberado @CU-24.3-H01-01 @supuesto:CU-24.3-SUP-05',
+    'cancels a booking and receives the confirmation with the booking and the freed time @CU-24.3-H01-01 @assumption:CU-24.3-SUP-05',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, _) = await reservaDeManana();
-      await entrar(tester, correo);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, _) = await tomorrowBooking();
+      await signIn(tester, email);
 
-      // La cancelación llega desde otro teléfono: acá la persona está en el Home.
-      await cancelFromAnotherPhone(correo);
-      await waitUntil(tester, find.text(titulo));
+      // The cancellation arrives from another phone: here the person is on the Home.
+      await cancelFromAnotherPhone(email);
+      await waitUntil(tester, find.text(title));
 
-      // Verifica: la tarjeta superior trae qué reserva se canceló y que el horario quedó
-      // libre, sobre la pantalla en la que estaba.
-      expect(find.text(cuerpo(sede)), findsOneWidget);
+      // Verifies: the top card says which booking was canceled and that the time was
+      // freed, over the screen it was on.
+      expect(find.text(body(venue)), findsOneWidget);
       expect(find.text('MARCAR TODAS'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'al tocar la confirmación la app abre el historial con la reserva cancelada @CU-24.3-H01-02 @supuesto:CU-24.3-SUP-06',
+    'on tapping the confirmation the app opens the history with the canceled booking @CU-24.3-H01-02 @assumption:CU-24.3-SUP-06',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, cancha) = await reservaDeManana();
-      await entrar(tester, correo);
-      await cancelFromAnotherPhone(correo);
-      await waitUntil(tester, find.text(titulo));
+      final semantics = tester.ensureSemantics();
+      final (email, venue, court) = await tomorrowBooking();
+      await signIn(tester, email);
+      await cancelFromAnotherPhone(email);
+      await waitUntil(tester, find.text(title));
 
-      await tester.tap(find.text(titulo));
+      await tester.tap(find.text(title));
       await tester.pumpAndSettle();
 
-      // Verifica: Mis reservas en el historial, con la reserva como cancelada y resaltada.
+      // Verifies: «Mis reservas» on the history, with the booking as canceled and highlighted.
       await waitUntil(tester, find.text('CANCELADA'));
       expect(find.text('Mis reservas'), findsOneWidget);
-      expect(find.text(cancha), findsOneWidget);
-      expect(resaltada(tester, sede), isTrue);
+      expect(find.text(court), findsOneWidget);
+      expect(highlighted(tester, venue), isTrue);
       expect(find.text('MARCAR TODAS'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'la confirmación queda en el centro de notificaciones @CU-24.3-H01-03',
+    'the confirmation stays in the notification center @CU-24.3-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, _) = await reservaDeManana();
-      await entrar(tester, correo);
-      await cancelFromAnotherPhone(correo);
-      await waitUntil(tester, find.text(titulo));
-      await cerrarPanel(tester);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, _) = await tomorrowBooking();
+      await signIn(tester, email);
+      await cancelFromAnotherPhone(email);
+      await waitUntil(tester, find.text(title));
+      await closePanel(tester);
 
-      await abrirCentro(tester, sinLeer: 1);
+      await openCenter(tester, unread: 1);
 
-      // Verifica: la confirmación figura en el centro, del día de hoy y sin leer.
+      // Verifies: the confirmation is in the center, from today and unread.
       expect(find.text('HOY'), findsOneWidget);
-      expect(find.text(titulo), findsOneWidget);
-      expect(find.text(cuerpo(sede)), findsOneWidget);
-      semantica.dispose();
+      expect(find.text(title), findsOneWidget);
+      expect(find.text(body(venue)), findsOneWidget);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'si sigue en Mis reservas ve sólo el mensaje de éxito de la cancelación, sin la tarjeta @CU-24.3-H02-01 @supuesto:CU-24.3-SUP-03 @supuesto:CU-24.3-SUP-07',
+    'if it stays on «Mis reservas» it sees only the cancellation success message, without the card @CU-24.3-H02-01 @assumption:CU-24.3-SUP-03 @assumption:CU-24.3-SUP-07',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, cancha) = await reservaDeManana();
-      await otraReserva(correo, hora: 22);
-      await entrar(tester, correo);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, court) = await tomorrowBooking();
+      await anotherBooking(email, hour: 22);
+      await signIn(tester, email);
 
-      await cancelarEnLaApp(tester, cancha);
+      await cancelInApp(tester, court);
 
-      // Un recordatorio que llega después hace que la app lea el centro, que ya trae la
-      // confirmación: el panel muestra el recordatorio y no la confirmación.
-      await dispatchReminders(email: correo, day: manana, hour: 21);
+      // A reminder that arrives later makes the app read the center, which already has the
+      // confirmation: the panel shows the reminder and not the confirmation.
+      await dispatchReminders(email: email, day: tomorrow, hour: 21);
       await waitUntil(tester, find.text('Tu reserva es en 1 hora'));
 
-      // Verifica: la tarjeta de la confirmación no aparece y la pantalla sigue siendo Mis
-      // reservas.
-      expect(find.text(titulo), findsNothing);
-      expect(find.text(cuerpo(sede)), findsNothing);
+      // Verifies: the confirmation card does not appear and the screen is still «Mis
+      // reservas».
+      expect(find.text(title), findsNothing);
+      expect(find.text(body(venue)), findsNothing);
       expect(find.text('Mis reservas'), findsOneWidget);
 
-      // Verifica: la confirmación sigue sin leer en la campana y en el centro.
-      await cerrarPanel(tester);
+      // Verifies: the confirmation is still unread on the bell and in the center.
+      await closePanel(tester);
       await tapText(tester, 'INICIO');
-      await abrirCentro(tester, sinLeer: 2);
-      expect(find.text(titulo), findsOneWidget);
-      expect(find.text(cuerpo(sede)), findsOneWidget);
-      semantica.dispose();
+      await openCenter(tester, unread: 2);
+      expect(find.text(title), findsOneWidget);
+      expect(find.text(body(venue)), findsOneWidget);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin permiso de notificaciones no llega el push pero la confirmación está en el centro @CU-24.3-H03-01',
+    'without notification permission the push does not arrive but the confirmation is in the center @CU-24.3-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, sede, cancha) = await reservaDeManana();
-      await entrar(tester, correo, permiso: false);
+      final semantics = tester.ensureSemantics();
+      final (email, venue, court) = await tomorrowBooking();
+      await signIn(tester, email, permission: false);
 
-      await cancelarEnLaApp(tester, cancha);
+      await cancelInApp(tester, court);
       await tapText(tester, 'INICIO');
-      await abrirCentro(tester, sinLeer: 1);
+      await openCenter(tester, unread: 1);
 
-      // Verifica: el centro avisa que están desactivadas y trae la confirmación igual.
+      // Verifies: the center says they are turned off and has the confirmation anyway.
       expect(find.text('Notificaciones desactivadas'), findsOneWidget);
-      expect(find.text(cuerpo(sede)), findsOneWidget);
+      expect(find.text(body(venue)), findsOneWidget);
       expect(find.text('MARCAR TODAS'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'si la cancelación falló no recibe ninguna confirmación @CU-24.3-H04-01',
+    'if the cancellation failed it receives no confirmation @CU-24.3-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (correo, _, cancha) = await reservaDeManana();
-      await entrar(tester, correo);
+      final semantics = tester.ensureSemantics();
+      final (email, _, court) = await tomorrowBooking();
+      await signIn(tester, email);
       await tapText(tester, 'RESERVAS');
-      await waitUntil(tester, find.text(cancha));
+      await waitUntil(tester, find.text(court));
       await tapText(tester, 'CANCELAR');
       await waitUntil(tester, find.text('¿Cancelar la reserva?'));
 
-      // Mientras mira la confirmación, el turno empieza.
-      await startBookingsOf(cancha);
+      // While it looks at the confirmation, the slot starts.
+      await startBookingsOf(court);
       await tapText(tester, 'CANCELAR RESERVA');
       await waitUntil(tester, find.text('Esto cambió mientras tanto'));
       await tapText(tester, 'VER LO ACTUALIZADO');
       await tapText(tester, 'INICIO');
 
-      // Verifica: el centro sigue vacío y la campana no cuenta nada.
-      await abrirCentro(tester);
+      // Verifies: the center stays empty and the bell counts nothing.
+      await openCenter(tester);
       await waitUntil(tester, find.text('Todavía no tenés notificaciones'));
-      expect(find.text(titulo), findsNothing);
-      semantica.dispose();
+      expect(find.text(title), findsNothing);
+      semantics.dispose();
     },
   );
 }

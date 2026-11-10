@@ -6,44 +6,44 @@ import '../support/actions.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> irAlRegistro(WidgetTester tester) async {
+  Future<void> goToRegistration(WidgetTester tester) async {
     await openApp(tester);
     await tapText(tester, 'COMENZAR');
     expect(find.text('Creá tu cuenta'), findsOneWidget);
   }
 
-  Future<void> completar(
+  Future<void> fillIn(
     WidgetTester tester, {
-    required String correo,
+    required String email,
     required String dni,
   }) async {
     await typeInto(tester, 'Nombre', 'Nahuel Agustín');
     await typeInto(tester, 'Apellido', 'Mosse');
     await typeInto(tester, 'DNI', dni);
     await typeInto(tester, 'Fecha de nacimiento', '14032000');
-    await typeInto(tester, 'Correo electrónico', correo);
+    await typeInto(tester, 'Correo electrónico', email);
     await typeInto(tester, 'Contraseña', 'ClubNahuel1');
   }
 
-  Future<void> registrar(WidgetTester tester, String correo, String dni) async {
-    await irAlRegistro(tester);
-    await completar(tester, correo: correo, dni: dni);
+  Future<void> register(WidgetTester tester, String email, String dni) async {
+    await goToRegistration(tester);
+    await fillIn(tester, email: email, dni: dni);
     await tapText(tester, 'CREAR CUENTA');
     await waitUntil(tester, find.text('¡Cuenta creada!'));
     await tapText(tester, 'VOLVER AL INICIO DE SESIÓN');
   }
 
   testWidgets(
-    'completa todos los datos, crea la cuenta y vuelve al login @CU-03-H01-01',
+    'fills in all the data, creates the account and returns to the login @CU-03-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final s = unique();
 
-      await irAlRegistro(tester);
-      await completar(tester, correo: 'nuevo.$s@correo.com', dni: dniOf(s));
+      await goToRegistration(tester);
+      await fillIn(tester, email: 'nuevo.$s@correo.com', dni: dniOf(s));
       await tapText(tester, 'CREAR CUENTA');
 
-      // Verifica: la cuenta se crea con los seis datos y la app lo confirma.
+      // Verifies: the account is created with the six fields and the app confirms it.
       await waitUntil(tester, find.text('¡Cuenta creada!'));
       expect(
         find.text(
@@ -52,29 +52,29 @@ void main() {
         findsOneWidget,
       );
 
-      // Verifica: vuelve al inicio de sesión. Si falla, queda en un callejón sin salida.
+      // Verifies: it returns to the sign-in. If it fails, it is left in a dead end.
       await tapText(tester, 'VOLVER AL INICIO DE SESIÓN');
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'deja campos obligatorios vacíos y ve cuáles faltan, sin que se cree la cuenta @CU-03-H02-01',
+    'leaves required fields empty and sees which are missing, without the account being created @CU-03-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final s = unique();
-      final correo = 'incompleto.$s@correo.com';
+      final email = 'incompleto.$s@correo.com';
 
-      await irAlRegistro(tester);
+      await goToRegistration(tester);
       await typeInto(tester, 'Nombre', 'Nahuel Agustín');
       await typeInto(tester, 'Apellido', 'Mosse');
-      await typeInto(tester, 'Correo electrónico', correo);
+      await typeInto(tester, 'Correo electrónico', email);
       await enterAndLeave(tester, 'DNI');
       await enterAndLeave(tester, 'Fecha de nacimiento');
       await enterAndLeave(tester, 'Contraseña');
 
-      // Verifica: cada campo vacío dice que es obligatorio. Si falla, no sabe qué le falta.
+      // Verifies: each empty field says it is required. If it fails, it does not know what is missing.
       expect(find.text('El DNI es obligatorio'), findsOneWidget);
       expect(
         find.text('La fecha de nacimiento es obligatoria'),
@@ -82,34 +82,34 @@ void main() {
       );
       expect(find.text('La contraseña es obligatoria'), findsOneWidget);
 
-      // Verifica: con datos faltantes no se puede crear la cuenta.
+      // Verifies: with missing data the account cannot be created.
       await tapText(tester, 'CREAR CUENTA');
       expect(find.text('¡Cuenta creada!'), findsNothing);
       expect(find.text('Creá tu cuenta'), findsOneWidget);
 
-      // Verifica: no quedó nada creado; el mismo correo se registra después sin choque.
+      // Verifies: nothing was created; the same email registers later without a clash.
       await typeInto(tester, 'DNI', dniOf(s));
       await typeInto(tester, 'Fecha de nacimiento', '14032000');
       await typeInto(tester, 'Contraseña', 'ClubNahuel1');
       await tapText(tester, 'CREAR CUENTA');
       await waitUntil(tester, find.text('¡Cuenta creada!'));
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'se registra con un correo que ya tiene cuenta y queda en el formulario con el error @CU-03-H03-01',
+    'registers with an email that already has an account and stays on the form with the error @CU-03-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final s = unique();
-      final correo = 'repetido.$s@correo.com';
-      await registrar(tester, correo, dniOf(s));
+      final email = 'repetido.$s@correo.com';
+      await register(tester, email, dniOf(s));
 
       await tapText(tester, 'COMENZAR');
-      await completar(tester, correo: correo, dni: dniOf(unique()));
+      await fillIn(tester, email: email, dni: dniOf(unique()));
       await tapText(tester, 'CREAR CUENTA');
 
-      // Verifica: el correo repetido se marca y la persona sigue en el formulario.
+      // Verifies: the repeated email is flagged and the person stays on the form.
       await waitUntil(tester, find.text('Este correo ya está registrado'));
       expect(
         find.text(
@@ -119,27 +119,27 @@ void main() {
       );
       expect(find.text('Creá tu cuenta'), findsOneWidget);
       expect(find.text('¡Cuenta creada!'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'se registra con un DNI que ya tiene cuenta y queda en el formulario con el error @CU-03-H03-02',
+    'registers with a DNI that already has an account and stays on the form with the error @CU-03-H03-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final s = unique();
       final dni = dniOf(s);
-      await registrar(tester, 'primero.$s@correo.com', dni);
+      await register(tester, 'primero.$s@correo.com', dni);
 
       await tapText(tester, 'COMENZAR');
-      await completar(tester, correo: 'segundo.$s@correo.com', dni: dni);
+      await fillIn(tester, email: 'segundo.$s@correo.com', dni: dni);
       await tapText(tester, 'CREAR CUENTA');
 
-      // Verifica: el DNI repetido se marca y no se crea una segunda cuenta.
+      // Verifies: the repeated DNI is flagged and a second account is not created.
       await waitUntil(tester, find.text('Este DNI ya está registrado'));
       expect(find.text('Creá tu cuenta'), findsOneWidget);
       expect(find.text('¡Cuenta creada!'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

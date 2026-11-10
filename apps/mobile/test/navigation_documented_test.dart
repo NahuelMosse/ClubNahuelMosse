@@ -10,20 +10,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/mount.dart';
 
-const _acceso = '/admin/acceso-denegado';
+const _accessDenied = '/admin/acceso-denegado';
 
-/// Cada fila de la tabla de rutas de la página: la ruta con valores de ejemplo y quién entra.
-List<(String, String)> _filas() {
-  final texto = File(
+/// Each row of the page's route table: the route with example values and who may enter.
+List<(String, String)> _rows() {
+  final text = File(
     '../../docs/technical/app-navigation.md',
   ).readAsStringSync();
-  final tabla = texto.split('## Routes').last.split('\n## ').first;
-  final fila = RegExp(
+  final table = text.split('## Routes').last.split('\n## ').first;
+  final row = RegExp(
     r'^\| `([^`]+)` \|.*\| ([^|]+) \| [^|]+ \|$',
     multiLine: true,
   );
   return [
-    for (final m in fila.allMatches(tabla))
+    for (final m in row.allMatches(table))
       (
         m
             .group(1)!
@@ -36,60 +36,60 @@ List<(String, String)> _filas() {
 
 void main() {
   testWidgets(
-    'quién puede entrar a cada ruta es lo que dice la página de navegación @DOC-01-S2',
+    'who may enter each route is what the navigation page says @DOC-01-S2',
     (tester) async {
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
-      final filas = _filas();
-      expect(filas.length, greaterThanOrEqualTo(30));
+      final rows = _rows();
+      expect(rows.length, greaterThanOrEqualTo(30));
 
-      for (final (ruta, quien) in filas) {
-        for (final sesion in ['ninguna', 'usuario', 'admin']) {
+      for (final (route, who) in rows) {
+        for (final session in ['none', 'user', 'admin']) {
           await tester.pumpWidget(
             App(
               key: UniqueKey(),
               api: apiRoutes({}),
-              session: FakeSession(switch (sesion) {
-                'usuario' => userProfile,
+              session: FakeSession(switch (session) {
+                'user' => userProfile,
                 'admin' => adminProfile,
                 _ => null,
               }),
               appearance: Appearance.inMemory(),
-              initialLocation: ruta,
+              initialLocation: route,
             ),
           );
           await tester.pump(const Duration(milliseconds: 300));
           await tester.pump(const Duration(milliseconds: 300));
 
-          final entra = switch (quien) {
+          final allowed = switch (who) {
             'No session' => true,
-            'Anyone with a session' => sesion != 'ninguna',
-            'User' => sesion == 'usuario',
-            'Admin' => sesion == 'admin',
-            _ => throw StateError('rol sin documentar: $quien'),
+            'Anyone with a session' => session != 'none',
+            'User' => session == 'user',
+            'Admin' => session == 'admin',
+            _ => throw StateError('undocumented role: $who'),
           };
-          final alLogin =
-              ruta != '/' &&
+          final toLogin =
+              route != '/' &&
               find.byType(LoginScreen).hitTestable().evaluate().isNotEmpty;
-          final denegado =
-              ruta != _acceso &&
+          final denied =
+              route != _accessDenied &&
               find
                   .byType(AccessDeniedScreen)
                   .hitTestable()
                   .evaluate()
                   .isNotEmpty;
-          final alPanel =
-              quien != 'Admin' &&
-              ruta != _acceso &&
-              sesion == 'admin' &&
-              quien == 'User' &&
+          final toPanel =
+              who != 'Admin' &&
+              route != _accessDenied &&
+              session == 'admin' &&
+              who == 'User' &&
               find.byType(AdminPanelScreen).evaluate().isNotEmpty;
 
           expect(
-            !(alLogin || denegado || alPanel),
-            entra,
-            reason: '$ruta con sesión «$sesion»: la página dice «$quien»',
+            !(toLogin || denied || toPanel),
+            allowed,
+            reason: '$route with session «$session»: the page says «$who»',
           );
         }
       }

@@ -9,33 +9,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/mount.dart';
 
 Map<String, String> _lib() => {
-  for (final archivo in Directory(
+  for (final file in Directory(
     'lib',
   ).listSync(recursive: true).whereType<File>())
-    if (archivo.path.endsWith('.dart'))
-      archivo.path.replaceAll(r'\', '/').substring(4): archivo
-          .readAsStringSync(),
+    if (file.path.endsWith('.dart'))
+      file.path.replaceAll(r'\', '/').substring(4): file.readAsStringSync(),
 };
 
-Set<String> _queContienen(Pattern patron) => {
-  for (final MapEntry(key: ruta, value: texto) in _lib().entries)
-    if (texto.contains(patron)) ruta,
+Set<String> _filesContaining(Pattern pattern) => {
+  for (final MapEntry(key: path, value: text) in _lib().entries)
+    if (text.contains(pattern)) path,
 };
 
-/// Una sesión que Firebase no puede cerrar.
-class _SesionQueNoCierra extends FakeSession {
-  _SesionQueNoCierra() : super(userProfile);
+/// A session that Firebase cannot close.
+class _SessionThatWontClose extends FakeSession {
+  _SessionThatWontClose() : super(userProfile);
 
   @override
-  Future<void> close() async => throw Exception('Firebase no respondió');
+  Future<void> close() async => throw Exception('Firebase did not respond');
 }
 
 void main() {
   test(
-    'sólo fallo_de_carga.dart, el cierre de sesión y las pantallas sin sesión avisan la sesión vencida y el error de red @ARQ-03-S2 @ARQ-03-ASM-02',
+    'only load_failure.dart, the sign-out and the screens without a session report the expired session and the network error @ARQ-03-S2 @ARQ-03-ASM-02',
     () {
-      final llamadas = RegExp(r'show(SessionExpired|NetworkError)\(context');
-      expect(_queContienen(llamadas), {
+      final calls = RegExp(r'show(SessionExpired|NetworkError)\(context');
+      expect(_filesContaining(calls), {
         'features/session/presentation/load_failure.dart',
         'features/session/presentation/account_card.dart',
         'features/users/presentation/registration_screen.dart',
@@ -45,15 +44,15 @@ void main() {
   );
 
   testWidgets(
-    'si Firebase no puede cerrar la sesión, la persona queda adentro y ve el error del servidor @ARQ-03-ASM-05',
+    'if Firebase cannot close the session, the person stays in and sees the server error @ARQ-03-ASM-05',
     (tester) async {
-      final sesion = _SesionQueNoCierra();
+      final session = _SessionThatWontClose();
       await mountScreen(
         tester,
         Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () => signOut(context, sesion),
+              onPressed: () => signOut(context, session),
               child: const Text('Cerrar sesión'),
             ),
           ),
@@ -65,52 +64,52 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Error del servidor'), findsOneWidget);
-      expect(sesion.profile, isNotNull);
+      expect(session.profile, isNotNull);
     },
   );
 
   test(
-    'mi perfil cierra la sesión vencida aunque ya no esté en pantalla @ARQ-03-ASM-05',
+    'my profile closes the expired session even when it is no longer on screen @ARQ-03-ASM-05',
     () {
-      final perfil =
+      final profile =
           _lib()['features/users/presentation/my_profile_screen.dart']!;
       expect(
-        perfil,
+        profile,
         matches(RegExp(r'if \(!mounted\) \{[\s\S]{0,400}?session\.close\(\)')),
       );
     },
   );
 
   test(
-    'cada pantalla_*.dart declara sólo su widget y su State; sus piezas van a archivos de la carpeta @ARQ-03-S3 @ARQ-03-ASM-06',
+    'every «pantalla_*.dart» declares only its widget and its State; its pieces go to files in the folder @ARQ-03-S3 @ARQ-03-ASM-06',
     () {
-      final conPiezas = {
-        for (final MapEntry(key: ruta, value: texto) in _lib().entries)
-          if (ruta.split('/').last.startsWith('pantalla_') &&
-              RegExp(r'^class ', multiLine: true).allMatches(texto).length > 2)
-            ruta,
+      final withPieces = {
+        for (final MapEntry(key: path, value: text) in _lib().entries)
+          if (path.split('/').last.startsWith('pantalla_') &&
+              RegExp(r'^class ', multiLine: true).allMatches(text).length > 2)
+            path,
       };
-      expect(conPiezas, isEmpty);
+      expect(withPieces, isEmpty);
     },
   );
 
   test(
-    'los días y meses salen de intl en español, con la mayúscula de hoy @ARQ-03-S1 @ARQ-03-ASM-07',
+    'days and months come from intl in Spanish, with today\'s capitalization @ARQ-03-S1 @ARQ-03-ASM-07',
     () {
-      expect(_queContienen(RegExp("'[Mm]iércoles'")), isEmpty);
-      expect(_queContienen(RegExp("'[Nn]oviembre'")), isEmpty);
-      final jueves = DateTime(2026, 11, 12);
-      expect(shortDay(jueves), 'Jue 12');
-      expect(longDate(jueves), 'Jue 12 de noviembre');
+      expect(_filesContaining(RegExp("'[Mm]iércoles'")), isEmpty);
+      expect(_filesContaining(RegExp("'[Nn]oviembre'")), isEmpty);
+      final thursday = DateTime(2026, 11, 12);
+      expect(shortDay(thursday), 'Jue 12');
+      expect(longDate(thursday), 'Jue 12 de noviembre');
       expect(weekdayName(DateTime(2026, 11, 11)), 'Miércoles');
       expect(weekdayAbbreviation(DateTime(2026, 11, 14)), 'SÁB');
       expect(shortTime(DateTime(2026, 11, 12, 9, 5)), '09:05');
-      expect(isoDate(jueves), '2026-11-12');
+      expect(isoDate(thursday), '2026-11-12');
     },
   );
 
   test(
-    'el DNI se agrupa con intl y uno que no es número se muestra como llega @ARQ-03-ASM-07',
+    'the DNI is grouped with intl and one that is not a number is shown as it arrives @ARQ-03-ASM-07',
     () {
       expect(readableDni('30111222'), '30.111.222');
       expect(readableDni('X12'), 'X12');
@@ -119,9 +118,9 @@ void main() {
   );
 
   test(
-    'sólo el token simulado de notificaciones usa DateTime.now @ARQ-03-ASM-04',
+    'only the simulated notifications token uses DateTime.now @ARQ-03-ASM-04',
     () {
-      expect(_queContienen('DateTime.now()'), {
+      expect(_filesContaining('DateTime.now()'), {
         'features/notifications/data/simulated_notification_system.dart',
       });
       expect(
@@ -132,23 +131,26 @@ void main() {
   );
 
   test(
-    'los cinco chips usan SelectableChip, cada indicador en curso usa InProgress y los errores por campo se leen en un solo lugar @ARQ-03-S2 @ARQ-03-ASM-03',
+    'the five chips use SelectableChip, each in-progress indicator uses InProgress and the per-field errors are read in a single place @ARQ-03-S2 @ARQ-03-ASM-03',
     () {
-      expect(_queContienen('SelectableChip(').length, greaterThanOrEqualTo(6));
-      expect(_queContienen('InProgress(').length, greaterThanOrEqualTo(6));
-      expect(_queContienen("'errors'"), {'common/field_errors.dart'});
-      expect(_queContienen('class _Elegible '), isEmpty);
+      expect(
+        _filesContaining('SelectableChip(').length,
+        greaterThanOrEqualTo(6),
+      );
+      expect(_filesContaining('InProgress(').length, greaterThanOrEqualTo(6));
+      expect(_filesContaining("'errors'"), {'common/field_errors.dart'});
+      expect(_filesContaining('class _Elegible '), isEmpty);
     },
   );
 
   test(
-    'el registro exitoso conserva su pulso y sus separaciones @ARQ-03-ASM-08',
+    'the successful registration keeps its pulse and its spacing @ARQ-03-ASM-08',
     () {
-      final registro =
+      final registration =
           _lib()['features/users/presentation/registration_done_screen.dart']!;
-      expect(registro, contains('ResultScreen('));
-      for (final medida in ['100', '44', '20', '36']) {
-        expect(registro, contains(medida), reason: medida);
+      expect(registration, contains('ResultScreen('));
+      for (final measure in ['100', '44', '20', '36']) {
+        expect(registration, contains(measure), reason: measure);
       }
     },
   );

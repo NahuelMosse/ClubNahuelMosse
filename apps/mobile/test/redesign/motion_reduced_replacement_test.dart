@@ -16,9 +16,9 @@ import '../notifications_test.dart'
 import '../support/mount.dart';
 import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
 
-final _uno = closeTo(1, 1e-6);
+final _one = closeTo(1, 1e-6);
 
-Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
+Future<void> _mountFree(WidgetTester tester, Widget screen) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -29,125 +29,122 @@ Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
       locale: const Locale('es', 'AR'),
       supportedLocales: const [Locale('es', 'AR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: pantalla,
+      home: screen,
     ),
   );
 }
 
-Future<void> _desmontar(WidgetTester tester) async {
+Future<void> _unmount(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpAndSettle();
 }
 
-void _reducirMovimiento(WidgetTester tester) {
+void _reduceMotion(WidgetTester tester) {
   tester.platformDispatcher.accessibilityFeaturesTestValue =
       const FakeAccessibilityFeatures(disableAnimations: true);
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 }
 
-Future<void> _hastaQue(WidgetTester tester, bool Function() condicion) async {
-  for (var i = 0; i < 20 && !condicion(); i++) {
+Future<void> _until(WidgetTester tester, bool Function() condition) async {
+  for (var i = 0; i < 20 && !condition(); i++) {
     await tester.pump();
   }
-  expect(condicion(), isTrue);
+  expect(condition(), isTrue);
 }
 
-double _opacidad(WidgetTester tester, Finder aparecer) => tester
+double _opacity(WidgetTester tester, Finder appearance) => tester
     .widget<FadeTransition>(
       find
-          .descendant(of: aparecer, matching: find.byType(FadeTransition))
+          .descendant(of: appearance, matching: find.byType(FadeTransition))
           .first,
     )
     .opacity
     .value;
 
-double _visibilidad(WidgetTester tester, Finder f) {
+double _visibility(WidgetTester tester, Finder f) {
   if (f.evaluate().isEmpty) return 0;
   var visible = 1.0;
-  for (final fundido in tester.widgetList<FadeTransition>(
+  for (final fade in tester.widgetList<FadeTransition>(
     find.ancestor(of: f, matching: find.byType(FadeTransition)),
   )) {
-    visible *= fundido.opacity.value;
+    visible *= fade.opacity.value;
   }
   return visible;
 }
 
-bool _todasEnSuFinal(WidgetTester tester) {
-  final cuantas = find.byType(FadeIn).evaluate().length;
-  return cuantas > 0 &&
+bool _allAtEnd(WidgetTester tester) {
+  final count = find.byType(FadeIn).evaluate().length;
+  return count > 0 &&
       [
-        for (var i = 0; i < cuantas; i++)
-          _opacidad(tester, find.byType(FadeIn).at(i)),
+        for (var i = 0; i < count; i++)
+          _opacity(tester, find.byType(FadeIn).at(i)),
       ].every((o) => o == 1);
 }
 
-double _ancho(WidgetTester tester, Finder f) =>
+double _width(WidgetTester tester, Finder f) =>
     tester.getBottomRight(f).dx - tester.getTopLeft(f).dx;
 
-Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(bookingJson()));
-  if (reserva == null) fail('la reserva de prueba no se lee');
-  return reserva;
+Booking _confirmedBooking() {
+  final booking = bookingFromJson(jsonDecode(bookingJson()));
+  if (booking == null) fail('the test booking cannot be read');
+  return booking;
 }
 
 void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'con reducir movimiento el festejo, el aviso y la entrada muestran su final en el primer cuadro @RED-04-S14',
+    'with reduce motion the celebration, the notice and the entrance show their end state on the first frame @RED-04-S14',
     (tester) async {
-      _reducirMovimiento(tester);
+      _reduceMotion(tester);
 
-      // El festejo.
-      await _montarLibre(
+      // The celebration.
+      await _mountFree(
         tester,
-        BookingConfirmedScreen(reserva: _reservaConfirmada()),
+        BookingConfirmedScreen(reserva: _confirmedBooking()),
       );
-      final titulo = find.text('¡Reserva confirmada!');
-      final comprobante = find.text('Horario');
+      final title = find.text('¡Reserva confirmada!');
+      final receipt = find.text('Horario');
       expect(find.byType(Celebration), findsOneWidget);
-      final ancho = _ancho(tester, titulo);
-      expect(_visibilidad(tester, comprobante), _uno);
-      // El primer montaje de MaterialApp siempre deja agendado el cuadro de su ruta inicial.
+      final width = _width(tester, title);
+      expect(_visibility(tester, receipt), _one);
+      // The first mount of MaterialApp always leaves the frame of its initial route scheduled.
       await tester.pump();
       expect(tester.binding.hasScheduledFrame, isFalse);
       await tester.pumpAndSettle();
-      expect(_ancho(tester, titulo), closeTo(ancho, 1e-6));
-      await _desmontar(tester);
+      expect(_width(tester, title), closeTo(width, 1e-6));
+      await _unmount(tester);
 
-      // El aviso dentro de la app.
+      // The in-app notice.
       final api = FakeApi();
-      final sesion = FakeSession(userProfile);
-      final centro = centerOf(api, sesion);
-      await _montarLibre(
+      final session = FakeSession(userProfile);
+      final center = centerOf(api, session);
+      await _mountFree(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
+            NoticePanel(center: center, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
       );
       api
         ..avisos = [reminderNotice]
         ..unread = 1;
-      await tester.runAsync(centro.load);
+      await tester.runAsync(center.load);
       await tester.pump();
       await tester.pump();
-      final aviso = find.text('NOTIFICACIONES');
-      expect(aviso, findsOneWidget);
-      final arriba = tester.getTopLeft(aviso).dy;
+      final notice = find.text('NOTIFICACIONES');
+      expect(notice, findsOneWidget);
+      final top = tester.getTopLeft(notice).dy;
       await tester.pumpAndSettle();
-      expect(tester.getTopLeft(aviso).dy, closeTo(arriba, 1e-6));
-      await _desmontar(tester);
+      expect(tester.getTopLeft(notice).dy, closeTo(top, 1e-6));
+      await _unmount(tester);
 
-      // La entrada escalonada del inicio.
-      await _montarLibre(tester, fakeHome(FakeSession(userProfile)));
-      await _hastaQue(
-        tester,
-        () => find.byType(SportTile).evaluate().isNotEmpty,
-      );
-      expect(_todasEnSuFinal(tester), isTrue);
+      // The staggered entrance of the home screen.
+      await _mountFree(tester, fakeHome(FakeSession(userProfile)));
+      await _until(tester, () => find.byType(SportTile).evaluate().isNotEmpty);
+      expect(_allAtEnd(tester), isTrue);
     },
   );
 }

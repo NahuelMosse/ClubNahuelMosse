@@ -15,59 +15,59 @@ import 'support/user.dart';
 
 const _booking1 = '00000000-0000-7000-8000-000000000001';
 const _booking2 = '00000000-0000-7000-8000-000000000002';
-const _idRecordatorio = '00000000-0000-7000-8000-000000000003';
+const _reminderId = '00000000-0000-7000-8000-000000000003';
 
-/// Un sistema donde el test decide cuándo la persona toca un aviso de la bandeja.
-class SistemaConToques extends FakeSystem {
-  final toques = StreamController<NoticeTapped>.broadcast();
+/// A system where the test decides when the person taps a notice in the tray.
+class SystemWithTaps extends FakeSystem {
+  final taps = StreamController<NoticeTapped>.broadcast();
 
   @override
-  Stream<NoticeTapped> get onTap => toques.stream;
+  Stream<NoticeTapped> get onTap => taps.stream;
 }
 
-Future<(FakeApi, NotificationCenter)> _abrirCentro(
+Future<(FakeApi, NotificationCenter)> _openCenter(
   WidgetTester tester, {
-  required List<String> avisos,
+  required List<String> notices,
 }) async {
   final api = FakeApi()
-    ..avisos = avisos
-    ..unread = avisos.length;
+    ..avisos = notices
+    ..unread = notices.length;
   final session = FakeSession(userProfile);
-  final centro = centerOf(api, session);
+  final center = centerOf(api, session);
   await mountScreen(
     tester,
     NotificationsScreen(
-      center: centro,
+      center: center,
       session: session,
       now: () => noticesNow,
       onOpen: (_, _) {},
     ),
     theme: darkTheme,
   );
-  return (api, centro);
+  return (api, center);
 }
 
-/// La app entera con [avisos] sin leer y un sistema donde el test toca los avisos.
-Future<(FakeApi, SistemaConToques, NotificationCenter)> _montarApp(
+/// The whole app with unread [notices] and a system where the test taps the notices.
+Future<(FakeApi, SystemWithTaps, NotificationCenter)> _mountApp(
   WidgetTester tester,
-  List<String> avisos,
+  List<String> notices,
 ) async {
   final api = FakeApi()
-    ..avisos = avisos
-    ..unread = avisos.length;
-  final sistema = SistemaConToques();
-  addTearDown(sistema.toques.close);
-  late NotificationCenter centro;
+    ..avisos = notices
+    ..unread = notices.length;
+  final system = SystemWithTaps();
+  addTearDown(system.taps.close);
+  late NotificationCenter center;
   await mountUser(
     tester,
     start: '/inicio',
     api: api.cliente,
-    center: (session) => centro = centerOf(api, session, sistema: sistema),
+    center: (session) => center = centerOf(api, session, sistema: system),
   );
-  return (api, sistema, centro);
+  return (api, system, center);
 }
 
-Future<void> _salir(WidgetTester tester) async {
+Future<void> _leave(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpAndSettle();
 }
@@ -75,104 +75,104 @@ Future<void> _salir(WidgetTester tester) async {
 void main() {
   setUpAll(loadFonts);
 
-  group('salir del centro de notificaciones', () {
+  group('leaving the notification center', () {
     testWidgets(
-      'abrir la campana y volver deja leídas las que se mostraron y la campana en cero @NOT-03-S1',
+      'opening the bell and going back marks the shown ones as read and the bell at zero @NOT-03-S1',
       (tester) async {
-        final (api, centro) = await _abrirCentro(
+        final (api, center) = await _openCenter(
           tester,
-          avisos: [reminderNotice],
+          notices: [reminderNotice],
         );
-        expect(centro.unread, 1);
+        expect(center.unread, 1);
 
-        await _salir(tester);
+        await _leave(tester);
 
         expect(api.de('POST', '/notifications/read-all'), hasLength(1));
-        expect(centro.unread, 0);
-        expect(centro.list.every((n) => n.read), isTrue);
+        expect(center.unread, 0);
+        expect(center.list.every((n) => n.read), isTrue);
       },
     );
 
     testWidgets(
-      'con el centro abierto las nuevas siguen marcadas sin leer @NOT-03-S1',
+      'with the center open the new ones stay marked unread @NOT-03-S1',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        final (api, centro) = await _abrirCentro(
+        final semantics = tester.ensureSemantics();
+        final (api, center) = await _openCenter(
           tester,
-          avisos: [reminderNotice],
+          notices: [reminderNotice],
         );
 
         expect(find.bySemanticsLabel(RegExp('sin leer')), findsOneWidget);
-        expect(centro.unread, 1);
+        expect(center.unread, 1);
         expect(api.de('POST', '/notifications/read-all'), isEmpty);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
     testWidgets(
-      'si la API no contesta al salir se ven leídas y la próxima lectura corrige @assumption:NOT-03-ASM-02',
+      'if the API does not answer on leaving they show as read and the next read corrects it @assumption:NOT-03-ASM-02',
       (tester) async {
-        final (api, centro) = await _abrirCentro(
+        final (api, center) = await _openCenter(
           tester,
-          avisos: [reminderNotice],
+          notices: [reminderNotice],
         );
         api.caida = true;
 
-        await _salir(tester);
+        await _leave(tester);
 
-        expect(centro.unread, 0);
-        expect(centro.list.every((n) => n.read), isTrue);
+        expect(center.unread, 0);
+        expect(center.list.every((n) => n.read), isTrue);
 
         api.caida = false;
-        await tester.runAsync(centro.load);
-        expect(centro.unread, 1);
+        await tester.runAsync(center.load);
+        expect(center.unread, 1);
       },
     );
   });
 
-  group('tocar un push', () {
+  group('tapping a push', () {
     testWidgets(
-      'tocar un push marca leídas las de ese tipo y reserva y abre la reserva @NOT-03-S2',
+      'tapping a push marks as read those of that kind and booking and opens the booking @NOT-03-S2',
       (tester) async {
         final otherBooking = noticeJson(
           id: '00000000-0000-7000-8000-000000000005',
           club: DateTime.utc(2026, 11, 12, 19, 50),
           reservaId: _booking2,
         );
-        final otroTipo = noticeJson(
+        final otherKind = noticeJson(
           id: '00000000-0000-7000-8000-000000000006',
           club: DateTime.utc(2026, 11, 12, 19, 40),
           tipo: 'user_cancellation',
           titulo: 'Reserva cancelada',
         );
-        final (api, sistema, centro) = await _montarApp(tester, [
+        final (api, system, center) = await _mountApp(tester, [
           reminderNotice,
           otherBooking,
-          otroTipo,
+          otherKind,
         ]);
 
-        sistema.toques.add(
+        system.taps.add(
           NoticeTapped(kind: NotificationKind.reminder, bookingId: _booking1),
         );
         await tester.pumpAndSettle();
 
-        final leidas = api.requests
+        final read = api.requests
             .where((p) => p.method == 'POST' && p.url.path.endsWith('/read'))
             .map((p) => p.url.path)
             .toList();
-        expect(leidas, ['/notifications/$_idRecordatorio/read']);
-        expect(centro.unreadList, hasLength(2));
+        expect(read, ['/notifications/$_reminderId/read']);
+        expect(center.unreadList, hasLength(2));
         expect(find.text('Mis reservas'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'un push que no se toca sigue sin leer @assumption:NOT-03-ASM-01',
+      'a push that is not tapped stays unread @assumption:NOT-03-ASM-01',
       (tester) async {
-        final (api, _, centro) = await _montarApp(tester, [reminderNotice]);
+        final (api, _, center) = await _mountApp(tester, [reminderNotice]);
 
-        expect(centro.unread, 1);
-        expect(api.de('POST', '/notifications/$_idRecordatorio/read'), isEmpty);
+        expect(center.unread, 1);
+        expect(api.de('POST', '/notifications/$_reminderId/read'), isEmpty);
         expect(api.de('POST', '/notifications/read-all'), isEmpty);
       },
     );

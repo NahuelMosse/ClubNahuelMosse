@@ -10,66 +10,69 @@ import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
+/// Asserts nothing: produces the step-9 strip to compare against the prototype.
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  final temas = {'dark': darkTheme, 'light': lightTheme};
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  final themes = {'dark': darkTheme, 'light': lightTheme};
 
-  Future<Session> sesionCon((int, String) cambio) async {
-    final sesion = Session(
+  Future<Session> sessionWith((int, String) change) async {
+    final session = Session(
       repository: SessionRepository(
         credentials: FakeCredentials(),
         api: apiRoutes({
           'GET /me': (200, profileJson()),
-          'PUT /me/password': cambio,
+          'PUT /me/password': change,
         }),
       ),
     );
-    await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
-    return sesion;
+    await session.signIn('nahuel@correo.com', 'ClubNahuel1');
+    return session;
   }
 
-  Future<void> escribir(
+  Future<void> typeInto(
     WidgetTester tester, {
-    String actual = 'ClubNahuel1',
-    String nueva = 'ClubNahuel2',
-    String? repetida,
+    String current = 'ClubNahuel1',
+    String newPassword = 'ClubNahuel2',
+    String? repeated,
   }) async {
-    await tester.enterText(find.bySemanticsLabel('Contraseña actual'), actual);
-    await tester.enterText(find.bySemanticsLabel('Contraseña nueva'), nueva);
+    await tester.enterText(find.bySemanticsLabel('Contraseña actual'), current);
+    await tester.enterText(
+      find.bySemanticsLabel('Contraseña nueva'),
+      newPassword,
+    );
     await tester.enterText(
       find.bySemanticsLabel('Repetir contraseña'),
-      repetida ?? nueva,
+      repeated ?? newPassword,
     );
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
   }
 
-  Future<void> capturar(String archivo) =>
-      expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+  Future<void> capture(String file) =>
+      expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: tema) in temas.entries) {
-      Future<void> montarCon(WidgetTester tester, (int, String) cambio) async {
-        final sesion = await sesionCon(cambio);
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: theme) in themes.entries) {
+      Future<void> mountWith(WidgetTester tester, (int, String) change) async {
+        final session = await sessionWith(change);
         await mountScreen(
           tester,
-          ChangePasswordScreen(session: sesion),
-          theme: tema,
-          size: tamano,
+          ChangePasswordScreen(session: session),
+          theme: theme,
+          size: size,
         );
       }
 
-      testWidgets('contraseña vacía $ancho $modo', (tester) async {
-        await montarCon(tester, (204, ''));
-        await capturar('users/password_empty_${ancho}_$modo.png');
+      testWidgets('empty password $width $mode', (tester) async {
+        await mountWith(tester, (204, ''));
+        await capture('users/password_empty_${width}_$mode.png');
       });
 
-      testWidgets('contraseña reglas $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarCon(tester, (204, ''));
+      testWidgets('password rules $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountWith(tester, (204, ''));
         await tester.enterText(
           find.bySemanticsLabel('Contraseña actual'),
           'ClubNahuel1',
@@ -79,42 +82,42 @@ void main() {
           'ClubNahuel',
         );
         await tester.pump();
-        await capturar('users/password_rules_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture('users/password_rules_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('contraseña no coinciden $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarCon(tester, (204, ''));
-        await escribir(tester, repetida: 'ClubNahuel3');
-        await capturar('users/passwords_do_not_match_${ancho}_$modo.png');
-        semantica.dispose();
+      testWidgets('passwords do not match $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountWith(tester, (204, ''));
+        await typeInto(tester, repeated: 'ClubNahuel3');
+        await capture('users/passwords_do_not_match_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('contraseña actual equivocada $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarCon(tester, (
+      testWidgets('wrong current password $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountWith(tester, (
           422,
           '{"errors": {"current_password": "La contraseña actual no coincide"}}',
         ));
-        await escribir(tester);
+        await typeInto(tester);
         await tester.tap(find.text('GUARDAR CONTRASEÑA'));
         await tester.pumpAndSettle();
-        await capturar('users/current_password_wrong_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture('users/current_password_wrong_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('contraseña actualizada $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarCon(tester, (204, ''));
-        await escribir(tester);
+      testWidgets('password updated $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountWith(tester, (204, ''));
+        await typeInto(tester);
         await tester.tap(find.text('GUARDAR CONTRASEÑA'));
         await tester.pumpAndSettle();
-        await capturar('users/password_updated_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture('users/password_updated_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      for (final (nombre, abrir) in [
+      for (final (name, open) in [
         (
           'error_connection',
           (BuildContext c) => showNetworkError(c, const SinConexion()),
@@ -125,25 +128,25 @@ void main() {
         ),
         ('session_expired', showSessionExpired),
       ]) {
-        testWidgets('overlay $nombre $ancho $modo', (tester) async {
+        testWidgets('overlay $name $width $mode', (tester) async {
           await mountScreen(
             tester,
             Builder(
               builder: (c) => Scaffold(
                 body: Center(
                   child: TextButton(
-                    onPressed: () => abrir(c),
+                    onPressed: () => open(c),
                     child: const Text('abrir'),
                   ),
                 ),
               ),
             ),
-            theme: tema,
-            size: tamano,
+            theme: theme,
+            size: size,
           );
           await tester.tap(find.text('abrir'));
           await tester.pumpAndSettle();
-          await capturar('common/${nombre}_${ancho}_$modo.png');
+          await capture('common/${name}_${width}_$mode.png');
         });
       }
     }

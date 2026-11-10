@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/mount.dart';
 
-const _franjas = [
+const _slots = [
   SlotState.free,
   SlotState.free,
   SlotState.taken,
@@ -15,25 +15,25 @@ const _franjas = [
 
 void main() {
   testWidgets(
-    'libre es accentLibre, ocupado stateDisabled y elegido accentInk @RED-02-ASM-02 @RED-05-S2',
+    'free is accentLibre, taken stateDisabled and selected accentInk @RED-02-ASM-02 @RED-05-S2',
     (tester) async {
-      for (final (tema, p) in [
+      for (final (theme, p) in [
         (darkTheme, Palette.dark),
         (lightTheme, Palette.light),
       ]) {
         await mountScreen(
           tester,
           const Scaffold(
-            body: Center(child: DayTimeline(slots: _franjas, from: 8)),
+            body: Center(child: DayTimeline(slots: _slots, from: 8)),
           ),
-          theme: tema,
+          theme: theme,
         );
 
-        Color? franja(String hora) =>
+        Color? slot(String hour) =>
             (tester
                         .widget<DecoratedBox>(
                           find.descendant(
-                            of: find.byKey(ValueKey('franja-$hora')),
+                            of: find.byKey(ValueKey('franja-$hour')),
                             matching: find.byType(DecoratedBox),
                           ),
                         )
@@ -41,12 +41,12 @@ void main() {
                     as BoxDecoration)
                 .color;
 
-        Color? leyenda(String texto) =>
+        Color? legend(String text) =>
             (tester
                         .widget<DecoratedBox>(
                           find.descendant(
                             of: find.ancestor(
-                              of: find.text(texto),
+                              of: find.text(text),
                               matching: find.byType(Row),
                             ),
                             matching: find.byType(DecoratedBox),
@@ -56,12 +56,12 @@ void main() {
                     as BoxDecoration)
                 .color;
 
-        expect(franja('08'), p.accentFree);
-        expect(franja('10'), p.stateDisabled);
-        expect(franja('11'), p.accentInk);
-        expect(leyenda('Libre'), p.accentFree);
-        expect(leyenda('Ocupado'), p.stateDisabled);
-        expect(leyenda('Elegido'), p.accentInk);
+        expect(slot('08'), p.accentFree);
+        expect(slot('10'), p.stateDisabled);
+        expect(slot('11'), p.accentInk);
+        expect(legend('Libre'), p.accentFree);
+        expect(legend('Ocupado'), p.stateDisabled);
+        expect(legend('Elegido'), p.accentInk);
       }
     },
   );

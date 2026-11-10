@@ -8,24 +8,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/mount.dart';
 
-double _contraste(Color texto, Color fondo) {
-  final compuesto = Color.alphaBlend(texto, fondo);
-  final (claro, oscuro) = (
-    math.max(compuesto.computeLuminance(), fondo.computeLuminance()),
-    math.min(compuesto.computeLuminance(), fondo.computeLuminance()),
+double _contrast(Color text, Color background) {
+  final composite = Color.alphaBlend(text, background);
+  final (light, dark) = (
+    math.max(composite.computeLuminance(), background.computeLuminance()),
+    math.min(composite.computeLuminance(), background.computeLuminance()),
   );
-  return (claro + 0.05) / (oscuro + 0.05);
+  return (light + 0.05) / (dark + 0.05);
 }
 
 void main() {
   testWidgets(
-    'el botón atenuado baja sólo el fondo del lima, deja el texto principal y acepta el toque @RED-05-ASM-03',
+    'the dimmed button lowers only the lime background, keeps the primary text and accepts the tap @RED-05-ASM-03',
     (tester) async {
-      for (final (tema, p) in [
+      for (final (theme, p) in [
         (darkTheme, Palette.dark),
         (lightTheme, Palette.light),
       ]) {
-        var toques = 0;
+        var taps = 0;
         await mountScreen(
           tester,
           Scaffold(
@@ -33,23 +33,23 @@ void main() {
               padding: const EdgeInsets.all(24),
               child: PrimaryButton(
                 label: 'CONFIRMAR',
-                onTap: () => toques++,
+                onTap: () => taps++,
                 dimmed: true,
               ),
             ),
           ),
-          theme: tema,
+          theme: theme,
         );
-        final estilo = tester
+        final style = tester
             .widget<FilledButton>(find.byType(FilledButton))
             .style;
-        final fondo = estilo?.backgroundColor?.resolve({});
-        final texto = estilo?.foregroundColor?.resolve({});
+        final background = style?.backgroundColor?.resolve({});
+        final text = style?.foregroundColor?.resolve({});
 
-        expect(fondo, p.accentBase.withValues(alpha: 0.4));
-        expect(texto, p.textPrimary);
+        expect(background, p.accentBase.withValues(alpha: 0.4));
+        expect(text, p.textPrimary);
         expect(
-          _contraste(
+          _contrast(
             p.textPrimary,
             Color.alphaBlend(p.accentBase.withValues(alpha: 0.4), p.bgBase),
           ),
@@ -65,7 +65,7 @@ void main() {
         }
         await tester.tap(find.text('CONFIRMAR'));
         await tester.pump(const Duration(milliseconds: 200));
-        expect(toques, 1);
+        expect(taps, 1);
       }
     },
   );

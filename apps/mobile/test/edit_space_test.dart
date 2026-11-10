@@ -9,42 +9,42 @@ import 'package:http/testing.dart';
 import 'support/admin.dart';
 
 void main() {
-  const editado =
+  const edited =
       '{"id": "00000000-0000-7000-8000-000000000009", "name": "Moron_Rivadavia_19850_Futbol_F5_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
       '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 1, '
       '"covered": false, "lit": true, "price_per_hour": 45000}';
 
-  Future<List<http.Request>> abrir(
+  Future<List<http.Request>> open(
     WidgetTester tester, {
-    (int, String) alGuardar = (200, editado),
-    Size tamano = const Size(393, 852),
+    (int, String) onSave = (200, edited),
+    Size size = const Size(393, 852),
   }) async {
-    final pedidos = <http.Request>[];
-    var guardado = false;
+    final requests = <http.Request>[];
+    var saved = false;
     await mountAdmin(
       tester,
       start: '/admin/espacios',
-      size: tamano,
+      size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+        cliente: MockClient((request) async {
+          requests.add(request);
+          final (status, body) = switch ((request.method, request.url.path)) {
             ('PUT', '/spaces/00000000-0000-7000-8000-000000000009') => () {
-              guardado = alGuardar.$1 == 200;
-              return alGuardar;
+              saved = onSave.$1 == 200;
+              return onSave;
             }(),
             ('GET', '/spaces') => (
               200,
-              '{"spaces": [${guardado ? editado : spaceF5Json}]}',
+              '{"spaces": [${saved ? edited : spaceF5Json}]}',
             ),
             ('GET', '/spaces/catalog') => (200, catalogJson),
             ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            codigo,
+            utf8.encode(body),
+            status,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
@@ -54,37 +54,37 @@ void main() {
       find.bySemanticsLabel('Editar Moron_Rivadavia_19850_Futbol_F5_1'),
     );
     await tester.pumpAndSettle();
-    return pedidos;
+    return requests;
   }
 
-  Future<void> escribirPrecio(WidgetTester tester, String texto) async {
+  Future<void> typePrice(WidgetTester tester, String text) async {
     await tester.enterText(
       find.descendant(
         of: find.bySemanticsLabel('Precio por hora'),
         matching: find.byType(EditableText),
       ),
-      texto,
+      text,
     );
     await tester.pumpAndSettle();
   }
 
-  Future<void> tocar(WidgetTester tester, String texto) async {
-    await tester.ensureVisible(find.text(texto));
+  Future<void> tapText(WidgetTester tester, String text) async {
+    await tester.ensureVisible(find.text(text));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(texto));
+    await tester.tap(find.text(text));
     await tester.pumpAndSettle();
   }
 
-  bool habilitado(WidgetTester tester, String etiqueta) => tester
-      .getSemantics(find.bySemanticsLabel(etiqueta))
+  bool enabled(WidgetTester tester, String label) => tester
+      .getSemantics(find.bySemanticsLabel(label))
       .flagsCollection
       .isEnabled;
 
   testWidgets(
-    'abre con los datos del espacio y lo que no se edita, deshabilitado',
+    'opens with the space data and what is not editable, disabled',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(tester);
+      final semantics = tester.ensureSemantics();
+      await open(tester);
 
       expect(find.text('Editar espacio deportivo'), findsOneWidget);
       expect(find.text('Sede Morón'), findsOneWidget);
@@ -93,103 +93,105 @@ void main() {
       expect(find.text('Iluminada'), findsOneWidget);
       expect(find.textContaining('38.000'), findsOneWidget);
       expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
-      expect(habilitado(tester, 'Sede'), isFalse);
-      expect(habilitado(tester, 'Deporte'), isFalse);
-      expect(habilitado(tester, 'Tipo'), isFalse);
-      expect(habilitado(tester, 'GUARDAR ESPACIO'), isFalse);
-      semantica.dispose();
+      expect(enabled(tester, 'Sede'), isFalse);
+      expect(enabled(tester, 'Deporte'), isFalse);
+      expect(enabled(tester, 'Tipo'), isFalse);
+      expect(enabled(tester, 'GUARDAR ESPACIO'), isFalse);
+      semantics.dispose();
     },
   );
 
-  testWidgets('guarda el precio nuevo, avisa y vuelve al listado', (
+  testWidgets('saves the new price, notifies and returns to the list', (
     tester,
   ) async {
-    final pedidos = await abrir(tester);
-    await escribirPrecio(tester, '45000');
+    final requests = await open(tester);
+    await typePrice(tester, '45000');
 
-    await tocar(tester, 'GUARDAR ESPACIO');
+    await tapText(tester, 'GUARDAR ESPACIO');
 
-    final put = pedidos.singleWhere((p) => p.method == 'PUT');
-    // Sólo lo que cambió.
+    final put = requests.singleWhere((p) => p.method == 'PUT');
+    // Only what changed.
     expect(jsonDecode(put.body), {'price_per_hour': 45000});
     expect(find.text('Los cambios se guardaron correctamente'), findsOneWidget);
     expect(find.text('ALTA ESPACIO'), findsOneWidget);
     expect(find.textContaining('45.000 por hora'), findsOneWidget);
   });
 
-  testWidgets('un precio vacío o en cero se marca y no deja guardar', (
+  testWidgets('an empty or zero price is flagged and cannot be saved', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await abrir(tester);
+    final semantics = tester.ensureSemantics();
+    await open(tester);
 
-    await escribirPrecio(tester, '');
+    await typePrice(tester, '');
     expect(find.text('Este campo es obligatorio'), findsOneWidget);
-    expect(habilitado(tester, 'GUARDAR ESPACIO'), isFalse);
+    expect(enabled(tester, 'GUARDAR ESPACIO'), isFalse);
 
-    await escribirPrecio(tester, '0');
+    await typePrice(tester, '0');
     expect(
       find.text('Ingresá un precio entre \$ 1 y \$ 9.999.999'),
       findsOneWidget,
     );
-    expect(habilitado(tester, 'GUARDAR ESPACIO'), isFalse);
-    semantica.dispose();
+    expect(enabled(tester, 'GUARDAR ESPACIO'), isFalse);
+    semantics.dispose();
   });
 
-  testWidgets('volver al precio de antes deja otra vez sin nada que guardar', (
+  testWidgets('going back to the previous price leaves nothing to save again', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await abrir(tester);
+    final semantics = tester.ensureSemantics();
+    await open(tester);
 
-    await escribirPrecio(tester, '45000');
-    expect(habilitado(tester, 'GUARDAR ESPACIO'), isTrue);
-    await escribirPrecio(tester, '38000');
-    expect(habilitado(tester, 'GUARDAR ESPACIO'), isFalse);
-    semantica.dispose();
+    await typePrice(tester, '45000');
+    expect(enabled(tester, 'GUARDAR ESPACIO'), isTrue);
+    await typePrice(tester, '38000');
+    expect(enabled(tester, 'GUARDAR ESPACIO'), isFalse);
+    semantics.dispose();
   });
 
-  testWidgets('el espacio dado de baja en otra sesión: el aviso y el listado', (
+  testWidgets('the space deactivated in another session: the notice and the list', (
     tester,
   ) async {
-    await abrir(tester, alGuardar: (404, ''));
-    await escribirPrecio(tester, '45000');
+    await open(tester, onSave: (404, ''));
+    await typePrice(tester, '45000');
 
-    await tocar(tester, 'GUARDAR ESPACIO');
+    await tapText(tester, 'GUARDAR ESPACIO');
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tocar(tester, 'VER LO ACTUALIZADO');
+    await tapText(tester, 'VER LO ACTUALIZADO');
 
     expect(find.text('ALTA ESPACIO'), findsOneWidget);
   });
 
-  testWidgets('el servidor falla: el aviso y el precio escrito sigue', (
+  testWidgets('the server fails: the notice shows and the typed price stays', (
     tester,
   ) async {
-    await abrir(tester, alGuardar: (500, '{}'));
-    await escribirPrecio(tester, '45000');
+    await open(tester, onSave: (500, '{}'));
+    await typePrice(tester, '45000');
 
-    await tocar(tester, 'GUARDAR ESPACIO');
+    await tapText(tester, 'GUARDAR ESPACIO');
     expect(find.text('Error del servidor'), findsOneWidget);
-    await tocar(tester, 'ACEPTAR');
+    await tapText(tester, 'ACEPTAR');
 
     expect(find.textContaining('45.000'), findsOneWidget);
     expect(find.text('Editar espacio deportivo'), findsOneWidget);
   });
 
-  testWidgets('CANCELAR vuelve al listado sin pedir nada', (tester) async {
-    final pedidos = await abrir(tester);
-    await escribirPrecio(tester, '45000');
+  testWidgets('CANCELAR returns to the list without sending anything', (
+    tester,
+  ) async {
+    final requests = await open(tester);
+    await typePrice(tester, '45000');
 
-    await tocar(tester, 'CANCELAR');
+    await tapText(tester, 'CANCELAR');
 
-    expect(pedidos.where((p) => p.method == 'PUT'), isEmpty);
+    expect(requests.where((p) => p.method == 'PUT'), isEmpty);
     expect(find.text('ALTA ESPACIO'), findsOneWidget);
   });
 
-  testWidgets('DAR DE BAJA EL ESPACIO abre la confirmación', (tester) async {
-    await abrir(tester);
+  testWidgets('DAR DE BAJA EL ESPACIO opens the confirmation', (tester) async {
+    await open(tester);
 
-    await tocar(tester, 'DAR DE BAJA EL ESPACIO');
+    await tapText(tester, 'DAR DE BAJA EL ESPACIO');
 
     expect(find.text('¿Dar de baja el espacio?'), findsOneWidget);
     expect(
@@ -203,12 +205,12 @@ void main() {
     expect(find.text('Editar espacio deportivo'), findsOneWidget);
   });
 
-  testWidgets('con el texto al 200 % en un teléfono chico no se corta nada', (
+  testWidgets('with text at 200 % on a small phone nothing is cut off', (
     tester,
   ) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await abrir(tester, tamano: const Size(360, 800));
+    await open(tester, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
   });
 }

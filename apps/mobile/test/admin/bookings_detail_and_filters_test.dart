@@ -22,56 +22,56 @@ import '../support/mount.dart';
 import 'package:clubnahuelmosse/features/spaces/domain/space.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
-String _reserva({
-  bool anulable = true,
-  String estado = 'active',
-  String aviso = '',
+String _booking({
+  bool voidable = true,
+  String status = 'active',
+  String notice = '',
 }) =>
     '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
     ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
     ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "status": "$estado", "reason": ${estado == 'voided' ? '"lluvia"' : 'null'},'
+    ' "status": "$status", "reason": ${status == 'voided' ? '"lluvia"' : 'null'},'
     ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
     ' "created_at": "2026-11-02T18:42:00-03:00",'
-    ' "canceled_at": ${estado == 'voided' ? '"2026-11-03T10:00:00-03:00"' : 'null'},'
-    ' "canceled_by_name": ${estado == 'voided' ? '"Ana Díaz"' : 'null'},'
-    ' "space_deactivated": false, "voidable": $anulable$aviso}';
+    ' "canceled_at": ${status == 'voided' ? '"2026-11-03T10:00:00-03:00"' : 'null'},'
+    ' "canceled_by_name": ${status == 'voided' ? '"Ana Díaz"' : 'null'},'
+    ' "space_deactivated": false, "voidable": $voidable$notice}';
 
 void main() {
   setUpAll(loadFonts);
 
-  final sesion = FakeSession(adminProfile);
+  final session = FakeSession(adminProfile);
 
-  Widget detalle(BookingHistoryEntry reserva, ApiClient api) =>
+  Widget detail(BookingHistoryEntry booking, ApiClient api) =>
       BookingDetailScreen(
-        booking: reserva,
-        history: BookingHistory(api: api, sesion: sesion),
-        session: sesion,
+        booking: booking,
+        history: BookingHistory(api: api, sesion: session),
+        session: session,
         spaces: Spaces(
-          repository: SpacesRepository(api: api, session: sesion),
+          repository: SpacesRepository(api: api, session: session),
         ),
         filters: const HistoryFilters(),
         pending: PendingPanelFilters(),
       );
 
-  BookingHistoryEntry leida(String json) {
+  BookingHistoryEntry parsed(String json) {
     final r = parseBookingHistoryEntry(jsonDecode(json));
-    if (r == null) fail('la reserva de prueba no se lee');
+    if (r == null) fail('the test booking cannot be read');
     return r;
   }
 
-  group('detalle', () {
-    testWidgets('muestra lo vigente en el servidor, con la línea de aviso', (
+  group('detail', () {
+    testWidgets('shows what is current on the server, with the notice line', (
       tester,
     ) async {
       final api = apiRoutes({
         'GET /bookings/all/00000000-0000-7000-8000-000000000001': (
           200,
-          _reserva(
-            anulable: false,
-            estado: 'voided',
-            aviso:
+          _booking(
+            voidable: false,
+            status: 'voided',
+            notice:
                 ', "notice_delivery": "sent", "notice_at": "2026-11-03T10:00:05-03:00"',
           ),
         ),
@@ -79,7 +79,7 @@ void main() {
       });
       await mountScreen(
         tester,
-        detalle(leida(_reserva()), api),
+        detail(parsed(_booking()), api),
         theme: darkTheme,
       );
       await tester.pumpAndSettle();
@@ -89,13 +89,13 @@ void main() {
       expect(find.text('ANULAR RESERVA'), findsNothing);
     });
 
-    testWidgets('nombra el deporte como el catálogo, con tilde', (
+    testWidgets('names the sport as the catalog does, with the accent', (
       tester,
     ) async {
       final api = apiRoutes({'GET /spaces/catalog': (200, catalogJson)});
       await mountScreen(
         tester,
-        detalle(leida(_reserva()), api),
+        detail(parsed(_booking()), api),
         theme: darkTheme,
       );
       await tester.pumpAndSettle();
@@ -104,46 +104,46 @@ void main() {
       expect(find.text('Futbol'), findsNothing);
     });
 
-    testWidgets('la flecha tiene nombre accesible', (tester) async {
-      final semantica = tester.ensureSemantics();
+    testWidgets('the arrow has an accessible name', (tester) async {
+      final semantics = tester.ensureSemantics();
       final api = apiRoutes({'GET /spaces/catalog': (200, catalogJson)});
       await mountScreen(
         tester,
-        detalle(leida(_reserva()), api),
+        detail(parsed(_booking()), api),
         theme: darkTheme,
       );
       await tester.pumpAndSettle();
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       expect(find.byTooltip('Volver'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('con la anulación en camino no se puede salir', (tester) async {
-      final respuesta = Completer<http.Response>();
+    testWidgets('with the void in flight you cannot leave', (tester) async {
+      final response = Completer<http.Response>();
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          if (pedido.method == 'POST') return respuesta.future;
+        cliente: MockClient((request) async {
+          if (request.method == 'POST') return response.future;
           return http.Response.bytes(
             utf8.encode(
-              pedido.url.path == '/spaces/catalog' ? catalogJson : '{}',
+              request.url.path == '/spaces/catalog' ? catalogJson : '{}',
             ),
-            pedido.url.path == '/spaces/catalog' ? 200 : 404,
+            request.url.path == '/spaces/catalog' ? 200 : 404,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
       );
-      bool? resultado;
+      bool? result;
       await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(
             body: TextButton(
               onPressed: () async {
-                resultado = await Navigator.of(context).push<bool>(
+                result = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
-                    builder: (_) => detalle(leida(_reserva()), api),
+                    builder: (_) => detail(parsed(_booking()), api),
                   ),
                 );
               },
@@ -171,11 +171,11 @@ void main() {
       await tester.binding.handlePopRoute();
       await tester.pump();
       expect(find.text('Detalle de reserva'), findsOneWidget);
-      expect(resultado, isNull);
+      expect(result, isNull);
 
-      respuesta.complete(
+      response.complete(
         http.Response.bytes(
-          utf8.encode(_reserva(anulable: false, estado: 'voided')),
+          utf8.encode(_booking(voidable: false, status: 'voided')),
           200,
           headers: {'content-type': 'application/json; charset=utf-8'},
         ),
@@ -184,13 +184,13 @@ void main() {
       await tester.tap(find.text('ACEPTAR'));
       await tester.pumpAndSettle();
 
-      expect(resultado, isTrue);
+      expect(result, isTrue);
       expect(find.text('Detalle de reserva'), findsNothing);
     });
   });
 
-  group('filtros', () {
-    Future<void> abrir(WidgetTester tester) async {
+  group('filters', () {
+    Future<void> open(WidgetTester tester) async {
       await mountScreen(
         tester,
         Builder(
@@ -212,35 +212,36 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    bool aplicarHabilitado(WidgetTester tester) =>
+    bool applyEnabled(WidgetTester tester) =>
         tester.widget<PrimaryButton>(find.byType(PrimaryButton)).onTap != null;
 
-    testWidgets('una fecha que no existe marca el error y bloquea APLICAR', (
-      tester,
-    ) async {
-      await abrir(tester);
-      expect(aplicarHabilitado(tester), isTrue);
+    testWidgets(
+      'a date that does not exist flags the error and blocks APLICAR',
+      (tester) async {
+        await open(tester);
+        expect(applyEnabled(tester), isTrue);
 
-      await tester.enterText(find.byType(TextField).first, '31022026');
-      await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).first, '31022026');
+        await tester.pumpAndSettle();
 
-      expect(find.text('Fecha inválida'), findsOneWidget);
-      expect(aplicarHabilitado(tester), isFalse);
+        expect(find.text('Fecha inválida'), findsOneWidget);
+        expect(applyEnabled(tester), isFalse);
 
-      await tester.enterText(find.byType(TextField).first, '28022026');
-      await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).first, '28022026');
+        await tester.pumpAndSettle();
 
-      expect(find.text('Fecha inválida'), findsNothing);
-      expect(aplicarHabilitado(tester), isTrue);
-    });
+        expect(find.text('Fecha inválida'), findsNothing);
+        expect(applyEnabled(tester), isTrue);
+      },
+    );
 
-    testWidgets('la X tiene nombre accesible', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(tester);
+    testWidgets('the X has an accessible name', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await open(tester);
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       expect(find.byTooltip('Cerrar'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
   });
 }

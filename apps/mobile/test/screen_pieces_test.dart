@@ -7,84 +7,81 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/mount.dart';
 
-/// El código de un archivo de `lib/`, sin comentarios.
-String _codigo(String ruta) => File(
-  'lib/$ruta',
+/// The code of a `lib/` file, without comments.
+String _code(String path) => File(
+  'lib/$path',
 ).readAsLinesSync().where((l) => !l.trimLeft().startsWith('//')).join('\n');
 
-/// Una pantalla y las piezas de su carpeta que importa, directa o indirectamente.
-Map<String, String> _conPiezas(String pantalla) {
-  final carpeta = pantalla.substring(0, pantalla.lastIndexOf('/'));
-  final importDeLaCarpeta = RegExp(
-    r"^import '([a-z_]+/.dart)'",
-    multiLine: true,
-  );
-  final vistos = <String, String>{};
-  final pendientes = [pantalla];
-  while (pendientes.isNotEmpty) {
-    final ruta = pendientes.removeLast();
-    if (vistos.containsKey(ruta)) continue;
-    final codigo = _codigo(ruta);
-    vistos[ruta] = codigo;
-    for (final m in importDeLaCarpeta.allMatches(codigo)) {
-      pendientes.add('$carpeta/${m.group(1)}');
+/// A screen and the pieces of its folder that it imports, directly or indirectly.
+Map<String, String> _withPieces(String screen) {
+  final folder = screen.substring(0, screen.lastIndexOf('/'));
+  final folderImport = RegExp(r"^import '([a-z_]+/.dart)'", multiLine: true);
+  final seen = <String, String>{};
+  final pending = [screen];
+  while (pending.isNotEmpty) {
+    final path = pending.removeLast();
+    if (seen.containsKey(path)) continue;
+    final code = _code(path);
+    seen[path] = code;
+    for (final m in folderImport.allMatches(code)) {
+      pending.add('$folder/${m.group(1)}');
     }
   }
-  return vistos;
+  return seen;
 }
 
-String _todo(String pantalla) => _conPiezas(pantalla).values.join('\n');
+String _all(String screen) => _withPieces(screen).values.join('\n');
 
-/// Lo que va sobre una foto no lee la paleta de un modo fijo ni grises escritos a mano.
-void _sinTonosFijos(String pantalla) {
-  _conPiezas(pantalla).forEach((ruta, codigo) {
-    expect(codigo, isNot(contains('Paleta.oscura')), reason: ruta);
-    expect(codigo, isNot(contains('Paleta.clara')), reason: ruta);
-    expect(codigo, isNot(contains('0xFFD4D4D8')), reason: ruta);
+/// What sits over a photo does not read the palette in a fixed mode nor hand-written grays.
+void _noFixedTones(String screen) {
+  _withPieces(screen).forEach((path, code) {
+    expect(code, isNot(contains('Paleta.oscura')), reason: path);
+    expect(code, isNot(contains('Paleta.clara')), reason: path);
+    expect(code, isNot(contains('0xFFD4D4D8')), reason: path);
   });
 }
 
-void _acentoSobreFoto(String pantalla) {
-  _sinTonosFijos(pantalla);
-  expect(_todo(pantalla), contains('accentOnMedia'), reason: pantalla);
+void _accentOverPhoto(String screen) {
+  _noFixedTones(screen);
+  expect(_all(screen), contains('accentOnMedia'), reason: screen);
 }
 
 void main() {
   setUpAll(loadFonts);
 
   test(
-    'el sobretítulo del inicio usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('features/home/presentation/home_screen.dart'),
+    'the home overline uses accentOnMedia in the screen or its pieces @RED-01-S2 @ARQ-03-S3',
+    () => _accentOverPhoto('features/home/presentation/home_screen.dart'),
   );
 
   test(
-    'el sobretítulo de la sede usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('features/venues/presentation/venue_screen.dart'),
+    'the venue overline uses accentOnMedia in the screen or its pieces @RED-01-S2 @ARQ-03-S3',
+    () => _accentOverPhoto('features/venues/presentation/venue_screen.dart'),
   );
 
   test(
-    'el sobretítulo de confirmar reserva usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto(
+    'the confirm booking overline uses accentOnMedia in the screen or its pieces @RED-01-S2 @ARQ-03-S3',
+    () => _accentOverPhoto(
       'features/bookings/presentation/confirm_booking_screen.dart',
     ),
   );
 
   test(
-    'el sobretítulo de horarios usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto(
+    'the availability overline uses accentOnMedia in the screen or its pieces @RED-01-S2 @ARQ-03-S3',
+    () => _accentOverPhoto(
       'features/bookings/presentation/availability_screen.dart',
     ),
   );
 
   test(
-    'el acento del login usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('features/session/presentation/login_screen.dart'),
+    'the login accent uses accentOnMedia in the screen or its pieces @RED-01-S2 @ARQ-03-S3',
+    () => _accentOverPhoto('features/session/presentation/login_screen.dart'),
   );
 
   test(
-    'el texto sobre foto de cada pantalla y sus piezas sale de los tokens on-media @RED-01-S3 @ARQ-03-S3',
+    'the text over a photo on each screen and its pieces comes from the on-media tokens @RED-01-S3 @ARQ-03-S3',
     () {
-      for (final pantalla in [
+      for (final screen in [
         'features/home/presentation/home_screen.dart',
         'features/venues/presentation/venue_screen.dart',
         'features/venues/presentation/venues_screen.dart',
@@ -92,24 +89,24 @@ void main() {
         'features/bookings/presentation/availability_screen.dart',
         'features/session/presentation/login_screen.dart',
       ]) {
-        _sinTonosFijos(pantalla);
-        expect(_todo(pantalla), contains('textOnMedia'), reason: pantalla);
+        _noFixedTones(screen);
+        expect(_all(screen), contains('textOnMedia'), reason: screen);
       }
     },
   );
 
   test(
-    'la cabecera del perfil va de bgHeroFrom a bgHeroTo @RED-01-S5 @ARQ-03-S3',
+    'the profile header goes from bgHeroFrom to bgHeroTo @RED-01-S5 @ARQ-03-S3',
     () {
       expect(
-        _todo('features/users/presentation/my_profile_screen.dart'),
+        _all('features/users/presentation/my_profile_screen.dart'),
         contains('[p.bgHeroFrom, p.bgHeroTo]'),
       );
     },
   );
 
   testWidgets(
-    'el panel admin y Mis reservas muestran la reserva con la misma tarjeta @REV-06-S5 @assumption:REV-06-ASM-04 @ARQ-03-S3',
+    'the admin panel and «Mis reservas» show the booking with the same card @REV-06-S5 @assumption:REV-06-ASM-04 @ARQ-03-S3',
     (tester) async {
       await mountScreen(
         tester,
@@ -124,41 +121,37 @@ void main() {
       expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
 
-      for (final pantalla in [
+      for (final screen in [
         'features/admin/presentation/admin_panel_screen.dart',
         'features/bookings/presentation/my_bookings_screen.dart',
       ]) {
-        final codigo = _todo(pantalla);
-        expect(codigo, contains('common/booking_card.dart'), reason: pantalla);
-        expect(codigo, contains('BookingDateAndTime('), reason: pantalla);
-        expect(
-          codigo,
-          isNot(contains('Icons.schedule_rounded')),
-          reason: pantalla,
-        );
+        final code = _all(screen);
+        expect(code, contains('common/booking_card.dart'), reason: screen);
+        expect(code, contains('BookingDateAndTime('), reason: screen);
+        expect(code, isNot(contains('Icons.schedule_rounded')), reason: screen);
       }
     },
   );
 
   test(
-    'sólo el token simulado de notificaciones usa DateTime.now y mi perfil valida el nacimiento con el reloj del club @ARQ-03-ASM-04 @ARQ-03-S3',
+    'only the simulated notifications token uses DateTime.now and my profile validates the birth date with the club clock @ARQ-03-ASM-04 @ARQ-03-S3',
     () {
-      final conReloj = Directory('lib')
+      final withClock = Directory('lib')
           .listSync(recursive: true)
           .whereType<File>()
           .where((f) => f.path.endsWith('.dart'))
           .where((f) => f.readAsStringSync().contains('DateTime.now()'))
           .map((f) => f.path.replaceAll('\\', '/').substring('lib/'.length))
           .toSet();
-      expect(conReloj, {
+      expect(withClock, {
         'features/notifications/data/simulated_notification_system.dart',
       });
 
-      final perfil = _conPiezas(
+      final profile = _withPieces(
         'features/users/presentation/my_profile_screen.dart',
       );
-      expect(perfil.values.join('\n'), contains('clubNow'));
-      for (final MapEntry(:key, :value) in perfil.entries) {
+      expect(profile.values.join('\n'), contains('clubNow'));
+      for (final MapEntry(:key, :value) in profile.entries) {
         expect(value, isNot(contains('DateTime.now()')), reason: key);
       }
     },

@@ -22,7 +22,7 @@ Map<String, Object?> _catalog(String name) =>
 
 void main() {
   test(
-    'los textos, rutas de la API, claves JSON y rutas de pantalla de reservas e inicio son los de antes @ENG-10-S3',
+    'the bookings and home texts, API routes, JSON keys and screen routes are the same as before @ENG-10-S3',
     () {
       final source = _sources(['lib/features/bookings', 'lib/features/home']);
       for (final piece in [
@@ -42,7 +42,7 @@ void main() {
   );
 
   test(
-    'BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01',
+    'BookingStatus shows its Spanish label and reads the same API value as always @assumption:ENG-10-ASM-01',
     () {
       expect(BookingStatus.values.map((s) => s.apiValue), [
         'active',

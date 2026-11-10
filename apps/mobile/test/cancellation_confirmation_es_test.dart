@@ -9,7 +9,7 @@ import 'notifications_spanish_test.dart'
 import 'support/mount.dart';
 import 'support/user.dart';
 
-final cancelada = noticeJson(
+final canceled = noticeJson(
   id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 59),
   tipo: 'user_cancellation',
@@ -21,50 +21,50 @@ final cancelada = noticeJson(
 void main() {
   setUpAll(loadFonts);
 
-  group('la confirmación de una cancelación en el panel', () {
-    Future<(FakeApi, NotificationCenter)> abrir(
+  group('the cancellation confirmation in the panel', () {
+    Future<(FakeApi, NotificationCenter)> open(
       WidgetTester tester, {
-      required String ubicacion,
-      Size tamano = const Size(393, 852),
-      double escala = 1,
+      required String location,
+      Size size = const Size(393, 852),
+      double scale = 1,
     }) async {
       final api = FakeApi();
       final session = FakeSession(userProfile);
-      final centro = centerOf(api, session)..location = () => ubicacion;
+      final center = centerOf(api, session)..location = () => location;
       await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
+            NoticePanel(center: center, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
         theme: darkTheme,
-        size: tamano,
-        textScale: escala,
+        size: size,
+        textScale: scale,
       );
-      return (api, centro);
+      return (api, center);
     }
 
-    Future<void> llega(
+    Future<void> arrives(
       WidgetTester tester,
       FakeApi api,
-      NotificationCenter centro,
-      List<String> avisos,
+      NotificationCenter center,
+      List<String> notices,
     ) async {
       api
-        ..avisos = avisos
-        ..unread = avisos.length;
-      await tester.runAsync(centro.load);
+        ..avisos = notices
+        ..unread = notices.length;
+      await tester.runAsync(center.load);
       await tester.pumpAndSettle();
     }
 
-    testWidgets('fuera de Mis reservas abre el panel con el aviso', (
+    testWidgets('outside «Mis reservas» it opens the panel with the notice', (
       tester,
     ) async {
-      final (api, centro) = await abrir(tester, ubicacion: '/inicio');
+      final (api, center) = await open(tester, location: '/inicio');
 
-      await llega(tester, api, centro, [cancelada]);
+      await arrives(tester, api, center, [canceled]);
 
       expect(find.text('Reserva cancelada'), findsOneWidget);
       expect(
@@ -76,89 +76,90 @@ void main() {
     });
 
     testWidgets(
-      'en Mis reservas no abre el panel pero cuenta como sin leer @supuesto:CU-24.3-SUP-03',
+      'in «Mis reservas» it does not open the panel but counts as unread @assumption:CU-24.3-SUP-03',
       (tester) async {
-        final (api, centro) = await abrir(tester, ubicacion: '/reservas');
+        final (api, center) = await open(tester, location: '/reservas');
 
-        await llega(tester, api, centro, [cancelada]);
+        await arrives(tester, api, center, [canceled]);
 
         expect(find.text('MARCAR TODAS'), findsNothing);
         expect(find.text('Reserva cancelada'), findsNothing);
-        expect(centro.unread, 1);
-        expect(centro.list.single.read, isFalse);
+        expect(center.unread, 1);
+        expect(center.list.single.read, isFalse);
       },
     );
 
     testWidgets(
-      'lo silenciado no vuelve al panel cuando llega otro aviso @supuesto:CU-24.3-SUP-07',
+      'what was silenced does not return to the panel when another notice arrives @assumption:CU-24.3-SUP-07',
       (tester) async {
-        final (api, centro) = await abrir(tester, ubicacion: '/reservas');
-        await llega(tester, api, centro, [cancelada]);
+        final (api, center) = await open(tester, location: '/reservas');
+        await arrives(tester, api, center, [canceled]);
 
-        await llega(tester, api, centro, [
+        await arrives(tester, api, center, [
           reminderNotice.replaceFirst(
             '"id": "00000000-0000-7000-8000-000000000003"',
             '"id": "00000000-0000-7000-8000-000000000006"',
           ),
-          cancelada,
+          canceled,
         ]);
 
         expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
         expect(find.text('Reserva cancelada'), findsNothing);
-        expect(centro.unread, 2);
+        expect(center.unread, 2);
       },
     );
 
-    for (final ancho in [360.0, 430.0]) {
+    for (final width in [360.0, 430.0]) {
       testWidgets(
-        'con el texto al 200 % en ${ancho.toInt()} de ancho entra en pantalla',
+        'with text at 200 % at ${width.toInt()} wide it fits on the screen',
         (tester) async {
-          final (api, centro) = await abrir(
+          final (api, center) = await open(
             tester,
-            ubicacion: '/inicio',
-            tamano: Size(ancho, 800),
-            escala: 2,
+            location: '/inicio',
+            size: Size(width, 800),
+            scale: 2,
           );
 
-          await llega(tester, api, centro, [cancelada]);
+          await arrives(tester, api, center, [canceled]);
 
           expect(tester.takeException(), isNull);
           expect(find.text('Reserva cancelada'), findsOneWidget);
           expect(
             tester.getBottomRight(find.text('MARCAR TODAS')).dx,
-            lessThanOrEqualTo(ancho),
+            lessThanOrEqualTo(width),
           );
         },
       );
     }
   });
 
-  group('al tocar la confirmación', () {
-    testWidgets('abre Mis reservas en el historial @supuesto:CU-24.3-SUP-06', (
-      tester,
-    ) async {
-      final api = FakeApi()
-        ..avisos = [cancelada]
-        ..unread = 1;
-      await mountUser(
-        tester,
-        start: '/notificaciones',
-        api: api.cliente,
-        center: (session) => centerOf(api, session),
-      );
-      api.requests.clear();
+  group('when tapping the confirmation', () {
+    testWidgets(
+      'it opens «Mis reservas» on the history @assumption:CU-24.3-SUP-06',
+      (tester) async {
+        final api = FakeApi()
+          ..avisos = [canceled]
+          ..unread = 1;
+        await mountUser(
+          tester,
+          start: '/notificaciones',
+          api: api.cliente,
+          center: (session) => centerOf(api, session),
+        );
+        api.requests.clear();
 
-      await tester.tap(find.text('Reserva cancelada'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Reserva cancelada'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Mis reservas'), findsOneWidget);
-      expect(
-        api.de('GET', '/bookings').map((p) => p.url.queryParameters['when']),
-        ['history'],
-      );
-    });
+        expect(find.text('Mis reservas'), findsOneWidget);
+        expect(
+          api.de('GET', '/bookings').map((p) => p.url.queryParameters['when']),
+          ['history'],
+        );
+      },
+    );
 
-    testWidgets('un recordatorio sigue abriendo las próximas', (tester) async {
+    testWidgets('a reminder still opens the upcoming ones', (tester) async {
       final api = FakeApi()
         ..avisos = [reminderNotice]
         ..unread = 1;

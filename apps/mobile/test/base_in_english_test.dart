@@ -232,7 +232,7 @@ List<File> _baseFiles() => [
 
 void main() {
   test(
-    'la base de la app se llama como dice el glosario @ENG-08-S1 @assumption:ENG-08-ASM-03',
+    'the app base is named as the glossary says @ENG-08-S1 @assumption:ENG-08-ASM-03',
     () {
       final missing = [
         for (final e in _renamed.entries)
@@ -248,23 +248,20 @@ void main() {
     },
   );
 
-  test(
-    'los nombres y comentarios de la base de la app están en inglés @ENG-08-S2',
-    () {
-      final files = _baseFiles();
-      expect(files, isNotEmpty);
-      final spanish = {
-        for (final f in files)
-          f.path: _spanishIn(
-            f.readAsStringSync(),
-          ).difference(_notYetTranslated(f.path)),
-      }..removeWhere((_, v) => v.isEmpty);
-      expect(spanish, isEmpty);
-    },
-  );
+  test('the names and comments of the app base are in English @ENG-08-S2', () {
+    final files = _baseFiles();
+    expect(files, isNotEmpty);
+    final spanish = {
+      for (final f in files)
+        f.path: _spanishIn(
+          f.readAsStringSync(),
+        ).difference(_notYetTranslated(f.path)),
+    }..removeWhere((_, v) => v.isEmpty);
+    expect(spanish, isEmpty);
+  });
 
   test(
-    'ningún test importa comun, tema o redireccion @assumption:ENG-08-ASM-04',
+    'no test imports «comun», «tema» or «redireccion» @assumption:ENG-08-ASM-04',
     () {
       final old = RegExp(r'''clubnahuelmosse/(comun|tema|redireccion)\b''');
       final offenders = [
@@ -280,7 +277,7 @@ void main() {
     },
   );
 
-  test('la base de la app no toca apps/api @assumption:ENG-08-ASM-05', () {
+  test('the app base does not touch apps/api @assumption:ENG-08-ASM-05', () {
     // The api cards of the integrated branch change apps/api in their own commits;
     // here only the working tree is checked.
     final dirty = Process.runSync('git', [

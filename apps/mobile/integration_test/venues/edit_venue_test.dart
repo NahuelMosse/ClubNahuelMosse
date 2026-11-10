@@ -9,10 +9,10 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = todayAtClub().add(const Duration(days: 1));
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
 
-  Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
-    final control = find.bySemanticsLabel(etiqueta);
+  Future<void> tapLabel(WidgetTester tester, String label) async {
+    final control = find.bySemanticsLabel(label);
     await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
@@ -20,30 +20,30 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
-      tester.getSemantics(find.bySemanticsLabel(etiqueta)).flagsCollection;
+  SemanticsFlags flags(WidgetTester tester, String label) =>
+      tester.getSemantics(find.bySemanticsLabel(label)).flagsCollection;
 
-  /// Del panel a la edición de la sede [nombre].
-  Future<void> abrirEdicion(WidgetTester tester, String nombre) async {
+  /// From the panel to the edit screen of the venue [name].
+  Future<void> openEdit(WidgetTester tester, String name) async {
     await tapText(tester, 'SEDES');
     await waitUntil(tester, find.text('AGREGAR SEDE'));
-    await tocarEtiqueta(tester, 'Editar sede $nombre');
+    await tapLabel(tester, 'Editar sede $name');
     await waitUntil(tester, find.text('Editar sede'));
   }
 
   testWidgets(
-    'cambia la dirección de una sede y el listado de usuarios muestra la nueva @CU-18-H01-01',
+    'changes the address of a venue and the user listing shows the new one @CU-18-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
 
       await typeInto(tester, 'Dirección', 'Av. Vergara 1900');
       await tapText(tester, 'GUARDAR CAMBIOS');
 
-      // Verifica: el aviso, y el listado del panel con la dirección nueva.
+      // Verifies: the notice, and the panel listing with the new address.
       await waitUntil(
         tester,
         find.text('Los cambios se guardaron correctamente'),
@@ -51,29 +51,29 @@ void main() {
       await waitUntil(
         tester,
         find.bySemanticsLabel(
-          RegExp('^${RegExp.escape(nombre)}, Av\\. Vergara 1900, '),
+          RegExp('^${RegExp.escape(name)}, Av\\. Vergara 1900, '),
         ),
       );
-      // Verifica: un usuario ve la sede con la dirección nueva.
-      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1900');
-      semantica.dispose();
+      // Verifies: a user sees the venue with the new address.
+      expect((await venueAUserSees(name))?['address'], 'Av. Vergara 1900');
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'después de editar, las reservas existentes siguen asociadas a la sede @CU-18-H01-02',
+    'after editing, the existing bookings stay associated with the venue @CU-18-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
-      final cancha = await createSpace(nombre);
-      final correo = 'socio.${unique()}@correo.com';
-      await createAccount(email: correo, password: 'ClubNahuel1');
-      await occupy(cancha, manana, 21, email: correo);
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
+      final court = await createSpace(name);
+      final email = 'socio.${unique()}@correo.com';
+      await createAccount(email: email, password: 'ClubNahuel1');
+      await occupy(court, tomorrow, 21, email: email);
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
 
-      await typeInto(tester, 'Nombre de la sede', '$nombre Norte');
+      await typeInto(tester, 'Nombre de la sede', '$name Norte');
       await typeInto(tester, 'Dirección', 'Av. Vergara 1900');
       await tapText(tester, 'GUARDAR CAMBIOS');
       await waitUntil(
@@ -81,108 +81,108 @@ void main() {
         find.text('Los cambios se guardaron correctamente'),
       );
 
-      // Verifica: la reserva sigue, en la misma cancha, con su nombre de siempre.
-      expect(await bookingsOf(correo), [(cancha, '21:00')]);
-      expect((await venueAUserSees('$nombre Norte'))?['space_count'], 1);
-      semantica.dispose();
+      // Verifies: the booking stays, on the same court, under its usual name.
+      expect(await bookingsOf(email), [(court, '21:00')]);
+      expect((await venueAUserSees('$name Norte'))?['space_count'], 1);
+      semantics.dispose();
     },
   );
 
-  testWidgets('vuelve atrás sin guardar y nada cambia @CU-18-H02-01', (
+  testWidgets('goes back without saving and nothing changes @CU-18-H02-01', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final nombre = 'Sede Haedo ${unique()}';
-    await createVenue(nombre, 'Av. Vergara 1850');
+    final semantics = tester.ensureSemantics();
+    final name = 'Sede Haedo ${unique()}';
+    await createVenue(name, 'Av. Vergara 1850');
     await signInAsAdmin(tester);
-    await abrirEdicion(tester, nombre);
+    await openEdit(tester, name);
     await typeInto(tester, 'Dirección', 'Av. Vergara 1900');
 
     await tester.tap(find.bySemanticsLabel('Volver'));
     await tester.pumpAndSettle();
 
-    // Verifica: el listado y la API siguen con la dirección de antes.
+    // Verifies: the listing and the API keep the previous address.
     await waitUntil(tester, find.text('AGREGAR SEDE'));
     expect(
       find.bySemanticsLabel(
-        RegExp('^${RegExp.escape(nombre)}, Av\\. Vergara 1850, '),
+        RegExp('^${RegExp.escape(name)}, Av\\. Vergara 1850, '),
       ),
       findsOneWidget,
     );
-    expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1850');
-    semantica.dispose();
+    expect((await venueAUserSees(name))?['address'], 'Av. Vergara 1850');
+    semantics.dispose();
   });
 
   testWidgets(
-    'vacía la dirección, ve el aviso de obligatorio y no puede guardar @CU-18-H03-01',
+    'empties the address, sees the required notice and cannot save @CU-18-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
 
       await typeInto(tester, 'Dirección', '');
 
-      // Verifica: el aviso en el campo y GUARDAR CAMBIOS deshabilitado.
+      // Verifies: the notice on the field and «GUARDAR CAMBIOS» disabled.
       expect(find.text('La dirección es obligatoria'), findsOneWidget);
-      expect(banderas(tester, 'GUARDAR CAMBIOS').isEnabled, isFalse);
-      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1850');
-      semantica.dispose();
+      expect(flags(tester, 'GUARDAR CAMBIOS').isEnabled, isFalse);
+      expect((await venueAUserSees(name))?['address'], 'Av. Vergara 1850');
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'achica el horario con reservas afuera, ve cuántas son, confirma, y esas reservas se mantienen @CU-18-H04-01',
+    'shrinks the schedule with bookings outside it, sees how many, confirms, and those bookings are kept @CU-18-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Morón ${unique()}';
-      await createVenue(nombre, 'Av. Rivadavia 19850');
-      final una = await createSpace(nombre);
-      final otra = await createSpace(nombre);
-      final correo = 'socio.${unique()}@correo.com';
-      await createAccount(email: correo, password: 'ClubNahuel1');
-      await occupy(una, manana, 8, email: correo);
-      await occupy(otra, manana, 8, email: correo);
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Morón ${unique()}';
+      await createVenue(name, 'Av. Rivadavia 19850');
+      final first = await createSpace(name);
+      final second = await createSpace(name);
+      final email = 'socio.${unique()}@correo.com';
+      await createAccount(email: email, password: 'ClubNahuel1');
+      await occupy(first, tomorrow, 8, email: email);
+      await occupy(second, tomorrow, 8, email: email);
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
 
       await chooseTime(tester, 'Horario de apertura', '09:00');
       await tapText(tester, 'GUARDAR CAMBIOS');
 
-      // Verifica: el aviso dice cuántas reservas quedan afuera.
+      // Verifies: the notice says how many bookings fall outside.
       await waitUntil(tester, find.text('¿Guardar el horario nuevo?'));
       expect(
         find.textContaining(
-          '2 reservas futuras de $nombre empiezan antes de las 09:00',
+          '2 reservas futuras de $name empiezan antes de las 09:00',
         ),
         findsOneWidget,
       );
       await tapText(tester, 'GUARDAR IGUAL');
 
-      // Verifica: se guardó el horario y las dos reservas siguen como estaban.
+      // Verifies: the schedule was saved and both bookings stay as they were.
       await waitUntil(
         tester,
         find.text('Los cambios se guardaron correctamente'),
       );
-      expect((await venueAUserSees(nombre))?['opens_at'], '09:00');
-      expect((await bookingsOf(correo)).toSet(), {
-        (una, '08:00'),
-        (otra, '08:00'),
+      expect((await venueAUserSees(name))?['opens_at'], '09:00');
+      expect((await bookingsOf(email)).toSet(), {
+        (first, '08:00'),
+        (second, '08:00'),
       });
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'después de achicar el horario, ya no se puede reservar fuera del rango nuevo @CU-18-H04-02',
+    'after shrinking the schedule, booking outside the new range is no longer possible @CU-18-H04-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Morón ${unique()}';
-      await createVenue(nombre, 'Av. Rivadavia 19850');
-      final cancha = await createSpace(nombre);
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Morón ${unique()}';
+      await createVenue(name, 'Av. Rivadavia 19850');
+      final court = await createSpace(name);
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
 
       await chooseTime(tester, 'Horario de apertura', '10:00');
       await chooseTime(tester, 'Horario de cierre', '20:00');
@@ -192,114 +192,116 @@ void main() {
         find.text('Los cambios se guardaron correctamente'),
       );
 
-      // Verifica: la grilla de mañana va de las 10 a las 19, nada antes ni después.
-      final libres = await freeStarts(cancha, manana);
-      expect(libres.first, '10:00');
-      expect(libres.last, '19:00');
-      expect(libres, isNot(contains('08:00')));
-      expect(libres, isNot(contains('20:00')));
-      semantica.dispose();
+      // Verifies: tomorrow's grid runs from 10 to 19, nothing before or after.
+      final free = await freeStarts(court, tomorrow);
+      expect(free.first, '10:00');
+      expect(free.last, '19:00');
+      expect(free, isNot(contains('08:00')));
+      expect(free, isNot(contains('20:00')));
+      semantics.dispose();
     },
   );
 
-  testWidgets('elige revisar el horario y no se guarda nada @CU-18-H04-03', (
-    tester,
-  ) async {
-    final semantica = tester.ensureSemantics();
-    final nombre = 'Sede Morón ${unique()}';
-    await createVenue(nombre, 'Av. Rivadavia 19850');
-    final cancha = await createSpace(nombre);
-    await occupy(cancha, manana, 22);
-    await signInAsAdmin(tester);
-    await abrirEdicion(tester, nombre);
+  testWidgets(
+    'chooses to review the schedule and nothing is saved @CU-18-H04-03',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Morón ${unique()}';
+      await createVenue(name, 'Av. Rivadavia 19850');
+      final court = await createSpace(name);
+      await occupy(court, tomorrow, 22);
+      await signInAsAdmin(tester);
+      await openEdit(tester, name);
 
-    await chooseTime(tester, 'Horario de cierre', '22:00');
-    await tapText(tester, 'GUARDAR CAMBIOS');
-    await waitUntil(tester, find.text('¿Guardar el horario nuevo?'));
-    expect(
-      find.textContaining(
-        '1 reserva futura de $nombre termina después de las 22:00',
-      ),
-      findsOneWidget,
-    );
+      await chooseTime(tester, 'Horario de cierre', '22:00');
+      await tapText(tester, 'GUARDAR CAMBIOS');
+      await waitUntil(tester, find.text('¿Guardar el horario nuevo?'));
+      expect(
+        find.textContaining(
+          '1 reserva futura de $name termina después de las 22:00',
+        ),
+        findsOneWidget,
+      );
 
-    await tapText(tester, 'REVISAR EL HORARIO');
+      await tapText(tester, 'REVISAR EL HORARIO');
 
-    // Verifica: sigue en la edición con lo elegido y la sede no cambió.
-    expect(find.text('Editar sede'), findsOneWidget);
-    expect(find.text('22:00'), findsOneWidget);
-    expect((await venueAUserSees(nombre))?['closes_at'], '23:00');
-    semantica.dispose();
-  });
+      // Verifies: stays on the edit screen with what was picked and the venue did not change.
+      expect(find.text('Editar sede'), findsOneWidget);
+      expect(find.text('22:00'), findsOneWidget);
+      expect((await venueAUserSees(name))?['closes_at'], '23:00');
+      semantics.dispose();
+    },
+  );
 
   testWidgets(
-    'la sede fue dada de baja en otra sesión y se le avisa al guardar @CU-18-H05-01',
+    'the venue was deactivated in another session and is told so on saving @CU-18-H05-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
       await signInAsAdmin(tester);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
       await typeInto(tester, 'Dirección', 'Av. Vergara 1900');
 
-      await deactivateVenueFromAnotherSession(nombre);
+      await deactivateVenueFromAnotherSession(name);
       await tapText(tester, 'GUARDAR CAMBIOS');
 
-      // Verifica: el aviso y el listado sin esa sede.
+      // Verifies: the notice and the listing without that venue.
       await waitUntil(tester, find.text('Esto cambió mientras tanto'));
       await tapText(tester, 'VER LO ACTUALIZADO');
       await waitUntil(tester, find.text('AGREGAR SEDE'));
-      expect(find.text(nombre), findsNothing);
-      semantica.dispose();
+      expect(find.text(name), findsNothing);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión al guardar, ve el error y conserva lo escrito @CU-18-H06-01',
+    'with no connection on saving, sees the error and keeps what was typed @CU-18-H06-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final nombre = 'Sede Haedo ${unique()}';
-      await createVenue(nombre, 'Av. Vergara 1850');
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
       final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
-      await abrirEdicion(tester, nombre);
+      await openEdit(tester, name);
       await typeInto(tester, 'Dirección', 'Av. Vergara 1900');
 
       api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR CAMBIOS');
 
-      // Verifica: el aviso, lo escrito sigue y la sede no cambió.
+      // Verifies: the notice, what was typed stays and the venue did not change.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
       expect(find.text('Av. Vergara 1900'), findsOneWidget);
-      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1850');
+      expect((await venueAUserSees(name))?['address'], 'Av. Vergara 1850');
 
-      // Verifica: con la red de vuelta, guardar funciona.
+      // Verifies: with the network back, saving works.
       api.state = ApiState.normal;
       await tapText(tester, 'GUARDAR CAMBIOS');
       await waitUntil(
         tester,
         find.text('Los cambios se guardaron correctamente'),
       );
-      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1900');
-      semantica.dispose();
+      expect((await venueAUserSees(name))?['address'], 'Av. Vergara 1900');
+      semantics.dispose();
     },
   );
 
-  testWidgets('desde la edición pasa a dar de baja la sede @CU-18-H07-01', (
-    tester,
-  ) async {
-    final semantica = tester.ensureSemantics();
-    final nombre = 'Sede Haedo ${unique()}';
-    await createVenue(nombre, 'Av. Vergara 1850');
-    await signInAsAdmin(tester);
-    await abrirEdicion(tester, nombre);
+  testWidgets(
+    'from the edit screen goes on to deactivate the venue @CU-18-H07-01',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final name = 'Sede Haedo ${unique()}';
+      await createVenue(name, 'Av. Vergara 1850');
+      await signInAsAdmin(tester);
+      await openEdit(tester, name);
 
-    await tapText(tester, 'DAR DE BAJA LA SEDE');
+      await tapText(tester, 'DAR DE BAJA LA SEDE');
 
-    // Verifica: la confirmación de la baja, con la sede que se está editando.
-    await waitUntil(tester, find.text('¿Dar de baja la sede?'));
-    expect(find.textContaining('$nombre · Av. Vergara 1850'), findsOneWidget);
-    semantica.dispose();
-  });
+      // Verifies: the deactivation confirmation, with the venue being edited.
+      await waitUntil(tester, find.text('¿Dar de baja la sede?'));
+      expect(find.textContaining('$name · Av. Vergara 1850'), findsOneWidget);
+      semantics.dispose();
+    },
+  );
 }

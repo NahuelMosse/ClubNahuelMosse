@@ -8,119 +8,119 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  Brightness brillo(WidgetTester tester, String texto) =>
-      Theme.of(tester.element(find.text(texto).first)).brightness;
+  Brightness brightness(WidgetTester tester, String text) =>
+      Theme.of(tester.element(find.text(text).first)).brightness;
 
   testWidgets(
-    'abre Perfil desde la barra inferior y ve sus datos personales y el correo como no editable @CU-05-H01-01',
+    'opens Profile from the bottom bar and sees its personal data and the email as not editable @CU-05-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, email: correo);
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, email: email);
 
       await tapText(tester, 'PERFIL');
 
-      // Verifica: se ven los datos que la API tiene de la cuenta.
+      // Verifies: the data the API holds for the account is shown.
       await waitUntil(tester, find.text('DATOS PERSONALES'));
       expect(find.text('Nahuel Mosse'), findsOneWidget);
       expect(find.text('MIEMBRO ACTIVO'), findsOneWidget);
-      for (final dato in ['Nombre', 'Apellido', 'DNI', 'Nacimiento']) {
-        expect(find.text(dato), findsOneWidget, reason: dato);
+      for (final item in ['Nombre', 'Apellido', 'DNI', 'Nacimiento']) {
+        expect(find.text(item), findsOneWidget, reason: item);
       }
       expect(find.text('Mosse'), findsOneWidget);
       expect(find.text('14/03/2000'), findsOneWidget);
 
-      // Verifica: el correo se muestra y se anuncia como un dato que no se puede cambiar.
+      // Verifies: the email is shown and announced as a value that cannot be changed.
       expect(
-        find.bySemanticsLabel('Correo: $correo. No se puede cambiar'),
+        find.bySemanticsLabel('Correo: $email. No se puede cambiar'),
         findsOneWidget,
       );
       expect(find.text('Cambiar contraseña'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'cambia a modo claro y la app entera cambia de tema sin salir del perfil @CU-05-H01-02',
+    'switches to light mode and the whole app changes theme without leaving the profile @CU-05-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await tapText(tester, 'PERFIL');
       await waitUntil(tester, find.text('DATOS PERSONALES'));
-      expect(brillo(tester, 'DATOS PERSONALES'), Brightness.dark);
+      expect(brightness(tester, 'DATOS PERSONALES'), Brightness.dark);
 
       await tester.ensureVisible(find.bySemanticsLabel('Modo oscuro'));
       await tester.pumpAndSettle();
       await tester.tap(find.bySemanticsLabel('Modo oscuro'));
       await tester.pumpAndSettle();
 
-      // Verifica: el perfil queda en claro y sigue a la vista.
-      expect(brillo(tester, 'DATOS PERSONALES'), Brightness.light);
+      // Verifies: the profile turns light and stays in view.
+      expect(brightness(tester, 'DATOS PERSONALES'), Brightness.light);
 
-      // Verifica: el cambio vale para toda la app, no sólo para esta pantalla.
+      // Verifies: the change applies to the whole app, not only this screen.
       await tapText(tester, 'INICIO');
-      expect(brillo(tester, 'RESERVÁ TU CANCHA'), Brightness.light);
-      semantica.dispose();
+      expect(brightness(tester, 'RESERVÁ TU CANCHA'), Brightness.light);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'desde el perfil llega a Editar perfil, Cambiar contraseña, Cerrar sesión y Eliminar cuenta @CU-05-H01-03',
+    'from the profile it reaches Edit profile, Change password, Sign out and Delete account @CU-05-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      Future<void> abrirPerfil() async {
+      Future<void> openProfile() async {
         await tapText(tester, 'PERFIL');
         await waitUntil(tester, find.text('DATOS PERSONALES'));
       }
 
-      // Verifica: «Editar» pasa los datos personales a modo edición.
-      await abrirPerfil();
+      // Verifies: «Editar» switches the personal data to edit mode.
+      await openProfile();
       await tapText(tester, 'Editar');
       expect(find.text('GUARDAR'), findsOneWidget);
 
-      // Verifica: la fila de Seguridad lleva a cambiar la contraseña.
+      // Verifies: the Security row leads to changing the password.
       await tapText(tester, 'INICIO');
-      await abrirPerfil();
+      await openProfile();
       await tapText(tester, 'Cambiar contraseña');
       expect(find.text('Cambiá tu contraseña'), findsOneWidget);
       await tester.tap(find.byTooltip('Volver'));
       await tester.pumpAndSettle();
 
-      // Verifica: «ELIMINAR CUENTA» pide confirmación, y cancelar no cambia nada.
+      // Verifies: «ELIMINAR CUENTA» asks for confirmation, and cancelling changes nothing.
       await tapText(tester, 'ELIMINAR CUENTA');
       expect(find.text('¿Eliminar tu cuenta?'), findsOneWidget);
       await tapText(tester, 'CANCELAR');
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
 
-      // Verifica: «CERRAR SESIÓN» sale al login.
+      // Verifies: «CERRAR SESIÓN» goes out to the login.
       await tapText(tester, 'CERRAR SESIÓN');
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'abre el perfil desde «Perfil completo» en la tarjeta del avatar @CU-05-H02-01',
+    'opens the profile from «Perfil completo» on the avatar card @CU-05-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
       await tester.pumpAndSettle();
       await tapText(tester, 'Perfil completo');
 
-      // Verifica: llega al mismo perfil que por la barra inferior.
+      // Verifies: it reaches the same profile as through the bottom bar.
       await waitUntil(tester, find.text('DATOS PERSONALES'));
       expect(find.text('14/03/2000'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión, ve la alerta de conexión y ningún dato del perfil @CU-05-H03-01',
+    'offline, it sees the connection alert and no profile data @CU-05-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final api = await ProxyApi.open();
       await signInAsUser(
         tester,
@@ -131,51 +131,50 @@ void main() {
       api.state = ApiState.offline;
       await tapText(tester, 'PERFIL');
 
-      // Verifica: avisa que no hay conexión y no muestra datos viejos.
+      // Verifies: it warns there is no connection and shows no stale data.
       await waitUntil(tester, find.text('Error de conexión'));
       expect(find.text('DATOS PERSONALES'), findsNothing);
       expect(find.text('14/03/2000'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets(
-    'el servidor falla y la pantalla no muestra datos @CU-05-H04-01',
-    (tester) async {
-      final semantica = tester.ensureSemantics();
-      final api = await ProxyApi.open();
-      await signInAsUser(
-        tester,
-        email: 'socio.${unique()}@correo.com',
-        apiUrl: api.url,
-      );
+  testWidgets('the server fails and the screen shows no data @CU-05-H04-01', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final api = await ProxyApi.open();
+    await signInAsUser(
+      tester,
+      email: 'socio.${unique()}@correo.com',
+      apiUrl: api.url,
+    );
 
-      api.state = ApiState.failing;
+    api.state = ApiState.failing;
+    await tapText(tester, 'PERFIL');
+
+    // Verifies: it warns of the server and shows no data.
+    await waitUntil(tester, find.text('Error del servidor'));
+    expect(find.text('DATOS PERSONALES'), findsNothing);
+    semantics.dispose();
+  });
+
+  testWidgets(
+    'with an expired session, it sees no data and the app takes it to the login @CU-05-H05-01',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, email: email);
+      await changeFromAnotherDevice(email, 'ClubNahuel1', 'ClubNahuel3');
+
       await tapText(tester, 'PERFIL');
 
-      // Verifica: avisa del servidor y no muestra datos.
-      await waitUntil(tester, find.text('Error del servidor'));
-      expect(find.text('DATOS PERSONALES'), findsNothing);
-      semantica.dispose();
-    },
-  );
-
-  testWidgets(
-    'con la sesión vencida, no ve datos y la app lo lleva al login @CU-05-H05-01',
-    (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, email: correo);
-      await changeFromAnotherDevice(correo, 'ClubNahuel1', 'ClubNahuel3');
-
-      await tapText(tester, 'PERFIL');
-
-      // Verifica: no expone datos y manda a iniciar sesión.
+      // Verifies: it exposes no data and sends to sign in.
       await waitUntil(tester, find.text('Tu sesión expiró'));
       expect(find.text('DATOS PERSONALES'), findsNothing);
       await tapText(tester, 'IR AL INICIO DE SESIÓN');
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

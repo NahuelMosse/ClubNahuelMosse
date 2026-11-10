@@ -9,31 +9,31 @@ import 'package:http/testing.dart';
 import 'support/admin.dart';
 
 void main() {
-  Future<List<http.Request>> abrir(
+  Future<List<http.Request>> open(
     WidgetTester tester, {
-    List<(int, String)> alGuardar = const [],
-    Size tamano = const Size(393, 852),
+    List<(int, String)> onSave = const [],
+    Size size = const Size(393, 852),
   }) async {
-    final pedidos = <http.Request>[];
-    final respuestas = [...alGuardar];
+    final requests = <http.Request>[];
+    final responses = [...onSave];
     await mountAdmin(
       tester,
-      size: tamano,
+      size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+        cliente: MockClient((request) async {
+          requests.add(request);
+          final (status, body) = switch ((request.method, request.url.path)) {
             ('PUT', '/venues/00000000-0000-7000-8000-000000000001') =>
-              respuestas.isEmpty
+              responses.isEmpty
                   ? (200, venueMoronJson)
-                  : respuestas.removeAt(0),
+                  : responses.removeAt(0),
             ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            codigo,
+            utf8.encode(body),
+            status,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
@@ -41,35 +41,35 @@ void main() {
     );
     await tester.tap(find.bySemanticsLabel('Editar sede Sede Morón'));
     await tester.pumpAndSettle();
-    return pedidos;
+    return requests;
   }
 
-  Future<void> escribir(WidgetTester tester, String campo, String texto) async {
+  Future<void> typeInto(WidgetTester tester, String field, String text) async {
     await tester.enterText(
       find.descendant(
-        of: find.bySemanticsLabel(campo),
+        of: find.bySemanticsLabel(field),
         matching: find.byType(EditableText),
       ),
-      texto,
+      text,
     );
     await tester.pumpAndSettle();
   }
 
-  Future<void> tocar(WidgetTester tester, String texto) async {
-    await tester.ensureVisible(find.text(texto));
+  Future<void> tapText(WidgetTester tester, String text) async {
+    await tester.ensureVisible(find.text(text));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(texto));
+    await tester.tap(find.text(text));
     await tester.pumpAndSettle();
   }
 
-  Map<String, Object?> cuerpo(http.Request pedido) =>
-      switch (jsonDecode(pedido.body)) {
-        final Map<String, Object?> datos => datos,
+  Map<String, Object?> bodyOf(http.Request request) =>
+      switch (jsonDecode(request.body)) {
+        final Map<String, Object?> data => data,
         _ => const {},
       };
 
-  testWidgets('abre con los datos de la sede cargados', (tester) async {
-    await abrir(tester);
+  testWidgets('opens with the venue data loaded', (tester) async {
+    await open(tester);
 
     expect(find.text('Editar sede'), findsOneWidget);
     expect(find.text('Sede Morón'), findsWidgets);
@@ -79,16 +79,16 @@ void main() {
     expect(find.text('Lunes a sábado'), findsOneWidget);
   });
 
-  testWidgets('guarda los datos nuevos, avisa y vuelve al listado', (
+  testWidgets('saves the new data, notifies and returns to the list', (
     tester,
   ) async {
-    final pedidos = await abrir(tester);
-    await escribir(tester, 'Dirección', 'Av. Rivadavia 20000');
+    final requests = await open(tester);
+    await typeInto(tester, 'Dirección', 'Av. Rivadavia 20000');
 
-    await tocar(tester, 'GUARDAR CAMBIOS');
+    await tapText(tester, 'GUARDAR CAMBIOS');
 
-    final put = pedidos.singleWhere((p) => p.method == 'PUT');
-    expect(cuerpo(put), {
+    final put = requests.singleWhere((p) => p.method == 'PUT');
+    expect(bodyOf(put), {
       'name': 'Sede Morón',
       'address': 'Av. Rivadavia 20000',
       'opens_at': '09:00',
@@ -101,33 +101,33 @@ void main() {
   });
 
   testWidgets(
-    'con un obligatorio vacío, el aviso y GUARDAR CAMBIOS se puede tocar pero no envía',
+    'with an empty required field, the notice shows and GUARDAR CAMBIOS can be tapped but sends nothing',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
+      final semantics = tester.ensureSemantics();
+      final requests = await open(tester);
 
-      await escribir(tester, 'Nombre de la sede', '');
+      await typeInto(tester, 'Nombre de la sede', '');
 
       expect(find.text('El nombre es obligatorio'), findsOneWidget);
-      final boton = find.bySemanticsLabel('GUARDAR CAMBIOS');
-      expect(tester.getSemantics(boton).flagsCollection.isEnabled, isTrue);
-      await tocar(tester, 'GUARDAR CAMBIOS');
+      final button = find.bySemanticsLabel('GUARDAR CAMBIOS');
+      expect(tester.getSemantics(button).flagsCollection.isEnabled, isTrue);
+      await tapText(tester, 'GUARDAR CAMBIOS');
       expect(find.text('El nombre es obligatorio'), findsOneWidget);
-      expect(pedidos.where((p) => p.method == 'PUT'), isEmpty);
-      semantica.dispose();
+      expect(requests.where((p) => p.method == 'PUT'), isEmpty);
+      semantics.dispose();
     },
   );
 
-  testWidgets('con reservas afuera pide confirmar y GUARDAR IGUAL confirma', (
+  testWidgets('with bookings outside it asks to confirm and GUARDAR IGUAL confirms', (
     tester,
   ) async {
-    final pedidos = await abrir(
+    final requests = await open(
       tester,
-      alGuardar: [(409, '{"bookings_outside": 3}')],
+      onSave: [(409, '{"bookings_outside": 3}')],
     );
     await choose(tester, 'Horario de cierre', '22:00');
 
-    await tocar(tester, 'GUARDAR CAMBIOS');
+    await tapText(tester, 'GUARDAR CAMBIOS');
 
     expect(find.text('¿Guardar el horario nuevo?'), findsOneWidget);
     expect(
@@ -138,21 +138,21 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tocar(tester, 'GUARDAR IGUAL');
+    await tapText(tester, 'GUARDAR IGUAL');
 
-    final puts = pedidos.where((p) => p.method == 'PUT').toList();
-    expect(puts.map((p) => cuerpo(p)['confirm']), [false, true]);
+    final puts = requests.where((p) => p.method == 'PUT').toList();
+    expect(puts.map((p) => bodyOf(p)['confirm']), [false, true]);
     expect(find.text('Los cambios se guardaron correctamente'), findsOneWidget);
   });
 
-  testWidgets('con varios motivos, el aviso habla del horario nuevo', (
+  testWidgets('with several reasons, the notice talks about the new hours', (
     tester,
   ) async {
-    await abrir(tester, alGuardar: [(409, '{"bookings_outside": 1}')]);
+    await open(tester, onSave: [(409, '{"bookings_outside": 1}')]);
     await choose(tester, 'Horario de apertura', '10:00');
     await choose(tester, 'Días que abre', 'Lunes a viernes');
 
-    await tocar(tester, 'GUARDAR CAMBIOS');
+    await tapText(tester, 'GUARDAR CAMBIOS');
 
     expect(
       find.textContaining(
@@ -161,55 +161,57 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tocar(tester, 'REVISAR EL HORARIO');
+    await tapText(tester, 'REVISAR EL HORARIO');
     expect(find.text('Editar sede'), findsOneWidget);
     expect(find.text('10:00'), findsOneWidget);
   });
 
-  testWidgets('un nombre en uso queda marcado en el campo', (tester) async {
-    await abrir(
+  testWidgets('a name already in use is flagged in the field', (tester) async {
+    await open(
       tester,
-      alGuardar: [
+      onSave: [
         (409, '{"errors": {"name": "Ya existe una sede con ese nombre"}}'),
       ],
     );
-    await escribir(tester, 'Nombre de la sede', 'Sede Castelar');
+    await typeInto(tester, 'Nombre de la sede', 'Sede Castelar');
 
-    await tocar(tester, 'GUARDAR CAMBIOS');
+    await tapText(tester, 'GUARDAR CAMBIOS');
 
     expect(find.text('Ya existe una sede con ese nombre'), findsOneWidget);
   });
 
-  testWidgets('la sede dada de baja en otra sesión: el aviso y el listado', (
+  testWidgets('the venue deactivated in another session: the notice and the list', (
     tester,
   ) async {
-    await abrir(tester, alGuardar: [(404, '')]);
+    await open(tester, onSave: [(404, '')]);
 
-    await tocar(tester, 'GUARDAR CAMBIOS');
+    await tapText(tester, 'GUARDAR CAMBIOS');
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tocar(tester, 'VER LO ACTUALIZADO');
+    await tapText(tester, 'VER LO ACTUALIZADO');
 
     expect(find.text('AGREGAR SEDE'), findsOneWidget);
   });
 
-  testWidgets('el servidor falla: el aviso y lo escrito sigue', (tester) async {
-    await abrir(tester, alGuardar: [(500, '{}')]);
-    await escribir(tester, 'Dirección', 'Av. Rivadavia 20000');
+  testWidgets('the server fails: the notice shows and what was typed stays', (
+    tester,
+  ) async {
+    await open(tester, onSave: [(500, '{}')]);
+    await typeInto(tester, 'Dirección', 'Av. Rivadavia 20000');
 
-    await tocar(tester, 'GUARDAR CAMBIOS');
+    await tapText(tester, 'GUARDAR CAMBIOS');
     expect(find.text('Error del servidor'), findsOneWidget);
-    await tocar(tester, 'ACEPTAR');
+    await tapText(tester, 'ACEPTAR');
 
     expect(find.text('Av. Rivadavia 20000'), findsOneWidget);
     expect(find.text('Editar sede'), findsOneWidget);
   });
 
-  testWidgets('DAR DE BAJA LA SEDE abre la confirmación con la sede', (
+  testWidgets('DAR DE BAJA LA SEDE opens the confirmation with the venue', (
     tester,
   ) async {
-    await abrir(tester);
+    await open(tester);
 
-    await tocar(tester, 'DAR DE BAJA LA SEDE');
+    await tapText(tester, 'DAR DE BAJA LA SEDE');
 
     expect(find.text('¿Dar de baja la sede?'), findsOneWidget);
     expect(
@@ -219,16 +221,16 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tocar(tester, 'CANCELAR');
+    await tapText(tester, 'CANCELAR');
     expect(find.text('Editar sede'), findsOneWidget);
   });
 
-  testWidgets('con el texto al 200 % en un teléfono chico no se corta nada', (
+  testWidgets('with text at 200 % on a small phone nothing is cut off', (
     tester,
   ) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await abrir(tester, tamano: const Size(360, 800));
+    await open(tester, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
   });
 }

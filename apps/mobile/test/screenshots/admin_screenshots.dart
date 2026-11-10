@@ -5,19 +5,19 @@ import '../support/admin.dart';
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
+/// Asserts nothing: produces the step-9 strip to compare against the prototype.
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  const modos = {'dark': true, 'light': false};
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  const modes = {'dark': true, 'light': false};
 
-  Future<void> capturar(WidgetTester tester, String archivo) async {
+  Future<void> capture(WidgetTester tester, String file) async {
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
   }
 
-  Future<void> completar(WidgetTester tester) async {
+  Future<void> fill(WidgetTester tester) async {
     await tester.enterText(
       find.bySemanticsLabel('Nombre de la sede'),
       'Sede Haedo',
@@ -31,13 +31,13 @@ void main() {
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
-      testWidgets('panel de sedes $ancho $modo', (tester) async {
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: dark) in modes.entries) {
+      testWidgets('venues panel $width $mode', (tester) async {
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /venues': (
               200,
@@ -45,50 +45,52 @@ void main() {
             ),
           }),
         );
-        await capturar(tester, 'admin/venues_${ancho}_$modo.png');
+        await capture(tester, 'admin/venues_${width}_$mode.png');
       });
 
-      testWidgets('panel sin sedes $ancho $modo', (tester) async {
+      testWidgets('panel without venues $width $mode', (tester) async {
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
-        await capturar(tester, 'admin/venues_empty_${ancho}_$modo.png');
+        await capture(tester, 'admin/venues_empty_${width}_$mode.png');
       });
 
-      testWidgets('alta de sede vacía $ancho $modo', (tester) async {
+      testWidgets('empty venue creation $width $mode', (tester) async {
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
-        await capturar(tester, 'admin/create_empty_${ancho}_$modo.png');
+        await capture(tester, 'admin/create_empty_${width}_$mode.png');
       });
 
-      testWidgets('alta de sede completa $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('complete venue creation $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
-        await completar(tester);
-        await capturar(tester, 'admin/create_complete_${ancho}_$modo.png');
-        semantica.dispose();
+        await fill(tester);
+        await capture(tester, 'admin/create_complete_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('alta de sede con faltantes $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('venue creation with missing fields $width $mode', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
@@ -99,84 +101,86 @@ void main() {
         await choose(tester, 'Horario de apertura', '08:00');
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.tap(find.text('GUARDAR SEDE'));
-        await capturar(tester, 'admin/create_missing_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/create_missing_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('selector de horario $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('time picker $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.tap(find.bySemanticsLabel('Horario de cierre'));
-        await capturar(tester, 'admin/selector_hour_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/selector_hour_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      Future<void> abrirEdicion(
+      Future<void> openEdit(
         WidgetTester tester, {
-        (int, String) alGuardar = (200, venueMoronJson),
+        (int, String) onSave = (200, venueMoronJson),
       }) async {
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
-            'PUT /venues/00000000-0000-7000-8000-000000000001': alGuardar,
+            'PUT /venues/00000000-0000-7000-8000-000000000001': onSave,
           }),
         );
         await tester.tap(find.bySemanticsLabel('Editar sede Sede Morón'));
         await tester.pumpAndSettle();
       }
 
-      testWidgets('editar sede $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrirEdicion(tester);
-        await capturar(tester, 'admin/edit_${ancho}_$modo.png');
-        semantica.dispose();
+      testWidgets('edit venue $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
+        await openEdit(tester);
+        await capture(tester, 'admin/edit_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('editar sede con un campo vacío $ancho $modo', (
+      testWidgets('edit venue with an empty field $width $mode', (
         tester,
       ) async {
-        final semantica = tester.ensureSemantics();
-        await abrirEdicion(tester);
+        final semantics = tester.ensureSemantics();
+        await openEdit(tester);
         await tester.enterText(find.bySemanticsLabel('Dirección'), '');
         FocusManager.instance.primaryFocus?.unfocus();
-        await capturar(tester, 'admin/edit_empty_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/edit_empty_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('editar sede con reservas afuera $ancho $modo', (
+      testWidgets('edit venue with bookings outside the hours $width $mode', (
         tester,
       ) async {
-        final semantica = tester.ensureSemantics();
-        await abrirEdicion(tester, alGuardar: (409, '{"bookings_outside": 3}'));
+        final semantics = tester.ensureSemantics();
+        await openEdit(tester, onSave: (409, '{"bookings_outside": 3}'));
         await choose(tester, 'Horario de apertura', '10:00');
         await tester.tap(find.text('GUARDAR CAMBIOS'));
-        await capturar(tester, 'admin/edit_outside_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/edit_outside_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('confirmar la baja de la sede $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrirEdicion(tester);
+      testWidgets('confirm deactivating the venue $width $mode', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await openEdit(tester);
         await tester.tap(find.text('DAR DE BAJA LA SEDE'));
-        await capturar(tester, 'admin/deactivate_venue_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/deactivate_venue_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('sede con reservas pendientes $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('venue with pending bookings $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           api: apiRoutes({
             'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
             'DELETE /venues/00000000-0000-7000-8000-000000000001': (
@@ -188,19 +192,19 @@ void main() {
         await tester.tap(find.bySemanticsLabel('Dar de baja Sede Morón'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('DAR DE BAJA'));
-        await capturar(
+        await capture(
           tester,
-          'admin/deactivate_with_bookings_${ancho}_$modo.png',
+          'admin/deactivate_with_bookings_${width}_$mode.png',
         );
-        semantica.dispose();
+        semantics.dispose();
       });
 
-      testWidgets('editar espacio $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('edit space $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/admin/espacios',
           api: apiRoutes({
             'GET /spaces': (200, '{"spaces": [$spaceF5Json]}'),
@@ -213,26 +217,26 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.bySemanticsLabel('Precio por hora'), '0');
         FocusManager.instance.primaryFocus?.unfocus();
-        await capturar(tester, 'admin/edit_space_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/edit_space_${width}_$mode.png');
+        semantics.dispose();
       });
 
-      testWidgets('sede creada $ancho $modo', (tester) async {
-        final semantica = tester.ensureSemantics();
+      testWidgets('venue created $width $mode', (tester) async {
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
-          size: tamano,
+          dark: dark,
+          size: size,
           start: '/admin/sedes/nueva',
           api: apiRoutes({
             'POST /venues': (201, venueHaedoJson),
             'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),
           }),
         );
-        await completar(tester);
+        await fill(tester);
         await tester.tap(find.text('GUARDAR SEDE'));
-        await capturar(tester, 'admin/venue_created_${ancho}_$modo.png');
-        semantica.dispose();
+        await capture(tester, 'admin/venue_created_${width}_$mode.png');
+        semantics.dispose();
       });
     }
   }

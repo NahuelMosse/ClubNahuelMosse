@@ -10,146 +10,147 @@ import 'support/user.dart';
 void main() {
   setUpAll(loadFonts);
 
-  Future<void> cumpleLasGuias(WidgetTester tester) async {
+  Future<void> meetsGuidelines(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
-    // Las tarjetas tienen una etiqueta propia y la guía de contraste no ve sus textos: se
-    // miden los que están enteros a la vista, arriba de la barra inferior. El texto de un
-    // control deshabilitado —una franja ocupada— no tiene piso de contraste (WCAG 1.4.3).
-    final pantalla = tester.view.physicalSize / tester.view.devicePixelRatio;
-    final aLaVista = Rect.fromLTWH(0, 0, pantalla.width, pantalla.height - 90);
-    bool deshabilitado(Element elemento) {
-      var si = false;
-      elemento.visitAncestorElements((ancestro) {
-        final w = ancestro.widget;
-        if (w is Semantics && w.properties.enabled == false) si = true;
-        return !si;
+    // The cards have their own label and the contrast guideline does not see their texts: the
+    // ones fully in view, above the bottom bar, are measured. The text of a disabled
+    // control —a taken slot— has no contrast floor (WCAG 1.4.3).
+    final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final inView = Rect.fromLTWH(0, 0, screen.width, screen.height - 90);
+    bool isDisabled(Element element) {
+      var found = false;
+      element.visitAncestorElements((ancestor) {
+        final w = ancestor.widget;
+        if (w is Semantics && w.properties.enabled == false) found = true;
+        return !found;
       });
-      return si;
+      return found;
     }
 
-    final visibles = find.byElementPredicate((elemento) {
-      final texto = elemento.widget;
-      if (texto is! Text || deshabilitado(elemento)) return false;
-      // El trazo fino de JetBrains Mono a 13 px sobre la superficie de la tarjeta de reserva
-      // sale casi todo antialiasing y la guía lo toma como el color del texto: mide 1,5:1
-      // hasta con textPrimary. Ese color se verifica en palette_test.dart.
-      if (texto.style?.fontFamily == 'JetBrains Mono' &&
-          elemento.findAncestorWidgetOfExactType<BookingCard>() != null) {
+    final visible = find.byElementPredicate((element) {
+      final text = element.widget;
+      if (text is! Text || isDisabled(element)) return false;
+      // The thin stroke of JetBrains Mono at 13 px on the booking card surface
+      // is almost all antialiasing and the guideline takes it as the text color: it measures 1.5:1
+      // even with textPrimary. That color is checked in palette_test.dart.
+      if (text.style?.fontFamily == 'JetBrains Mono' &&
+          element.findAncestorWidgetOfExactType<BookingCard>() != null) {
         return false;
       }
-      final caja = elemento.renderObject;
-      if (caja is! RenderBox || !caja.hasSize) return false;
-      final lugar = caja.localToGlobal(Offset.zero) & caja.size;
-      return aLaVista.contains(lugar.topLeft) &&
-          aLaVista.contains(lugar.bottomRight);
+      final box = element.renderObject;
+      if (box is! RenderBox || !box.hasSize) return false;
+      final place = box.localToGlobal(Offset.zero) & box.size;
+      return inView.contains(place.topLeft) &&
+          inView.contains(place.bottomRight);
     });
     await expectLater(
       tester,
-      meetsGuideline(CustomMinimumContrastGuideline(finder: visibles)),
+      meetsGuideline(CustomMinimumContrastGuideline(finder: visible)),
     );
   }
 
-  /// Las fotos se decodifican fuera del reloj falso del test.
-  Future<void> conFotos(WidgetTester tester) async {
+  /// The photos are decoded outside the test's fake clock.
+  Future<void> withPhotos(WidgetTester tester) async {
     await tester.runAsync(() async {
-      for (final elemento in find.byType(Image).evaluate()) {
-        final imagen = elemento.widget;
-        if (imagen is Image) await precacheImage(imagen.image, elemento);
+      for (final element in find.byType(Image).evaluate()) {
+        final image = element.widget;
+        if (image is Image) await precacheImage(image.image, element);
       }
     });
     await tester.pumpAndSettle();
   }
 
-  for (final oscuro in [true, false]) {
-    final modo = oscuro ? 'oscuro' : 'claro';
+  for (final dark in [true, false]) {
+    final mode = dark ? 'dark' : 'light';
 
-    testWidgets('todas las sedes cumple las guías en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await mountUser(tester, dark: oscuro, api: apiRoutes(venueRoutes()));
-      await conFotos(tester);
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+    testWidgets('all venues meet the guidelines in $mode mode', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mountUser(tester, dark: dark, api: apiRoutes(venueRoutes()));
+      await withPhotos(tester);
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('una sede con canchas cumple las guías en modo $modo', (
+    testWidgets('a venue with courts meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: apiRoutes(venueRoutes()),
       );
-      await conFotos(tester);
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await withPhotos(tester);
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('los horarios de una cancha cumplen las guías en modo $modo', (
+    testWidgets('the time slots of a court meet the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        dark: oscuro,
+        dark: dark,
         start:
             '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
         api: apiRoutes(venueRoutes()),
       );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('la consulta de canchas cumple las guías en modo $modo', (
+    testWidgets('the court search meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/inicio/buscar',
         api: apiRoutes(venueRoutes()),
       );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('el inicio con sus accesos cumple las guías en modo $modo', (
+    testWidgets(
+      'the home with its shortcuts meets the guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountUser(
+          tester,
+          dark: dark,
+          start: '/inicio',
+          api: apiRoutes({
+            ...venueRoutes(),
+            'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
+          }),
+        );
+        await meetsGuidelines(tester);
+        semantics.dispose();
+      },
+    );
+
+    testWidgets('my bookings meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        dark: oscuro,
-        start: '/inicio',
-        api: apiRoutes({
-          ...venueRoutes(),
-          'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
-        }),
-      );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
-    });
-
-    testWidgets('mis reservas cumple las guías en modo $modo', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await mountUser(
-        tester,
-        dark: oscuro,
+        dark: dark,
         start: '/reservas',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
         }),
       );
-      await conFotos(tester);
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await withPhotos(tester);
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
   }
 }

@@ -9,11 +9,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'notifications_spanish_test.dart' show FakeApi, FakeSystem, centerOf;
 import 'support/mount.dart';
 
-/// Un sistema que no contestó la pregunta del permiso hasta que el test lo decide.
-class SistemaQueDemora extends FakeSystem {
-  SistemaQueDemora() : super(concedido: false);
+/// A system that has not answered the permission question until the test decides.
+class StallingSystem extends FakeSystem {
+  StallingSystem() : super(concedido: false);
 
-  final respuesta = Completer<bool>();
+  final answer = Completer<bool>();
 
   @override
   Future<bool> wasAsked() async => false;
@@ -21,22 +21,22 @@ class SistemaQueDemora extends FakeSystem {
   @override
   Future<bool> requestPermission() {
     solicitudes++;
-    return respuesta.future;
+    return answer.future;
   }
 }
 
-/// Firebase Messaging con el estado de permiso que fija el test.
-class MensajeriaFalsa implements FirebaseMessaging {
-  MensajeriaFalsa(this.estado);
+/// Firebase Messaging with the permission status the test sets.
+class FakeMessaging implements FirebaseMessaging {
+  FakeMessaging(this.status);
 
-  final AuthorizationStatus estado;
+  final AuthorizationStatus status;
 
   @override
   Future<NotificationSettings> getNotificationSettings() async =>
       NotificationSettings(
         alert: AppleNotificationSetting.notSupported,
         announcement: AppleNotificationSetting.notSupported,
-        authorizationStatus: estado,
+        authorizationStatus: status,
         badge: AppleNotificationSetting.notSupported,
         carPlay: AppleNotificationSetting.notSupported,
         lockScreen: AppleNotificationSetting.notSupported,
@@ -54,23 +54,23 @@ class MensajeriaFalsa implements FirebaseMessaging {
 
 void main() {
   test(
-    'con Firebase, el permiso cuenta como preguntado sólo después de que el sistema tiene una respuesta @NOT-01-S2',
+    'with Firebase, the permission counts as asked only after the system has an answer @NOT-01-S2',
     () async {
       expect(
         await FcmNotificationSystem(
-          MensajeriaFalsa(AuthorizationStatus.notDetermined),
+          FakeMessaging(AuthorizationStatus.notDetermined),
         ).wasAsked(),
         isFalse,
       );
       expect(
         await FcmNotificationSystem(
-          MensajeriaFalsa(AuthorizationStatus.denied),
+          FakeMessaging(AuthorizationStatus.denied),
         ).wasAsked(),
         isTrue,
       );
       expect(
         await FcmNotificationSystem(
-          MensajeriaFalsa(AuthorizationStatus.authorized),
+          FakeMessaging(AuthorizationStatus.authorized),
         ).wasAsked(),
         isTrue,
       );
@@ -78,31 +78,27 @@ void main() {
   );
 
   test(
-    'el sistema simulado conserva el token del teléfono entre pedidos @NOT-01-S1',
+    'the simulated system keeps the phone token between requests @NOT-01-S1',
     () async {
       SharedPreferences.setMockInitialValues({});
-      final sistema = SimulatedNotificationSystem();
-      final primero = await sistema.token();
-      expect(primero, isNotNull);
-      expect(await sistema.token(), primero);
+      final system = SimulatedNotificationSystem();
+      final first = await system.token();
+      expect(first, isNotNull);
+      expect(await system.token(), first);
     },
   );
 
   testWidgets(
-    'si la app se cierra mientras el sistema pregunta el permiso, no registra el teléfono @NOT-01-S1',
+    'if the app closes while the system asks for the permission, it does not register the phone @NOT-01-S1',
     (tester) async {
       final api = FakeApi();
-      final sistema = SistemaQueDemora();
-      final centro = centerOf(
-        api,
-        FakeSession(userProfile),
-        sistema: sistema,
-      );
+      final system = StallingSystem();
+      final center = centerOf(api, FakeSession(userProfile), sistema: system);
       await tester.pump();
-      expect(sistema.solicitudes, 1);
+      expect(system.solicitudes, 1);
 
-      centro.dispose();
-      sistema.respuesta.complete(true);
+      center.dispose();
+      system.answer.complete(true);
       await tester.pumpAndSettle();
 
       expect(api.de('PUT', '/dispositivos'), isEmpty);

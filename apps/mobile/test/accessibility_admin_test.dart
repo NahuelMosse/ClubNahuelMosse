@@ -6,22 +6,22 @@ import 'support/mount.dart';
 void main() {
   setUpAll(loadFonts);
 
-  Future<void> cumpleLasGuias(WidgetTester tester) async {
+  Future<void> meetsGuidelines(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
   }
 
-  for (final oscuro in [true, false]) {
-    final modo = oscuro ? 'oscuro' : 'claro';
+  for (final dark in [true, false]) {
+    final mode = dark ? 'dark' : 'light';
 
-    testWidgets('el panel de espacios cumple las guías en modo $modo', (
+    testWidgets('the spaces panel meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/admin/espacios',
         api: apiRoutes({
           ...spaceRoutes(),
@@ -31,35 +31,35 @@ void main() {
           ),
         }),
       );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
     testWidgets(
-      'el alta de espacio con faltantes cumple las guías en modo $modo',
+      'the space form with missing fields meets the guidelines in $mode mode',
       (tester) async {
-        final semantica = tester.ensureSemantics();
+        final semantics = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          dark: oscuro,
+          dark: dark,
           start: '/admin/espacios/nuevo',
           api: apiRoutes(spaceRoutes()),
         );
         await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
         await tester.tap(find.text('GUARDAR ESPACIO'));
         await tester.pumpAndSettle();
-        await cumpleLasGuias(tester);
-        semantica.dispose();
+        await meetsGuidelines(tester);
+        semantics.dispose();
       },
     );
 
-    testWidgets('el alta de espacio completa cumple las guías en modo $modo', (
+    testWidgets('the completed space form meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/admin/espacios/nuevo',
         api: apiRoutes(spaceRoutes()),
       );
@@ -70,17 +70,17 @@ void main() {
       await choose(tester, 'Iluminación', 'Iluminada');
       await tester.enterText(find.bySemanticsLabel('Precio por hora'), '38000');
       await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('el panel de sedes cumple las guías en modo $modo', (
+    testWidgets('the venues panel meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        dark: oscuro,
+        dark: dark,
         api: apiRoutes({
           'GET /venues': (
             200,
@@ -88,49 +88,50 @@ void main() {
           ),
         }),
       );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('el alta con campos faltantes cumple las guías en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await mountAdmin(
-        tester,
-        dark: oscuro,
-        start: '/admin/sedes/nueva',
-        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
-      );
-      await tester.tap(find.text('GUARDAR SEDE'));
-      await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      semantica.dispose();
-    });
+    testWidgets(
+      'the venue form with missing fields meets the guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await mountAdmin(
+          tester,
+          dark: dark,
+          start: '/admin/sedes/nueva',
+          api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
+        );
+        await tester.tap(find.text('GUARDAR SEDE'));
+        await tester.pumpAndSettle();
+        await meetsGuidelines(tester);
+        semantics.dispose();
+      },
+    );
 
-    testWidgets('el selector de horario cumple las guías en modo $modo', (
+    testWidgets('the time picker meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/admin/sedes/nueva',
         api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.bySemanticsLabel('Horario de apertura'));
       await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('la sede creada cumple las guías en modo $modo', (
+    testWidgets('the created venue meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/admin/sedes/nueva',
         api: apiRoutes({
           'POST /venues': (201, venueHaedoJson),
@@ -150,8 +151,8 @@ void main() {
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
       expect(find.text('¡Sede creada!'), findsOneWidget);
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
   }
 }

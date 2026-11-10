@@ -15,28 +15,27 @@ import 'package:http/testing.dart';
 
 import 'support/mount.dart';
 
-/// Contesta [respuestas] en orden a cada POST a [ruta] (la última se repite); un `null` es
-/// un corte de red. Lo que no es ese POST lo contesta [resto].
-MockClient _conCorte(
-  String ruta,
-  List<(int, String)?> respuestas,
-  (int, String) Function(http.Request) resto,
+/// Answers [responses] in order to each POST to [route] (the last one repeats); a `null` is
+/// a network outage. Anything that is not that POST is answered by [rest].
+MockClient _withOutage(
+  String route,
+  List<(int, String)?> responses,
+  (int, String) Function(http.Request) rest,
 ) {
   var n = 0;
-  return MockClient((pedido) async {
-    final (int, String) respuesta;
-    if (pedido.url.path == ruta && pedido.method == 'POST') {
-      final siguiente =
-          respuestas[n < respuestas.length ? n : respuestas.length - 1];
+  return MockClient((request) async {
+    final (int, String) response;
+    if (request.url.path == route && request.method == 'POST') {
+      final next = responses[n < responses.length ? n : responses.length - 1];
       n++;
-      if (siguiente == null) throw const SocketException('sin red');
-      respuesta = siguiente;
+      if (next == null) throw const SocketException('sin red');
+      response = next;
     } else {
-      respuesta = resto(pedido);
+      response = rest(request);
     }
     return http.Response.bytes(
-      utf8.encode(respuesta.$2),
-      respuesta.$1,
+      utf8.encode(response.$2),
+      response.$1,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
   });
@@ -45,16 +44,16 @@ MockClient _conCorte(
 void main() {
   setUpAll(loadFonts);
 
-  group('registro', () {
-    const yaRegistrado =
+  group('registration', () {
+    const alreadyRegistered =
         '{"errors": {"email": "Ese correo ya está registrado"}, '
         '"message": "Ese correo ya está registrado"}';
 
-    Future<void> abrirRegistro(
+    Future<void> openRegistration(
       WidgetTester tester,
-      List<(int, String)?> respuestas,
+      List<(int, String)?> responses,
     ) async {
-      final rutas = GoRouter(
+      final routes = GoRouter(
         initialLocation: '/registro',
         routes: [
           GoRoute(
@@ -68,9 +67,9 @@ void main() {
               registration: RegistrationService(
                 ApiClient(
                   'http://api.falsa',
-                  cliente: _conCorte(
+                  cliente: _withOutage(
                     '/register',
-                    respuestas,
+                    responses,
                     (_) => (404, '{}'),
                   ),
                 ),
@@ -79,7 +78,7 @@ void main() {
           ),
         ],
       );
-      addTearDown(rutas.dispose);
+      addTearDown(routes.dispose);
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -89,11 +88,11 @@ void main() {
           localeListResolutionCallback: resolveLanguage,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          routerConfig: rutas,
+          routerConfig: routes,
         ),
       );
       await tester.pumpAndSettle();
-      for (final (campo, valor) in [
+      for (final (field, value) in [
         ('Nombre', 'Ana'),
         ('Apellido', 'Pérez'),
         ('DNI', '12345678'),
@@ -101,7 +100,7 @@ void main() {
         ('Correo electrónico', 'ana@correo.com'),
         ('Contraseña', 'ClubNahuel1'),
       ]) {
-        await tester.enterText(find.bySemanticsLabel(campo), valor);
+        await tester.enterText(find.bySemanticsLabel(field), value);
       }
       await tester.pump();
       await tester.ensureVisible(find.text('CREAR CUENTA'));
@@ -111,10 +110,10 @@ void main() {
     }
 
     testWidgets(
-      'un 409 después de un corte dice que la cuenta ya existe y ofrece iniciar sesión',
+      'a 409 after an outage says the account already exists and offers to sign in',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrirRegistro(tester, [null, (409, yaRegistrado)]);
+        final semantics = tester.ensureSemantics();
+        await openRegistration(tester, [null, (409, alreadyRegistered)]);
         expect(find.text('Error de conexión'), findsOneWidget);
 
         await tester.tap(find.text('REINTENTAR'));
@@ -127,14 +126,14 @@ void main() {
         await tester.tap(find.text('INICIAR SESIÓN'));
         await tester.pumpAndSettle();
         expect(find.text('Iniciar sesión'), findsOneWidget);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('un 409 sin corte sigue marcando el correo repetido', (
+    testWidgets('a 409 without an outage still flags the repeated email', (
       tester,
     ) async {
-      await abrirRegistro(tester, [(409, yaRegistrado)]);
+      await openRegistration(tester, [(409, alreadyRegistered)]);
 
       expect(find.text('Ese correo ya está registrado'), findsWidgets);
       expect(find.textContaining('Tu cuenta ya existe'), findsNothing);

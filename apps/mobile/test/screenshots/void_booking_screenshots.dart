@@ -5,14 +5,14 @@ import '../support/admin.dart';
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 
-/// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo (CU-15).
+/// Asserts nothing: produces the step-9 strip to compare against the prototype (CU-15).
 void main() {
   setUpAll(loadFonts);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  const modos = {'dark': true, 'light': false};
+  const phones = {'360': Size(360, 800), '430': Size(430, 932)};
+  const modes = {'dark': true, 'light': false};
 
-  const reservaJson =
+  const bookingJson =
       '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
       ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
       ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
@@ -21,20 +21,20 @@ void main() {
       ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
       ' "canceled_by_name": null, "space_deactivated": false, "voidable": true}';
 
-  Future<void> abrirConfirmacion(
+  Future<void> openConfirmation(
     WidgetTester tester, {
-    required bool oscuro,
-    required Size tamano,
+    required bool dark,
+    required Size size,
   }) async {
     await mountAdmin(
       tester,
       start: '/admin',
-      dark: oscuro,
-      size: tamano,
+      dark: dark,
+      size: size,
       api: apiRoutes({
         'GET /bookings/all': (
           200,
-          '{"bookings": [$reservaJson], "total": 1, "page": 1, "per_page": 20,'
+          '{"bookings": [$bookingJson], "total": 1, "page": 1, "per_page": 20,'
               ' "counters": {"all": 1, "active": 1, "completed": 0, "voided": 0}}',
         ),
         'GET /spaces/catalog': (200, catalogJson),
@@ -42,35 +42,35 @@ void main() {
     );
   }
 
-  Future<void> capturar(WidgetTester tester, String archivo) async {
+  Future<void> capture(WidgetTester tester, String file) async {
     await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
   }
 
-  for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
-    for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
-      testWidgets('listado con ANULAR RESERVA $ancho $modo', (tester) async {
-        await abrirConfirmacion(tester, oscuro: oscuro, tamano: tamano);
-        await capturar(tester, 'bookings/void_list_${ancho}_$modo.png');
+  for (final MapEntry(key: width, value: size) in phones.entries) {
+    for (final MapEntry(key: mode, value: dark) in modes.entries) {
+      testWidgets('listing with VOID BOOKING $width $mode', (tester) async {
+        await openConfirmation(tester, dark: dark, size: size);
+        await capture(tester, 'bookings/void_list_${width}_$mode.png');
       });
 
-      testWidgets('confirmar anulación $ancho $modo', (tester) async {
-        await abrirConfirmacion(tester, oscuro: oscuro, tamano: tamano);
+      testWidgets('confirm voiding $width $mode', (tester) async {
+        await openConfirmation(tester, dark: dark, size: size);
         await tester.tap(find.text('ANULAR RESERVA'));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextField).last,
           'Mantenimiento urgente del césped sintético.',
         );
-        await capturar(tester, 'bookings/void_confirm_${ancho}_$modo.png');
+        await capture(tester, 'bookings/void_confirm_${width}_$mode.png');
       });
 
-      testWidgets('anular sin motivo $ancho $modo', (tester) async {
-        await abrirConfirmacion(tester, oscuro: oscuro, tamano: tamano);
+      testWidgets('void without a reason $width $mode', (tester) async {
+        await openConfirmation(tester, dark: dark, size: size);
         await tester.tap(find.text('ANULAR RESERVA'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('CONFIRMAR ANULACIÓN'));
-        await capturar(tester, 'bookings/void_no_reason_${ancho}_$modo.png');
+        await capture(tester, 'bookings/void_no_reason_${width}_$mode.png');
       });
     }
   }

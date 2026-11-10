@@ -19,68 +19,68 @@ import 'support/mount.dart';
 void main() {
   setUpAll(loadFonts);
 
-  late FakeCredentials credenciales;
-  final ediciones = <String>[];
-  var bajas = 0;
+  late FakeCredentials credentials;
+  final edits = <String>[];
+  var deactivations = 0;
 
-  /// La app real en el perfil con una sesión iniciada. [yo] es lo que responde `GET /yo`
-  /// al abrir el perfil; al iniciar sesión responde el perfil de siempre.
-  Future<Appearance> montarPerfil(
+  /// The real app on the profile with a signed-in session. [me] is what `GET /yo`
+  /// answers when the profile opens; on sign-in it answers the usual profile.
+  Future<Appearance> mountProfile(
     WidgetTester tester, {
-    (int, String) yo = (200, ''),
-    (int, String) edicion = (200, ''),
-    (int, String) baja = (204, ''),
-    Appearance? apariencia,
+    (int, String) me = (200, ''),
+    (int, String) edit = (200, ''),
+    (int, String) deactivation = (204, ''),
+    Appearance? appearance,
   }) async {
-    credenciales = FakeCredentials();
-    ediciones.clear();
-    bajas = 0;
-    var consultas = 0;
+    credentials = FakeCredentials();
+    edits.clear();
+    deactivations = 0;
+    var queries = 0;
     final api = ApiClient(
       'http://api.falsa',
-      cliente: MockClient((pedido) async {
-        if (pedido.method == 'DELETE') {
-          bajas++;
-          final (codigo, cuerpo) = baja;
-          return http.Response.bytes(utf8.encode(cuerpo), codigo);
+      cliente: MockClient((request) async {
+        if (request.method == 'DELETE') {
+          deactivations++;
+          final (code, body) = deactivation;
+          return http.Response.bytes(utf8.encode(body), code);
         }
-        if (pedido.method == 'PUT') {
-          ediciones.add(pedido.body);
-          final (codigo, cuerpo) = edicion;
-          return http.Response.bytes(utf8.encode(cuerpo), codigo);
+        if (request.method == 'PUT') {
+          edits.add(request.body);
+          final (code, body) = edit;
+          return http.Response.bytes(utf8.encode(body), code);
         }
-        consultas++;
-        final (codigo, cuerpo) = consultas == 1 || yo.$1 == 200
+        queries++;
+        final (code, body) = queries == 1 || me.$1 == 200
             ? (200, profileJson())
-            : yo;
-        return http.Response.bytes(utf8.encode(cuerpo), codigo);
+            : me;
+        return http.Response.bytes(utf8.encode(body), code);
       }),
     );
-    final sesion = Session(
-      repository: SessionRepository(credentials: credenciales, api: api),
+    final session = Session(
+      repository: SessionRepository(credentials: credentials, api: api),
     );
-    await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
-    final tema = apariencia ?? Appearance.inMemory();
+    await session.signIn('nahuel@correo.com', 'ClubNahuel1');
+    final appearanceUsed = appearance ?? Appearance.inMemory();
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
         api: api,
-        session: sesion,
-        appearance: tema,
+        session: session,
+        appearance: appearanceUsed,
         initialLocation: '/perfil',
       ),
     );
     await tester.pumpAndSettle();
-    return tema;
+    return appearanceUsed;
   }
 
-  testWidgets('muestra los datos con el DNI y la fecha para leer', (
+  testWidgets('shows the data with the DNI and the date to read', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPerfil(tester);
+    final semantics = tester.ensureSemantics();
+    await mountProfile(tester);
     expect(find.text('DATOS PERSONALES'), findsOneWidget);
     expect(find.text('42.118.507'), findsOneWidget);
     expect(find.text('14/03/2000'), findsOneWidget);
@@ -88,86 +88,89 @@ void main() {
       find.bySemanticsLabel('Correo: nahuel@correo.com. No se puede cambiar'),
       findsOneWidget,
     );
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('el selector de tema cambia la app y se guarda', (tester) async {
-    final semantica = tester.ensureSemantics();
+  testWidgets('the theme selector changes the app and is saved', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
     SharedPreferences.setMockInitialValues({});
-    final apariencia = await montarPerfil(
+    final appearance = await mountProfile(
       tester,
-      apariencia: await Appearance.load(),
+      appearance: await Appearance.load(),
     );
-    expect(apariencia.dark, isTrue);
+    expect(appearance.dark, isTrue);
 
     await tester.ensureVisible(find.bySemanticsLabel('Modo oscuro'));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Modo oscuro'));
     await tester.pumpAndSettle();
 
-    expect(apariencia.dark, isFalse);
+    expect(appearance.dark, isFalse);
     expect(
       Theme.of(tester.element(find.text('DATOS PERSONALES'))).brightness,
       Brightness.light,
     );
-    final guardado = await SharedPreferences.getInstance();
-    expect(guardado.getBool('modo_oscuro'), isFalse);
-    semantica.dispose();
+    final saved = await SharedPreferences.getInstance();
+    expect(saved.getBool('modo_oscuro'), isFalse);
+    semantics.dispose();
   });
 
   testWidgets(
-    'si el servidor falla no muestra datos y «ACEPTAR» lleva al inicio',
+    'if the server fails it shows no data and «ACEPTAR» leads to the home',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(tester, yo: (503, ''));
+      final semantics = tester.ensureSemantics();
+      await mountProfile(tester, me: (503, ''));
       expect(find.text('Error del servidor'), findsOneWidget);
       expect(find.text('DATOS PERSONALES'), findsNothing);
       await tester.tap(find.text('ACEPTAR'));
       await tester.pumpAndSettle();
       expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('con la sesión vencida no muestra datos y cierra la sesión', (
+  testWidgets('with an expired session it shows no data and signs out', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPerfil(tester, yo: (401, '{}'));
+    final semantics = tester.ensureSemantics();
+    await mountProfile(tester, me: (401, '{}'));
     expect(find.text('Tu sesión expiró'), findsOneWidget);
     expect(find.text('DATOS PERSONALES'), findsNothing);
     await tester.tap(find.text('IR AL INICIO DE SESIÓN'));
     await tester.pumpAndSettle();
-    expect(credenciales.signOuts, 1);
+    expect(credentials.signOuts, 1);
     expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('«ELIMINAR CUENTA» pide confirmar y cancelar no hace nada', (
-    tester,
-  ) async {
-    final semantica = tester.ensureSemantics();
-    await montarPerfil(tester);
-    await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('ELIMINAR CUENTA'));
-    await tester.pumpAndSettle();
-    expect(find.text('¿Eliminar tu cuenta?'), findsOneWidget);
-    await tester.tap(find.text('CANCELAR'));
-    await tester.pumpAndSettle();
-    expect(find.text('¿Eliminar tu cuenta?'), findsNothing);
-    expect(credenciales.signOuts, 0);
-    semantica.dispose();
-  });
+  testWidgets(
+    '«ELIMINAR CUENTA» asks for confirmation and canceling does nothing',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mountProfile(tester);
+      await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Eliminar tu cuenta?'), findsOneWidget);
+      await tester.tap(find.text('CANCELAR'));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Eliminar tu cuenta?'), findsNothing);
+      expect(credentials.signOuts, 0);
+      semantics.dispose();
+    },
+  );
 
-  test('el DNI se lee con puntos de mil y la fecha con barras', () {
+  test('the DNI reads with thousands dots and the date with slashes', () {
     expect(readableDni('42118507'), '42.118.507');
     expect(readableDni('4211850'), '4.211.850');
     expect(readableDate(DateTime(2000, 3, 4)), '04/03/2000');
   });
 
-  test('un perfil sin DNI o fecha es un error del servidor', () async {
-    final sesion = Session(
+  test('a profile without DNI or date is a server error', () async {
+    final session = Session(
       repository: SessionRepository(
         credentials: FakeCredentials(),
         api: apiRoutes({
@@ -179,122 +182,122 @@ void main() {
       ),
     );
     await expectLater(
-      sesion.signIn('a@b.com', 'Clave1234'),
+      session.signIn('a@b.com', 'Clave1234'),
       throwsA(isA<Exception>()),
     );
   });
 
-  group('editar los datos personales', () {
-    Future<void> editar(WidgetTester tester) async {
+  group('editing the personal data', () {
+    Future<void> startEditing(WidgetTester tester) async {
       await tester.tap(find.text('Editar'));
       await tester.pumpAndSettle();
     }
 
-    Future<void> guardar(WidgetTester tester) async {
+    Future<void> save(WidgetTester tester) async {
       await tester.ensureVisible(find.text('GUARDAR'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('GUARDAR'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('guarda los datos normalizados y vuelve a lectura', (
+    testWidgets('saves the normalized data and returns to read mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(
+      final semantics = tester.ensureSemantics();
+      await mountProfile(
         tester,
-        edicion: (
+        edit: (
           200,
           '{"first_name": "Agustín", "last_name": "Mosse", "email": "nahuel@correo.com", '
               '"role": "user", "dni": "42118507", "birth_date": "2000-03-14"}',
         ),
       );
-      await editar(tester);
+      await startEditing(tester);
       await tester.enterText(find.bySemanticsLabel('Nombre'), '  Agustín ');
-      await guardar(tester);
+      await save(tester);
 
-      expect(ediciones, [
+      expect(edits, [
         '{"first_name":"Agustín","last_name":"Mosse","dni":"42118507",'
             '"birth_date":"2000-03-14"}',
       ]);
       expect(find.text('GUARDAR'), findsNothing);
       expect(find.text('Agustín Mosse'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
     testWidgets(
-      'marca los datos inválidos con el mensaje del prototipo y no manda nada',
+      'flags the invalid data with the prototype message and sends nothing',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarPerfil(tester);
-        await editar(tester);
+        final semantics = tester.ensureSemantics();
+        await mountProfile(tester);
+        await startEditing(tester);
         await tester.enterText(find.bySemanticsLabel('DNI'), '42118');
         await tester.enterText(
           find.bySemanticsLabel('Fecha de nacimiento'),
           '32132000',
         );
         await tester.enterText(find.bySemanticsLabel('Apellido'), '');
-        await guardar(tester);
+        await save(tester);
 
         expect(
           find.text('El formato de los datos no es válido'),
           findsNWidgets(3),
         );
-        expect(ediciones, isEmpty);
+        expect(edits, isEmpty);
 
-        // Al corregir un campo se va su error y quedan los demás.
+        // Fixing one field clears its error and the others remain.
         await tester.enterText(find.bySemanticsLabel('DNI'), '42118507');
         await tester.pump();
         expect(
           find.text('El formato de los datos no es válido'),
           findsNWidgets(2),
         );
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('un DNI de otra cuenta se marca con su propio mensaje', (
+    testWidgets('a DNI from another account is flagged with its own message', (
       tester,
     ) async {
-      // Verifica CU-06-SUP-02.
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(
+      // Verifies CU-06-SUP-02.
+      final semantics = tester.ensureSemantics();
+      await mountProfile(
         tester,
-        edicion: (409, '{"errors": {"dni": "Este DNI ya está registrado"}}'),
+        edit: (409, '{"errors": {"dni": "Este DNI ya está registrado"}}'),
       );
-      await editar(tester);
+      await startEditing(tester);
       await tester.enterText(find.bySemanticsLabel('DNI'), '30111222');
-      await guardar(tester);
+      await save(tester);
       expect(find.text('Este DNI ya está registrado'), findsOneWidget);
       expect(find.text('GUARDAR'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('si el servidor falla conserva lo escrito', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(tester, edicion: (500, ''));
-      await editar(tester);
+    testWidgets('if the server fails it keeps what was typed', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mountProfile(tester, edit: (500, ''));
+      await startEditing(tester);
       await tester.enterText(find.bySemanticsLabel('Nombre'), 'Agustín');
-      await guardar(tester);
+      await save(tester);
       expect(find.text('Error del servidor'), findsOneWidget);
       await tester.tap(find.text('ACEPTAR'));
       await tester.pumpAndSettle();
-      final nombre = tester.widget<TextField>(
+      final firstName = tester.widget<TextField>(
         find.descendant(
           of: find.bySemanticsLabel('Nombre'),
           matching: find.byType(TextField),
         ),
       );
-      expect(nombre.controller?.text, 'Agustín');
-      semantica.dispose();
+      expect(firstName.controller?.text, 'Agustín');
+      semantics.dispose();
     });
   });
 
   testWidgets(
-    'el calendario abre aunque la fecha escrita sea de hoy o futura',
+    'the calendar opens even if the typed date is today or in the future',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(tester);
+      final semantics = tester.ensureSemantics();
+      await mountProfile(tester);
       await tester.tap(find.text('Editar'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -305,15 +308,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.byType(DatePickerDialog), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('el Home y el avatar siguen al perfil cuando cambia', (
+  testWidgets('the Home and the avatar follow the profile when it changes', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final sesion = Session(
+    final semantics = tester.ensureSemantics();
+    final session = Session(
       repository: SessionRepository(
         credentials: FakeCredentials(),
         api: apiRoutes({
@@ -326,14 +329,14 @@ void main() {
         }),
       ),
     );
-    await sesion.signIn('a@b.com', 'Clave1234');
+    await session.signIn('a@b.com', 'Clave1234');
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
         api: homeApi(),
-        session: sesion,
+        session: session,
         appearance: Appearance.inMemory(),
         initialLocation: '/inicio',
       ),
@@ -341,7 +344,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Nahuel'), findsOneWidget);
 
-    await sesion.updateProfile(
+    await session.updateProfile(
       firstName: 'Agustín',
       lastName: 'Paz',
       dni: '42118507',
@@ -350,11 +353,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Agustín'), findsOneWidget);
     expect(find.text('AP'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  group('dar la cuenta de baja', () {
-    Future<void> confirmarBaja(WidgetTester tester) async {
+  group('deactivating the account', () {
+    Future<void> confirmDeactivation(WidgetTester tester) async {
       await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('ELIMINAR CUENTA'));
@@ -368,102 +371,102 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('confirmada, da de baja, cierra la sesión y va al login', (
+    testWidgets('confirmed, it deactivates, signs out and goes to the login', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(tester);
-      await confirmarBaja(tester);
-      expect(bajas, 1);
-      expect(credenciales.signOuts, 1);
+      final semantics = tester.ensureSemantics();
+      await mountProfile(tester);
+      await confirmDeactivation(tester);
+      expect(deactivations, 1);
+      expect(credentials.signOuts, 1);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
     testWidgets(
-      'si el servidor falla la cuenta sigue y el botón vuelve a estar',
+      'if the server fails the account stays and the button comes back',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarPerfil(tester, baja: (500, ''));
-        await confirmarBaja(tester);
+        final semantics = tester.ensureSemantics();
+        await mountProfile(tester, deactivation: (500, ''));
+        await confirmDeactivation(tester);
         expect(find.text('Error del servidor'), findsOneWidget);
         await tester.tap(find.text('ACEPTAR'));
         await tester.pumpAndSettle();
-        expect(credenciales.signOuts, 0);
+        expect(credentials.signOuts, 0);
         expect(find.text('ELIMINAR CUENTA'), findsOneWidget);
         expect(find.text('DATOS PERSONALES'), findsOneWidget);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('con la sesión vencida avisa y cierra la sesión', (
+    testWidgets('with an expired session it warns and signs out', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarPerfil(tester, baja: (401, '{}'));
-      await confirmarBaja(tester);
+      final semantics = tester.ensureSemantics();
+      await mountProfile(tester, deactivation: (401, '{}'));
+      await confirmDeactivation(tester);
       expect(find.text('Tu sesión expiró'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
   });
 
   test(
-    'una baja que vuelve después de entrar con otra cuenta no la cierra',
+    'a deactivation that returns after signing in with another account does not sign it out',
     () async {
-      final respuesta = Completer<http.Response>();
-      final credenciales = FakeCredentials();
-      final sesion = Session(
+      final response = Completer<http.Response>();
+      final credentials = FakeCredentials();
+      final session = Session(
         repository: SessionRepository(
-          credentials: credenciales,
+          credentials: credentials,
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient((pedido) async {
-              if (pedido.method == 'DELETE') return respuesta.future;
+            cliente: MockClient((request) async {
+              if (request.method == 'DELETE') return response.future;
               return http.Response(profileJson(), 200);
             }),
           ),
         ),
       );
-      await sesion.signIn('a@b.com', 'Clave1234');
-      final baja = sesion.deactivate();
-      await sesion.close();
-      await sesion.signIn('otra@b.com', 'Clave1234');
-      respuesta.complete(http.Response('', 204));
-      await baja;
+      await session.signIn('a@b.com', 'Clave1234');
+      final deactivation = session.deactivate();
+      await session.close();
+      await session.signIn('otra@b.com', 'Clave1234');
+      response.complete(http.Response('', 204));
+      await deactivation;
 
-      expect(sesion.profile, isNotNull);
-      expect(credenciales.signOuts, 1);
+      expect(session.profile, isNotNull);
+      expect(credentials.signOuts, 1);
     },
   );
 
   testWidgets(
-    'un 401 al reintentar después de un corte cuenta como baja hecha',
+    'a 401 when retrying after an outage counts as deactivation done',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      var intentos = 0;
-      credenciales = FakeCredentials();
+      final semantics = tester.ensureSemantics();
+      var attempts = 0;
+      credentials = FakeCredentials();
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          if (pedido.method == 'DELETE') {
-            intentos++;
-            if (intentos == 1) throw const SocketException('se cortó');
+        cliente: MockClient((request) async {
+          if (request.method == 'DELETE') {
+            attempts++;
+            if (attempts == 1) throw const SocketException('se cortó');
             return http.Response('{}', 401);
           }
           return http.Response.bytes(utf8.encode(profileJson()), 200);
         }),
       );
-      final sesion = Session(
-        repository: SessionRepository(credentials: credenciales, api: api),
+      final session = Session(
+        repository: SessionRepository(credentials: credentials, api: api),
       );
-      await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
+      await session.signIn('nahuel@correo.com', 'ClubNahuel1');
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         App(
           api: api,
-          session: sesion,
+          session: session,
           appearance: Appearance.inMemory(),
           initialLocation: '/perfil',
         ),
@@ -486,7 +489,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Tu sesión expiró'), findsNothing);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

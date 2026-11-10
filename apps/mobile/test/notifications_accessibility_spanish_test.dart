@@ -19,24 +19,24 @@ import 'support/user.dart';
 void main() {
   setUpAll(loadFonts);
 
-  Future<void> cumpleLasGuias(WidgetTester tester) async {
+  Future<void> meetsGuidelines(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
   }
 
-  for (final oscuro in [true, false]) {
-    final modo = oscuro ? 'oscuro' : 'claro';
-    final tema = oscuro ? darkTheme : lightTheme;
+  for (final dark in [true, false]) {
+    final mode = dark ? 'dark' : 'light';
+    final theme = dark ? darkTheme : lightTheme;
 
-    Future<void> centro(
+    Future<void> openCenter(
       WidgetTester tester, {
-      List<String> avisos = const [],
-      bool permiso = true,
+      List<String> notices = const [],
+      bool permission = true,
     }) async {
       final api = FakeApi()
-        ..avisos = avisos
-        ..unread = avisos.length;
+        ..avisos = notices
+        ..unread = notices.length;
       final session = FakeSession(userProfile);
       await mountScreen(
         tester,
@@ -44,88 +44,93 @@ void main() {
           center: centerOf(
             api,
             session,
-            sistema: FakeSystem(concedido: permiso),
+            sistema: FakeSystem(concedido: permission),
           ),
           session: session,
           now: () => noticesNow,
           onOpen: (_, _) {},
         ),
-        theme: tema,
+        theme: theme,
       );
     }
 
-    testWidgets('el centro con avisos cumple las guías en modo $modo', (
+    testWidgets('the center with notices meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await centro(
+      final semantics = tester.ensureSemantics();
+      await openCenter(
         tester,
-        avisos: [reminderNotice, confirmationNotice, alertNotice],
+        notices: [reminderNotice, confirmationNotice, alertNotice],
       );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
-    testWidgets('el centro vacío cumple las guías en modo $modo', (
+    testWidgets('the empty center meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await centro(tester);
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      final semantics = tester.ensureSemantics();
+      await openCenter(tester);
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
 
     testWidgets(
-      '«Notificaciones desactivadas» cumple las guías en modo $modo',
+      '«Notificaciones desactivadas» meets the guidelines in $mode mode',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await centro(tester, permiso: false);
-        await cumpleLasGuias(tester);
-        semantica.dispose();
+        final semantics = tester.ensureSemantics();
+        await openCenter(tester, permission: false);
+        await meetsGuidelines(tester);
+        semantics.dispose();
       },
     );
 
-    testWidgets('el panel con la app abierta cumple las guías en modo $modo', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      final api = FakeApi();
-      final avisos = centerOf(api, FakeSession(userProfile));
-      await mountScreen(
-        tester,
-        Stack(
-          children: [
-            const Scaffold(body: SizedBox.expand()),
-            NoticePanel(center: avisos, now: () => noticesNow, onOpen: (_) {}),
-          ],
-        ),
-        theme: tema,
-      );
-      api
-        ..avisos = [reminderNotice]
-        ..unread = 1;
-      await tester.runAsync(avisos.load);
-      await tester.pumpAndSettle();
-      await cumpleLasGuias(tester);
-      semantica.dispose();
-    });
+    testWidgets(
+      'the panel with the app open meets the guidelines in $mode mode',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        final api = FakeApi();
+        final center = centerOf(api, FakeSession(userProfile));
+        await mountScreen(
+          tester,
+          Stack(
+            children: [
+              const Scaffold(body: SizedBox.expand()),
+              NoticePanel(
+                center: center,
+                now: () => noticesNow,
+                onOpen: (_) {},
+              ),
+            ],
+          ),
+          theme: theme,
+        );
+        api
+          ..avisos = [reminderNotice]
+          ..unread = 1;
+        await tester.runAsync(center.load);
+        await tester.pumpAndSettle();
+        await meetsGuidelines(tester);
+        semantics.dispose();
+      },
+    );
 
-    testWidgets('el Home con la campana cumple las guías en modo $modo', (
+    testWidgets('the Home with the bell meets the guidelines in $mode mode', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final api = FakeApi()
         ..avisos = [confirmationNotice, alertNotice]
         ..unread = 2;
       await mountUser(
         tester,
-        dark: oscuro,
+        dark: dark,
         start: '/inicio',
         api: api.cliente,
         center: (session) => centerOf(api, session),
       );
-      await cumpleLasGuias(tester);
-      semantica.dispose();
+      await meetsGuidelines(tester);
+      semantics.dispose();
     });
   }
 }

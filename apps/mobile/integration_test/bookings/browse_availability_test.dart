@@ -9,7 +9,7 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const dias = [
+  const weekdayNames = [
     'Lunes',
     'Martes',
     'Miércoles',
@@ -19,33 +19,33 @@ void main() {
     'Domingo',
   ];
 
-  /// La etiqueta del chip de [dia] en FECHA: «Viernes 13».
-  String chip(DateTime dia) => '${dias[dia.weekday - 1]} ${dia.day}';
+  /// The label of the chip of [day] in FECHA: «Viernes 13».
+  String chip(DateTime day) => '${weekdayNames[day.weekday - 1]} ${day.day}';
 
-  /// La franja que empieza a la [hora] en punto y dura [horas]: «18:00 – 19:00».
-  String franja(int hora, [int horas = 1]) {
-    String dos(int h) => '${(h % 24).toString().padLeft(2, '0')}:00';
-    return '${dos(hora)} – ${dos(hora + horas)}';
+  /// The slot that starts at [hour] sharp and lasts [hours]: «18:00 – 19:00».
+  String slot(int hour, [int hours = 1]) {
+    String two(int h) => '${(h % 24).toString().padLeft(2, '0')}:00';
+    return '${two(hour)} – ${two(hour + hours)}';
   }
 
-  final manana = todayAtClub().add(const Duration(days: 1));
-  final pasado = todayAtClub().add(const Duration(days: 2));
+  final tomorrow = todayAtClub().add(const Duration(days: 1));
+  final dayAfter = todayAtClub().add(const Duration(days: 2));
 
-  /// Una sede de 08:00 a 23:00 con dos Fútbol 5 techados de $ 43.000 la hora.
-  Future<(String, String, String)> sedeConDosCanchas({
-    List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
+  /// A venue open 08:00 to 23:00 with two covered Fútbol 5 courts at $ 43.000 an hour.
+  Future<(String, String, String)> venueWithTwoCourts({
+    List<int> days = const [1, 2, 3, 4, 5, 6, 7],
   }) async {
-    final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850', days: dias);
-    return (sede, await createSpace(sede), await createSpace(sede));
+    final venue = 'Sede Haedo ${unique()}';
+    await createVenue(venue, 'Av. Vergara 1850', days: days);
+    return (venue, await createSpace(venue), await createSpace(venue));
   }
 
-  /// Entra como usuario a los horarios de la Cancha 1 de [sede].
-  Future<void> abrirHorarios(
+  /// Signs in as a user and opens the times of «Cancha 1» of [venue].
+  Future<void> openTimes(
     WidgetTester tester,
-    String sede, {
+    String venue, {
     String? apiUrl,
-    void Function()? antesDeEntrar,
+    void Function()? beforeSignIn,
   }) async {
     await signInAsUser(
       tester,
@@ -53,23 +53,23 @@ void main() {
       apiUrl: apiUrl,
     );
     await tapText(tester, 'SEDES');
-    final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-    await waitUntil(tester, tarjeta);
-    await tester.ensureVisible(tarjeta);
+    final card = find.bySemanticsLabel(RegExp('^${RegExp.escape(venue)},'));
+    await waitUntil(tester, card);
+    await tester.ensureVisible(card);
     await tester.pumpAndSettle();
-    await tester.tap(tarjeta);
+    await tester.tap(card);
     await tester.pumpAndSettle();
-    final reservar = find.text('VER HORARIOS / RESERVAR');
-    await waitUntil(tester, reservar);
-    antesDeEntrar?.call();
-    await tester.ensureVisible(reservar.first);
+    final book = find.text('VER HORARIOS / RESERVAR');
+    await waitUntil(tester, book);
+    beforeSignIn?.call();
+    await tester.ensureVisible(book.first);
     await tester.pumpAndSettle();
-    await tester.tap(reservar.first);
+    await tester.tap(book.first);
     await tester.pumpAndSettle();
   }
 
-  Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
-    final control = find.bySemanticsLabel(etiqueta);
+  Future<void> tapLabel(WidgetTester tester, String label) async {
+    final control = find.bySemanticsLabel(label);
     await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
@@ -77,265 +77,265 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
-      tester.getSemantics(find.bySemanticsLabel(etiqueta)).flagsCollection;
+  SemanticsFlags flags(WidgetTester tester, String label) =>
+      tester.getSemantics(find.bySemanticsLabel(label)).flagsCollection;
 
-  bool habilitada(WidgetTester tester, String etiqueta) =>
-      banderas(tester, etiqueta).isEnabled;
+  bool enabled(WidgetTester tester, String label) =>
+      flags(tester, label).isEnabled;
 
-  bool elegida(WidgetTester tester, String etiqueta) =>
-      banderas(tester, etiqueta).isSelected;
+  bool selected(WidgetTester tester, String label) =>
+      flags(tester, label).isSelected;
 
-  Future<void> verDia(WidgetTester tester, DateTime dia) async {
-    await tocarEtiqueta(tester, chip(dia));
+  Future<void> viewDay(WidgetTester tester, DateTime day) async {
+    await tapLabel(tester, chip(day));
     await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
   }
 
   testWidgets(
-    'abre los horarios con cancha, fecha de hoy y 1 hora por defecto, y sólo puede elegir franjas libres y futuras @CU-12-H01-01',
+    'opens the times with court, today\'s date and 1 hour by default, and can only pick free, future slots @CU-12-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _) = await sedeConDosCanchas();
-      await abrirHorarios(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _) = await venueWithTwoCourts();
+      await openTimes(tester, venue);
 
-      // Verifica: la Cancha 1, hoy y 1 hora vienen elegidas.
+      // Verifies: «Cancha 1», today and 1 hour come picked.
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(elegida(tester, 'Cancha 1, Techada'), isTrue);
-      expect(elegida(tester, chip(todayAtClub())), isTrue);
+      expect(selected(tester, 'Cancha 1, Techada'), isTrue);
+      expect(selected(tester, chip(todayAtClub())), isTrue);
       expect(find.text('1 hora'), findsOneWidget);
 
-      // Verifica: las horas que ya empezaron no se ofrecen y la próxima sí.
-      final ahora = hourAtClub();
-      for (var h = 8; h <= ahora && h <= 22; h++) {
-        expect(find.bySemanticsLabel(franja(h)), findsNothing);
+      // Verifies: hours that already started are not offered and the next one is.
+      final now = hourAtClub();
+      for (var h = 8; h <= now && h <= 22; h++) {
+        expect(find.bySemanticsLabel(slot(h)), findsNothing);
       }
-      final proxima = ahora < 8 ? 8 : ahora + 1;
-      if (proxima <= 22) {
-        expect(habilitada(tester, franja(proxima)), isTrue);
+      final next = now < 8 ? 8 : now + 1;
+      if (next <= 22) {
+        expect(enabled(tester, slot(next)), isTrue);
       } else {
         expect(find.text('No hay horarios disponibles'), findsOneWidget);
       }
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'una franja que otra persona ya reservó aparece no disponible @CU-12-H01-02',
+    'a slot that another person already booked shows as unavailable @CU-12-H01-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 10);
-      await abrirHorarios(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, court1, _) = await venueWithTwoCourts();
+      await occupy(court1, tomorrow, 10);
+      await openTimes(tester, venue);
 
-      await verDia(tester, manana);
+      await viewDay(tester, tomorrow);
 
-      // Verifica: la de las 10 se ve pero no se puede elegir; la siguiente sí.
-      expect(habilitada(tester, franja(10)), isFalse);
-      expect(habilitada(tester, franja(11)), isTrue);
-      semantica.dispose();
+      // Verifies: the 10 one is shown but cannot be picked; the next one can.
+      expect(enabled(tester, slot(10)), isFalse);
+      expect(enabled(tester, slot(11)), isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'elige una franja y el resumen muestra el horario y el total; continuar lleva a reservar @CU-12-H01-03',
+    'picks a slot and the summary shows the time and the total; continue leads to booking @CU-12-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _) = await sedeConDosCanchas();
-      await abrirHorarios(tester, sede);
-      await verDia(tester, manana);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _) = await venueWithTwoCourts();
+      await openTimes(tester, venue);
+      await viewDay(tester, tomorrow);
 
-      await tocarEtiqueta(tester, franja(18));
+      await tapLabel(tester, slot(18));
 
-      // Verifica: la franja queda elegida y el resumen dice horario, fecha y total.
-      expect(elegida(tester, franja(18)), isTrue);
-      expect(find.text(franja(18)), findsNWidgets(2));
+      // Verifies: the slot is picked and the summary shows time, date and total.
+      expect(selected(tester, slot(18)), isTrue);
+      expect(find.text(slot(18)), findsNWidgets(2));
       expect(find.textContaining('43.000 × 1'), findsOneWidget);
-      expect(find.textContaining(_mes(manana)), findsOneWidget);
+      expect(find.textContaining(_month(tomorrow)), findsOneWidget);
 
       await tapText(tester, 'CONTINUAR');
 
-      // Verifica: la confirmación recibe la sede, la cancha, la fecha y el horario.
+      // Verifies: the confirmation receives the venue, the court, the date and the time.
       await waitUntil(tester, find.text('Confirmá tu reserva'));
-      expect(find.text(sede.toUpperCase()), findsOneWidget);
+      expect(find.text(venue.toUpperCase()), findsOneWidget);
       expect(find.text('Cancha 1 · Techada'), findsOneWidget);
-      expect(find.text('${franja(18)} · 1 hora'), findsOneWidget);
+      expect(find.text('${slot(18)} · 1 hora'), findsOneWidget);
       expect(find.textContaining('43.000'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el botón para continuar está deshabilitado mientras no eligió franja @CU-12-H01-04',
+    'the continue button is disabled while no slot is picked @CU-12-H01-04',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _) = await sedeConDosCanchas();
-      await abrirHorarios(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _) = await venueWithTwoCourts();
+      await openTimes(tester, venue);
 
-      await verDia(tester, manana);
+      await viewDay(tester, tomorrow);
 
-      // Verifica: sin franja no hay horario en el resumen y no se puede seguir.
+      // Verifies: with no slot there is no time in the summary and it cannot continue.
       expect(find.text('Sin horario elegido'), findsOneWidget);
-      expect(habilitada(tester, 'CONTINUAR'), isFalse);
+      expect(enabled(tester, 'CONTINUAR'), isFalse);
       await tester.tap(find.text('CONTINUAR'));
       await tester.pumpAndSettle();
       expect(find.text('Confirmá tu reserva'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'la nota de la grilla dice cuántos horarios no están disponibles @CU-12-H01-05',
+    'the grid note says how many times are unavailable @CU-12-H01-05',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 9);
-      await occupy(cancha1, manana, 12);
-      await abrirHorarios(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, court1, _) = await venueWithTwoCourts();
+      await occupy(court1, tomorrow, 9);
+      await occupy(court1, tomorrow, 12);
+      await openTimes(tester, venue);
 
-      await verDia(tester, manana);
+      await viewDay(tester, tomorrow);
 
-      // Verifica: dos ocupadas, dos no disponibles.
+      // Verifies: two taken, two unavailable.
       await waitUntil(
         tester,
         find.text('Algunos horarios ya están ocupados · 2 no disponibles'),
       );
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'cambia la fecha y la grilla se recalcula para ese día @CU-12-H02-01',
+    'changes the date and the grid is recalculated for that day @CU-12-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 10);
-      await abrirHorarios(tester, sede);
-      await verDia(tester, manana);
-      expect(habilitada(tester, franja(10)), isFalse);
+      final semantics = tester.ensureSemantics();
+      final (venue, court1, _) = await venueWithTwoCourts();
+      await occupy(court1, tomorrow, 10);
+      await openTimes(tester, venue);
+      await viewDay(tester, tomorrow);
+      expect(enabled(tester, slot(10)), isFalse);
 
-      await verDia(tester, pasado);
+      await viewDay(tester, dayAfter);
 
-      // Verifica: el otro día la de las 10 está libre.
-      expect(elegida(tester, chip(pasado)), isTrue);
-      expect(habilitada(tester, franja(10)), isTrue);
-      semantica.dispose();
+      // Verifies: the other day the 10 one is free.
+      expect(selected(tester, chip(dayAfter)), isTrue);
+      expect(enabled(tester, slot(10)), isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'cambia de cancha y la grilla se recalcula para esa cancha @CU-12-H03-01',
+    'changes the court and the grid is recalculated for that court @CU-12-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, cancha2) = await sedeConDosCanchas();
-      await occupy(cancha2, manana, 10);
-      await abrirHorarios(tester, sede);
-      await verDia(tester, manana);
-      expect(habilitada(tester, franja(10)), isTrue);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, court2) = await venueWithTwoCourts();
+      await occupy(court2, tomorrow, 10);
+      await openTimes(tester, venue);
+      await viewDay(tester, tomorrow);
+      expect(enabled(tester, slot(10)), isTrue);
 
-      await tocarEtiqueta(tester, 'Cancha 2, Techada');
+      await tapLabel(tester, 'Cancha 2, Techada');
 
-      // Verifica: en la Cancha 2 la de las 10 está ocupada.
+      // Verifies: on «Cancha 2» the 10 one is taken.
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(elegida(tester, 'Cancha 2, Techada'), isTrue);
-      expect(habilitada(tester, franja(10)), isFalse);
-      semantica.dispose();
+      expect(selected(tester, 'Cancha 2, Techada'), isTrue);
+      expect(enabled(tester, slot(10)), isFalse);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'con 2 horas sólo se ofrecen inicios con las dos horas libres y fin antes del cierre @CU-12-H04-01',
+    'with 2 hours only starts with both hours free and ending before closing are offered @CU-12-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 11);
-      await abrirHorarios(tester, sede);
-      await verDia(tester, manana);
+      final semantics = tester.ensureSemantics();
+      final (venue, court1, _) = await venueWithTwoCourts();
+      await occupy(court1, tomorrow, 11);
+      await openTimes(tester, venue);
+      await viewDay(tester, tomorrow);
 
-      await tocarEtiqueta(tester, 'Una hora más');
+      await tapLabel(tester, 'Una hora más');
 
-      // Verifica: las que pisan las 11 no se pueden elegir, las demás sí.
+      // Verifies: those that overlap 11 cannot be picked, the rest can.
       await waitUntil(tester, find.text('2 horas'));
-      expect(habilitada(tester, franja(9, 2)), isTrue);
-      expect(habilitada(tester, franja(10, 2)), isFalse);
-      expect(habilitada(tester, franja(11, 2)), isFalse);
-      expect(habilitada(tester, franja(12, 2)), isTrue);
+      expect(enabled(tester, slot(9, 2)), isTrue);
+      expect(enabled(tester, slot(10, 2)), isFalse);
+      expect(enabled(tester, slot(11, 2)), isFalse);
+      expect(enabled(tester, slot(12, 2)), isTrue);
 
-      // Verifica: la última termina al cierre.
-      expect(habilitada(tester, franja(21, 2)), isTrue);
-      expect(find.bySemanticsLabel(franja(22, 2)), findsNothing);
+      // Verifies: the last one ends at closing.
+      expect(enabled(tester, slot(21, 2)), isTrue);
+      expect(find.bySemanticsLabel(slot(22, 2)), findsNothing);
       expect(
         find.text('Con 2 horas hay menos inicios posibles · 2 no disponibles'),
         findsOneWidget,
       );
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'con más horas vale la misma regla y el total es precio por hora por duración @CU-12-H04-02',
+    'with more hours the same rule holds and the total is hourly price times duration @CU-12-H04-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 15);
-      await abrirHorarios(tester, sede);
-      await verDia(tester, manana);
-      await tocarEtiqueta(tester, 'Una hora más');
-      await tocarEtiqueta(tester, 'Una hora más');
+      final semantics = tester.ensureSemantics();
+      final (venue, court1, _) = await venueWithTwoCourts();
+      await occupy(court1, tomorrow, 15);
+      await openTimes(tester, venue);
+      await viewDay(tester, tomorrow);
+      await tapLabel(tester, 'Una hora más');
+      await tapLabel(tester, 'Una hora más');
       await waitUntil(tester, find.text('3 horas'));
 
-      await tocarEtiqueta(tester, franja(18, 3));
+      await tapLabel(tester, slot(18, 3));
 
-      // Verifica: con 3 horas la que pisa las 15 no se ofrece, y el total es por tres.
-      expect(habilitada(tester, franja(13, 3)), isFalse);
-      expect(habilitada(tester, franja(20, 3)), isTrue);
-      expect(find.bySemanticsLabel(franja(21, 3)), findsNothing);
+      // Verifies: with 3 hours the one overlapping 15 is not offered, and the total is for three.
+      expect(enabled(tester, slot(13, 3)), isFalse);
+      expect(enabled(tester, slot(20, 3)), isTrue);
+      expect(find.bySemanticsLabel(slot(21, 3)), findsNothing);
       expect(find.textContaining('43.000 × 3'), findsOneWidget);
       expect(find.textContaining('129.000'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'la duración va de 1 a 4 horas: en 1 hora no se puede bajar y en 4 no se puede subir @CU-12-H04-03',
+    'the duration goes from 1 to 4 hours: at 1 hour it cannot go down and at 4 it cannot go up @CU-12-H04-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _) = await sedeConDosCanchas();
-      await abrirHorarios(tester, sede);
-      await verDia(tester, manana);
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _) = await venueWithTwoCourts();
+      await openTimes(tester, venue);
+      await viewDay(tester, tomorrow);
 
-      // Verifica: arranca en 1 hora sin poder bajar, con la regla a la vista.
-      expect(habilitada(tester, 'Una hora menos'), isFalse);
+      // Verifies: starts at 1 hour unable to go down, with the rule in view.
+      expect(enabled(tester, 'Una hora menos'), isFalse);
       expect(
         find.text('Horas completas, de 1 a 4 h. La sede cierra a las 23:00.'),
         findsOneWidget,
       );
 
       for (var i = 0; i < 3; i++) {
-        await tocarEtiqueta(tester, 'Una hora más');
+        await tapLabel(tester, 'Una hora más');
       }
 
-      // Verifica: en 4 horas no sube más.
+      // Verifies: at 4 hours it does not go up any more.
       await waitUntil(tester, find.text('4 horas'));
-      expect(habilitada(tester, 'Una hora más'), isFalse);
-      expect(habilitada(tester, 'Una hora menos'), isTrue);
-      semantica.dispose();
+      expect(enabled(tester, 'Una hora más'), isFalse);
+      expect(enabled(tester, 'Una hora menos'), isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'no queda ninguna franja libre y ve el estado vacío con la sugerencia @CU-12-H05-01',
+    'no free slot is left and sees the empty state with the suggestion @CU-12-H05-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 8, hours: 4);
-      await occupy(cancha1, manana, 12, hours: 4);
-      await occupy(cancha1, manana, 16, hours: 4);
-      await occupy(cancha1, manana, 20, hours: 3);
-      await abrirHorarios(tester, sede);
+      final semantics = tester.ensureSemantics();
+      final (venue, court1, _) = await venueWithTwoCourts();
+      await occupy(court1, tomorrow, 8, hours: 4);
+      await occupy(court1, tomorrow, 12, hours: 4);
+      await occupy(court1, tomorrow, 16, hours: 4);
+      await occupy(court1, tomorrow, 20, hours: 3);
+      await openTimes(tester, venue);
 
-      await verDia(tester, manana);
+      await viewDay(tester, tomorrow);
 
-      // Verifica: el estado vacío reemplaza la grilla y sugiere otra fecha.
+      // Verifies: the empty state replaces the grid and suggests another date.
       await waitUntil(tester, find.text('No hay horarios disponibles'));
       expect(
         find.text(
@@ -343,85 +343,85 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.bySemanticsLabel(franja(8)), findsNothing);
-      expect(habilitada(tester, 'CONTINUAR'), isFalse);
-      semantica.dispose();
+      expect(find.bySemanticsLabel(slot(8)), findsNothing);
+      expect(enabled(tester, 'CONTINUAR'), isFalse);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'elige un día en que la sede no abre y ve el estado vacío @CU-12-H05-02',
+    'picks a day the venue is closed and sees the empty state @CU-12-H05-02',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final (sede, _, _) = await sedeConDosCanchas(
-        dias: [
+      final semantics = tester.ensureSemantics();
+      final (venue, _, _) = await venueWithTwoCourts(
+        days: [
           for (var d = 1; d <= 7; d++)
-            if (d != manana.weekday) d,
+            if (d != tomorrow.weekday) d,
         ],
       );
-      await abrirHorarios(tester, sede);
+      await openTimes(tester, venue);
 
-      await verDia(tester, manana);
+      await viewDay(tester, tomorrow);
 
-      // Verifica: la sede no abre ese día y no hay franjas.
+      // Verifies: the venue is closed that day and there are no slots.
       await waitUntil(tester, find.text('No hay horarios disponibles'));
       expect(
         find.text('La sede no abre ese día. Probá con otra fecha.'),
         findsOneWidget,
       );
-      expect(find.bySemanticsLabel(franja(10)), findsNothing);
-      semantica.dispose();
+      expect(find.bySemanticsLabel(slot(10)), findsNothing);
+      semantics.dispose();
     },
   );
 
-  testWidgets('sin conexión, ve la alerta y ningún horario @CU-12-H06-01', (
+  testWidgets('with no connection, sees the alert and no times @CU-12-H06-01', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final (sede, _, _) = await sedeConDosCanchas();
+    final semantics = tester.ensureSemantics();
+    final (venue, _, _) = await venueWithTwoCourts();
     final api = await ProxyApi.open();
 
-    await abrirHorarios(
+    await openTimes(
       tester,
-      sede,
+      venue,
       apiUrl: api.url,
-      antesDeEntrar: () => api.state = ApiState.offline,
+      beforeSignIn: () => api.state = ApiState.offline,
     );
 
-    // Verifica: la alerta de conexión y, al cerrarla, ningún horario.
+    // Verifies: the connection alert and, once closed, no times.
     await waitUntil(tester, find.text('Error de conexión'));
     await tapText(tester, 'Volver');
     expect(find.text('HORARIO DISPONIBLE'), findsNothing);
     expect(find.bySemanticsLabel(RegExp(r'^\d\d:00 – ')), findsNothing);
     expect(find.text('REINTENTAR'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('el servidor falla y no se muestran horarios @CU-12-H07-01', (
+  testWidgets('the server fails and no times are shown @CU-12-H07-01', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final (sede, _, _) = await sedeConDosCanchas();
+    final semantics = tester.ensureSemantics();
+    final (venue, _, _) = await venueWithTwoCourts();
     final api = await ProxyApi.open();
 
-    await abrirHorarios(
+    await openTimes(
       tester,
-      sede,
+      venue,
       apiUrl: api.url,
-      antesDeEntrar: () => api.state = ApiState.failing,
+      beforeSignIn: () => api.state = ApiState.failing,
     );
 
-    // Verifica: el error del servidor y, al cerrarlo, ningún horario.
+    // Verifies: the server error and, once closed, no times.
     await waitUntil(tester, find.text('Error del servidor'));
     await tapText(tester, 'ACEPTAR');
     expect(find.text('HORARIO DISPONIBLE'), findsNothing);
     expect(find.bySemanticsLabel(RegExp(r'^\d\d:00 – ')), findsNothing);
     expect(find.text('REINTENTAR'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 }
 
-const _meses = [
+const _months = [
   'enero',
   'febrero',
   'marzo',
@@ -436,4 +436,4 @@ const _meses = [
   'diciembre',
 ];
 
-String _mes(DateTime dia) => '${dia.day} de ${_meses[dia.month - 1]}';
+String _month(DateTime day) => '${day.day} de ${_months[day.month - 1]}';

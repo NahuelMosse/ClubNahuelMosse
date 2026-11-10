@@ -8,138 +8,138 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const invalido = 'El formato de los datos no es válido';
+  const invalid = 'El formato de los datos no es válido';
 
-  Future<void> abrirPerfil(WidgetTester tester) async {
+  Future<void> openProfile(WidgetTester tester) async {
     await tapText(tester, 'PERFIL');
     await waitUntil(tester, find.text('DATOS PERSONALES'));
   }
 
-  Future<void> editar(WidgetTester tester) async {
-    await abrirPerfil(tester);
+  Future<void> edit(WidgetTester tester) async {
+    await openProfile(tester);
     await tapText(tester, 'Editar');
     expect(find.text('GUARDAR'), findsOneWidget);
   }
 
-  TextField campo(WidgetTester tester, String etiqueta) =>
+  TextField field(WidgetTester tester, String label) =>
       tester.widget<TextField>(
         find.descendant(
-          of: find.bySemanticsLabel(etiqueta),
+          of: find.bySemanticsLabel(label),
           matching: find.byType(TextField),
         ),
       );
 
-  Brightness brillo(WidgetTester tester) =>
+  Brightness brightness(WidgetTester tester) =>
       Theme.of(tester.element(find.text('DATOS PERSONALES'))).brightness;
 
   testWidgets(
-    'edita su nombre, guarda, y el perfil muestra el dato nuevo al volver a abrirlo @CU-06-H01-01',
+    'edits its name, saves, and the profile shows the new value when reopened @CU-06-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await editar(tester);
+      await edit(tester);
 
       await typeInto(tester, 'Nombre', 'Agustín');
       await tapText(tester, 'GUARDAR');
 
-      // Verifica: vuelve a modo lectura con el nombre nuevo.
+      // Verifies: it returns to read mode with the new name.
       await waitUntil(tester, find.text('Agustín'));
       expect(find.text('GUARDAR'), findsNothing);
       expect(find.text('Agustín Mosse'), findsOneWidget);
 
-      // Verifica: el cambio quedó guardado en la API, no sólo en la pantalla.
+      // Verifies: the change was saved in the API, not only on screen.
       await tapText(tester, 'INICIO');
-      await abrirPerfil(tester);
+      await openProfile(tester);
       expect(find.text('Agustín'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('el correo no se puede editar @CU-06-H01-02', (tester) async {
-    final semantica = tester.ensureSemantics();
-    final correo = 'socio.${unique()}@correo.com';
-    await signInAsUser(tester, email: correo);
-    await editar(tester);
+  testWidgets('the email cannot be edited @CU-06-H01-02', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final email = 'socio.${unique()}@correo.com';
+    await signInAsUser(tester, email: email);
+    await edit(tester);
 
-    // Verifica: el correo está en el formulario pero deshabilitado, con su valor.
-    final correoEnEdicion = campo(tester, 'Correo electrónico');
-    expect(correoEnEdicion.enabled, isFalse);
-    expect(correoEnEdicion.controller?.text, correo);
-    expect(campo(tester, 'Nombre').enabled, isTrue);
-    semantica.dispose();
+    // Verifies: the email is in the form but disabled, with its value.
+    final emailInEdit = field(tester, 'Correo electrónico');
+    expect(emailInEdit.enabled, isFalse);
+    expect(emailInEdit.controller?.text, email);
+    expect(field(tester, 'Nombre').enabled, isTrue);
+    semantics.dispose();
   });
 
   testWidgets(
-    'alterna el modo oscuro y el tema cambia al opuesto @CU-06-H01-03',
+    'toggles dark mode and the theme switches to the opposite @CU-06-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await editar(tester);
-      final antes = brillo(tester);
+      await edit(tester);
+      final before = brightness(tester);
 
-      Future<void> alternar() async {
+      Future<void> toggle() async {
         await tester.ensureVisible(find.bySemanticsLabel('Modo oscuro'));
         await tester.pumpAndSettle();
         await tester.tap(find.bySemanticsLabel('Modo oscuro'));
         await tester.pumpAndSettle();
       }
 
-      // Verifica: cada toque pasa el tema al opuesto del que tenía.
-      await alternar();
-      expect(brillo(tester), isNot(antes));
-      await alternar();
-      expect(brillo(tester), antes);
-      semantica.dispose();
+      // Verifies: each tap flips the theme to the opposite of the one it had.
+      await toggle();
+      expect(brightness(tester), isNot(before));
+      await toggle();
+      expect(brightness(tester), before);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'guarda un DNI o una fecha con formato inválido, ve el error y no se guarda nada @CU-06-H02-01',
+    'saves an ID number or a date with an invalid format, sees the error and nothing is saved @CU-06-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
-      await editar(tester);
+      await edit(tester);
 
       await typeInto(tester, 'Nombre', 'Agustín');
       await typeInto(tester, 'DNI', '42118');
       await typeInto(tester, 'Fecha de nacimiento', '32132000');
       await tapText(tester, 'GUARDAR');
 
-      // Verifica: marca los dos datos inválidos y sigue en edición.
-      expect(find.text(invalido), findsNWidgets(2));
+      // Verifies: it flags both invalid values and stays in edit mode.
+      expect(find.text(invalid), findsNWidgets(2));
       expect(find.text('GUARDAR'), findsOneWidget);
 
-      // Verifica: no se guardó ningún dato, ni siquiera el nombre válido.
+      // Verifies: nothing was saved, not even the valid name.
       await tapText(tester, 'INICIO');
-      await abrirPerfil(tester);
+      await openProfile(tester);
       expect(find.text('Agustín'), findsNothing);
       expect(find.text('14/03/2000'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión al guardar, ve el error de conectividad y conserva lo escrito @CU-06-H03-01',
+    'offline on saving, it sees the connectivity error and keeps what was typed @CU-06-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final api = await ProxyApi.open();
       await signInAsUser(
         tester,
         email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
-      await editar(tester);
+      await edit(tester);
       await typeInto(tester, 'Nombre', 'Agustín');
 
       api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR');
 
-      // Verifica: avisa que no hay conexión y lo escrito sigue en el campo.
+      // Verifies: it warns there is no connection and what was typed stays in the field.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
-      expect(campo(tester, 'Nombre').controller?.text, 'Agustín');
+      expect(field(tester, 'Nombre').controller?.text, 'Agustín');
       expect(find.text('GUARDAR'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

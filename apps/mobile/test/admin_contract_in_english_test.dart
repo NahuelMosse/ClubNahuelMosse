@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-    'los textos, rutas de la API, claves JSON y rutas de pantalla del panel son los de antes @ENG-09-S3',
+    'the panel texts, API routes, JSON keys and screen routes are the same as before @ENG-09-S3',
     () {
       final source = [
         File('lib/l10n/app_es.arb').readAsStringSync(),

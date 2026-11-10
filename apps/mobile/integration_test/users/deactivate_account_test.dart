@@ -8,38 +8,38 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  const contrasena = 'ClubNahuel1';
+  const password = 'ClubNahuel1';
 
-  Future<void> pedirBaja(WidgetTester tester) async {
+  Future<void> requestDeletion(WidgetTester tester) async {
     await tapText(tester, 'PERFIL');
     await waitUntil(tester, find.text('DATOS PERSONALES'));
     await tapText(tester, 'ELIMINAR CUENTA');
     expect(find.text('¿Eliminar tu cuenta?'), findsOneWidget);
   }
 
-  /// El botón que confirma la baja, el del diálogo.
-  Finder confirmar() => find.descendant(
+  /// The button that confirms the deletion, the one in the dialog.
+  Finder confirm() => find.descendant(
     of: find.byType(Dialog),
     matching: find.text('ELIMINAR CUENTA'),
   );
 
   testWidgets(
-    'elimina su cuenta, vuelve al login y ya no puede iniciar sesión con ella @CU-07-H01-01',
+    'deletes its account, returns to the login and can no longer sign in with it @CU-07-H01-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, email: correo);
-      await pedirBaja(tester);
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, email: email);
+      await requestDeletion(tester);
 
-      await tester.tap(confirmar());
+      await tester.tap(confirm());
       await tester.pumpAndSettle();
 
-      // Verifica: la sesión termina y la app vuelve al login.
+      // Verifies: the session ends and the app returns to the login.
       await waitUntil(tester, find.text('INICIAR SESIÓN'));
 
-      // Verifica: con esa cuenta ya no se entra.
-      await typeInto(tester, 'Correo', correo);
-      await typeInto(tester, 'Contraseña', contrasena);
+      // Verifies: that account no longer gets in.
+      await typeInto(tester, 'Correo', email);
+      await typeInto(tester, 'Contraseña', password);
       await tapText(tester, 'INICIAR SESIÓN');
       await waitUntil(
         tester,
@@ -48,98 +48,98 @@ void main() {
         ),
       );
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'mientras se elimina la cuenta, el botón muestra «Eliminando tu cuenta…» y no se puede volver a tocar @CU-07-H01-03',
+    'while the account is being deleted, the button shows «Eliminando tu cuenta…» and cannot be tapped again @CU-07-H01-03',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final api = await ProxyApi.open();
       await signInAsUser(
         tester,
         email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
-      await pedirBaja(tester);
+      await requestDeletion(tester);
 
       api.state = ApiState.slow;
-      await tester.tap(confirmar());
+      await tester.tap(confirm());
       await tester.pump(const Duration(milliseconds: 500));
 
-      // Verifica: mientras espera, el botón lo dice y no acepta otro toque.
+      // Verifies: while it waits, the button says so and does not accept another tap.
       expect(find.text('ELIMINANDO TU CUENTA…'), findsOneWidget);
-      final boton = tester.widget<OutlinedButton>(
+      final button = tester.widget<OutlinedButton>(
         find.widgetWithText(OutlinedButton, 'ELIMINANDO TU CUENTA…'),
       );
-      expect(boton.onPressed, isNull);
+      expect(button.onPressed, isNull);
 
       await waitUntil(tester, find.text('INICIAR SESIÓN'));
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'cancela en la confirmación y la cuenta sigue intacta @CU-07-H02-01',
+    'cancels on the confirmation and the account stays intact @CU-07-H02-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, email: correo);
-      await pedirBaja(tester);
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, email: email);
+      await requestDeletion(tester);
 
       await tapText(tester, 'CANCELAR');
 
-      // Verifica: vuelve al perfil con la sesión abierta y la cuenta sigue sirviendo.
+      // Verifies: it returns to the profile with the session open and the account still works.
       expect(find.text('¿Eliminar tu cuenta?'), findsNothing);
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
-      expect(await canSignIn(correo, contrasena), isTrue);
-      semantica.dispose();
+      expect(await canSignIn(email, password), isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión al confirmar, ve la alerta y la cuenta no se elimina @CU-07-H03-01',
+    'offline on confirming, it sees the alert and the account is not deleted @CU-07-H03-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
       final api = await ProxyApi.open();
-      await signInAsUser(tester, email: correo, apiUrl: api.url);
-      await pedirBaja(tester);
+      await signInAsUser(tester, email: email, apiUrl: api.url);
+      await requestDeletion(tester);
 
       api.state = ApiState.offline;
-      await tester.tap(confirmar());
+      await tester.tap(confirm());
       await tester.pumpAndSettle();
 
-      // Verifica: avisa que no hay conexión y la cuenta queda como estaba.
+      // Verifies: it warns there is no connection and the account is left as it was.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
-      expect(await canSignIn(correo, contrasena), isTrue);
-      semantica.dispose();
+      expect(await canSignIn(email, password), isTrue);
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'el servidor falla al confirmar y la cuenta no se elimina @CU-07-H04-01',
+    'the server fails on confirming and the account is not deleted @CU-07-H04-01',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unique()}@correo.com';
+      final semantics = tester.ensureSemantics();
+      final email = 'socio.${unique()}@correo.com';
       final api = await ProxyApi.open();
-      await signInAsUser(tester, email: correo, apiUrl: api.url);
-      await pedirBaja(tester);
+      await signInAsUser(tester, email: email, apiUrl: api.url);
+      await requestDeletion(tester);
 
       api.state = ApiState.failing;
-      await tester.tap(confirmar());
+      await tester.tap(confirm());
       await tester.pumpAndSettle();
 
-      // Verifica: avisa del servidor y la cuenta sigue sirviendo.
+      // Verifies: it warns of the server and the account still works.
       await waitUntil(tester, find.text('Error del servidor'));
       await tapText(tester, 'ACEPTAR');
       api.state = ApiState.normal;
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
-      expect(await canSignIn(correo, contrasena), isTrue);
-      semantica.dispose();
+      expect(await canSignIn(email, password), isTrue);
+      semantics.dispose();
     },
   );
 }

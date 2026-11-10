@@ -2,115 +2,117 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Los archivos de `lib/`, por ruta relativa, con su texto.
+/// The files of `lib/`, by relative path, with their text.
 Map<String, String> _lib() => {
-  for (final archivo in Directory(
+  for (final file in Directory(
     'lib',
   ).listSync(recursive: true).whereType<File>())
-    if (archivo.path.endsWith('.dart'))
-      archivo.path.replaceAll(r'\', '/').substring(4): archivo
-          .readAsStringSync(),
+    if (file.path.endsWith('.dart'))
+      file.path.replaceAll(r'\', '/').substring(4): file.readAsStringSync(),
 };
 
-Set<String> _queContienen(Pattern patron) => {
-  for (final MapEntry(key: ruta, value: texto) in _lib().entries)
-    if (texto.contains(patron)) ruta,
+Set<String> _filesContaining(Pattern pattern) => {
+  for (final MapEntry(key: path, value: text) in _lib().entries)
+    if (text.contains(pattern)) path,
 };
 
 void main() {
   test(
-    'las fechas, las horas y el DNI salen de intl y ningún archivo usa padLeft @ARQ-03-S1',
+    'dates, times and the DNI come from intl and no file uses padLeft @ARQ-03-S1',
     () {
-      expect(_queContienen('padLeft('), isEmpty);
+      expect(_filesContaining('padLeft('), isEmpty);
       expect(_lib()['common/dates.dart'], contains('DateFormat'));
       expect(
-        _queContienen('package:intl/intl.dart'),
+        _filesContaining('package:intl/intl.dart'),
         contains('common/dates.dart'),
       );
     },
   );
 
   test(
-    'sólo fallo_de_carga.dart avisa la sesión vencida y el error de red @ARQ-03-S2 @ARQ-03-ASM-02',
+    'only load_failure.dart reports the expired session and the network error @ARQ-03-S2 @ARQ-03-ASM-02',
     () {
-      final llamadas = RegExp(r'show(SessionExpired|NetworkError)\(context');
-      expect(_queContienen(llamadas), {
+      final calls = RegExp(r'show(SessionExpired|NetworkError)\(context');
+      expect(_filesContaining(calls), {
         'features/session/presentation/load_failure.dart',
       });
     },
   );
 
   test(
-    'los chips y pestañas seleccionables son un solo SelectableChip @ARQ-03-S2 @ARQ-03-ASM-03',
+    'the selectable chips and tabs are a single SelectableChip @ARQ-03-S2 @ARQ-03-ASM-03',
     () {
-      final copias = RegExp(r'class _(Chip|ChipCondicion|Pestanas|Elegible) ');
-      expect(_queContienen(copias), isEmpty);
+      final copies = RegExp(r'class _(Chip|ChipCondicion|Pestanas|Elegible) ');
+      expect(_filesContaining(copies), isEmpty);
       expect(
         _lib()['common/selectable_chip.dart'],
         contains('class SelectableChip '),
       );
-      expect(_queContienen('SelectableChip(').length, greaterThanOrEqualTo(5));
+      expect(
+        _filesContaining('SelectableChip(').length,
+        greaterThanOrEqualTo(5),
+      );
     },
   );
 
   test(
-    'el registro exitoso es una ResultScreen y las bajas en curso usan InProgress @ARQ-03-S2',
+    'the successful registration is a ResultScreen and the in-progress deactivations use InProgress @ARQ-03-S2',
     () {
       expect(
         _lib()['features/users/presentation/registration_done_screen.dart'],
         contains('ResultScreen('),
       );
       expect(_lib()['common/in_progress.dart'], contains('class InProgress '));
-      expect(_queContienen('InProgress(').length, greaterThanOrEqualTo(4));
+      expect(_filesContaining('InProgress(').length, greaterThanOrEqualTo(4));
     },
   );
 
   test(
-    'los errores por campo que manda el servidor se leen sólo en errores_de_campo.dart @ARQ-03-S2',
+    'the per-field errors sent by the server are read only in field_errors.dart @ARQ-03-S2',
     () {
-      expect(_queContienen("['errors']"), {'common/field_errors.dart'});
+      expect(_filesContaining("['errors']"), {'common/field_errors.dart'});
     },
   );
 
-  test('ninguna pantalla pasa de 500 líneas @ARQ-03-S3', () {
-    final largas = {
-      for (final MapEntry(key: ruta, value: texto) in _lib().entries)
-        if (ruta.split('/').last.startsWith('pantalla_') &&
-            '\n'.allMatches(texto).length > 500)
-          ruta,
+  test('no screen goes over 500 lines @ARQ-03-S3', () {
+    final long = {
+      for (final MapEntry(key: path, value: text) in _lib().entries)
+        if (path.split('/').last.startsWith('pantalla_') &&
+            '\n'.allMatches(text).length > 500)
+          path,
     };
-    expect(largas, isEmpty);
+    expect(long, isEmpty);
   });
 
   test(
-    'las capturas se comparan sin regenerarlas @ARQ-03-S3 @ARQ-03-ASM-01',
+    'the screenshots are compared without regenerating them @ARQ-03-S3 @ARQ-03-ASM-01',
     () {
-      final capturas = Directory('test/screenshots')
+      final screenshots = Directory('test/screenshots')
           .listSync()
           .whereType<File>()
           .where((f) => f.path.endsWith('_screenshots.dart'))
           .toList();
-      expect(capturas, isNotEmpty);
-      for (final archivo in capturas) {
-        final texto = archivo.readAsStringSync();
-        expect(texto, contains('matchesGoldenFile'), reason: archivo.path);
+      expect(screenshots, isNotEmpty);
+      for (final file in screenshots) {
+        final text = file.readAsStringSync();
+        expect(text, contains('matchesGoldenFile'), reason: file.path);
         expect(
-          texto,
+          text,
           isNot(contains('autoUpdateGoldenFiles')),
-          reason: archivo.path,
+          reason: file.path,
         );
       }
     },
   );
 
   test(
-    'mi perfil valida el nacimiento con el reloj del club y nadie usa DateTime.now @ARQ-03-ASM-04',
+    'my profile validates the birth date with the club clock and nobody uses DateTime.now @ARQ-03-ASM-04',
     () {
       expect(
         _lib()['features/users/presentation/my_profile_screen.dart'],
         contains('clubNow'),
       );
-      expect(_queContienen('DateTime.now()'), isEmpty);
+      expect(_filesContaining('DateTime.now()'), isEmpty);
     },
   );
 }

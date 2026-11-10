@@ -43,150 +43,145 @@ import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venue_screen.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues_screen.dart';
 
-const _ancho = 393.0;
-const _alto = 852.0;
+const _width = 393.0;
+const _height = 852.0;
 
 Duration _ms(int n) => Duration(milliseconds: n);
 
-typedef _Paso = Future<void> Function(WidgetTester tester);
+typedef _Step = Future<void> Function(WidgetTester tester);
 
-GoRouter _rutas(WidgetTester tester) =>
+GoRouter _routes(WidgetTester tester) =>
     GoRouter.of(tester.element(find.byType(Scaffold).first));
 
-Future<void> _ir(WidgetTester tester, String ruta, {Object? extra}) async =>
-    _rutas(tester).go(ruta, extra: extra);
+Future<void> _go(WidgetTester tester, String route, {Object? extra}) async =>
+    _routes(tester).go(route, extra: extra);
 
-Future<void> _empujar(WidgetTester tester, String ruta) async =>
-    unawaited(_rutas(tester).push<void>(ruta));
+Future<void> _push(WidgetTester tester, String route) async =>
+    unawaited(_routes(tester).push<void>(route));
 
-/// Toca [f] sin esperar a que termine la transición que dispara.
-Future<void> _tocar(WidgetTester tester, Finder f) async {
+/// Taps [f] without waiting for the transition it triggers to finish.
+Future<void> _tap(WidgetTester tester, Finder f) async {
   await tester.ensureVisible(f);
   await tester.pumpAndSettle();
   await tester.tap(f);
 }
 
-Future<void> _tocarYEsperar(WidgetTester tester, Finder f) async {
-  await _tocar(tester, f);
+Future<void> _tapAndWait(WidgetTester tester, Finder f) async {
+  await _tap(tester, f);
   await tester.pumpAndSettle();
 }
 
-/// Deja que la navegación se arme, sin que corra el reloj de la transición.
-Future<void> _arrancar(WidgetTester tester) async {
+/// Lets the navigation set up, without running the transition clock.
+Future<void> _start(WidgetTester tester) async {
   await tester.pump();
   await tester.pump();
 }
 
-/// Descarta la app anterior: una `App` nueva sobre la vieja conservaría su enrutador.
-Future<void> _reiniciar(WidgetTester tester) async {
+/// Discards the previous app: a new `App` over the old one would keep its router.
+Future<void> _restart(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pumpAndSettle();
 }
 
-void _reducirMovimiento(WidgetTester tester) {
+void _reduceMotion(WidgetTester tester) {
   tester.platformDispatcher.accessibilityFeaturesTestValue =
       const FakeAccessibilityFeatures(disableAnimations: true);
   addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 }
 
-double _izquierda(WidgetTester tester, Type pantalla) =>
-    tester.getTopLeft(find.byType(pantalla)).dx;
+double _left(WidgetTester tester, Type screen) =>
+    tester.getTopLeft(find.byType(screen)).dx;
 
-double _arriba(WidgetTester tester, Finder pantalla) =>
-    tester.getTopLeft(pantalla).dy;
+double _top(WidgetTester tester, Finder screen) => tester.getTopLeft(screen).dy;
 
-/// La pantalla ya está en su lugar y ninguna transición de página la desliza.
-void _sinTransicion(WidgetTester tester, Type pantalla, {String? motivo}) {
-  expect(find.byType(pantalla), findsOneWidget, reason: motivo);
-  expect(_izquierda(tester, pantalla), 0, reason: motivo);
+/// The screen is already in place and no page transition slides it.
+void _noTransition(WidgetTester tester, Type screen, {String? reason}) {
+  expect(find.byType(screen), findsOneWidget, reason: reason);
+  expect(_left(tester, screen), 0, reason: reason);
   expect(
     find.ancestor(
-      of: find.byType(pantalla),
+      of: find.byType(screen),
       matching: find.byType(SlideTransition),
     ),
     findsNothing,
-    reason: motivo,
+    reason: reason,
   );
-  // Ni una transición de la ruta en curso, sea cual sea.
+  // Not a transition of the current route, whichever it is.
   expect(
-    ModalRoute.of(tester.element(find.byType(pantalla)))?.animation?.status,
+    ModalRoute.of(tester.element(find.byType(screen)))?.animation?.status,
     AnimationStatus.completed,
-    reason: motivo,
+    reason: reason,
   );
-  // Tampoco un fundido ni un zoom a medias.
-  expect(_opacidadesDe(tester, pantalla), everyElement(1), reason: motivo);
+  // Nor a half-way fade or zoom.
+  expect(_opacitiesOf(tester, screen), everyElement(1), reason: reason);
   expect(
     [
       for (final z in tester.widgetList<ScaleTransition>(
         find.ancestor(
-          of: find.byType(pantalla),
+          of: find.byType(screen),
           matching: find.byType(ScaleTransition),
         ),
       ))
         z.scale.value,
     ],
     everyElement(1),
-    reason: motivo,
+    reason: reason,
   );
 }
 
-/// La pantalla está en su lugar desde el primer cuadro y sigue así: no hay transición en curso.
-Future<void> _quieta(
-  WidgetTester tester,
-  Type pantalla, {
-  String? motivo,
-}) async {
-  _sinTransicion(tester, pantalla, motivo: motivo);
+/// The screen is in place from the first frame and stays so: there is no transition in progress.
+Future<void> _still(WidgetTester tester, Type screen, {String? reason}) async {
+  _noTransition(tester, screen, reason: reason);
   await tester.pump(_ms(100));
-  _sinTransicion(tester, pantalla, motivo: motivo);
+  _noTransition(tester, screen, reason: reason);
 }
 
-/// La pantalla entra desde la derecha: a los 160 ms va a mitad de camino y a los 320 ya llegó.
-Future<void> _entraDesdeLaDerecha(
+/// The screen enters from the right: at 160 ms it is half-way and at 320 it has arrived.
+Future<void> _entersFromRight(
   WidgetTester tester,
-  Type pantalla, {
-  String? motivo,
+  Type screen, {
+  String? reason,
 }) async {
-  await _arrancar(tester);
-  expect(find.byType(pantalla), findsOneWidget, reason: motivo);
+  await _start(tester);
+  expect(find.byType(screen), findsOneWidget, reason: reason);
   await tester.pump(_ms(160));
-  final aMitad = _izquierda(tester, pantalla);
-  expect(aMitad, greaterThan(0), reason: motivo);
-  expect(aMitad, lessThan(_ancho), reason: motivo);
+  final halfway = _left(tester, screen);
+  expect(halfway, greaterThan(0), reason: reason);
+  expect(halfway, lessThan(_width), reason: reason);
   await tester.pump(_ms(160));
-  expect(_izquierda(tester, pantalla), 0, reason: motivo);
+  expect(_left(tester, screen), 0, reason: reason);
 }
 
-/// La pantalla sale hacia la derecha: a los 140 ms va a mitad de camino y a los 280 ya no está.
-Future<void> _saleHaciaLaDerecha(
+/// The screen leaves to the right: at 140 ms it is half-way and at 280 it is gone.
+Future<void> _leavesToRight(
   WidgetTester tester,
-  Type pantalla, {
-  String? motivo,
+  Type screen, {
+  String? reason,
 }) async {
-  await _arrancar(tester);
-  expect(find.byType(pantalla), findsOneWidget, reason: motivo);
+  await _start(tester);
+  expect(find.byType(screen), findsOneWidget, reason: reason);
   await tester.pump(_ms(140));
-  final aMitad = _izquierda(tester, pantalla);
-  expect(aMitad, greaterThan(0), reason: motivo);
-  expect(aMitad, lessThan(_ancho), reason: motivo);
+  final halfway = _left(tester, screen);
+  expect(halfway, greaterThan(0), reason: reason);
+  expect(halfway, lessThan(_width), reason: reason);
   await tester.pump(_ms(140));
   await tester.pump();
-  expect(find.byType(pantalla), findsNothing, reason: motivo);
+  expect(find.byType(screen), findsNothing, reason: reason);
 }
 
-List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
+List<double> _opacitiesOf(WidgetTester tester, Type screen) => [
   for (final f in tester.widgetList<FadeTransition>(
     find.ancestor(
-      of: find.byType(pantalla),
+      of: find.byType(screen),
       matching: find.byType(FadeTransition),
     ),
   ))
     f.opacity.value,
 ];
 
-// ---- las apps ----
+// ---- the apps ----
 
-ApiClient _apiUsuario() => apiRoutes({
+ApiClient _userApi() => apiRoutes({
   ...venueRoutes(grid: gridJson(taken: {9, 12})),
   'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
 });
@@ -200,7 +195,7 @@ const _adminBooking =
     ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
     ' "canceled_by_name": null, "space_deactivated": false}';
 
-ApiClient _apiAdmin() => apiRoutes({
+ApiClient _adminApi() => apiRoutes({
   ...spaceRoutes(),
   'GET /bookings/all': (
     200,
@@ -210,257 +205,257 @@ ApiClient _apiAdmin() => apiRoutes({
   ),
 });
 
-/// Alto para que el inicio construya todos sus bloques, también los de abajo.
+/// Tall so that home builds all its blocks, the lower ones too.
 const _tallPhone = Size(393, 1600);
 
-Future<void> _usuarioEn(WidgetTester tester, String inicio) =>
-    mountUser(tester, api: _apiUsuario(), start: inicio, size: _tallPhone);
+Future<void> _userAt(WidgetTester tester, String startRoute) =>
+    mountUser(tester, api: _userApi(), start: startRoute, size: _tallPhone);
 
-Future<void> _adminEn(WidgetTester tester, String inicio) =>
-    mountAdmin(tester, api: _apiAdmin(), start: inicio);
+Future<void> _adminAt(WidgetTester tester, String startRoute) =>
+    mountAdmin(tester, api: _adminApi(), start: startRoute);
 
-Future<void> _usuarioConCentro(WidgetTester tester, String inicio) {
+Future<void> _userWithCenter(WidgetTester tester, String startRoute) {
   final api = FakeApi();
   return mountUser(
     tester,
     api: api.cliente,
-    start: inicio,
+    start: startRoute,
     size: _tallPhone,
     center: (session) => centerOf(api, session),
   );
 }
 
-// ---- las pantallas hijas (S2 y S3) ----
+// ---- the child screens (S2 and S3) ----
 
-class _Hija {
-  const _Hija(
-    this.nombre,
+class _Child {
+  const _Child(
+    this.name,
     this.mountScreen,
-    this.abrir,
-    this.pantalla, {
-    this.conBarra = false,
+    this.open,
+    this.screen, {
+    this.withBar = false,
   });
 
-  final String nombre;
+  final String name;
 
-  /// Deja la app en la pantalla desde donde se llega.
-  final _Paso mountScreen;
+  /// Leaves the app on the screen it is reached from.
+  final _Step mountScreen;
 
-  /// Hace lo que hace la persona para llegar, sin esperar a que termine la transición.
-  final _Paso abrir;
-  final Type pantalla;
+  /// Does what the person does to get there, without waiting for the transition to finish.
+  final _Step open;
+  final Type screen;
 
-  /// La pantalla tiene la flecha «Volver» de la barra superior.
-  final bool conBarra;
+  /// The screen has the «Volver» arrow of the top bar.
+  final bool withBar;
 }
 
-final _hijas = <_Hija>[
-  _Hija(
+final _children = <_Child>[
+  _Child(
     'sede',
-    (t) => _usuarioEn(t, '/sedes'),
-    (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _userAt(t, '/sedes'),
+    (t) => _go(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     VenueScreen,
   ),
-  _Hija(
+  _Child(
     'horarios',
-    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
-    (t) => _ir(
+    (t) => _userAt(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _go(
       t,
       '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
     ),
     AvailabilityScreen,
   ),
-  _Hija(
+  _Child(
     'confirmar reserva',
     (t) async {
-      await _usuarioEn(
+      await _userAt(
         t,
         '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
-      await _tocarYEsperar(t, find.text('18:00 – 19:00'));
+      await _tapAndWait(t, find.text('18:00 – 19:00'));
     },
-    (t) => _tocar(t, find.text('CONTINUAR')),
+    (t) => _tap(t, find.text('CONTINUAR')),
     ConfirmBookingScreen,
   ),
-  _Hija(
+  _Child(
     'modificar',
-    (t) => _usuarioEn(t, '/reservas'),
-    (t) => _tocar(t, find.text('MODIFICAR').first),
+    (t) => _userAt(t, '/reservas'),
+    (t) => _tap(t, find.text('MODIFICAR').first),
     AvailabilityScreen,
   ),
-  _Hija(
+  _Child(
     'confirmar cambio',
     (t) async {
-      await _usuarioEn(t, '/reservas');
-      await _tocarYEsperar(t, find.text('MODIFICAR').first);
-      await _tocarYEsperar(t, find.text('19:00 – 20:00'));
+      await _userAt(t, '/reservas');
+      await _tapAndWait(t, find.text('MODIFICAR').first);
+      await _tapAndWait(t, find.text('19:00 – 20:00'));
     },
-    (t) => _tocar(t, find.text('CONTINUAR CON EL CAMBIO')),
+    (t) => _tap(t, find.text('CONTINUAR CON EL CAMBIO')),
     ConfirmChangeScreen,
   ),
-  _Hija(
+  _Child(
     'contraseña',
-    (t) => _usuarioEn(t, '/perfil'),
-    (t) => _tocar(t, find.text('Cambiar contraseña')),
+    (t) => _userAt(t, '/perfil'),
+    (t) => _tap(t, find.text('Cambiar contraseña')),
     ChangePasswordScreen,
-    conBarra: true,
+    withBar: true,
   ),
-  _Hija(
+  _Child(
     'registro',
-    (t) => _usuarioEn(t, '/'),
-    (t) => _tocar(t, find.text('COMENZAR')),
+    (t) => _userAt(t, '/'),
+    (t) => _tap(t, find.text('COMENZAR')),
     RegistrationScreen,
-    conBarra: true,
+    withBar: true,
   ),
-  _Hija(
+  _Child(
     'recuperar contraseña',
-    (t) => _usuarioEn(t, '/'),
-    (t) => _tocar(t, find.text('¿Olvidaste tu contraseña?')),
+    (t) => _userAt(t, '/'),
+    (t) => _tap(t, find.text('¿Olvidaste tu contraseña?')),
     ForgotPasswordScreen,
-    conBarra: true,
+    withBar: true,
   ),
-  _Hija(
+  _Child(
     'notificaciones',
-    (t) => _usuarioConCentro(t, '/inicio'),
-    (t) => _tocar(t, find.byIcon(Icons.notifications_none_rounded)),
+    (t) => _userWithCenter(t, '/inicio'),
+    (t) => _tap(t, find.byIcon(Icons.notifications_none_rounded)),
     NotificationsScreen,
-    conBarra: true,
+    withBar: true,
   ),
-  _Hija(
+  _Child(
     'buscar cancha',
-    (t) => _usuarioEn(t, '/inicio'),
-    (t) => _tocar(t, find.text('Buscar cancha')),
+    (t) => _userAt(t, '/inicio'),
+    (t) => _tap(t, find.text('Buscar cancha')),
     SpaceSearchScreen,
-    conBarra: true,
+    withBar: true,
   ),
-  _Hija(
+  _Child(
     'detalle de reserva del admin',
-    (t) => _adminEn(t, '/admin'),
-    (t) => _tocar(t, find.text('Nahuel Mosse')),
+    (t) => _adminAt(t, '/admin'),
+    (t) => _tap(t, find.text('Nahuel Mosse')),
     BookingDetailScreen,
   ),
-  _Hija(
+  _Child(
     'alta de sede',
-    (t) => _adminEn(t, '/admin/sedes'),
-    (t) => _tocar(t, find.text('AGREGAR SEDE')),
+    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _tap(t, find.text('AGREGAR SEDE')),
     VenueFormScreen,
   ),
-  _Hija(
+  _Child(
     'edición de sede',
-    (t) => _adminEn(t, '/admin/sedes'),
-    (t) => _tocar(t, find.text('Editar sede').first),
+    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _tap(t, find.text('Editar sede').first),
     VenueFormScreen,
   ),
-  _Hija(
+  _Child(
     'alta de espacio',
-    (t) => _adminEn(t, '/admin/espacios'),
-    (t) => _tocar(t, find.text('ALTA ESPACIO')),
+    (t) => _adminAt(t, '/admin/espacios'),
+    (t) => _tap(t, find.text('ALTA ESPACIO')),
     NewSpaceScreen,
   ),
-  _Hija(
+  _Child(
     'edición de espacio',
-    (t) => _adminEn(t, '/admin/espacios'),
-    (t) => _tocar(t, find.text('Editar').first),
+    (t) => _adminAt(t, '/admin/espacios'),
+    (t) => _tap(t, find.text('Editar').first),
     EditSpaceScreen,
   ),
 ];
 
-// ---- las raíces (S1) ----
+// ---- the roots (S1) ----
 
-class _Raiz {
-  const _Raiz(this.nombre, this.mountScreen, this.ruta, this.pantalla);
+class _Root {
+  const _Root(this.name, this.mountScreen, this.route, this.screen);
 
-  final String nombre;
-  final _Paso mountScreen;
-  final String ruta;
-  final Type pantalla;
+  final String name;
+  final _Step mountScreen;
+  final String route;
+  final Type screen;
 }
 
-final _raices = <_Raiz>[
-  _Raiz(
+final _roots = <_Root>[
+  _Root(
     'inicio',
-    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _userAt(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     '/inicio',
     HomeScreen,
   ),
-  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/sedes', VenuesScreen),
-  _Raiz(
+  _Root('sedes', (t) => _userAt(t, '/inicio'), '/sedes', VenuesScreen),
+  _Root(
     'reservas',
-    (t) => _usuarioEn(t, '/inicio'),
+    (t) => _userAt(t, '/inicio'),
     '/reservas',
     MyBookingsScreen,
   ),
-  _Raiz('perfil', (t) => _usuarioEn(t, '/inicio'), '/perfil', MyProfileScreen),
-  _Raiz(
+  _Root('perfil', (t) => _userAt(t, '/inicio'), '/perfil', MyProfileScreen),
+  _Root(
     'panel del admin',
-    (t) => _adminEn(t, '/admin/sedes'),
+    (t) => _adminAt(t, '/admin/sedes'),
     '/admin',
     AdminPanelScreen,
   ),
-  _Raiz(
+  _Root(
     'sedes del admin',
-    (t) => _adminEn(t, '/admin'),
+    (t) => _adminAt(t, '/admin'),
     '/admin/sedes',
     AdminVenuesScreen,
   ),
-  _Raiz(
+  _Root(
     'espacios del admin',
-    (t) => _adminEn(t, '/admin'),
+    (t) => _adminAt(t, '/admin'),
     '/admin/espacios',
     AdminSpacesScreen,
   ),
-  _Raiz(
+  _Root(
     'login',
-    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _userAt(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     '/',
     LoginScreen,
   ),
 ];
 
-// ---- los resultados (S4) ----
+// ---- the results (S4) ----
 
-class _Resultado {
-  const _Resultado(this.nombre, this.mountScreen, this.abrir, this.pantalla);
+class _Result {
+  const _Result(this.name, this.mountScreen, this.open, this.screen);
 
-  final String nombre;
-  final _Paso mountScreen;
-  final _Paso abrir;
-  final Type pantalla;
+  final String name;
+  final _Step mountScreen;
+  final _Step open;
+  final Type screen;
 }
 
-Booking _reservaConfirmada() {
+Booking _confirmedBooking() {
   final booking = bookingFromJson(jsonDecode(bookingJson()));
-  if (booking == null) fail('la reserva de prueba no se lee');
+  if (booking == null) fail('the test booking cannot be read');
   return booking;
 }
 
-final _resultados = <_Resultado>[
-  _Resultado(
+final _results = <_Result>[
+  _Result(
     'registro exitoso',
-    (t) => _usuarioEn(t, '/registro'),
-    (t) => _ir(t, '/registro/exitoso'),
+    (t) => _userAt(t, '/registro'),
+    (t) => _go(t, '/registro/exitoso'),
     RegistrationDoneScreen,
   ),
-  _Resultado(
+  _Result(
     'reserva confirmada',
-    (t) => _usuarioEn(t, '/reservas'),
-    (t) => _ir(t, '/reservas/confirmada', extra: _reservaConfirmada()),
+    (t) => _userAt(t, '/reservas'),
+    (t) => _go(t, '/reservas/confirmada', extra: _confirmedBooking()),
     BookingConfirmedScreen,
   ),
-  _Resultado(
+  _Result(
     'sede creada',
-    (t) => _adminEn(t, '/admin/sedes'),
-    (t) => _ir(
+    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _go(
       t,
       '/admin/sedes/creada',
       extra: Venue.fromJson(jsonDecode(venueMoronJson)),
     ),
     VenueCreatedScreen,
   ),
-  _Resultado(
+  _Result(
     'espacio creado',
-    (t) => _adminEn(t, '/admin/espacios'),
-    (t) => _ir(
+    (t) => _adminAt(t, '/admin/espacios'),
+    (t) => _go(
       t,
       '/admin/espacios/creado',
       extra: Space.fromJson(jsonDecode(spaceF5Json)),
@@ -469,246 +464,240 @@ final _resultados = <_Resultado>[
   ),
 ];
 
-Finder get _panelDeFiltros =>
+Finder get _filterPanel =>
     find.byWidgetPredicate((w) => w.runtimeType.toString() == '_FiltersPanel');
 
 void main() {
   setUpAll(loadFonts);
 
-  testWidgets('cada raíz de pestaña aparece en el primer cuadro @RED-04-S1', (
+  testWidgets('every tab root appears on the first frame @RED-04-S1', (
     tester,
   ) async {
-    for (final raiz in _raices) {
-      for (final empujando in [false, true]) {
-        final como = empujando ? 'push' : 'go';
-        await raiz.mountScreen(tester);
-        if (empujando) {
-          await _empujar(tester, raiz.ruta);
+    for (final root in _roots) {
+      for (final pushing in [false, true]) {
+        final how = pushing ? 'push' : 'go';
+        await root.mountScreen(tester);
+        if (pushing) {
+          await _push(tester, root.route);
         } else {
-          await _ir(tester, raiz.ruta);
+          await _go(tester, root.route);
         }
-        await _arrancar(tester);
-        await _quieta(tester, raiz.pantalla, motivo: '${raiz.nombre} ($como)');
-        await _reiniciar(tester);
+        await _start(tester);
+        await _still(tester, root.screen, reason: '${root.name} ($how)');
+        await _restart(tester);
       }
     }
   });
 
-  testWidgets(
-    'cada pantalla hija entra desde la derecha en 320 ms @RED-04-S2',
-    (tester) async {
-      for (final hija in _hijas) {
-        await hija.mountScreen(tester);
-        await hija.abrir(tester);
-        await _entraDesdeLaDerecha(tester, hija.pantalla, motivo: hija.nombre);
-        await _reiniciar(tester);
-      }
-    },
-  );
+  testWidgets('every child screen enters from the right in 320 ms @RED-04-S2', (
+    tester,
+  ) async {
+    for (final child in _children) {
+      await child.mountScreen(tester);
+      await child.open(tester);
+      await _entersFromRight(tester, child.screen, reason: child.name);
+      await _restart(tester);
+    }
+  });
 
   testWidgets(
-    'volver con el atrás de la barra o del sistema sale hacia la derecha en 280 ms @RED-04-S3',
+    'going back with the back of the bar or of the system leaves to the right in 280 ms @RED-04-S3',
     (tester) async {
-      for (final hija in _hijas) {
-        await hija.mountScreen(tester);
-        await hija.abrir(tester);
+      for (final child in _children) {
+        await child.mountScreen(tester);
+        await child.open(tester);
         await tester.pumpAndSettle();
         await tester.binding.handlePopRoute();
-        await _saleHaciaLaDerecha(
+        await _leavesToRight(
           tester,
-          hija.pantalla,
-          motivo: '${hija.nombre} (atrás del sistema)',
+          child.screen,
+          reason: '${child.name} (atrás del sistema)',
         );
-        await _reiniciar(tester);
+        await _restart(tester);
 
-        if (!hija.conBarra) continue;
-        await hija.mountScreen(tester);
-        await hija.abrir(tester);
+        if (!child.withBar) continue;
+        await child.mountScreen(tester);
+        await child.open(tester);
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Volver'));
-        await _saleHaciaLaDerecha(
+        await _leavesToRight(
           tester,
-          hija.pantalla,
-          motivo: '${hija.nombre} (atrás de la barra)',
+          child.screen,
+          reason: '${child.name} (atrás de la barra)',
         );
-        await _reiniciar(tester);
+        await _restart(tester);
       }
     },
   );
 
-  testWidgets(
-    'cada pantalla de resultado aparece con un fundido de 250 ms @RED-04-S4',
-    (tester) async {
-      for (final resultado in _resultados) {
-        await resultado.mountScreen(tester);
-        await resultado.abrir(tester);
-        await _arrancar(tester);
-        expect(
-          find.byType(resultado.pantalla),
-          findsOneWidget,
-          reason: resultado.nombre,
-        );
-        expect(
-          find.ancestor(
-            of: find.byType(resultado.pantalla),
-            matching: find.byType(SlideTransition),
-          ),
-          findsNothing,
-          reason: resultado.nombre,
-        );
-        await tester.pump(_ms(125));
-        final aMitad = _opacidadesDe(tester, resultado.pantalla);
-        expect(
-          aMitad.any((o) => o > 0 && o < 1),
-          isTrue,
-          reason: '${resultado.nombre} a los 125 ms: $aMitad',
-        );
-        await tester.pump(_ms(125));
-        expect(
-          _opacidadesDe(tester, resultado.pantalla),
-          everyElement(1),
-          reason: '${resultado.nombre} a los 250 ms',
-        );
-        await _reiniciar(tester);
-      }
-    },
-  );
+  testWidgets('every result screen appears with a 250 ms fade @RED-04-S4', (
+    tester,
+  ) async {
+    for (final result in _results) {
+      await result.mountScreen(tester);
+      await result.open(tester);
+      await _start(tester);
+      expect(find.byType(result.screen), findsOneWidget, reason: result.name);
+      expect(
+        find.ancestor(
+          of: find.byType(result.screen),
+          matching: find.byType(SlideTransition),
+        ),
+        findsNothing,
+        reason: result.name,
+      );
+      await tester.pump(_ms(125));
+      final halfway = _opacitiesOf(tester, result.screen);
+      expect(
+        halfway.any((o) => o > 0 && o < 1),
+        isTrue,
+        reason: '${result.name} at 125 ms: $halfway',
+      );
+      await tester.pump(_ms(125));
+      expect(
+        _opacitiesOf(tester, result.screen),
+        everyElement(1),
+        reason: '${result.name} at 250 ms',
+      );
+      await _restart(tester);
+    }
+  });
 
   testWidgets(
-    'con reducir movimiento las transiciones terminan en el primer cuadro @RED-04-S14',
+    'with reduce motion the transitions end on the first frame @RED-04-S14',
     (tester) async {
-      _reducirMovimiento(tester);
+      _reduceMotion(tester);
 
-      // Avanzar: la hija ya está en su lugar.
-      await _usuarioEn(tester, '/sedes');
-      await _ir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
-      await _arrancar(tester);
-      _sinTransicionDeEmpuje(tester, VenueScreen);
+      // Forward: the child is already in place.
+      await _userAt(tester, '/sedes');
+      await _go(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _start(tester);
+      _noPushTransition(tester, VenueScreen);
 
-      // Volver: la hija ya no está.
+      // Back: the child is gone.
       await tester.binding.handlePopRoute();
-      await _arrancar(tester);
+      await _start(tester);
       await tester.pump();
       expect(find.byType(VenueScreen), findsNothing);
-      await _reiniciar(tester);
+      await _restart(tester);
 
-      // Resultado: el fundido ya terminó.
-      await _usuarioEn(tester, '/reservas');
-      await _ir(tester, '/reservas/confirmada', extra: _reservaConfirmada());
-      await _arrancar(tester);
+      // Result: the fade has finished.
+      await _userAt(tester, '/reservas');
+      await _go(tester, '/reservas/confirmada', extra: _confirmedBooking());
+      await _start(tester);
       expect(find.byType(BookingConfirmedScreen), findsOneWidget);
-      expect(_opacidadesDe(tester, BookingConfirmedScreen), everyElement(1));
-      await _reiniciar(tester);
+      expect(_opacitiesOf(tester, BookingConfirmedScreen), everyElement(1));
+      await _restart(tester);
 
-      // Raíz de pestaña.
-      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
-      await _ir(tester, '/inicio');
-      await _arrancar(tester);
-      await _quieta(tester, HomeScreen);
-      await _reiniciar(tester);
+      // Tab root.
+      await _userAt(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _go(tester, '/inicio');
+      await _start(tester);
+      await _still(tester, HomeScreen);
+      await _restart(tester);
 
-      // El panel de filtros del admin.
-      await _adminEn(tester, '/admin');
+      // The admin filter panel.
+      await _adminAt(tester, '/admin');
       await tester.tap(find.text('Filtros'));
-      await _hastaQue(tester, () => _panelDeFiltros.evaluate().isNotEmpty);
-      expect(_arriba(tester, _panelDeFiltros), 0);
+      await _until(tester, () => _filterPanel.evaluate().isNotEmpty);
+      expect(_top(tester, _filterPanel), 0);
     },
   );
 
   testWidgets(
-    'tocar la pestaña activa dentro de una sede o «VER TODAS» y «Ver sedes» del inicio llegan sin animación @RED-04-ASM-05',
+    'tapping the active tab inside a venue or «VER TODAS» and «Ver sedes» on home arrive without animation @RED-04-ASM-05',
     (tester) async {
-      // La pestaña activa, desde adentro de una sede, lleva al listado.
-      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
-      await _tocar(
+      // The active tab, from inside a venue, leads to the listing.
+      await _userAt(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _tap(
         tester,
         find.descendant(
           of: find.byType(BottomBar),
           matching: find.text('SEDES'),
         ),
       );
-      await _arrancar(tester);
-      await _quieta(tester, VenuesScreen, motivo: 'la pestaña activa');
-      // La sede que se deja sale con su push inverso.
+      await _start(tester);
+      await _still(tester, VenuesScreen, reason: 'la pestaña activa');
+      // The venue that is left leaves with its reverse push.
       await tester.pump(_ms(280));
       expect(find.byType(VenueScreen), findsNothing);
-      await _reiniciar(tester);
+      await _restart(tester);
 
-      await _usuarioEn(tester, '/inicio');
-      await _tocar(tester, find.text('VER TODAS →'));
-      await _arrancar(tester);
-      await _quieta(tester, MyBookingsScreen, motivo: 'VER TODAS');
+      await _userAt(tester, '/inicio');
+      await _tap(tester, find.text('VER TODAS →'));
+      await _start(tester);
+      await _still(tester, MyBookingsScreen, reason: 'VER TODAS');
       expect(find.byType(HomeScreen), findsNothing);
-      await _reiniciar(tester);
+      await _restart(tester);
 
-      await _usuarioEn(tester, '/inicio');
-      await _tocar(tester, find.text('Ver sedes'));
-      await _arrancar(tester);
-      await _quieta(tester, VenuesScreen, motivo: 'Ver sedes');
+      await _userAt(tester, '/inicio');
+      await _tap(tester, find.text('Ver sedes'));
+      await _start(tester);
+      await _still(tester, VenuesScreen, reason: 'Ver sedes');
       expect(find.byType(HomeScreen), findsNothing);
     },
   );
 
-  testWidgets('cerrar sesión muestra el login sin animación @RED-04-ASM-06', (
+  testWidgets('signing out shows the login without animation @RED-04-ASM-06', (
     tester,
   ) async {
-    await _usuarioEn(tester, '/inicio');
-    await _tocarYEsperar(tester, find.byType(AccountButton));
-    await _tocar(tester, find.text('Cerrar sesión'));
+    await _userAt(tester, '/inicio');
+    await _tapAndWait(tester, find.byType(AccountButton));
+    await _tap(tester, find.text('Cerrar sesión'));
     for (var i = 0; i < 5 && find.byType(LoginScreen).evaluate().isEmpty; i++) {
       await tester.pump();
     }
-    await _quieta(tester, LoginScreen, motivo: 'cerrar sesión');
-    await _reiniciar(tester);
+    await _still(tester, LoginScreen, reason: 'cerrar sesión');
+    await _restart(tester);
 
-    // Volver de recuperar la contraseña al login.
-    await _usuarioEn(tester, '/recuperar-contrasena');
-    await _ir(tester, '/');
-    await _arrancar(tester);
-    await _quieta(tester, LoginScreen, motivo: 'recuperar → login');
+    // Going back from password recovery to the login.
+    await _userAt(tester, '/recuperar-contrasena');
+    await _go(tester, '/');
+    await _start(tester);
+    await _still(tester, LoginScreen, reason: 'recuperar → login');
   });
 
   testWidgets(
-    'el panel de filtros del admin sube desde abajo en 450 ms @RED-04-ASM-09',
+    'the admin filter panel rises from the bottom in 450 ms @RED-04-ASM-09',
     (tester) async {
-      await _adminEn(tester, '/admin');
+      await _adminAt(tester, '/admin');
       await tester.tap(find.text('Filtros'));
-      await _hastaQue(tester, () => _panelDeFiltros.evaluate().isNotEmpty);
+      await _until(tester, () => _filterPanel.evaluate().isNotEmpty);
 
-      // Entra desde abajo del todo.
-      expect(_arriba(tester, _panelDeFiltros), closeTo(_alto, 1));
+      // Enters from the very bottom.
+      expect(_top(tester, _filterPanel), closeTo(_height, 1));
       await tester.pump(_ms(225));
-      final aMitad = _arriba(tester, _panelDeFiltros);
-      expect(aMitad, greaterThan(0));
-      expect(aMitad, lessThan(_alto));
+      final halfway = _top(tester, _filterPanel);
+      expect(halfway, greaterThan(0));
+      expect(halfway, lessThan(_height));
       await tester.pump(_ms(225));
-      expect(_arriba(tester, _panelDeFiltros), 0);
+      expect(_top(tester, _filterPanel), 0);
       await tester.pumpAndSettle();
 
-      // Y sale hacia abajo.
+      // And leaves downward.
       await tester.tap(find.byTooltip('Cerrar'));
-      await _arrancar(tester);
+      await _start(tester);
       await tester.pump(_ms(100));
-      final saliendo = _arriba(tester, _panelDeFiltros);
-      expect(saliendo, greaterThan(0));
-      expect(saliendo, lessThan(_alto));
+      final leaving = _top(tester, _filterPanel);
+      expect(leaving, greaterThan(0));
+      expect(leaving, lessThan(_height));
       await tester.pump(_ms(450));
       await tester.pump();
-      expect(_panelDeFiltros, findsNothing);
+      expect(_filterPanel, findsNothing);
     },
   );
 }
 
-/// Con reducir movimiento la hija ya está en su lugar, sin deslizarse.
-void _sinTransicionDeEmpuje(WidgetTester tester, Type pantalla) {
-  expect(find.byType(pantalla), findsOneWidget);
-  expect(_izquierda(tester, pantalla), 0);
+/// With reduce motion the child is already in place, without sliding.
+void _noPushTransition(WidgetTester tester, Type screen) {
+  expect(find.byType(screen), findsOneWidget);
+  expect(_left(tester, screen), 0);
 }
 
-/// Pasa cuadros sin avanzar el reloj hasta que se cumple [condicion].
-Future<void> _hastaQue(WidgetTester tester, bool Function() condicion) async {
-  for (var i = 0; i < 20 && !condicion(); i++) {
+/// Pumps frames without advancing the clock until [condition] holds.
+Future<void> _until(WidgetTester tester, bool Function() condition) async {
+  for (var i = 0; i < 20 && !condition(); i++) {
     await tester.pump();
   }
-  expect(condicion(), isTrue);
+  expect(condition(), isTrue);
 }

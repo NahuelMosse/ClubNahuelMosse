@@ -156,7 +156,7 @@ void main() {
   );
 
   test(
-    'the outside-hours notice agrees in singular and in plural (termina/terminan, cae/caen, se mantiene/se mantienen and their English forms) @ENG-19-ASM-06',
+    'the outside-hours notice agrees in singular and in plural («termina»/«terminan», «cae»/«caen», «se mantiene»/«se mantienen» and their English forms) @ENG-19-ASM-06',
     () {
       String message(String language, int count, List<OutsideReason> reasons) =>
           outsideHoursMessage(

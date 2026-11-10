@@ -10,7 +10,7 @@ import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  const espacios =
+  const spaces =
       '[{"id": "00000000-0000-7000-8000-000000000009", "name": "Moron_Rivadavia_19850_Futbol_F5_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
       '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 1, '
       '"covered": false, "lit": true, "price_per_hour": 38000}, '
@@ -18,80 +18,79 @@ void main() {
       '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
       '"covered": true, "lit": true, "price_per_hour": 38000}]';
 
-  Future<List<http.Request>> abrir(
+  Future<List<http.Request>> open(
     WidgetTester tester, {
-    Map<String, (int, String)> cambios = const {},
+    Map<String, (int, String)> overrides = const {},
   }) async {
-    final pedidos = <http.Request>[];
+    final requests = <http.Request>[];
     await mountUser(
       tester,
       start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRoutes({
-        ...venueRoutes(spaces: espacios),
+        ...venueRoutes(spaces: spaces),
         'GET /spaces/00000000-0000-7000-8000-000000000011/slots': (
           200,
           gridJson(taken: {18}),
         ),
-        ...cambios,
-      }, requests: pedidos),
+        ...overrides,
+      }, requests: requests),
     );
-    return pedidos;
+    return requests;
   }
 
-  bool habilitado(WidgetTester tester, String etiqueta) => tester
-      .getSemantics(find.bySemanticsLabel(etiqueta))
+  bool enabled(WidgetTester tester, String label) => tester
+      .getSemantics(find.bySemanticsLabel(label))
       .flagsCollection
       .isEnabled;
 
-  bool elegido(WidgetTester tester, String etiqueta) => tester
-      .getSemantics(find.bySemanticsLabel(etiqueta))
+  bool chosen(WidgetTester tester, String label) => tester
+      .getSemantics(find.bySemanticsLabel(label))
       .flagsCollection
       .isSelected;
 
-  Future<void> tocar(WidgetTester tester, String etiqueta) async {
-    await tester.ensureVisible(find.bySemanticsLabel(etiqueta));
+  Future<void> tapLabel(WidgetTester tester, String label) async {
+    await tester.ensureVisible(find.bySemanticsLabel(label));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel(etiqueta));
+    await tester.tap(find.bySemanticsLabel(label));
     await tester.pumpAndSettle();
   }
 
-  testWidgets(
-    'muestra la grilla del día con las ocupadas atenuadas y la nota',
-    (tester) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(tester);
-
-      expect(elegido(tester, 'Jueves 12'), isTrue);
-      expect(find.bySemanticsLabel('Miércoles 18'), findsOneWidget);
-      expect(habilitado(tester, '08:00 – 09:00'), isTrue);
-      expect(habilitado(tester, '09:00 – 10:00'), isFalse);
-      expect(
-        find.text('Algunos horarios ya están ocupados · 6 no disponibles'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Horas completas, de 1 a 4 h. La sede cierra a las 23:00.'),
-        findsOneWidget,
-      );
-      expect(find.text('Sin horario elegido'), findsOneWidget);
-      expect(find.text('Jue 12 de noviembre'), findsOneWidget);
-      expect(habilitado(tester, 'CONTINUAR'), isFalse);
-      semantica.dispose();
-    },
-  );
-
-  testWidgets('elegir una franja completa el resumen y habilita continuar', (
+  testWidgets('shows the day grid with the taken slots dimmed and the note', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await abrir(tester);
+    final semantics = tester.ensureSemantics();
+    await open(tester);
 
-    await tocar(tester, '18:00 – 19:00');
+    expect(chosen(tester, 'Jueves 12'), isTrue);
+    expect(find.bySemanticsLabel('Miércoles 18'), findsOneWidget);
+    expect(enabled(tester, '08:00 – 09:00'), isTrue);
+    expect(enabled(tester, '09:00 – 10:00'), isFalse);
+    expect(
+      find.text('Algunos horarios ya están ocupados · 6 no disponibles'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Horas completas, de 1 a 4 h. La sede cierra a las 23:00.'),
+      findsOneWidget,
+    );
+    expect(find.text('Sin horario elegido'), findsOneWidget);
+    expect(find.text('Jue 12 de noviembre'), findsOneWidget);
+    expect(enabled(tester, 'CONTINUAR'), isFalse);
+    semantics.dispose();
+  });
 
-    expect(elegido(tester, '18:00 – 19:00'), isTrue);
+  testWidgets('choosing a slot completes the summary and enables continue', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+
+    await tapLabel(tester, '18:00 – 19:00');
+
+    expect(chosen(tester, '18:00 – 19:00'), isTrue);
     expect(find.textContaining('38.000 × 1'), findsOneWidget);
-    expect(habilitado(tester, 'CONTINUAR'), isTrue);
+    expect(enabled(tester, 'CONTINUAR'), isTrue);
 
     await tester.tap(find.text('CONTINUAR'));
     await tester.pumpAndSettle();
@@ -103,49 +102,49 @@ void main() {
     await tester.tap(find.text('CANCELAR'));
     await tester.pumpAndSettle();
     expect(find.text('SELECCIONÁ CANCHA'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
   testWidgets(
-    'cambiar de cancha pide su grilla y quita la franja que ya no está',
+    'switching court requests its grid and drops the slot that is no longer there',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
-      await tocar(tester, '18:00 – 19:00');
+      final semantics = tester.ensureSemantics();
+      final requests = await open(tester);
+      await tapLabel(tester, '18:00 – 19:00');
 
-      await tocar(tester, 'Cancha 2, Techada');
+      await tapLabel(tester, 'Cancha 2, Techada');
 
       expect(
-        pedidos.last.url.path,
+        requests.last.url.path,
         '/spaces/00000000-0000-7000-8000-000000000011/slots',
       );
-      expect(elegido(tester, 'Cancha 2, Techada'), isTrue);
-      expect(habilitado(tester, '18:00 – 19:00'), isFalse);
+      expect(chosen(tester, 'Cancha 2, Techada'), isTrue);
+      expect(enabled(tester, '18:00 – 19:00'), isFalse);
       expect(find.text('Sin horario elegido'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('la fecha y la duración van en la consulta', (tester) async {
-    final semantica = tester.ensureSemantics();
-    final pedidos = await abrir(tester);
+  testWidgets('the date and the duration go in the query', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final requests = await open(tester);
 
-    await tocar(tester, 'Viernes 13');
-    expect(pedidos.last.url.queryParameters['date'], '2026-11-13');
+    await tapLabel(tester, 'Viernes 13');
+    expect(requests.last.url.queryParameters['date'], '2026-11-13');
 
-    await tocar(tester, 'Una hora más');
-    expect(pedidos.last.url.queryParameters['hours'], '2');
+    await tapLabel(tester, 'Una hora más');
+    expect(requests.last.url.queryParameters['hours'], '2');
     expect(find.text('2 horas'), findsOneWidget);
-    expect(habilitado(tester, 'Una hora menos'), isTrue);
-    semantica.dispose();
+    expect(enabled(tester, 'Una hora menos'), isTrue);
+    semantics.dispose();
   });
 
-  testWidgets('la sede cerrada ese día muestra el estado vacío', (
+  testWidgets('the venue closed that day shows the empty state', (
     tester,
   ) async {
-    await abrir(
+    await open(
       tester,
-      cambios: {
+      overrides: {
         'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           200,
           gridJson(opens: false),
@@ -160,12 +159,12 @@ void main() {
     );
   });
 
-  testWidgets('sin franjas libres sugiere otra fecha u otra cancha', (
+  testWidgets('with no free slots it suggests another date or another court', (
     tester,
   ) async {
-    await abrir(
+    await open(
       tester,
-      cambios: {
+      overrides: {
         'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           200,
           gridJson(taken: {for (var h = 8; h < 23; h++) h}),
@@ -180,12 +179,12 @@ void main() {
     );
   });
 
-  testWidgets('el servidor falla: el aviso y después REINTENTAR sin horarios', (
+  testWidgets('the server fails: the notice and then RETRY with no slots', (
     tester,
   ) async {
-    await abrir(
+    await open(
       tester,
-      cambios: {
+      overrides: {
         'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (500, '{}'),
       },
     );
@@ -197,10 +196,12 @@ void main() {
     expect(find.text('08:00 – 09:00'), findsNothing);
   });
 
-  testWidgets('una cancha que ya no está vuelve a la sede', (tester) async {
-    await abrir(
+  testWidgets('a court that no longer exists returns to the venue', (
+    tester,
+  ) async {
+    await open(
       tester,
-      cambios: {
+      overrides: {
         'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           404,
           '{"errors": {"space_id": "Esta cancha ya no está disponible"}}',
@@ -215,66 +216,66 @@ void main() {
     expect(find.text('SELECCIONÁ CANCHA'), findsNothing);
   });
 
-  testWidgets('entrar a confirmar sin elegir vuelve a los horarios', (
+  testWidgets('entering the confirmation without choosing returns to the slots', (
     tester,
   ) async {
     await mountUser(
       tester,
       start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009/reservar',
-      api: apiRoutes(venueRoutes(spaces: espacios)),
+      api: apiRoutes(venueRoutes(spaces: spaces)),
     );
 
     expect(find.text('SELECCIONÁ CANCHA'), findsOneWidget);
   });
 
   testWidgets(
-    'volver de la confirmación deja la cancha, la duración y la franja',
+    'going back from the confirmation keeps the court, the duration and the slot',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
-      await tocar(tester, 'Cancha 2, Techada');
-      await tocar(tester, 'Una hora más');
-      await tocar(tester, '10:00 – 11:00');
+      final semantics = tester.ensureSemantics();
+      final requests = await open(tester);
+      await tapLabel(tester, 'Cancha 2, Techada');
+      await tapLabel(tester, 'Una hora más');
+      await tapLabel(tester, '10:00 – 11:00');
       await tester.tap(find.text('CONTINUAR'));
       await tester.pumpAndSettle();
       expect(find.text('Cancha 2 · Techada'), findsOneWidget);
-      final antes = pedidos.length;
+      final before = requests.length;
 
       await tester.tap(find.text('CANCELAR'));
       await tester.pumpAndSettle();
 
-      expect(pedidos.length, antes);
-      expect(elegido(tester, 'Cancha 2, Techada'), isTrue);
+      expect(requests.length, before);
+      expect(chosen(tester, 'Cancha 2, Techada'), isTrue);
       expect(find.text('2 horas'), findsOneWidget);
-      expect(elegido(tester, '10:00 – 11:00'), isTrue);
-      semantica.dispose();
+      expect(chosen(tester, '10:00 – 11:00'), isTrue);
+      semantics.dispose();
     },
   );
 
-  testWidgets('si el día elegido ya pasó, vuelve a consultar el de hoy', (
+  testWidgets('if the chosen day has already passed, it queries today again', (
     tester,
   ) async {
-    final pedidos = <http.Request>[];
+    final requests = <http.Request>[];
     await mountUser(
       tester,
       start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((pedido) async {
-          pedidos.add(pedido);
-          final rutas = venueRoutes(spaces: espacios);
-          final vencida =
-              pedido.url.path ==
+        cliente: MockClient((request) async {
+          requests.add(request);
+          final routes = venueRoutes(spaces: spaces);
+          final expired =
+              request.url.path ==
                   '/spaces/00000000-0000-7000-8000-000000000009/slots' &&
-              pedido.url.queryParameters.containsKey('fecha');
-          final (codigo, cuerpo) = vencida
+              request.url.queryParameters.containsKey('fecha');
+          final (status, body) = expired
               ? (422, '{"errors": {"date": "Elegí un día de los próximos 7"}}')
-              : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+              : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
           return http.Response.bytes(
-            utf8.encode(cuerpo),
-            codigo,
+            utf8.encode(body),
+            status,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
@@ -285,12 +286,12 @@ void main() {
     await tester.tap(find.text('13'));
     await tester.pumpAndSettle();
 
-    expect(pedidos.last.url.queryParameters.containsKey('fecha'), isFalse);
+    expect(requests.last.url.queryParameters.containsKey('fecha'), isFalse);
     expect(find.text('Error del servidor'), findsNothing);
     expect(find.text('08:00 – 09:00'), findsOneWidget);
   });
 
-  testWidgets('con el texto al 200 % en un teléfono chico no se corta nada', (
+  testWidgets('with text at 200 % on a small phone nothing is cut off', (
     tester,
   ) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -300,7 +301,7 @@ void main() {
       size: const Size(360, 800),
       start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      api: apiRoutes(venueRoutes(spaces: espacios)),
+      api: apiRoutes(venueRoutes(spaces: spaces)),
     );
 
     expect(tester.takeException(), isNull);

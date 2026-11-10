@@ -14,48 +14,48 @@ import 'support/mount.dart';
 void main() {
   setUpAll(loadFonts);
 
-  late List<http.Request> pedidos;
+  late List<http.Request> requests;
 
-  /// Monta [pantalla] dentro de rutas mínimas, para ver adónde lleva cada botón.
-  Future<void> montarEnRutas(WidgetTester tester, Widget pantalla) async {
-    final rutas = GoRouter(
+  /// Mounts [screen] inside minimal routes, to see where each button leads.
+  Future<void> mountInRoutes(WidgetTester tester, Widget screen) async {
+    final routes = GoRouter(
       initialLocation: '/pantalla',
       routes: [
         GoRoute(path: '/', builder: (_, _) => const Text('LOGIN')),
-        GoRoute(path: '/pantalla', builder: (_, _) => pantalla),
+        GoRoute(path: '/pantalla', builder: (_, _) => screen),
         GoRoute(
           path: '/recuperar-contrasena',
           builder: (_, _) => const Text('PEDIR'),
         ),
       ],
     );
-    addTearDown(rutas.dispose);
+    addTearDown(routes.dispose);
     await tester.pumpWidget(
-      MaterialApp.router(theme: darkTheme, routerConfig: rutas),
+      MaterialApp.router(theme: darkTheme, routerConfig: routes),
     );
     await tester.pumpAndSettle();
   }
 
-  PasswordRecovery recuperacion(Map<String, (int, String)> respuestas) {
-    pedidos = [];
-    return PasswordRecovery(apiRoutes(respuestas, requests: pedidos));
+  PasswordRecovery recoveryWith(Map<String, (int, String)> responses) {
+    requests = [];
+    return PasswordRecovery(apiRoutes(responses, requests: requests));
   }
 
-  bool habilitado(WidgetTester tester, String boton) =>
+  bool isEnabled(WidgetTester tester, String button) =>
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, boton))
+          .widget<FilledButton>(find.widgetWithText(FilledButton, button))
           .onPressed !=
       null;
 
-  group('pedir el enlace', () {
+  group('request the link', () {
     testWidgets(
-      'con un correo mal escrito no deja enviar y lo marca al salir',
+      'a misspelled email cannot be sent and is flagged on leaving the field',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await montarEnRutas(
+        final semantics = tester.ensureSemantics();
+        await mountInRoutes(
           tester,
           ForgotPasswordScreen(
-            recovery: recuperacion({'POST /password-recovery': (202, '')}),
+            recovery: recoveryWith({'POST /password-recovery': (202, '')}),
           ),
         );
         await tester.enterText(
@@ -67,20 +67,20 @@ void main() {
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
         expect(find.text('Revisá el formato del correo'), findsOneWidget);
-        expect(habilitado(tester, 'ENVIAR ENLACE'), isFalse);
-        expect(pedidos, isEmpty);
-        semantica.dispose();
+        expect(isEnabled(tester, 'ENVIAR ENLACE'), isFalse);
+        expect(requests, isEmpty);
+        semantics.dispose();
       },
     );
 
-    testWidgets('envía el correo normalizado, muestra el aviso y reenvía', (
+    testWidgets('sends the normalized email, shows the notice and resends', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
         ForgotPasswordScreen(
-          recovery: recuperacion({'POST /password-recovery': (202, '')}),
+          recovery: recoveryWith({'POST /password-recovery': (202, '')}),
         ),
       );
       await tester.enterText(
@@ -93,26 +93,26 @@ void main() {
 
       expect(find.text('Revisá tu correo'), findsOneWidget);
       expect(find.text(linkSentNotice), findsOneWidget);
-      expect(pedidos.single.body, '{"email":"nahuel@correo.com"}');
+      expect(requests.single.body, '{"email":"nahuel@correo.com"}');
 
       await tester.tap(find.text('Reenviar el correo'));
       await tester.pumpAndSettle();
-      expect(pedidos, hasLength(2));
+      expect(requests, hasLength(2));
 
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
       expect(find.text('LOGIN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('si el servidor falla no muestra el aviso de enviado', (
+    testWidgets('if the server fails it does not show the sent notice', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
         ForgotPasswordScreen(
-          recovery: recuperacion({'POST /password-recovery': (500, '')}),
+          recovery: recoveryWith({'POST /password-recovery': (500, '')}),
         ),
       );
       await tester.enterText(
@@ -124,57 +124,62 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Error del servidor'), findsOneWidget);
       expect(find.text('Revisá tu correo'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
   });
 
-  group('crear la contraseña nueva', () {
-    Widget pantalla(Map<String, (int, String)> respuestas) => NewPasswordScreen(
-      recovery: recuperacion(respuestas),
-      session: FakeSession(null),
-      code: 'abc',
-    );
+  group('create the new password', () {
+    Widget screenWith(Map<String, (int, String)> responses) =>
+        NewPasswordScreen(
+          recovery: recoveryWith(responses),
+          session: FakeSession(null),
+          code: 'abc',
+        );
 
-    testWidgets('un enlace que ya no sirve lleva a pedir otro', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+    testWidgets('a link that no longer works leads to requesting another', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
-        pantalla({'POST /password-recovery/check': (410, '')}),
+        screenWith({'POST /password-recovery/check': (410, '')}),
       );
       expect(find.text('El enlace no es válido'), findsOneWidget);
       await tester.tap(find.text('PEDIR UN ENLACE NUEVO'));
       await tester.pumpAndSettle();
       expect(find.text('PEDIR'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin código ni siquiera consulta a la API', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+    testWidgets('without a code it does not even query the API', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
         NewPasswordScreen(
-          recovery: recuperacion({}),
+          recovery: recoveryWith({}),
           session: FakeSession(null),
           code: '',
         ),
       );
       expect(find.text('El enlace no es válido'), findsOneWidget);
-      expect(pedidos, isEmpty);
-      semantica.dispose();
+      expect(requests, isEmpty);
+      semantics.dispose();
     });
 
-    testWidgets('guarda con un enlace vigente y vuelve al login', (
+    testWidgets('saves with a valid link and returns to the login', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
-        pantalla({
+        screenWith({
           'POST /password-recovery/check': (204, ''),
           'PUT /password-recovery': (204, ''),
         }),
       );
-      expect(habilitado(tester, 'GUARDAR CONTRASEÑA'), isFalse);
+      expect(isEnabled(tester, 'GUARDAR CONTRASEÑA'), isFalse);
       await tester.enterText(
         find.bySemanticsLabel('Contraseña nueva'),
         'ClubNahuel2',
@@ -188,20 +193,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Contraseña actualizada'), findsOneWidget);
-      expect(pedidos.last.body, '{"code":"abc","new_password":"ClubNahuel2"}');
+      expect(requests.last.body, '{"code":"abc","new_password":"ClubNahuel2"}');
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
       expect(find.text('LOGIN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('si el enlace se usó mientras escribía, lo avisa al guardar', (
+    testWidgets('if the link was used while typing, it says so on save', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
-        pantalla({
+        screenWith({
           'POST /password-recovery/check': (204, ''),
           'PUT /password-recovery': (410, ''),
         }),
@@ -218,14 +223,14 @@ void main() {
       await tester.tap(find.text('GUARDAR CONTRASEÑA'));
       await tester.pumpAndSettle();
       expect(find.text('El enlace no es válido'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('la repetición distinta no deja guardar', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await montarEnRutas(
+    testWidgets('a mismatched repeat does not allow saving', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mountInRoutes(
         tester,
-        pantalla({'POST /password-recovery/check': (204, '')}),
+        screenWith({'POST /password-recovery/check': (204, '')}),
       );
       await tester.enterText(
         find.bySemanticsLabel('Contraseña nueva'),
@@ -238,77 +243,77 @@ void main() {
       FocusManager.instance.primaryFocus?.unfocus();
       await tester.pumpAndSettle();
       expect(find.text('Las contraseñas no coinciden'), findsOneWidget);
-      expect(habilitado(tester, 'GUARDAR CONTRASEÑA'), isFalse);
-      semantica.dispose();
+      expect(isEnabled(tester, 'GUARDAR CONTRASEÑA'), isFalse);
+      semantics.dispose();
     });
   });
 
-  group('abrir la app desde el enlace', () {
-    Future<void> abrir(WidgetTester tester, String ruta) async {
-      await tester.binding.handlePushRoute(ruta);
+  group('open the app from the link', () {
+    Future<void> open(WidgetTester tester, String route) async {
+      await tester.binding.handlePushRoute(route);
       await tester.pumpAndSettle();
     }
 
-    testWidgets(
-      'un enlace nuevo con la pantalla abierta se vuelve a comprobar',
-      (tester) async {
-        final pedidos = <http.Request>[];
-        final api = apiRoutes({
-          'POST /password-recovery/check': (410, ''),
-        }, requests: pedidos);
-        await tester.pumpWidget(
-          App(
-            api: api,
-            session: FakeSession(null),
-            appearance: Appearance.inMemory(),
-            initialLocation: '/recuperar?codigo=viejo',
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(find.text('El enlace no es válido'), findsOneWidget);
-
-        await abrir(tester, '/recuperar?codigo=nuevo');
-        expect(pedidos.map((p) => p.body), [
-          '{"code":"viejo"}',
-          '{"code":"nuevo"}',
-        ]);
-      },
-    );
-
-    testWidgets('con la sesión abierta, al terminar la cierra y va al login', (
+    testWidgets('a new link with the screen open is checked again', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      final sesion = FakeSession(userProfile);
+      final requests = <http.Request>[];
+      final api = apiRoutes({
+        'POST /password-recovery/check': (410, ''),
+      }, requests: requests);
       await tester.pumpWidget(
         App(
-          api: apiRoutes({
-            'POST /password-recovery/check': (204, ''),
-            'PUT /password-recovery': (204, ''),
-          }),
-          session: sesion,
+          api: api,
+          session: FakeSession(null),
           appearance: Appearance.inMemory(),
-          initialLocation: '/recuperar?codigo=abc',
+          initialLocation: '/recuperar?codigo=viejo',
         ),
       );
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.bySemanticsLabel('Contraseña nueva'),
-        'ClubNahuel2',
-      );
-      await tester.enterText(
-        find.bySemanticsLabel('Repetir contraseña'),
-        'ClubNahuel2',
-      );
-      await tester.pump();
-      await tester.tap(find.text('GUARDAR CONTRASEÑA'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
-      await tester.pumpAndSettle();
+      expect(find.text('El enlace no es válido'), findsOneWidget);
 
-      expect(sesion.closes, 1);
-      expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      await open(tester, '/recuperar?codigo=nuevo');
+      expect(requests.map((p) => p.body), [
+        '{"code":"viejo"}',
+        '{"code":"nuevo"}',
+      ]);
     });
+
+    testWidgets(
+      'with the session open, finishing closes it and goes to login',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        final session = FakeSession(userProfile);
+        await tester.pumpWidget(
+          App(
+            api: apiRoutes({
+              'POST /password-recovery/check': (204, ''),
+              'PUT /password-recovery': (204, ''),
+            }),
+            session: session,
+            appearance: Appearance.inMemory(),
+            initialLocation: '/recuperar?codigo=abc',
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.bySemanticsLabel('Contraseña nueva'),
+          'ClubNahuel2',
+        );
+        await tester.enterText(
+          find.bySemanticsLabel('Repetir contraseña'),
+          'ClubNahuel2',
+        );
+        await tester.pump();
+        await tester.tap(find.text('GUARDAR CONTRASEÑA'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
+        await tester.pumpAndSettle();
+
+        expect(session.closes, 1);
+        expect(find.text('INICIAR SESIÓN'), findsOneWidget);
+        semantics.dispose();
+      },
+    );
   });
 }

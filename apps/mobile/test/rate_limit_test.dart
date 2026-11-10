@@ -12,7 +12,7 @@ void main() {
   setUpAll(loadFonts);
 
   testWidgets(
-    'la app muestra el 429 con el mensaje del servidor en su diálogo de error @REV-01-S6 @assumption:REV-01-ASM-14',
+    'the app shows the 429 with the server message in its error dialog @REV-01-S6 @assumption:REV-01-ASM-14',
     (tester) async {
       final api = ApiClient(
         'http://api.falsa',

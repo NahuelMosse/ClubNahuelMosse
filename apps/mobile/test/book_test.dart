@@ -7,50 +7,50 @@ import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  Future<List<http.Request>> hastaConfirmar(
+  Future<List<http.Request>> untilConfirm(
     WidgetTester tester, {
-    (int, String) respuesta = (201, ''),
-    Size tamano = const Size(393, 852),
+    (int, String) response = (201, ''),
+    Size size = const Size(393, 852),
   }) async {
-    final pedidos = <http.Request>[];
-    final (codigo, cuerpo) = respuesta;
+    final requests = <http.Request>[];
+    final (status, body) = response;
     await mountUser(
       tester,
       start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      size: tamano,
+      size: size,
       api: apiRoutes({
         ...venueRoutes(),
-        'POST /bookings': (codigo, cuerpo.isEmpty ? bookingJson() : cuerpo),
-      }, requests: pedidos),
+        'POST /bookings': (status, body.isEmpty ? bookingJson() : body),
+      }, requests: requests),
     );
-    final franja = find.bySemanticsLabel('18:00 – 19:00');
-    await tester.ensureVisible(franja);
+    final slot = find.bySemanticsLabel('18:00 – 19:00');
+    await tester.ensureVisible(slot);
     await tester.pumpAndSettle();
-    await tester.tap(franja);
+    await tester.tap(slot);
     await tester.pumpAndSettle();
     await tester.tap(find.text('CONTINUAR'));
     await tester.pumpAndSettle();
-    return pedidos;
+    return requests;
   }
 
-  testWidgets('confirmar manda la elección y muestra el comprobante', (
+  testWidgets('confirming sends the choice and shows the receipt', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final pedidos = await hastaConfirmar(tester);
+    final semantics = tester.ensureSemantics();
+    final requests = await untilConfirm(tester);
 
     await tester.tap(find.text('CONFIRMAR RESERVA'));
     await tester.pumpAndSettle();
 
-    final pedido = pedidos.lastWhere((p) => p.method == 'POST');
-    expect(pedido.url.path, '/bookings');
+    final request = requests.lastWhere((p) => p.method == 'POST');
+    expect(request.url.path, '/bookings');
     expect(
-      pedido.body,
+      request.body,
       contains('"space_id":"00000000-0000-7000-8000-000000000009"'),
     );
-    expect(pedido.body, contains('"start_hour":"18:00"'));
-    expect(pedido.body, contains('"hours":1'));
+    expect(request.body, contains('"start_hour":"18:00"'));
+    expect(request.body, contains('"hours":1'));
     expect(find.text('¡Reserva confirmada!'), findsOneWidget);
     expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
     expect(find.text('21:00 – 22:00 · 1 hora'), findsOneWidget);
@@ -58,15 +58,15 @@ void main() {
     await tester.tap(find.text('VER MIS RESERVAS'));
     await tester.pumpAndSettle();
     expect(find.text('Próximas'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('si el horario se ocupó, avisa y vuelve a la grilla', (
+  testWidgets('if the time slot got taken, it warns and returns to the grid', (
     tester,
   ) async {
-    final pedidos = await hastaConfirmar(
+    final requests = await untilConfirm(
       tester,
-      respuesta: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
+      response: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
     );
 
     await tester.tap(find.text('CONFIRMAR RESERVA'));
@@ -77,21 +77,21 @@ void main() {
       find.textContaining('Cancha 1 · Jue 12, 18:00 – 19:00'),
       findsOneWidget,
     );
-    final antes = pedidos.length;
+    final before = requests.length;
     await tester.tap(find.text('ELEGIR OTRO HORARIO'));
     await tester.pumpAndSettle();
     expect(find.text('HORARIO DISPONIBLE'), findsOneWidget);
     expect(find.text('Sin horario elegido'), findsOneWidget);
     expect(
-      pedidos.skip(antes).where((p) => p.url.path.endsWith('/slots')),
+      requests.skip(before).where((p) => p.url.path.endsWith('/slots')),
       isNotEmpty,
     );
   });
 
-  testWidgets('el servidor falla: el aviso y sigue en la confirmación', (
+  testWidgets('the server fails: the notice shows and it stays on confirmation', (
     tester,
   ) async {
-    await hastaConfirmar(tester, respuesta: (500, '{}'));
+    await untilConfirm(tester, response: (500, '{}'));
 
     await tester.tap(find.text('CONFIRMAR RESERVA'));
     await tester.pumpAndSettle();
@@ -102,12 +102,12 @@ void main() {
     expect(find.text('Confirmá tu reserva'), findsOneWidget);
   });
 
-  testWidgets('con el texto al 200 % la confirmación no se corta', (
+  testWidgets('with text at 200 % the confirmation is not cut off', (
     tester,
   ) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await hastaConfirmar(tester, tamano: const Size(360, 800));
+    await untilConfirm(tester, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('CONFIRMAR RESERVA'));
     await tester.pumpAndSettle();
