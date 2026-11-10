@@ -93,7 +93,7 @@ class NewSpaceForm extends ChangeNotifier {
       return null;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (_closed) return null;
@@ -131,9 +131,9 @@ class NewSpaceForm extends ChangeNotifier {
       if (_isCurrent(request)) showErrors(e.errors);
     } on SessionExpired {
       expired = true;
-    } on SinConexion catch (e) {
+    } on NoConnection catch (e) {
       _failName(request, e);
-    } on ErrorDelServidor catch (e) {
+    } on ServerError catch (e) {
       _failName(request, e);
     } finally {
       if (_isCurrent(request)) {
@@ -267,7 +267,7 @@ class NewSpaceForm extends ChangeNotifier {
       if (!_closed) showErrors(e.errors);
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (!_closed) {

@@ -37,7 +37,7 @@ class SpaceList extends StatelessWidget {
           SpaceCard(
             space: space,
             catalog: catalog,
-            onBook: () => context.go('/sedes/$venueId/canchas/${space.id}'),
+            onBook: () => context.go('/venues/$venueId/spaces/${space.id}'),
           ),
           const SizedBox(height: Spacing.s16),
         ],

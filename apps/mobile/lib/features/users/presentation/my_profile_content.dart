@@ -87,7 +87,7 @@ class MyProfileContent extends StatelessWidget {
                     child: ProfileRow(
                       icon: Icons.lock_outline_rounded,
                       text: l10n.changePasswordTitle,
-                      onTap: () => context.push('/perfil/contrasena'),
+                      onTap: () => context.push('/profile/password'),
                     ),
                   ),
                 ),

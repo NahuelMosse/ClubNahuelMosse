@@ -74,7 +74,7 @@ NotificationCenter _center(List<String> notices, {bool allowed = true}) {
   final session = FakeSession(userProfile);
   final api = ApiClient(
     'http://api.falsa',
-    cliente: MockClient((request) async {
+    client: MockClient((request) async {
       final (code, body) = switch ((request.method, request.url.path)) {
         ('GET', '/notifications') => (
           200,
@@ -243,21 +243,21 @@ void main() {
         final semantics = tester.ensureSemantics();
         final errors = <(Object, String, String, String, String)>[
           (
-            const SinConexion(),
+            const NoConnection(),
             'Connection error',
             'We could not connect. Check your internet connection and try again.',
             'RETRY',
             'Back',
           ),
           (
-            const ServidorSinRespuesta(),
+            const ServerNotResponding(),
             'Server error',
             'The server is not responding. Try again in a few minutes.',
             'OK',
             '',
           ),
           (
-            const ErrorDelServidor(500),
+            const ServerError(500),
             'Server error',
             'We could not process the operation right now. Try again later.',
             'OK',

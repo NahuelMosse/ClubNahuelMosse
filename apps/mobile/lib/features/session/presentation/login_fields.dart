@@ -67,9 +67,7 @@ class LoginFields extends StatelessWidget {
           child: TextActionButton(
             label: l10n.loginForgotPassword,
             overPhoto: true,
-            onTap: submitting
-                ? null
-                : () => context.go('/recuperar-contrasena'),
+            onTap: submitting ? null : () => context.go('/password-recovery'),
           ),
         ),
       ],

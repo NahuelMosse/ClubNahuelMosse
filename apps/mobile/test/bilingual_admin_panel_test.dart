@@ -23,7 +23,7 @@ void main() {
   Future<void> mount(
     WidgetTester tester, {
     required ApiClient api,
-    String start = '/admin/sedes',
+    String start = '/admin/venues',
   }) async {
     await tester.pumpWidget(const SizedBox());
     await mountAdmin(tester, api: api, start: start);
@@ -68,7 +68,7 @@ void main() {
 
       await mount(
         tester,
-        start: '/admin/espacios',
+        start: '/admin/spaces',
         api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('Spaces'), findsOneWidget);
@@ -78,7 +78,7 @@ void main() {
 
       await mount(
         tester,
-        start: '/admin/sedes/nueva',
+        start: '/admin/venues/new',
         api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       expect(find.text('New venue'), findsOneWidget);
@@ -91,7 +91,7 @@ void main() {
 
       await mount(
         tester,
-        start: '/admin/espacios/nuevo',
+        start: '/admin/spaces/new',
         api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('New sports space'), findsOneWidget);

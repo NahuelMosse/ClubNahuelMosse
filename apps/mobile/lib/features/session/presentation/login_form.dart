@@ -76,7 +76,7 @@ class _LoginFormState extends State<LoginForm> {
       final profile = await widget.session.signIn(email, password);
       if (!mounted) return;
       if (widget.pending.isFor(profile.email)) {
-        context.go('/reservar', extra: widget.pending.take());
+        context.go('/book', extra: widget.pending.take());
       } else {
         context.go(profile.home);
       }
@@ -88,7 +88,7 @@ class _LoginFormState extends State<LoginForm> {
           _notices++;
         });
       }
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);

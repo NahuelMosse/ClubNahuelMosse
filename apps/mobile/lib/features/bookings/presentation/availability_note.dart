@@ -4,9 +4,9 @@ import '../../../theme/tokens.dart';
 
 /// `Nota-Ocupados`: cuántos inicios de la grilla no se pueden elegir.
 class AvailabilityNote extends StatelessWidget {
-  const AvailabilityNote({super.key, required this.texto});
+  const AvailabilityNote({super.key, required this.text});
 
-  final String texto;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class AvailabilityNote extends StatelessWidget {
           const SizedBox(width: Spacing.s8),
           Expanded(
             child: Text(
-              texto,
+              text,
               style: Texts.caption.copyWith(color: p.textSecondary),
             ),
           ),

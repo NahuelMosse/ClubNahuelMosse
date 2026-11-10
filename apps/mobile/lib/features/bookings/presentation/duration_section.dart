@@ -11,30 +11,30 @@ import 'slots_section.dart';
 class DurationSection extends StatelessWidget {
   const DurationSection({
     super.key,
-    required this.horas,
-    required this.cierre,
-    required this.alCambiar,
+    required this.hours,
+    required this.closing,
+    required this.onChanged,
   });
 
-  final int horas;
+  final int hours;
 
   /// La hora de cierre de la sede, tal como se muestra.
-  final String cierre;
-  final ValueChanged<int> alCambiar;
+  final String closing;
+  final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
     return SlotsSection(
-      titulo: l.availabilityDuration,
+      title: l.availabilityDuration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DurationSelector(horas: horas, alCambiar: alCambiar),
+          DurationSelector(hours: hours, onChanged: onChanged),
           const SizedBox(height: Spacing.s8),
           Text(
-            l.availabilityDurationHint(cierre, maxHours, minHours),
+            l.availabilityDurationHint(closing, maxHours, minHours),
             style: Texts.caption.copyWith(color: p.textSecondary),
           ),
         ],

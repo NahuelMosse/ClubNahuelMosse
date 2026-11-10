@@ -39,7 +39,7 @@ void main() {
         ..unread = 0;
       final session = FakeSession(userProfile);
       final NotificationCenter center = centerOf(api, session)
-        ..location = () => '/inicio';
+        ..location = () => '/home';
       await mountScreen(
         tester,
         Stack(

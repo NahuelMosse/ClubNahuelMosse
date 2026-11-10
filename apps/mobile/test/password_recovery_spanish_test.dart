@@ -26,7 +26,7 @@ void main() {
         GoRoute(path: '/', builder: (_, _) => const Text('LOGIN')),
         GoRoute(path: '/screen', builder: (_, _) => screen),
         GoRoute(
-          path: '/recuperar-contrasena',
+          path: '/password-recovery',
           builder: (_, _) => const Text('PEDIR'),
         ),
       ],
@@ -278,13 +278,13 @@ void main() {
           api: api,
           session: FakeSession(null),
           appearance: Appearance.inMemory(),
-          initialLocation: '/recuperar?codigo=viejo',
+          initialLocation: '/recover?code=viejo',
         ),
       );
       await tester.pumpAndSettle();
       expect(find.text('El enlace no es válido'), findsOneWidget);
 
-      await open(tester, '/recuperar?codigo=nuevo');
+      await open(tester, '/recover?code=nuevo');
       expect(requests.map((p) => p.body), [
         '{"code":"viejo"}',
         '{"code":"nuevo"}',
@@ -304,7 +304,7 @@ void main() {
             }),
             session: session,
             appearance: Appearance.inMemory(),
-            initialLocation: '/recuperar?codigo=abc',
+            initialLocation: '/recover?code=abc',
           ),
         );
         await tester.pumpAndSettle();

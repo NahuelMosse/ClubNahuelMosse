@@ -739,7 +739,7 @@ Future<void> cancelUpcomingOf(
   if (token == null) throw StateError('the account $email cannot sign in');
   for (final id in await bookingNumbers(email, password: password)) {
     final r = await http.post(
-      Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas/$id/cancelar'),
+      Uri.parse('${AppConfig.fromEnvironment().apiUrl}/bookings/$id/cancelar'),
       headers: {'authorization': 'Bearer $token'},
     );
     if (r.statusCode != 200) throw StateError('cancel: ${r.statusCode}');
@@ -798,7 +798,7 @@ Future<void> cancelFromAnotherPhone(
   }
   final r = await http.post(
     Uri.parse(
-      '${AppConfig.fromEnvironment().apiUrl}/reservas/${numbers.single}/cancelar',
+      '${AppConfig.fromEnvironment().apiUrl}/bookings/${numbers.single}/cancelar',
     ),
     headers: {'authorization': 'Bearer $token'},
   );
@@ -836,7 +836,7 @@ Future<int> voidFromAdmin(
 }) async {
   final r = await http.post(
     Uri.parse(
-      '${AppConfig.fromEnvironment().apiUrl}/reservas/${booking.id}/anular',
+      '${AppConfig.fromEnvironment().apiUrl}/bookings/${booking.id}/anular',
     ),
     headers: {
       'content-type': 'application/json',

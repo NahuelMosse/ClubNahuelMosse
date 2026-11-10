@@ -10,10 +10,10 @@ String noticeRoute(NotificationKind? kind, String? bookingId) {
       kind == NotificationKind.forcedCancellation ||
       kind == NotificationKind.userCancellation;
   final parameters = [
-    if (history) 'historial=1',
-    if (bookingId != null) 'reserva=$bookingId',
+    if (history) 'history=1',
+    if (bookingId != null) 'booking=$bookingId',
   ];
-  return parameters.isEmpty ? '/reservas' : '/reservas?${parameters.join('&')}';
+  return parameters.isEmpty ? '/bookings' : '/bookings?${parameters.join('&')}';
 }
 
 /// Una entrada del centro de notificaciones.

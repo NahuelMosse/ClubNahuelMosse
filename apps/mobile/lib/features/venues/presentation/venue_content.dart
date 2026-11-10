@@ -121,7 +121,7 @@ class VenueContent extends StatelessWidget {
           CoverWithTitle(
             image: venueCover(venue.id),
             backTo: l.venueBack,
-            onBack: () => context.go('/sedes'),
+            onBack: () => context.go('/venues'),
             gap: Spacing.s40,
             overline: l
                 .venueAddressHours(venue.address, venue.closing, venue.opening)

@@ -23,11 +23,11 @@ void main() {
     final routes = venueRoutes(grid: grid);
     await mountUser(
       tester,
-      start: '/reservas',
+      start: '/bookings',
       size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           requests.add(request);
           final (code, body) = switch ((request.method, request.url.path)) {
             ('POST', '/bookings/00000000-0000-7000-8000-000000000001/modify') =>
@@ -92,7 +92,7 @@ void main() {
       expect(query.queryParameters['hours'], '1');
       expect(
         find.textContaining(
-          'Estás modificando tu reserva del Jue 12, 21:00 – 22:00',
+          'Estás modifying tu reserva del Jue 12, 21:00 – 22:00',
         ),
         findsOneWidget,
       );
@@ -161,7 +161,7 @@ void main() {
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
     await tap(tester, find.text('VER LO ACTUALIZADO'));
 
-    expect(find.textContaining('Estás modificando tu reserva'), findsOneWidget);
+    expect(find.textContaining('Estás modifying tu reserva'), findsOneWidget);
     expect(
       requests.where((p) => p.url.path.endsWith('/slots')).length,
       before + 1,
@@ -185,7 +185,7 @@ void main() {
       await tap(tester, find.text('VER LO ACTUALIZADO'));
 
       expect(find.text('Próximas'), findsOneWidget);
-      expect(find.textContaining('Estás modificando'), findsNothing);
+      expect(find.textContaining('Estás modifying'), findsNothing);
     },
   );
 

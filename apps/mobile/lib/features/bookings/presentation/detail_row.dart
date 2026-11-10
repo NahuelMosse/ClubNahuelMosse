@@ -6,32 +6,32 @@ import '../../../theme/tokens.dart';
 class DetailRow extends StatelessWidget {
   const DetailRow({
     super.key,
-    required this.dato,
-    required this.valor,
-    this.destacado = false,
-    this.codigo = false,
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+    this.code = false,
   });
 
-  final String dato;
-  final String valor;
-  final bool destacado;
+  final String label;
+  final String value;
+  final bool emphasized;
 
   /// Un código largo sin espacios (el nombre compuesto del espacio): va debajo del dato,
   /// en la fuente mono, para no partirse a mitad de palabra.
-  final bool codigo;
+  final bool code;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    if (codigo) {
+    if (code) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: Spacing.s12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(dato, style: Texts.body.copyWith(color: p.textSecondary)),
+            Text(label, style: Texts.body.copyWith(color: p.textSecondary)),
             const SizedBox(height: Spacing.s4),
-            Text(valor, style: Texts.mono.copyWith(color: p.textPrimary)),
+            Text(value, style: Texts.mono.copyWith(color: p.textPrimary)),
           ],
         ),
       );
@@ -41,14 +41,14 @@ class DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(dato, style: Texts.body.copyWith(color: p.textSecondary)),
+          Text(label, style: Texts.body.copyWith(color: p.textSecondary)),
           const SizedBox(width: Spacing.s16),
           Expanded(
             child: Text(
-              valor,
+              value,
               textAlign: TextAlign.end,
-              style: (destacado ? Texts.bodyStrong : Texts.body).copyWith(
-                color: destacado ? p.accentInk : p.textPrimary,
+              style: (emphasized ? Texts.bodyStrong : Texts.body).copyWith(
+                color: emphasized ? p.accentInk : p.textPrimary,
               ),
             ),
           ),

@@ -155,31 +155,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       );
       if (!mounted) return;
-      if (r.codigo == 201) {
-        context.go('/registro/exitoso');
+      if (r.code == 201) {
+        context.go('/register/success');
         return;
       }
-      if (r.codigo == 409 && _hadCutoff) {
+      if (r.code == 409 && _hadCutoff) {
         setState(() => _alreadyExists = true);
         return;
       }
-      final errors = fieldErrors(r.cuerpo);
-      final message = r.cuerpo['message'];
+      final errors = fieldErrors(r.body);
+      final message = r.body['message'];
       if (errors.isEmpty) {
-        failure = ErrorDelServidor(r.codigo);
+        failure = ServerError(r.code);
       } else {
         setState(() {
           for (final MapEntry(:key, :value) in errors.entries) {
             final field = RegistrationField.fromApi(key);
             if (field != null) _serverErrors[field] = value;
           }
-          _notice = r.codigo == 409 && message is String ? message : null;
+          _notice = r.code == 409 && message is String ? message : null;
         });
       }
-    } on SinConexion catch (e) {
+    } on NoConnection catch (e) {
       _hadCutoff = true;
       failure = e;
-    } on ErrorDelServidor catch (e) {
+    } on ServerError catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);

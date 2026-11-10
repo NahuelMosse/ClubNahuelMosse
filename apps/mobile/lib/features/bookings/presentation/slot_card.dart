@@ -10,15 +10,15 @@ import 'selectable_frame.dart';
 class SlotCard extends StatelessWidget {
   const SlotCard({
     super.key,
-    required this.franja,
-    required this.elegida,
-    required this.alTocar,
+    required this.slot,
+    required this.chosen,
+    required this.onTap,
     this.actual = false,
   });
 
-  final Slot franja;
-  final bool elegida;
-  final VoidCallback? alTocar;
+  final Slot slot;
+  final bool chosen;
+  final VoidCallback? onTap;
 
   /// Es el horario de la reserva que se modifica.
   final bool actual;
@@ -27,26 +27,24 @@ class SlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final tinta = elegida ? p.accentOn : p.textPrimary;
+    final ink = chosen ? p.accentOn : p.textPrimary;
     return Grow(
-      activo: elegida,
+      active: chosen,
       child: SelectableFrame(
-        etiqueta: actual
-            ? '${franja.text} ${l.availabilityCurrent}'
-            : franja.text,
-        elegido: elegida,
-        alTocar: alTocar,
-        atenuado: !franja.available,
+        label: actual ? '${slot.text} ${l.availabilityCurrent}' : slot.text,
+        selected: chosen,
+        onTap: onTap,
+        dimmed: !slot.available,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(franja.text, style: Texts.bodyStrong.copyWith(color: tinta)),
+              Text(slot.text, style: Texts.bodyStrong.copyWith(color: ink)),
               if (actual)
                 Text(
                   l.availabilityCurrent,
                   style: Texts.caption.copyWith(
-                    color: elegida ? p.accentOn : p.textSecondary,
+                    color: chosen ? p.accentOn : p.textSecondary,
                   ),
                 ),
             ],

@@ -40,64 +40,64 @@ class SpaceSearchScreen extends StatefulWidget {
   const SpaceSearchScreen({
     super.key,
     required this.venues,
-    required this.espacios,
-    required this.horarios,
-    required this.sesion,
-    this.deporte,
+    required this.spaces,
+    required this.availability,
+    required this.session,
+    this.sport,
   });
 
   final Venues venues;
-  final Spaces espacios;
-  final AvailabilityApi horarios;
-  final Session sesion;
+  final Spaces spaces;
+  final AvailabilityApi availability;
+  final Session session;
 
   /// El deporte con el que abre el formulario, el que se tocó en el inicio.
-  final String? deporte;
+  final String? sport;
 
   @override
   State<SpaceSearchScreen> createState() => _SpaceSearchScreenState();
 }
 
 /// Lo que se consultó, para el encabezado y para seguir a los horarios.
-typedef _Consulta = ({
+typedef _Query = ({
   Venue venue,
-  String deporte,
-  String? tipo,
-  DateTime fecha,
-  int desde,
-  int hasta,
+  String sport,
+  String? kind,
+  DateTime date,
+  int from,
+  int to,
 });
 
 class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
-  (List<Venue>, Catalog)? _opciones;
-  bool _falloAlCargar = false;
+  (List<Venue>, Catalog)? _options;
+  bool _loadFailed = false;
 
-  Venue? _sede;
-  String? _deporte;
-  String? _tipo;
+  Venue? _venue;
+  String? _sport;
+  String? _kind;
   final _date = TextEditingController();
 
   /// El texto de FECHA la última vez que cambió: el controlador avisa también cuando
   /// cambian el cursor o el foco, y eso no es cambiar el filtro.
-  String _textoDeFecha = '';
-  int _desde = 18;
-  int _hasta = 19;
+  String _dateText = '';
+  int _from = 18;
+  int _to = 19;
 
   /// Errores que devolvió la API para el último rango consultado.
-  Map<String, String> _rechazo = const {};
+  Map<String, String> _rejection = const {};
 
-  bool _consultando = false;
-  _Consulta? _consulta;
-  List<Space>? _resultado;
-  Object? _falla;
-  bool? _techada;
+  bool _searching = false;
+  _Query? _query;
+  List<Space>? _result;
+  Object? _searchFailure;
+  bool? _indoor;
 
   @override
   void initState() {
     super.initState();
-    _deporte = widget.deporte;
-    _date.addListener(_alEscribirFecha);
-    _cargar();
+    _sport = widget.sport;
+    _date.addListener(_onDateTyped);
+    _load();
   }
 
   @override
@@ -106,286 +106,286 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     super.dispose();
   }
 
-  Future<void> _cargar() async {
-    setState(() => _falloAlCargar = false);
-    Object? fallo;
+  Future<void> _load() async {
+    setState(() => _loadFailed = false);
+    Object? failure;
     var vencida = false;
     try {
       final venues = await widget.venues.repository.active();
-      final catalogo = await widget.espacios.repository.catalog();
-      if (mounted) setState(() => _opciones = (venues, catalogo));
+      final catalog = await widget.spaces.repository.catalog();
+      if (mounted) setState(() => _options = (venues, catalog));
       return;
     } on SessionExpired {
       vencida = true;
-    } on FalloDeRed catch (e) {
-      fallo = e;
+    } on NetworkFailure catch (e) {
+      failure = e;
     }
     if (!mounted) return;
-    setState(() => _falloAlCargar = true);
-    await avisarFalloDeEnvio(
+    setState(() => _loadFailed = true);
+    await notifySendFailure(
       context,
-      session: widget.sesion,
+      session: widget.session,
       expired: vencida,
-      error: fallo,
-      reintentar: _cargar,
+      error: failure,
+      retry: _load,
     );
   }
 
-  void _alEscribirFecha() {
-    if (_date.text == _textoDeFecha) return;
-    _textoDeFecha = _date.text;
-    _alCambiarFiltro();
+  void _onDateTyped() {
+    if (_date.text == _dateText) return;
+    _dateText = _date.text;
+    _onFilterChanged();
   }
 
-  DateTime? get _dia => switch (readDate(_date.text)) {
+  DateTime? get _day => switch (readDate(_date.text)) {
     final d? => DateTime.utc(d.year, d.month, d.day),
     null => null,
   };
 
   /// Los errores de los filtros que ya se pueden juzgar: una fecha completa que no existe,
   /// la fecha fuera de los próximos días, y las reglas del rango cuando hay sede.
-  Map<String, String> get _errores {
+  Map<String, String> get _errors {
     final l = AppLocalizations.of(context);
-    final errores = <String, String>{};
-    final dia = _dia;
+    final errors = <String, String>{};
+    final day = _day;
     if (_date.text.length >= l.spaceSearchDatePlaceholder.length &&
-        dia == null) {
-      errores['date'] = l.spaceSearchDateFormat;
+        day == null) {
+      errors['date'] = l.spaceSearchDateFormat;
     }
-    final venue = _sede;
+    final venue = _venue;
     final problems = <String, RangeProblem>{
-      if (dia != null && venue == null) ...dateErrors(day: dia, now: clubNow()),
-      if (venue != null && dia != null)
+      if (day != null && venue == null) ...dateErrors(day: day, now: clubNow()),
+      if (venue != null && day != null)
         ...rangeErrors(
           venue: venue,
-          day: dia,
-          from: _desde,
-          to: _hasta,
+          day: day,
+          from: _from,
+          to: _to,
           now: clubNow(),
         ),
     };
-    errores.addAll({
+    errors.addAll({
       for (final e in problems.entries) e.key: rangeProblemText(l, e.value),
     });
-    return {...errores, ..._rechazo};
+    return {...errors, ..._rejection};
   }
 
-  bool get _completo =>
-      _sede != null && _deporte != null && _dia != null && _errores.isEmpty;
+  bool get _isComplete =>
+      _venue != null && _sport != null && _day != null && _errors.isEmpty;
 
   /// Otro filtro ya no es la búsqueda que se ve: el resultado se quita hasta consultar de
   /// nuevo, para no mostrar canchas de otra consulta como si fueran de ésta.
-  void _alCambiarFiltro() {
+  void _onFilterChanged() {
     setState(() {
-      _rechazo = const {};
-      _consulta = null;
-      _resultado = null;
-      _falla = null;
-      _techada = null;
+      _rejection = const {};
+      _query = null;
+      _result = null;
+      _searchFailure = null;
+      _indoor = null;
     });
   }
 
-  void _cambiar(VoidCallback cambio) {
-    cambio();
-    _alCambiarFiltro();
+  void _applyChange(VoidCallback change) {
+    change();
+    _onFilterChanged();
   }
 
-  Future<void> _consultar() async {
-    final venue = _sede;
-    final deporte = _deporte;
-    final dia = _dia;
-    if (venue == null || deporte == null || dia == null) return;
-    if (!_completo || _consultando) return;
-    final consulta = (
+  Future<void> _search() async {
+    final venue = _venue;
+    final sport = _sport;
+    final day = _day;
+    if (venue == null || sport == null || day == null) return;
+    if (!_isComplete || _searching) return;
+    final query = (
       venue: venue,
-      deporte: deporte,
-      tipo: _tipo,
-      fecha: dia,
-      desde: _desde,
-      hasta: _hasta,
+      sport: sport,
+      kind: _kind,
+      date: day,
+      from: _from,
+      to: _to,
     );
     setState(() {
-      _consultando = true;
-      _resultado = null;
-      _falla = null;
-      _techada = null;
+      _searching = true;
+      _result = null;
+      _searchFailure = null;
+      _indoor = null;
     });
     var vencida = false;
     try {
-      final libres = await widget.horarios.freeSpaces(
+      final free = await widget.availability.freeSpaces(
         venueId: venue.id,
-        sport: deporte,
-        kind: _tipo,
-        date: dia,
-        from: hhmm(_desde),
-        to: hhmm(_hasta),
+        sport: sport,
+        kind: _kind,
+        date: day,
+        from: hhmm(_from),
+        to: hhmm(_to),
       );
       if (!mounted) return;
       setState(() {
-        _consultando = false;
-        _consulta = consulta;
-        _resultado = libres;
+        _searching = false;
+        _query = query;
+        _result = free;
       });
       return;
     } on RangeRejected catch (e) {
       if (!mounted) return;
       setState(() {
-        _consultando = false;
-        _rechazo = e.errors;
+        _searching = false;
+        _rejection = e.errors;
       });
       if (e.errors.containsKey('venue_id')) {
         widget.venues.notifyChange();
-        await _cargar();
+        await _load();
       }
       return;
     } on SessionExpired {
       vencida = true;
-    } on FalloDeRed catch (e) {
-      _falla = e;
+    } on NetworkFailure catch (e) {
+      _searchFailure = e;
     }
     if (!mounted) return;
     setState(() {
-      _consultando = false;
-      _consulta = consulta;
+      _searching = false;
+      _query = query;
     });
-    if (vencida) await avisarSesionVencida(context, widget.sesion);
+    if (vencida) await notifySessionExpired(context, widget.session);
   }
 
-  void _limpiar() {
+  void _clear() {
     _date.clear();
-    _cambiar(() {
-      _sede = null;
-      _deporte = null;
-      _tipo = null;
-      _desde = 18;
-      _hasta = 19;
+    _applyChange(() {
+      _venue = null;
+      _sport = null;
+      _kind = null;
+      _from = 18;
+      _to = 19;
     });
   }
 
-  Future<void> _elegirSede(List<Venue> venues) async {
-    final elegida = await pickOption<Venue>(
+  Future<void> _selectVenue(List<Venue> venues) async {
+    final chosen = await pickOption<Venue>(
       context,
       title: AppLocalizations.of(context).spaceSearchVenue,
       options: [
         for (final s in venues)
           if (s.spaceCount > 0) (s, s.name),
       ],
-      selected: _sede,
+      selected: _venue,
     );
-    if (elegida == null || !mounted || elegida.id == _sede?.id) return;
-    _cambiar(() {
-      _sede = elegida;
+    if (chosen == null || !mounted || chosen.id == _venue?.id) return;
+    _applyChange(() {
+      _venue = chosen;
       // La sede nueva puede no tener ese deporte.
-      if (!elegida.sports.contains(_deporte)) {
-        _deporte = null;
-        _tipo = null;
+      if (!chosen.sports.contains(_sport)) {
+        _sport = null;
+        _kind = null;
       }
     });
   }
 
-  Future<void> _elegirDeporte(Catalog catalogo) async {
-    final elegido = await pickOption<String>(
+  Future<void> _selectSport(Catalog catalog) async {
+    final selected = await pickOption<String>(
       context,
       title: AppLocalizations.of(context).spaceSearchSport,
       options: [
-        for (final d in catalogo.sports)
-          if (_sede?.sports.contains(d.key) ?? true) (d.key, d.name),
+        for (final d in catalog.sports)
+          if (_venue?.sports.contains(d.key) ?? true) (d.key, d.name),
       ],
-      selected: _deporte,
+      selected: _sport,
     );
-    if (elegido != null && mounted && elegido != _deporte) {
-      _cambiar(() {
-        _deporte = elegido;
-        _tipo = null;
+    if (selected != null && mounted && selected != _sport) {
+      _applyChange(() {
+        _sport = selected;
+        _kind = null;
       });
     }
   }
 
-  Future<void> _elegirTipo(Catalog catalogo) async {
-    final deporte = catalogo.sport(_deporte ?? '');
-    if (deporte == null) return;
-    const todos = '';
-    final elegido = await pickOption<String>(
+  Future<void> _selectKind(Catalog catalog) async {
+    final sport = catalog.sport(_sport ?? '');
+    if (sport == null) return;
+    const all = '';
+    final selected = await pickOption<String>(
       context,
       title: AppLocalizations.of(context).spaceSearchKind,
       options: [
-        (todos, AppLocalizations.of(context).spaceSearchAllKinds),
-        for (final t in deporte.kinds) (t.key, t.name),
+        (all, AppLocalizations.of(context).spaceSearchAllKinds),
+        for (final t in sport.kinds) (t.key, t.name),
       ],
-      selected: _tipo ?? todos,
+      selected: _kind ?? all,
     );
-    final tipo = elegido == todos ? null : elegido;
-    if (elegido != null && mounted && tipo != _tipo) {
-      _cambiar(() => _tipo = tipo);
+    final kind = selected == all ? null : selected;
+    if (selected != null && mounted && kind != _kind) {
+      _applyChange(() => _kind = kind);
     }
   }
 
-  Future<void> _elegirHora({required bool inicio}) async {
-    final hours = inicio
+  Future<void> _selectTime({required bool start}) async {
+    final hours = start
         ? [for (var h = 0; h < 24; h++) h]
         : [for (var h = 1; h < 24; h++) h, 0];
-    final elegida = await pickOption<int>(
+    final chosen = await pickOption<int>(
       context,
-      title: inicio
+      title: start
           ? AppLocalizations.of(context).spaceSearchFrom
           : AppLocalizations.of(context).spaceSearchTo,
       options: [for (final h in hours) (h, hhmm(h))],
-      selected: inicio ? _desde : _hasta,
+      selected: start ? _from : _to,
       columns: 3,
     );
-    if (elegida == null || !mounted) return;
-    if (elegida == (inicio ? _desde : _hasta)) return;
-    _cambiar(() {
-      if (inicio) {
-        _desde = elegida;
+    if (chosen == null || !mounted) return;
+    if (chosen == (start ? _from : _to)) return;
+    _applyChange(() {
+      if (start) {
+        _from = chosen;
       } else {
-        _hasta = elegida;
+        _to = chosen;
       }
     });
   }
 
-  Future<void> _elegirFecha() async {
-    final ahora = clubNow();
-    final elegida = await pickUpcomingDay(
+  Future<void> _selectDate() async {
+    final now = clubNow();
+    final chosen = await pickUpcomingDay(
       context,
-      today: DateTime(ahora.year, ahora.month, ahora.day),
+      today: DateTime(now.year, now.month, now.day),
       days: daysInView,
-      proposed: _dia,
+      proposed: _day,
     );
-    if (elegida != null && mounted) _date.text = formatDate(elegida);
+    if (chosen != null && mounted) _date.text = formatDate(chosen);
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final opciones = _opciones;
+    final options = _options;
     return Scaffold(
       backgroundColor: p.bgBase,
       appBar: TopBar(
         title: AppLocalizations.of(context).spaceSearchTitle,
-        onBack: () => context.go('/inicio'),
+        onBack: () => context.go('/home'),
       ),
-      bottomNavigationBar: opciones == null
+      bottomNavigationBar: options == null
           ? null
           : SpaceSearchBar(
-              alLimpiar: _consultando ? null : _limpiar,
-              alConsultar: _completo && !_consultando ? _consultar : null,
-              consultando: _consultando,
+              onClear: _searching ? null : _clear,
+              onSearch: _isComplete && !_searching ? _search : null,
+              searching: _searching,
             ),
-      body: opciones == null ? _bodyWithoutOptions() : _form(opciones, p),
+      body: options == null ? _bodyWithoutOptions() : _form(options, p),
     );
   }
 
-  Widget _bodyWithoutOptions() => _falloAlCargar
+  Widget _bodyWithoutOptions() => _loadFailed
       ? Center(
           child: TextActionButton(
             label: AppLocalizations.of(context).bookingRetry,
-            onTap: _cargar,
+            onTap: _load,
           ),
         )
-      : SpaceSearchSkeleton(header: _encabezado(_introduccion));
+      : SpaceSearchSkeleton(header: _header(_intro));
 
-  Widget _encabezado(String subtitulo) {
+  Widget _header(String subtitle) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
     return Column(
@@ -399,12 +399,12 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
           ),
         ),
         const SizedBox(height: Spacing.s4),
-        Text(subtitulo, style: Texts.body.copyWith(color: p.textSecondary)),
+        Text(subtitle, style: Texts.body.copyWith(color: p.textSecondary)),
       ],
     );
   }
 
-  Widget _form((List<Venue>, Catalog) opciones, Palette p) =>
+  Widget _form((List<Venue>, Catalog) options, Palette p) =>
       SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           Spacing.s24,
@@ -415,90 +415,85 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _encabezado(_subtitulo(opciones.$2)),
-            if (_falla case final falla?) ...[
+            _header(_subtitle(options.$2)),
+            if (_searchFailure case final failure?) ...[
               const SizedBox(height: Spacing.s16),
               SearchErrorCard(
-                sinConexion: falla is SinConexion,
-                alVolver: () => setState(() {
-                  _falla = null;
-                  _consulta = null;
+                noConnection: failure is NoConnection,
+                onBack: () => setState(() {
+                  _searchFailure = null;
+                  _query = null;
                 }),
-                alReintentar: _consultar,
+                onRetry: _search,
               ),
             ],
             const SizedBox(height: Spacing.s16),
-            ..._filtros(opciones.$1, opciones.$2),
-            if (_consultando) const SpaceResultsSkeleton(),
-            if ((_consulta, _resultado) case (
-              final consulta?,
-              final resultado?,
-            ))
-              ..._resultados(consulta, resultado, opciones.$2, p),
+            ..._filters(options.$1, options.$2),
+            if (_searching) const SpaceResultsSkeleton(),
+            if ((_query, _result) case (final query?, final result?))
+              ..._results(query, result, options.$2, p),
           ],
         ),
       );
 
-  String get _introduccion =>
+  String get _intro =>
       AppLocalizations.of(context).spaceSearchIntro(maxHours, minHours);
 
-  String _subtitulo(Catalog catalogo) {
-    final c = _consulta;
-    if (c == null) return _introduccion;
+  String _subtitle(Catalog catalog) {
+    final c = _query;
+    if (c == null) return _intro;
     return AppLocalizations.of(context).spaceSearchSubtitle(
-      shortDate(c.fecha),
-      hhmm(c.desde),
-      hhmm(c.hasta),
+      shortDate(c.date),
+      hhmm(c.from),
+      hhmm(c.to),
       c.venue.name,
-      _queSeBusco(c, catalogo),
+      _searchedFor(c, catalog),
     );
   }
 
-  String _queSeBusco(_Consulta c, Catalog catalogo) {
-    final tipo = c.tipo;
-    return tipo == null
-        ? catalogo.sport(c.deporte)?.name ?? c.deporte
-        : catalogo.shortKind(c.deporte, tipo);
+  String _searchedFor(_Query c, Catalog catalog) {
+    final kind = c.kind;
+    return kind == null
+        ? catalog.sport(c.sport)?.name ?? c.sport
+        : catalog.shortKind(c.sport, kind);
   }
 
-  List<Widget> _filtros(List<Venue> venues, Catalog catalogo) {
+  List<Widget> _filters(List<Venue> venues, Catalog catalog) {
     final l = AppLocalizations.of(context);
-    final errores = _errores;
-    final deporte = catalogo.sport(_deporte ?? '');
-    final tipo = _tipo;
+    final errors = _errors;
+    final sport = catalog.sport(_sport ?? '');
+    final kind = _kind;
     return [
       SelectorField(
         label: l.spaceSearchVenue.toUpperCase(),
         semanticLabel: l.spaceSearchVenue,
-        value: _sede?.name,
+        value: _venue?.name,
         placeholder: l.spaceSearchPickVenue,
         icon: Icons.expand_more_rounded,
-        onTap: _consultando ? null : () => _elegirSede(venues),
-        error: errores['venue_id'],
+        onTap: _searching ? null : () => _selectVenue(venues),
+        error: errors['venue_id'],
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
         label: l.spaceSearchSport.toUpperCase(),
         semanticLabel: l.spaceSearchSport,
-        value: deporte?.name,
+        value: sport?.name,
         placeholder: l.spaceSearchPickSport,
         icon: Icons.expand_more_rounded,
-        onTap: _consultando ? null : () => _elegirDeporte(catalogo),
+        onTap: _searching ? null : () => _selectSport(catalog),
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
         label: l.spaceSearchKind.toUpperCase(),
         semanticLabel: l.spaceSearchKind,
-        value: deporte == null
+        value: sport == null
             ? null
-            : tipo == null
+            : kind == null
             ? l.spaceSearchAllKinds
-            : catalogo.shortKind(deporte.key, tipo),
+            : catalog.shortKind(sport.key, kind),
         placeholder: l.spaceSearchAllKinds,
         icon: Icons.expand_more_rounded,
-        onTap: deporte == null || _consultando
-            ? null
-            : () => _elegirTipo(catalogo),
+        onTap: sport == null || _searching ? null : () => _selectKind(catalog),
       ),
       const SizedBox(height: Spacing.s12),
       FormTextField(
@@ -506,13 +501,13 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         semanticLabel: l.spaceSearchDate,
         controller: _date,
         placeholder: l.spaceSearchDatePlaceholder,
-        error: errores['date'],
+        error: errors['date'],
         keyboardType: TextInputType.number,
         inputFormatters: const [DateInputFormatter()],
-        enabled: !_consultando,
+        enabled: !_searching,
         trailing: IconButton(
           tooltip: l.spaceSearchPickDate,
-          onPressed: _consultando ? null : _elegirFecha,
+          onPressed: _searching ? null : _selectDate,
           icon: Icon(
             Icons.calendar_today_outlined,
             color: context.palette.textSecondary,
@@ -521,82 +516,79 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       ),
       const SizedBox(height: Spacing.s12),
       SearchTimeRange(
-        desde: _desde,
-        hasta: _hasta,
-        errorDesde: errores['start_hour'],
-        errorHasta: errores['until'],
-        alElegirDesde: _consultando ? null : () => _elegirHora(inicio: true),
-        alElegirHasta: _consultando ? null : () => _elegirHora(inicio: false),
+        from: _from,
+        to: _to,
+        fromError: errors['start_hour'],
+        toError: errors['until'],
+        onPickFrom: _searching ? null : () => _selectTime(start: true),
+        onPickTo: _searching ? null : () => _selectTime(start: false),
       ),
     ];
   }
 
-  List<Widget> _resultados(
-    _Consulta consulta,
-    List<Space> resultado,
-    Catalog catalogo,
+  List<Widget> _results(
+    _Query query,
+    List<Space> result,
+    Catalog catalog,
     Palette p,
   ) {
     final l = AppLocalizations.of(context);
-    final techada = _techada;
+    final indoor = _indoor;
     final views = [
-      for (final c in resultado)
-        if (techada == null || c.covered == techada) c,
+      for (final c in result)
+        if (indoor == null || c.covered == indoor) c,
     ];
-    final rango = '${hhmm(consulta.desde)} – ${hhmm(consulta.hasta)}';
-    final que = _queSeBusco(consulta, catalogo).toUpperCase();
-    final encabezado = resultado.isEmpty
-        ? l.spaceSearchNoAvailability(rango, que)
-        : l.spaceSearchResults(resultado.length, rango, que);
-    final aireLibre = resultado.where((c) => !c.covered).length;
+    final range = '${hhmm(query.from)} – ${hhmm(query.to)}';
+    final criteria = _searchedFor(query, catalog).toUpperCase();
+    final header = result.isEmpty
+        ? l.spaceSearchNoAvailability(range, criteria)
+        : l.spaceSearchResults(result.length, range, criteria);
+    final outdoor = result.where((c) => !c.covered).length;
     return [
       const SizedBox(height: Spacing.s24),
-      if (resultado.isNotEmpty) ...[
+      if (result.isNotEmpty) ...[
         CoveredFilter(
-          total: resultado.length,
-          aireLibre: aireLibre,
-          elegida: techada,
-          alElegir: (valor) => setState(() => _techada = valor),
+          total: result.length,
+          outdoor: outdoor,
+          chosen: indoor,
+          onSelect: (value) => setState(() => _indoor = value),
         ),
         const SizedBox(height: Spacing.s12),
       ],
       Semantics(
         liveRegion: true,
-        child: Text(
-          encabezado,
-          style: Texts.overline.copyWith(color: p.accentInk),
-        ),
+        child: Text(header, style: Texts.overline.copyWith(color: p.accentInk)),
       ),
       const SizedBox(height: Spacing.s12),
-      if (resultado.isEmpty)
+      if (result.isEmpty)
         EmptyState(
           title: l.spaceSearchEmptyTitle,
           text: l.spaceSearchEmptyText,
           action: l.spaceSearchClearFilters,
-          onTap: _limpiar,
+          onTap: _clear,
         ),
-      for (final cancha in views) ...[
+      for (final space in views) ...[
         SpaceCard(
-          space: cancha,
-          catalog: catalogo,
-          onBook: () => _aLosHorarios(consulta, cancha),
+          space: space,
+          catalog: catalog,
+          onBook: () => _toAvailability(query, space),
         ),
         const SizedBox(height: Spacing.s16),
       ],
     ];
   }
 
-  void _aLosHorarios(_Consulta consulta, Space cancha) {
-    final fin = consulta.hasta == 0 ? 24 : consulta.hasta;
-    final ruta = Uri(
-      path: '/sedes/${consulta.venue.id}/canchas/${cancha.id}',
+  void _toAvailability(_Query query, Space space) {
+    final end = query.to == 0 ? 24 : query.to;
+    final route = Uri(
+      path: '/venues/${query.venue.id}/spaces/${space.id}',
       queryParameters: {
-        'fecha': isoDate(consulta.fecha),
-        'horas': '${fin - consulta.desde}',
-        'inicio': hhmm(consulta.desde),
+        'date': isoDate(query.date),
+        'hours': '${end - query.from}',
+        'start': hhmm(query.from),
       },
     );
     // Encima de la búsqueda: al volver, los filtros y el resultado siguen ahí.
-    context.push(ruta.toString());
+    context.push(route.toString());
   }
 }

@@ -11,7 +11,7 @@ void main() {
       Object? error;
       ApiClient(
             'http://api.falsa',
-            cliente: MockClient(
+            client: MockClient(
               (_) => Future.delayed(
                 const Duration(seconds: 90),
                 () => http.Response('{}', 200),
@@ -29,8 +29,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 29500));
       expect(error, isNull);
       await tester.pump(const Duration(seconds: 1));
-      expect(error, isA<ServidorSinRespuesta>());
-      expect((error! as ServidorSinRespuesta).codigo, 0);
+      expect(error, isA<ServerNotResponding>());
+      expect((error! as ServerNotResponding).code, 0);
       await tester.pump(const Duration(seconds: 90));
     },
   );

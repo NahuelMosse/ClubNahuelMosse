@@ -22,9 +22,9 @@ class SpaceCreatedScreen extends StatelessWidget {
       text: l10n.adminSpaceCreatedText,
       detail: space.name,
       primary: l10n.adminGoToList,
-      onPrimaryTap: () => context.go('/admin/espacios'),
+      onPrimaryTap: () => context.go('/admin/spaces'),
       secondary: l10n.adminCreateAnother,
-      onSecondaryTap: () => context.go('/admin/espacios/nuevo'),
+      onSecondaryTap: () => context.go('/admin/spaces/new'),
     );
   }
 }

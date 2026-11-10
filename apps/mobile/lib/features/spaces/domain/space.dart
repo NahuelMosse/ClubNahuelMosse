@@ -117,8 +117,8 @@ class Space {
   }
 
   /// Los espacios de un cuerpo `{'spaces': [...]}`, o `null` si alguno no se puede leer.
-  static List<Space>? listFromBody(Map<String, Object?> cuerpo) {
-    if (cuerpo case {'spaces': final List<Object?> items}) {
+  static List<Space>? listFromBody(Map<String, Object?> body) {
+    if (body case {'spaces': final List<Object?> items}) {
       final parsed = [for (final e in items) Space.fromJson(e)];
       if (!parsed.contains(null)) return [...parsed.nonNulls];
     }

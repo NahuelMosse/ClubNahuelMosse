@@ -87,7 +87,7 @@ void main() {
       final requests = <http.Request>[];
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: apiRoutes(venueRoutes(), requests: requests),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
@@ -118,7 +118,7 @@ void main() {
     ) async {
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000005',
+        start: '/venues/00000000-0000-7000-8000-000000000005',
         api: apiRoutes(venueRoutes(spaces: '[]')),
       );
       expect(find.text('0 CANCHAS'), findsOneWidget);
@@ -131,7 +131,7 @@ void main() {
       (tester) async {
         await mountUser(
           tester,
-          start: '/sedes/00000000-0000-7000-8000-000000000099',
+          start: '/venues/00000000-0000-7000-8000-000000000099',
           api: apiRoutes(venueRoutes()),
         );
         expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
@@ -156,7 +156,7 @@ void main() {
       var attempts = 0;
       final api = ApiClient(
         'http://api.falsa',
-        cliente: _Client((request) async {
+        client: _Client((request) async {
           final route = request.url.path;
           if (route == '/spaces' && attempts++ == 0) throw const _Outage();
           final (status, body) = venueRoutes()['GET $route'] ?? (404, '{}');
@@ -165,7 +165,7 @@ void main() {
       );
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: api,
       );
       expect(find.text('Error de conexión'), findsOneWidget);
@@ -190,7 +190,7 @@ void main() {
     ApiClient api({List<http.Request>? requests, bool failsOnFilter = false}) =>
         ApiClient(
           'http://api.falsa',
-          cliente: _Client((request) async {
+          client: _Client((request) async {
             requests?.add(request as http.Request);
             final route = request.url.path;
             final q = request.url.queryParameters;
@@ -229,7 +229,7 @@ void main() {
       final requests = <http.Request>[];
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: api(requests: requests),
       );
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
@@ -264,7 +264,7 @@ void main() {
       final requests = <http.Request>[];
       final client = ApiClient(
         'http://api.falsa',
-        cliente: _Client((request) async {
+        client: _Client((request) async {
           requests.add(request as http.Request);
           final route = request.url.path;
           final q = request.url.queryParameters;
@@ -287,7 +287,7 @@ void main() {
       );
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: client,
       );
       await tapChip(tester, 'Deporte Fútbol');
@@ -314,7 +314,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: api(),
       );
       await tapChip(tester, 'Deporte Tenis');
@@ -329,7 +329,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: api(failsOnFilter: true),
       );
       await tapChip(tester, 'Deporte Fútbol');
@@ -348,7 +348,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: apiRoutes(venueRoutes()),
       );
       await tester.ensureVisible(find.text('VER HORARIOS / RESERVAR').first);

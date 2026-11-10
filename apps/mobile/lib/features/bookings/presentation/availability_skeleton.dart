@@ -24,12 +24,12 @@ const _slotBlocks = 12;
 class AvailabilitySkeleton extends StatelessWidget {
   const AvailabilitySkeleton({
     super.key,
-    required this.volverA,
-    required this.alVolver,
+    required this.backLabel,
+    required this.onBack,
   });
 
-  final String volverA;
-  final VoidCallback alVolver;
+  final String backLabel;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) => SkeletonCover(
@@ -41,8 +41,8 @@ class AvailabilitySkeleton extends StatelessWidget {
       Spacing.s32,
     ),
     body: const _Body(),
-    backLabel: volverA,
-    onBack: alVolver,
+    backLabel: backLabel,
+    onBack: onBack,
   );
 }
 
@@ -65,7 +65,7 @@ class _Body extends StatelessWidget {
       _Section(
         titleWidth: 140,
         child: PairedGrid(
-          hijos: [
+          children: [
             Skeleton(height: _spaceCardHeight),
             Skeleton(height: _spaceCardHeight),
           ],
@@ -160,8 +160,8 @@ class _GridBlocks extends StatelessWidget {
       const Skeleton(height: _dayLineHeight),
       const SizedBox(height: Spacing.s12),
       PairedGrid(
-        alto: Spacing.controlHeight,
-        hijos: [
+        height: Spacing.controlHeight,
+        children: [
           for (var i = 0; i < _slotBlocks; i++)
             const Skeleton(height: Spacing.controlHeight),
         ],

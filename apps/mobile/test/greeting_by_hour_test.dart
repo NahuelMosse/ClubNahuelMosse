@@ -14,7 +14,7 @@ Clock _clubClock(int hour, int minute) => Clock.fixed(
 Future<void> _mountGreeting(WidgetTester tester, {Key? key}) => mountScreen(
   tester,
   Scaffold(
-    body: HomeGreeting(key: key, sesion: FakeSession(userProfile)),
+    body: HomeGreeting(key: key, session: FakeSession(userProfile)),
   ),
   theme: darkTheme,
 );

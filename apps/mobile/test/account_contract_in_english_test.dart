@@ -34,10 +34,10 @@ void main() {
       }
       final router = File('lib/router.dart').readAsStringSync();
       for (final route in [
-        "'/inicio'",
-        "'/sedes",
-        "'/notificaciones'",
-        "'/perfil'",
+        "'/home'",
+        "'/venues",
+        "'/notifications'",
+        "'/profile'",
       ]) {
         expect(router, contains(route), reason: route);
       }

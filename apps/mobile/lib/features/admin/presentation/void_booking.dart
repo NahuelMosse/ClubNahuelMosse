@@ -52,13 +52,13 @@ Future<VoidResult> voidBooking(
       changed = !hadCutoff;
     } on SessionExpired {
       expired = true;
-    } on SinConexion catch (e) {
+    } on NoConnection catch (e) {
       hadCutoff = true;
       failure = e;
-    } on ErrorDelServidor catch (e) {
+    } on ServerError catch (e) {
       failure = e;
     } on BookingRejected {
-      failure = const ErrorDelServidor(422);
+      failure = const ServerError(422);
     } finally {
       submitting(false);
     }
@@ -68,10 +68,10 @@ Future<VoidResult> voidBooking(
       return VoidResult.changed;
     }
     if (expired) {
-      await avisarSesionVencida(
+      await notifySessionExpired(
         context,
         session,
-        antes: () => pending.save(filters),
+        before: () => pending.save(filters),
       );
       return VoidResult.nothing;
     }

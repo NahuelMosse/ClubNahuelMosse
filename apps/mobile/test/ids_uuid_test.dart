@@ -110,7 +110,7 @@ void main() {
         final requests = <http.Request>[];
         await mountUser(
           tester,
-          start: '/sedes/$_venue',
+          start: '/venues/$_venue',
           api: apiRoutes({
             'GET /spaces/catalog': (200, catalogJson),
             'GET /venues': (200, '{"venues": [${_json(_venueJson())}]}'),
@@ -134,7 +134,7 @@ void main() {
           'kind': 'reminder',
           'booking_id': _booking,
         });
-        expect(notice.route, '/reservas?reserva=$_booking');
+        expect(notice.route, '/bookings?booking=$_booking');
       });
 
       test('one with a numeric booking_id opens the notification center', () {
@@ -142,11 +142,11 @@ void main() {
           'kind': 'reminder',
           'booking_id': '7',
         });
-        expect(notice.route, '/notificaciones');
+        expect(notice.route, '/notifications');
       });
 
       test('one without a booking_id opens «Mis reservas»', () {
-        expect(NoticeTapped.fromData({'kind': 'reminder'}).route, '/reservas');
+        expect(NoticeTapped.fromData({'kind': 'reminder'}).route, '/bookings');
       });
     },
   );

@@ -9,10 +9,10 @@ import '../theme/tokens.dart';
 import 'fixed_bar.dart';
 
 enum Section {
-  home(Icons.home_outlined, '/inicio'),
-  venues(Icons.place_outlined, '/sedes'),
-  bookings(Icons.calendar_today_outlined, '/reservas'),
-  profile(Icons.person_outline_rounded, '/perfil');
+  home(Icons.home_outlined, '/home'),
+  venues(Icons.place_outlined, '/venues'),
+  bookings(Icons.calendar_today_outlined, '/bookings'),
+  profile(Icons.person_outline_rounded, '/profile');
 
   const Section(this.icon, this.route);
   final IconData icon;
@@ -29,8 +29,8 @@ enum Section {
 /// The three tabs of the admin panel (`BottomNav-Admin`).
 enum AdminSection {
   bookings(Icons.calendar_today_outlined, '/admin'),
-  venues(Icons.place_outlined, '/admin/sedes'),
-  spaces(Icons.grid_view_outlined, '/admin/espacios');
+  venues(Icons.place_outlined, '/admin/venues'),
+  spaces(Icons.grid_view_outlined, '/admin/spaces');
 
   const AdminSection(this.icon, this.route);
   final IconData icon;

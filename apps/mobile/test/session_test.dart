@@ -56,7 +56,7 @@ void main() {
           api: fakeApi(status: 503),
         ),
       );
-      await expectLater(session.resume(), throwsA(isA<ErrorDelServidor>()));
+      await expectLater(session.resume(), throwsA(isA<ServerError>()));
       expect(credentials.signOuts, 0);
     });
   });
@@ -85,7 +85,7 @@ void main() {
     );
     await expectLater(
       session.signIn('a@b.com', 'Clave1234'),
-      throwsA(isA<ErrorDelServidor>()),
+      throwsA(isA<ServerError>()),
     );
     expect(credentials.hasAccount, isFalse);
   });
@@ -112,7 +112,7 @@ void main() {
           credentials: FakeCredentials(),
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient((request) async {
+            client: MockClient((request) async {
               requests++;
               if (request.method == 'PUT') return response.future;
               return http.Response(profileJson(), 200);

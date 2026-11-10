@@ -74,7 +74,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
       return;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (!mounted) return;
@@ -84,12 +84,12 @@ class _VenuesScreenState extends State<VenuesScreen> {
       _loading = false;
     });
     // Tapado por la sede o los horarios no avisa: la pantalla de arriba ya avisa lo suyo.
-    await avisarFalloDeCarga(
+    await notifyLoadFailure(
       context,
       session: widget.session,
       expired: expired,
       error: failure,
-      reintentar: _load,
+      retry: _load,
     );
   }
 
@@ -143,7 +143,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                     VenueCard(
                       venue: venue,
                       sports: sportsOf(venue, data.$2),
-                      onTap: () => context.go('/sedes/${venue.id}'),
+                      onTap: () => context.go('/venues/${venue.id}'),
                     ),
                     const SizedBox(height: Spacing.s16),
                   ],

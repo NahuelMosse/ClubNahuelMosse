@@ -4,27 +4,27 @@ import 'package:flutter/material.dart';
 class BookingAction extends StatelessWidget {
   const BookingAction({
     super.key,
-    required this.expandir,
-    required this.etiqueta,
-    required this.alTocar,
+    required this.expand,
+    required this.label,
+    required this.onTap,
     required this.child,
   });
 
-  final bool expandir;
-  final String etiqueta;
-  final VoidCallback? alTocar;
+  final bool expand;
+  final String label;
+  final VoidCallback? onTap;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final button = Semantics(
-      label: etiqueta,
+      label: label,
       excludeSemantics: true,
       button: true,
-      enabled: alTocar != null,
-      onTap: alTocar,
+      enabled: onTap != null,
+      onTap: onTap,
       child: child,
     );
-    return expandir ? Expanded(child: button) : button;
+    return expand ? Expanded(child: button) : button;
   }
 }

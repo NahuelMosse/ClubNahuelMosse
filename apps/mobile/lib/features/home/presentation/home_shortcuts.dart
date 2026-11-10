@@ -12,13 +12,13 @@ import 'home_title.dart';
 class HomeShortcuts extends StatelessWidget {
   const HomeShortcuts({
     super.key,
-    required this.primero,
-    required this.yaEntro,
+    required this.first,
+    required this.alreadyEntered,
   });
 
   /// Cuándo entra el primer acceso; el otro, un paso después.
-  final Duration primero;
-  final bool yaEntro;
+  final Duration first;
+  final bool alreadyEntered;
 
   @override
   Widget build(BuildContext context) {
@@ -41,26 +41,26 @@ class HomeShortcuts extends StatelessWidget {
               children: [
                 Expanded(
                   child: FadeIn(
-                    delay: primero,
-                    alreadyEntered: yaEntro,
+                    delay: first,
+                    alreadyEntered: alreadyEntered,
                     child: HomeShortcut(
-                      icono: Icons.search_rounded,
-                      titulo: l10n.homeFindCourt,
-                      texto: l10n.homeFindCourtHint,
-                      alTocar: () => context.go('/inicio/buscar'),
+                      icon: Icons.search_rounded,
+                      title: l10n.homeFindCourt,
+                      text: l10n.homeFindCourtHint,
+                      onTap: () => context.go('/home/search'),
                     ),
                   ),
                 ),
                 const SizedBox(width: Spacing.s12),
                 Expanded(
                   child: FadeIn(
-                    delay: primero + tileStep,
-                    alreadyEntered: yaEntro,
+                    delay: first + tileStep,
+                    alreadyEntered: alreadyEntered,
                     child: HomeShortcut(
-                      icono: Icons.location_on_outlined,
-                      titulo: l10n.homeViewVenues,
-                      texto: l10n.homeViewVenuesHint,
-                      alTocar: () => context.go('/sedes'),
+                      icon: Icons.location_on_outlined,
+                      title: l10n.homeViewVenues,
+                      text: l10n.homeViewVenuesHint,
+                      onTap: () => context.go('/venues'),
                     ),
                   ),
                 ),

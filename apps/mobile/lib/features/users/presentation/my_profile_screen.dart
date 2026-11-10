@@ -68,9 +68,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         return;
       }
       setState(() => _loading = false);
-      await avisarSesionVencida(context, widget.session);
+      await notifySessionExpired(context, widget.session);
       return;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (!mounted) return;
@@ -81,7 +81,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     if (outcome == ErrorOutcome.retry) {
       await _load();
     } else if (outcome == ErrorOutcome.closed) {
-      context.go('/inicio');
+      context.go('/home');
     }
   }
 
@@ -108,7 +108,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       return;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _deactivating = false);
@@ -124,13 +124,13 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       return;
     }
     if (!mounted) return;
-    _hadCutoff = failure is SinConexion;
-    await avisarFalloDeEnvio(
+    _hadCutoff = failure is NoConnection;
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: expired,
       error: failure,
-      reintentar: _deactivate,
+      retry: _deactivate,
     );
   }
 

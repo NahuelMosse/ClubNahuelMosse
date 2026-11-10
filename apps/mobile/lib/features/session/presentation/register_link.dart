@@ -28,7 +28,7 @@ class RegisterLink extends StatelessWidget {
           label: l10n.loginStart,
           icon: Icons.arrow_forward_rounded,
           overPhoto: true,
-          onTap: submitting ? null : () => context.go('/registro'),
+          onTap: submitting ? null : () => context.go('/register'),
         ),
       ],
     );

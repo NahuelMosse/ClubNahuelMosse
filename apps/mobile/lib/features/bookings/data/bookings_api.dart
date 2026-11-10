@@ -12,97 +12,97 @@ import 'booking_json.dart';
 
 /// The bookings of the signed-in person, read and written through the API.
 class BookingsApi {
-  BookingsApi({required ApiClient api, required TokenSource sesion})
+  BookingsApi({required ApiClient api, required TokenSource session})
     : _api = api,
-      _sesion = sesion;
+      _session = session;
 
   final ApiClient _api;
-  final TokenSource _sesion;
+  final TokenSource _session;
 
   /// All the upcoming ones (nearest first) or the whole history (most recent first).
   ///
-  /// Throws [SesionVencida], [SinConexion] or [ErrorDelServidor].
+  /// Throws [SesionVencida], [NoConnection] or [ServerError].
   Future<List<Booking>> mine({required bool history}) async {
     final when = history ? 'history' : 'upcoming';
     final r = await _api.get(
       '/bookings?when=$when',
-      token: await _sesion.token(),
+      token: await _session.token(),
     );
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 200) {
-      if (r.cuerpo case {'bookings': final List<Object?> list}) {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 200) {
+      if (r.body case {'bookings': final List<Object?> list}) {
         final read = [for (final e in list) bookingFromJson(e)];
         if (!read.contains(null)) return [...read.nonNulls];
       }
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 
   /// Books what was chosen on the availability screen.
   ///
   /// Throws [SlotTaken], [SpaceUnavailable], [BookingRejected], [SesionVencida],
-  /// [SinConexion] or [ErrorDelServidor].
+  /// [NoConnection] or [ServerError].
   Future<Booking> book(BookingChoice choice) async {
     final r = await _api.post('/bookings', {
       'space_id': choice.space.id,
       'date': isoDate(choice.date),
       'start_hour': choice.start,
       'hours': choice.hours,
-    }, token: await _sesion.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 409) throw const SlotTaken();
-    final errors = fieldErrors(r.cuerpo);
-    if (r.codigo == 422 && errors.isNotEmpty) {
+    }, token: await _session.token());
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 409) throw const SlotTaken();
+    final errors = fieldErrors(r.body);
+    if (r.code == 422 && errors.isNotEmpty) {
       if (errors.containsKey('space_id')) throw const SpaceUnavailable();
       throw BookingRejected(errors);
     }
-    final booking = r.codigo == 201 ? bookingFromJson(r.cuerpo) : null;
-    if (booking == null) throw ErrorDelServidor(r.codigo);
+    final booking = r.code == 201 ? bookingFromJson(r.body) : null;
+    if (booking == null) throw ServerError(r.code);
     return booking;
   }
 
   /// Cancels [booking]; the slot becomes free again.
   ///
-  /// Throws [BookingChanged], [SesionVencida], [SinConexion] or [ErrorDelServidor].
+  /// Throws [BookingChanged], [SesionVencida], [NoConnection] or [ServerError].
   Future<Booking> cancel(Booking booking) async {
     final r = await _api.post(
       '/bookings/${booking.id}/cancel',
       const {},
-      token: await _sesion.token(),
+      token: await _session.token(),
     );
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 404 || r.codigo == 409) throw const BookingChanged();
-    final canceled = r.codigo == 200 ? bookingFromJson(r.cuerpo) : null;
-    if (canceled == null) throw ErrorDelServidor(r.codigo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 404 || r.code == 409) throw const BookingChanged();
+    final canceled = r.code == 200 ? bookingFromJson(r.body) : null;
+    if (canceled == null) throw ServerError(r.code);
     return canceled;
   }
 
   /// Moves [booking] to the space, day and hour of [next], with the same duration.
   ///
   /// Throws [SlotTaken], [BookingChanged], [SpaceUnavailable], [BookingRejected],
-  /// [SesionVencida], [SinConexion] or [ErrorDelServidor].
+  /// [SesionVencida], [NoConnection] or [ServerError].
   Future<Booking> modify(Booking booking, BookingChoice next) async {
     final r = await _api.post('/bookings/${booking.id}/modify', {
       'space_id': next.space.id,
       'date': isoDate(next.date),
       'start_hour': next.start,
-    }, token: await _sesion.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 404) throw const BookingChanged();
-    final errors = fieldErrors(r.cuerpo);
+    }, token: await _session.token());
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 404) throw const BookingChanged();
+    final errors = fieldErrors(r.body);
     if (errors.isNotEmpty) {
-      if (r.codigo == 409) {
+      if (r.code == 409) {
         throw errors.containsKey('slot')
             ? const SlotTaken()
             : const BookingChanged();
       }
-      if (r.codigo == 422) {
+      if (r.code == 422) {
         if (errors.containsKey('space_id')) throw const SpaceUnavailable();
         throw BookingRejected(errors);
       }
     }
-    final modified = r.codigo == 200 ? bookingFromJson(r.cuerpo) : null;
-    if (modified == null) throw ErrorDelServidor(r.codigo);
+    final modified = r.code == 200 ? bookingFromJson(r.body) : null;
+    if (modified == null) throw ServerError(r.code);
     return modified;
   }
 }

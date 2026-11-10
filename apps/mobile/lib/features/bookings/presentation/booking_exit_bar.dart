@@ -26,13 +26,13 @@ class BookingExitBar extends StatelessWidget {
           children: [
             PrimaryButton(
               label: l.bookingSeeMine,
-              onTap: () => context.go('/reservas'),
+              onTap: () => context.go('/bookings'),
             ),
             const SizedBox(height: Spacing.s8),
             Center(
               child: TextActionButton(
                 label: l.bookingBackHome,
-                onTap: () => context.go('/inicio'),
+                onTap: () => context.go('/home'),
               ),
             ),
           ],

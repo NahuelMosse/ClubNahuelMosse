@@ -21,7 +21,7 @@ class SessionRepository implements TokenSource {
   /// El token tal como lo entrega Firebase, sin traducir; `null` si no hay cuenta.
   Future<String?> currentToken() => credentials.token();
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   @override
   Future<String> token() async {
     final String? token;
@@ -34,14 +34,14 @@ class SessionRepository implements TokenSource {
     return token;
   }
 
-  /// Lanza [InvalidCredentials], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [InvalidCredentials], [NoConnection] o [ServerError].
   Future<Profile> fetchProfile() async {
     final token = await credentials.token();
     if (token == null) throw const InvalidCredentials();
     return _profileFrom(await _api.get('/me', token: token));
   }
 
-  /// Lanza [DataRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [DataRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<Profile> updateProfile(
     String token, {
     required String firstName,
@@ -55,11 +55,11 @@ class SessionRepository implements TokenSource {
       'dni': dni,
       'birth_date': birthDate,
     }, token: token);
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 409 || r.codigo == 422) {
-      final errors = fieldErrors(r.cuerpo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 409 || r.code == 422) {
+      final errors = fieldErrors(r.body);
       if (errors.isNotEmpty) {
-        throw DataRejected(errors, duplicate: r.codigo == 409);
+        throw DataRejected(errors, duplicate: r.code == 409);
       }
     }
     return _profileFrom(r);
@@ -68,7 +68,7 @@ class SessionRepository implements TokenSource {
   /// Cambia la contraseña y vuelve a entrar con la nueva: la API invalida todas las
   /// sesiones abiertas de la cuenta, esta incluida.
   ///
-  /// Lanza [PasswordRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [PasswordRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<void> changePassword(
     String token,
     String email,
@@ -79,7 +79,7 @@ class SessionRepository implements TokenSource {
       'current_password': current,
       'new_password': newPassword,
     }, token: token);
-    switch (r.codigo) {
+    switch (r.code) {
       case 204:
         try {
           await credentials.signIn(email, newPassword);
@@ -90,26 +90,26 @@ class SessionRepository implements TokenSource {
       case 401:
         throw const SessionExpired();
       case 422:
-        final errors = fieldErrors(r.cuerpo);
-        if (errors.isEmpty) throw ErrorDelServidor(r.codigo);
+        final errors = fieldErrors(r.body);
+        if (errors.isEmpty) throw ServerError(r.code);
         throw PasswordRejected(errors);
       default:
         // 429: Firebase frena por demasiados intentos con la contraseña actual.
-        throw ErrorDelServidor(r.codigo);
+        throw ServerError(r.code);
     }
   }
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<void> deactivate(String token) async {
     final r = await _api.delete('/me', token: token);
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code != 204) throw ServerError(r.code);
   }
 
-  Profile _profileFrom(Respuesta r) {
-    if (r.codigo == 401) throw const InvalidCredentials();
-    if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
-    if (r.cuerpo case {
+  Profile _profileFrom(ApiResponse r) {
+    if (r.code == 401) throw const InvalidCredentials();
+    if (r.code != 200) throw ServerError(r.code);
+    if (r.body case {
       'first_name': final String firstName,
       'last_name': final String lastName,
       'email': final String email,
@@ -130,6 +130,6 @@ class SessionRepository implements TokenSource {
         );
       }
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 }

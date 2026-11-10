@@ -30,7 +30,7 @@ class Session extends ChangeNotifier implements TokenSource {
     notifyListeners();
   }
 
-  /// Lanza [InvalidCredentials], [SinConexion] o [ErrorDelServidor]. Si falla después
+  /// Lanza [InvalidCredentials], [NoConnection] o [ServerError]. Si falla después
   /// de que Firebase aceptó la contraseña, no deja una sesión a medias.
   Future<Profile> signIn(String email, String password) async {
     await _repository.credentials.signIn(email.trim().toLowerCase(), password);
@@ -47,7 +47,7 @@ class Session extends ChangeNotifier implements TokenSource {
   /// La sesión que quedó abierta en el dispositivo, si todavía vale.
   ///
   /// Sólo la cierra si la cuenta ya no es válida. Sin red o con la API caída conserva la
-  /// sesión y lanza [SinConexion] o [ErrorDelServidor] para que el arranque ofrezca reintentar.
+  /// sesión y lanza [NoConnection] o [ServerError] para que el arranque ofrezca reintentar.
   Future<Profile?> resume() async {
     if (!_repository.hasAccount) return null;
     try {
@@ -62,7 +62,7 @@ class Session extends ChangeNotifier implements TokenSource {
 
   /// Vuelve a pedir el perfil a la API: los datos no se guardan en el dispositivo.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<Profile> refresh() async {
     final before = _profile;
     final Profile profile;
@@ -84,7 +84,7 @@ class Session extends ChangeNotifier implements TokenSource {
 
   /// Guarda los datos personales y devuelve el perfil que quedó en la API.
   ///
-  /// Lanza [DataRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [DataRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<Profile> updateProfile({
     required String firstName,
     required String lastName,
@@ -104,7 +104,7 @@ class Session extends ChangeNotifier implements TokenSource {
     return profile;
   }
 
-  /// Lanza [PasswordRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [PasswordRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<void> changePassword(String current, String newPassword) async {
     final profile = _profile;
     final token = await this.token();
@@ -119,7 +119,7 @@ class Session extends ChangeNotifier implements TokenSource {
 
   /// Da de baja la cuenta y cierra la sesión del dispositivo.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor]; en esos casos la cuenta
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError]; en esos casos la cuenta
   /// sigue igual.
   Future<void> deactivate() async {
     final token = await this.token();
@@ -138,7 +138,7 @@ class Session extends ChangeNotifier implements TokenSource {
 
   /// El ID token de quien tiene la sesión, para los pedidos de otras pantallas.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   @override
   Future<String> token() => _repository.token();
 

@@ -37,7 +37,7 @@ void main() {
   Widget screen({required ApiClient api}) {
     final session = FakeSession(adminProfile);
     return AdminPanelScreen(
-      history: BookingHistory(api: api, sesion: session),
+      history: BookingHistory(api: api, session: session),
       venues: Venues(
         repository: VenuesRepository(api: api, session: session),
       ),
@@ -145,7 +145,7 @@ void main() {
       final secondPages = <Completer<http.Response>>[];
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           final headers = {'content-type': 'application/json; charset=utf-8'};
           if (request.url.path == '/bookings/all') {
             if (request.url.queryParameters['page'] == '2') {

@@ -18,7 +18,7 @@ import 'support/mount.dart';
 /// The API always answering 403, as with a role that is no longer enough.
 ApiClient _api403() => ApiClient(
   'http://api.falsa',
-  cliente: MockClient((_) async => http.Response('{}', 403)),
+  client: MockClient((_) async => http.Response('{}', 403)),
 );
 
 /// A session that opened as an administrator and, on re-reading the profile, is now a user.
@@ -46,11 +46,11 @@ void main() {
   final notices = <String, (String, Future<void> Function(BuildContext))>{
     'error de conexión': (
       'REINTENTAR',
-      (c) => showNetworkError(c, const SinConexion()),
+      (c) => showNetworkError(c, const NoConnection()),
     ),
     'error del servidor': (
       'ACEPTAR',
-      (c) => showNetworkError(c, const ErrorDelServidor(500)),
+      (c) => showNetworkError(c, const ServerError(500)),
     ),
     'sesión expirada': ('IR AL INICIO DE SESIÓN', showSessionExpired),
     'esto cambió mientras tanto': ('VER LO ACTUALIZADO', showChangedMeanwhile),
@@ -139,7 +139,7 @@ void main() {
         App(
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient(
+            client: MockClient(
               (request) async => switch (request.url.path) {
                 '/bookings' => http.Response('{"bookings": []}', 200),
                 '/spaces/catalog' => http.Response(catalogJson, 200),
@@ -149,7 +149,7 @@ void main() {
           ),
           session: session,
           appearance: Appearance.inMemory(),
-          initialLocation: '/admin/sedes',
+          initialLocation: '/admin/venues',
         ),
       );
       await tester.pumpAndSettle();
@@ -190,7 +190,7 @@ void main() {
   testWidgets(
     'a 403 when loading the space creation does not navigate over «Acceso denegado»',
     (tester) async {
-      await mountAdmin(tester, api: _api403(), start: '/admin/espacios/nuevo');
+      await mountAdmin(tester, api: _api403(), start: '/admin/spaces/new');
       await tester.pumpAndSettle();
 
       expect(find.text('Acceso denegado'), findsOneWidget);
@@ -198,37 +198,38 @@ void main() {
     },
   );
 
-  testWidgets('a 403 when loading a venue does not navigate over «Acceso denegado»', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(393, 852) * 3;
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      App(
-        api: _api403(),
-        session: FakeSession(userProfile),
-        appearance: Appearance.inMemory(),
-        initialLocation: '/sedes/00000000-0000-7000-8000-000000000001',
-      ),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'a 403 when loading a venue does not navigate over «Acceso denegado»',
+    (tester) async {
+      tester.view.physicalSize = const Size(393, 852) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        App(
+          api: _api403(),
+          session: FakeSession(userProfile),
+          appearance: Appearance.inMemory(),
+          initialLocation: '/venues/00000000-0000-7000-8000-000000000001',
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Acceso denegado'), findsOneWidget);
-  });
+      expect(find.text('Acceso denegado'), findsOneWidget);
+    },
+  );
 
   test(
     'an API that does not answer within the limit is treated as the server not responding',
     () async {
       final api = ApiClient(
         'http://api.falsa',
-        limite: const Duration(milliseconds: 50),
-        cliente: MockClient((_) => Completer<http.Response>().future),
+        limit: const Duration(milliseconds: 50),
+        client: MockClient((_) => Completer<http.Response>().future),
       );
 
       await expectLater(
         api.get('/venues'),
-        throwsA(isA<ServidorSinRespuesta>()),
+        throwsA(isA<ServerNotResponding>()),
       );
     },
   );

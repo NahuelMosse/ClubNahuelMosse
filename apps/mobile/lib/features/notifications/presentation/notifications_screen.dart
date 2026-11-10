@@ -78,18 +78,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (!mounted) return;
     setState(() => _loading = false);
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: expired,
       error: failure,
-      reintentar: _load,
-      alNoReintentar: () => setState(() => _failed = true),
+      retry: _load,
+      onGiveUp: () => setState(() => _failed = true),
     );
   }
 
@@ -119,7 +119,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           appBar: TopBar(
             title: l10n.notificationsTitle,
             onBack: () =>
-                context.canPop() ? context.pop() : context.go('/inicio'),
+                context.canPop() ? context.pop() : context.go('/home'),
           ),
           bottomNavigationBar: disabled && noNotices
               ? ActionBar(

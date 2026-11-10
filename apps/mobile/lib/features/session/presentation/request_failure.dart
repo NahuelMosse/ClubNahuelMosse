@@ -13,7 +13,7 @@ Future<RequestFailure> captureRequestFailure(
     await action();
   } on SessionExpired {
     return (expired: true, error: null);
-  } on FalloDeRed catch (e) {
+  } on NetworkFailure catch (e) {
     return (expired: false, error: e);
   }
   return (expired: false, error: null);

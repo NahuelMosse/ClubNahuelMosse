@@ -7,7 +7,7 @@ import '../domain/session_exceptions.dart';
 abstract interface class Credentials {
   bool get hasAccount;
 
-  /// Lanza [InvalidCredentials], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [InvalidCredentials], [NoConnection] o [ServerError].
   Future<void> signIn(String email, String password);
 
   Future<String?> token();
@@ -40,9 +40,9 @@ class FirebaseCredentials implements Credentials {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'network-request-failed') throw const SinConexion();
+      if (e.code == 'network-request-failed') throw const NoConnection();
       if (_rejections.contains(e.code)) throw const InvalidCredentials();
-      throw const ErrorDelServidor(0);
+      throw const ServerError(0);
     }
   }
 
@@ -59,9 +59,9 @@ class FirebaseCredentials implements Credentials {
     try {
       return await _auth.currentUser?.getIdToken();
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'network-request-failed') throw const SinConexion();
+      if (e.code == 'network-request-failed') throw const NoConnection();
       if (_deadAccount.contains(e.code)) throw const InvalidCredentials();
-      throw const ErrorDelServidor(0);
+      throw const ServerError(0);
     }
   }
 

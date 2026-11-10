@@ -140,7 +140,7 @@ class FakeApi {
 
   ApiClient get client => ApiClient(
     'http://api.falsa',
-    cliente: MockClient((request) async {
+    client: MockClient((request) async {
       requests.add(request);
       onRequest?.call(request);
       if (down) throw http.ClientException('sin red');
@@ -237,24 +237,24 @@ void main() {
           NotificationKind.reminder,
           '00000000-0000-7000-8000-000000000007',
         ),
-        '/reservas?reserva=00000000-0000-7000-8000-000000000007',
+        '/bookings?booking=00000000-0000-7000-8000-000000000007',
       );
       expect(
         noticeRoute(
           NotificationKind.forcedCancellation,
           '00000000-0000-7000-8000-000000000007',
         ),
-        '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
+        '/bookings?history=1&booking=00000000-0000-7000-8000-000000000007',
       );
       expect(
         noticeRoute(
           NotificationKind.userCancellation,
           '00000000-0000-7000-8000-000000000007',
         ),
-        '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
+        '/bookings?history=1&booking=00000000-0000-7000-8000-000000000007',
       );
-      expect(noticeRoute(NotificationKind.reminder, null), '/reservas');
-      expect(noticeRoute(null, null), '/reservas');
+      expect(noticeRoute(NotificationKind.reminder, null), '/bookings');
+      expect(noticeRoute(null, null), '/bookings');
     });
 
     test('a kind the app does not know is not read', () {
@@ -865,7 +865,7 @@ void main() {
           credentials: FakeCredentials(),
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient((_) async => http.Response('{}', 500)),
+            client: MockClient((_) async => http.Response('{}', 500)),
           ),
         ),
       );
@@ -874,7 +874,7 @@ void main() {
       await tester.runAsync(() async {
         await expectLater(
           session.signIn('nahuel@correo.com', 'ClubNahuel1'),
-          throwsA(isA<ErrorDelServidor>()),
+          throwsA(isA<ServerError>()),
         );
       });
 
@@ -1158,7 +1158,7 @@ void main() {
           ..unread = 2;
         await mountUser(
           tester,
-          start: '/inicio',
+          start: '/home',
           api: api.client,
           center: (session) => centerOf(api, session),
         );
@@ -1184,7 +1184,7 @@ void main() {
       final api = FakeApi();
       await mountUser(
         tester,
-        start: '/inicio',
+        start: '/home',
         api: api.client,
         center: (session) => centerOf(api, session),
       );
@@ -1195,7 +1195,7 @@ void main() {
 
     testWidgets('with no center the Home has no bell', (tester) async {
       final semantics = tester.ensureSemantics();
-      await mountUser(tester, start: '/inicio', api: FakeApi().client);
+      await mountUser(tester, start: '/home', api: FakeApi().client);
 
       expect(find.bySemanticsLabel(RegExp('^Notificaciones')), findsNothing);
       semantics.dispose();
@@ -1206,7 +1206,7 @@ void main() {
       (tester) async {
         await mountAdmin(
           tester,
-          start: '/notificaciones',
+          start: '/notifications',
           api: FakeApi().client,
         );
 
@@ -1229,7 +1229,7 @@ void main() {
           ..unread = 1;
         await mountUser(
           tester,
-          start: '/notificaciones',
+          start: '/notifications',
           api: api.client,
           center: (session) => centerOf(api, session),
         );
@@ -1269,7 +1269,7 @@ void main() {
           ..unread = 1;
         await mountUser(
           tester,
-          start: '/notificaciones',
+          start: '/notifications',
           api: api.client,
           center: (session) => centerOf(api, session),
         );
@@ -1305,7 +1305,7 @@ void main() {
       (tester) async {
         final semantics = tester.ensureSemantics();
         final api = FakeApi();
-        await mountUser(tester, start: '/reservas', api: api.client);
+        await mountUser(tester, start: '/bookings', api: api.client);
 
         expect(
           tester

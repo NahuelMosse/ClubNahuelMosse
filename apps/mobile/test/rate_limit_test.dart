@@ -16,7 +16,7 @@ void main() {
     (tester) async {
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient(
+        client: MockClient(
           (_) async => http.Response(
             '{"message": "Hiciste demasiados intentos. Esperá un minuto y volvé a probar."}',
             429,

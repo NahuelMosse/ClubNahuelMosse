@@ -48,25 +48,25 @@ import 'space_selection.dart';
 class AvailabilityScreen extends StatefulWidget {
   const AvailabilityScreen({
     super.key,
-    required this.sedeId,
-    required this.espacioId,
+    required this.venueId,
+    required this.spaceId,
     required this.venues,
-    required this.espacios,
-    required this.horarios,
-    required this.sesion,
+    required this.spaces,
+    required this.availability,
+    required this.session,
     this.date,
     this.hours,
     this.start,
-    this.modificando,
-    this.volverA,
+    this.modifying,
+    this.backLabel,
   });
 
-  final String sedeId;
-  final String espacioId;
+  final String venueId;
+  final String spaceId;
   final Venues venues;
-  final Spaces espacios;
-  final AvailabilityApi horarios;
-  final Session sesion;
+  final Spaces spaces;
+  final AvailabilityApi availability;
+  final Session session;
 
   /// Lo que ya viene elegido desde la consulta de canchas: el día, la duración y la hora
   /// de inicio (`HH:MM`). La hora queda elegida si está disponible.
@@ -74,299 +74,299 @@ class AvailabilityScreen extends StatefulWidget {
   final int? hours;
   final String? start;
 
-  /// La reserva que se está modificando: se mantiene su duración, su franja se ve libre y
+  /// La reserva que se está modifying: se mantiene su duración, su franja se ve libre y
   /// marcada, y CONTINUAR CON EL CAMBIO lleva a «Confirmá el cambio».
-  final Booking? modificando;
+  final Booking? modifying;
 
   /// Cómo se llama la pantalla a la que vuelve la modificación; «Mis reservas» si no se dice.
-  final String? volverA;
+  final String? backLabel;
 
   @override
   State<AvailabilityScreen> createState() => _AvailabilityScreenState();
 }
 
 class _AvailabilityScreenState extends State<AvailabilityScreen> {
-  (Venue, List<Space>, Catalog)? _datos;
-  late String _elegida = widget.espacioId;
-  late DateTime? _fecha = switch (widget.modificando) {
-    final r? => _diaDe(r.startsAt),
+  (Venue, List<Space>, Catalog)? _data;
+  late String _chosen = widget.spaceId;
+  late DateTime? _date = switch (widget.modifying) {
+    final r? => _dayOf(r.startsAt),
     null => widget.date,
   };
-  late int _horas = switch ((widget.modificando, widget.hours)) {
+  late int _hours = switch ((widget.modifying, widget.hours)) {
     (final r?, _) => r.endsAt.difference(r.startsAt).inHours,
     (_, final h?) when h >= minHours && h <= maxHours => h,
     _ => minHours,
   };
-  AvailabilityGrid? _grilla;
+  AvailabilityGrid? _grid;
 
   /// La cancha y la duración con que se pidió la grilla que está en pantalla: mientras
   /// llega otra, el resumen y la nota siguen hablando de esa.
-  (String, int)? _deLaGrilla;
+  (String, int)? _gridQuery;
 
   /// El día de hoy en el club, según la última grilla: FECHA sigue a la vista aunque la
   /// consulta siguiente falle.
-  DateTime? _hoy;
-  late String? _inicio = switch (widget.modificando) {
+  DateTime? _today;
+  late String? _start = switch (widget.modifying) {
     final r? => shortTime(r.startsAt),
     null => widget.start,
   };
-  bool _consultando = false;
-  bool _fallo = false;
+  bool _searching = false;
+  bool _failure = false;
 
   /// La cancha ya no está y se está avisando: no queda nada cargando detrás del aviso.
-  bool _cambio = false;
+  bool _change = false;
 
   /// Sube con cada consulta: la respuesta de una que ya no es la última se descarta.
-  int _pedido = 0;
+  int _request = 0;
 
   @override
   void initState() {
     super.initState();
-    _cargar();
+    _load();
   }
 
-  Space? get _cancha => _datos?.$2.where((c) => c.id == _elegida).firstOrNull;
+  Space? get _space => _data?.$2.where((c) => c.id == _chosen).firstOrNull;
 
-  /// La franja de [inicio] en la cancha y el día elegidos es la de la reserva que se
+  /// La franja de [start] en la cancha y el día elegidos es la de la reserva que se
   /// modifica.
-  bool _esLaActual(String start) => switch (widget.modificando) {
+  bool _isCurrent(String start) => switch (widget.modifying) {
     final r? =>
-      r.spaceId == _elegida &&
-          _fecha == _diaDe(r.startsAt) &&
+      r.spaceId == _chosen &&
+          _date == _dayOf(r.startsAt) &&
           start == shortTime(r.startsAt),
     null => false,
   };
 
-  bool get _puedeSeguir {
-    final start = _inicio;
-    return start != null && !_consultando && !_esLaActual(start);
+  bool get _canContinue {
+    final start = _start;
+    return start != null && !_searching && !_isCurrent(start);
   }
 
-  Future<void> _cargar() async {
-    setState(() => _fallo = false);
-    Object? fallo;
+  Future<void> _load() async {
+    setState(() => _failure = false);
+    Object? failure;
     var vencida = false;
     try {
-      final catalogo = await widget.espacios.repository.catalog();
+      final catalog = await widget.spaces.repository.catalog();
       final venues = await widget.venues.repository.active();
-      final venue = venues.where((s) => s.id == widget.sedeId).firstOrNull;
-      final canchas = await widget.espacios.repository.active(
-        venueId: widget.sedeId,
+      final venue = venues.where((s) => s.id == widget.venueId).firstOrNull;
+      final spaceOptions = await widget.spaces.repository.active(
+        venueId: widget.venueId,
       );
-      final elegida = canchas
-          .where((c) => c.id == widget.espacioId)
+      final chosen = spaceOptions
+          .where((c) => c.id == widget.spaceId)
           .firstOrNull;
       if (!mounted) return;
-      if (venue == null || elegida == null) {
-        await _yaNoEsta(venue == null);
+      if (venue == null || chosen == null) {
+        await _handleGone(venue == null);
         return;
       }
       setState(() {
-        _datos = (
+        _data = (
           venue,
           [
-            for (final c in canchas)
-              if (c.sport == elegida.sport && c.kind == elegida.kind) c,
+            for (final c in spaceOptions)
+              if (c.sport == chosen.sport && c.kind == chosen.kind) c,
           ],
-          catalogo,
+          catalog,
         );
       });
-      await _consultar();
+      await _search();
       return;
     } on SessionExpired {
       vencida = true;
-    } on FalloDeRed catch (e) {
-      fallo = e;
+    } on NetworkFailure catch (e) {
+      failure = e;
     }
-    await _avisar(vencida: vencida, fallo: fallo, reintentar: _cargar);
+    await _notify(vencida: vencida, failure: failure, retry: _load);
   }
 
   /// Pide la grilla de la cancha, la fecha y la duración elegidas. La hora de inicio
   /// elegida queda si sigue disponible.
-  Future<void> _consultar() async {
-    final request = ++_pedido;
+  Future<void> _search() async {
+    final request = ++_request;
     setState(() {
-      _consultando = true;
-      _fallo = false;
+      _searching = true;
+      _failure = false;
     });
-    Object? fallo;
+    Object? failure;
     var vencida = false;
-    final consulta = (_elegida, _horas);
+    final query = (_chosen, _hours);
     try {
-      final grilla = await widget.horarios.grid(
-        _elegida,
-        date: _fecha,
-        hours: _horas,
-        bookingId: widget.modificando?.id,
+      final grid = await widget.availability.grid(
+        _chosen,
+        date: _date,
+        hours: _hours,
+        bookingId: widget.modifying?.id,
       );
-      if (!mounted || request != _pedido) return;
+      if (!mounted || request != _request) return;
       setState(() {
-        _consultando = false;
-        _grilla = grilla;
-        _deLaGrilla = consulta;
-        _hoy = grilla.today;
-        _fecha = grilla.date;
-        final sigue = grilla.slots.any(
-          (f) => f.start == _inicio && f.available,
+        _searching = false;
+        _grid = grid;
+        _gridQuery = query;
+        _today = grid.today;
+        _date = grid.date;
+        final stillOpen = grid.slots.any(
+          (f) => f.start == _start && f.available,
         );
-        if (!sigue) _inicio = null;
+        if (!stillOpen) _start = null;
       });
       return;
     } on SpaceUnavailable {
-      if (mounted && request == _pedido) await _yaNoEsta(false);
+      if (mounted && request == _request) await _handleGone(false);
       return;
     } on DateExpired {
       // El día elegido ya pasó (la pantalla quedó abierta de un día para otro): vuelve a hoy.
-      if (!mounted || request != _pedido || _fecha == null) return;
-      _fecha = null;
-      _inicio = null;
-      await _consultar();
+      if (!mounted || request != _request || _date == null) return;
+      _date = null;
+      _start = null;
+      await _search();
       return;
     } on SessionExpired {
       vencida = true;
-    } on FalloDeRed catch (e) {
-      fallo = e;
+    } on NetworkFailure catch (e) {
+      failure = e;
     }
-    if (!mounted || request != _pedido) return;
+    if (!mounted || request != _request) return;
     setState(() {
-      _consultando = false;
-      _grilla = null;
-      _deLaGrilla = null;
-      _inicio = null;
+      _searching = false;
+      _grid = null;
+      _gridQuery = null;
+      _start = null;
     });
-    await _avisar(vencida: vencida, fallo: fallo, reintentar: _consultar);
+    await _notify(vencida: vencida, failure: failure, retry: _search);
   }
 
   /// Un error de la API: sin horarios en pantalla y REINTENTAR, salvo que la persona
   /// reintente desde el aviso.
-  Future<void> _avisar({
+  Future<void> _notify({
     required bool vencida,
-    required Object? fallo,
-    required Future<void> Function() reintentar,
+    required Object? failure,
+    required Future<void> Function() retry,
   }) async {
     if (!mounted) return;
-    setState(() => _fallo = true);
-    await avisarFalloDeCarga(
+    setState(() => _failure = true);
+    await notifyLoadFailure(
       context,
-      session: widget.sesion,
+      session: widget.session,
       expired: vencida,
-      error: fallo,
-      reintentar: reintentar,
+      error: failure,
+      retry: retry,
     );
   }
 
-  Future<void> _yaNoEsta(bool laSede) async {
+  Future<void> _handleGone(bool venueGone) async {
     setState(() {
-      _consultando = false;
-      _cambio = true;
+      _searching = false;
+      _change = true;
     });
     // La reserva que se modifica ya no se puede pasar a esta cancha: vuelve a Mis reservas.
-    if (widget.modificando != null) {
+    if (widget.modifying != null) {
       await showChangedMeanwhile(context);
-      if (mounted) _salir(ModifyResult.cambio);
+      if (mounted) _leave(ModifyResult.change);
       return;
     }
     await showChangedMeanwhile(context);
     if (!mounted) return;
-    if (laSede) {
+    if (venueGone) {
       widget.venues.notifyChange();
     } else {
-      widget.espacios.notifyChange();
+      widget.spaces.notifyChange();
     }
-    context.go(laSede ? '/sedes' : '/sedes/${widget.sedeId}');
+    context.go(venueGone ? '/venues' : '/venues/${widget.venueId}');
   }
 
-  void _elegirCancha(String id) {
-    if (id == _elegida) return;
-    setState(() => _elegida = id);
-    _consultar();
+  void _selectSpace(String id) {
+    if (id == _chosen) return;
+    setState(() => _chosen = id);
+    _search();
   }
 
-  void _elegirFecha(DateTime dia) {
-    if (dia == _fecha) return;
-    setState(() => _fecha = dia);
-    _consultar();
+  void _selectDate(DateTime day) {
+    if (day == _date) return;
+    setState(() => _date = day);
+    _search();
   }
 
-  void _cambiarHoras(int hours) {
-    setState(() => _horas = hours);
-    _consultar();
+  void _changeHours(int hours) {
+    setState(() => _hours = hours);
+    _search();
   }
 
-  Future<void> _continuar() async {
-    final data = _datos;
-    final cancha = _cancha;
-    final date = _fecha;
-    final franja = _grilla?.slots.where((f) => f.start == _inicio).firstOrNull;
-    if (data == null || cancha == null || date == null || franja == null) {
+  Future<void> _continue() async {
+    final data = _data;
+    final space = _space;
+    final date = _date;
+    final slot = _grid?.slots.where((f) => f.start == _start).firstOrNull;
+    if (data == null || space == null || date == null || slot == null) {
       return;
     }
-    final eleccion = BookingChoice(
+    final choice = BookingChoice(
       venue: data.$1,
-      space: cancha,
-      kind: data.$3.shortKind(cancha.sport, cancha.kind),
+      space: space,
+      kind: data.$3.shortKind(space.sport, space.kind),
       date: date,
-      start: franja.start,
-      end: franja.end,
-      hours: _horas,
+      start: slot.start,
+      end: slot.end,
+      hours: _hours,
     );
-    if (widget.modificando case final booking?) {
-      final resultado = await context.push<ModifyResult>(
-        '/reservas/${booking.id}/modificar/confirmar',
-        extra: (booking, eleccion),
+    if (widget.modifying case final booking?) {
+      final result = await context.push<ModifyResult>(
+        '/bookings/${booking.id}/modify/confirm',
+        extra: (booking, choice),
       );
       if (!mounted) return;
-      if (resultado == ModifyResult.ocupado) {
-        setState(() => _inicio = null);
-        await _consultar();
-      } else if (resultado != null) {
-        _salir(resultado);
+      if (result == ModifyResult.taken) {
+        setState(() => _start = null);
+        await _search();
+      } else if (result != null) {
+        _leave(result);
       }
       return;
     }
-    final resultado = await context.push<ConfirmResult>(
-      '/sedes/${widget.sedeId}/canchas/${widget.espacioId}/reservar',
-      extra: eleccion,
+    final result = await context.push<ConfirmResult>(
+      '/venues/${widget.venueId}/spaces/${widget.spaceId}/book',
+      extra: choice,
     );
-    if (resultado == ConfirmResult.ocupado && mounted) {
-      setState(() => _inicio = null);
-      await _consultar();
+    if (result == ConfirmResult.taken && mounted) {
+      setState(() => _start = null);
+      await _search();
     }
   }
 
   /// Vuelve a la pantalla de la que vino con cómo terminó la modificación.
-  void _salir([ModifyResult? resultado]) {
+  void _leave([ModifyResult? result]) {
     if (context.canPop()) {
-      context.pop(resultado);
+      context.pop(result);
     } else {
-      context.go('/reservas');
+      context.go('/bookings');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final data = _datos;
-    final cancha = _cancha;
-    final modificando = widget.modificando;
+    final data = _data;
+    final space = _space;
+    final modifying = widget.modifying;
     final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: p.bgBase,
       bottomNavigationBar: data == null
           ? null
           : AvailabilityActionBar(
-              texto: modificando == null
+              text: modifying == null
                   ? l.availabilityContinue
                   : l.availabilityContinueChange,
-              alContinuar: _puedeSeguir ? _continuar : null,
+              onContinue: _canContinue ? _continue : null,
             ),
-      body: data == null || cancha == null
-          ? _sinDatos()
+      body: data == null || space == null
+          ? _noData()
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _portada(data, cancha),
+                  _portada(data, space),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       Spacing.s24,
@@ -376,7 +376,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _secciones(data, cancha, p),
+                      children: _sections(data, space, p),
                     ),
                   ),
                 ],
@@ -385,110 +385,107 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  List<Widget> _secciones(
+  List<Widget> _sections(
     (Venue, List<Space>, Catalog) data,
-    Space cancha,
+    Space space,
     Palette p,
   ) {
-    final modificando = widget.modificando;
+    final modifying = widget.modifying;
     return [
-      if (modificando != null) ...[
-        ModificationNote(reserva: modificando, horas: _horas),
+      if (modifying != null) ...[
+        ModificationNote(booking: modifying, hours: _hours),
         const SizedBox(height: Spacing.s24),
       ],
       SpaceSelection(
-        canchas: data.$2,
-        elegida: _elegida,
-        alElegir: _elegirCancha,
+        spaceOptions: data.$2,
+        chosen: _chosen,
+        onSelect: _selectSpace,
       ),
-      if (_hoy case final hoy?) ...[
+      if (_today case final today?) ...[
         SlotsSection(
-          titulo: AppLocalizations.of(context).availabilityDate,
-          child: DateStrip(hoy: hoy, elegida: _fecha, alElegir: _elegirFecha),
+          title: AppLocalizations.of(context).availabilityDate,
+          child: DateStrip(today: today, chosen: _date, onSelect: _selectDate),
         ),
-        if (modificando == null)
+        if (modifying == null)
           DurationSection(
-            horas: _horas,
-            cierre: data.$1.closing,
-            alCambiar: _cambiarHoras,
+            hours: _hours,
+            closing: data.$1.closing,
+            onChanged: _changeHours,
           ),
       ],
-      _grillaOAviso(p),
-      if ((_grilla, _deLaGrilla) case (
-        final grilla?,
-        (final id, final hours)?,
-      )) ...[
+      _gridOrNotice(p),
+      if ((_grid, _gridQuery) case (final grid?, (final id, final hours)?)) ...[
         const SizedBox(height: Spacing.s8),
-        _resumen(data, cancha, grilla, id, hours),
+        _summary(data, space, grid, id, hours),
       ],
     ];
   }
 
-  Widget _sinDatos() {
-    if (_cambio) return const SafeArea(child: SizedBox.shrink());
-    if (_fallo) {
+  Widget _noData() {
+    if (_change) return const SafeArea(child: SizedBox.shrink());
+    if (_failure) {
       return SafeArea(
         child: Center(
           child: TextActionButton(
             label: AppLocalizations.of(context).bookingRetry,
-            onTap: _cargar,
+            onTap: _load,
           ),
         ),
       );
     }
-    return AvailabilitySkeleton(volverA: _volverA, alVolver: _alVolver);
+    return AvailabilitySkeleton(backLabel: _backLabel, onBack: _onBack);
   }
 
-  String get _volverA {
+  String get _backLabel {
     final l = AppLocalizations.of(context);
-    if (widget.modificando != null) {
-      return widget.volverA ?? l.bookingMyBookings;
+    if (widget.modifying != null) {
+      return widget.backLabel ?? l.bookingMyBookings;
     }
     return widget.date == null ? l.venuesTitle : l.spaceSearchTitle;
   }
 
-  VoidCallback get _alVolver => widget.modificando != null
-      ? _salir
+  VoidCallback get _onBack => widget.modifying != null
+      ? _leave
       : () => context.canPop()
             ? context.pop()
-            : context.go('/sedes/${widget.sedeId}');
+            : context.go('/venues/${widget.venueId}');
 
-  Widget _portada((Venue, List<Space>, Catalog) data, Space cancha) {
+  Widget _portada((Venue, List<Space>, Catalog) data, Space space) {
     return AvailabilityCover(
-      sede: data.$1,
-      tipo: data.$3.shortKind(cancha.sport, cancha.kind),
-      deporte: cancha.sport,
-      volverA: _volverA,
-      alVolver: _alVolver,
+      venue: data.$1,
+      kind: data.$3.shortKind(space.sport, space.kind),
+      sport: space.sport,
+      backLabel: _backLabel,
+      onBack: _onBack,
     );
   }
 
-  Widget _resumen(
+  Widget _summary(
     (Venue, List<Space>, Catalog) data,
-    Space cancha,
-    AvailabilityGrid grilla,
+    Space space,
+    AvailabilityGrid grid,
     String id,
     int hours,
   ) {
     return BookingSummary(
-      tipo: data.$3.shortKind(cancha.sport, cancha.kind),
-      precio:
-          (data.$2.where((c) => c.id == id).firstOrNull ?? cancha).pricePerHour,
-      horas: hours,
-      franja: grilla.slots.where((f) => f.start == _inicio).firstOrNull,
-      fecha: grilla.date,
+      kind: data.$3.shortKind(space.sport, space.kind),
+      price:
+          (data.$2.where((c) => c.id == id).firstOrNull ?? space).pricePerHour,
+      hours: hours,
+      slot: grid.slots.where((f) => f.start == _start).firstOrNull,
+      date: grid.date,
     );
   }
 
-  Widget _grillaOAviso(Palette p) {
-    final grilla = _grilla;
-    final hours = _deLaGrilla?.$2 ?? _horas;
+  Widget _gridOrNotice(Palette p) {
+    final grid = _grid;
+    final hours = _gridQuery?.$2 ?? _hours;
     final l = AppLocalizations.of(context);
-    if (grilla == null) {
-      if (_cambio) return const SizedBox(height: Spacing.s48);
-      if (_consultando || !_fallo) {
+    if (grid == null) {
+      if (_change) return const SizedBox(height: Spacing.s48);
+      if (_searching || !_failure) {
         return SlotsSection(
-          titulo: l.availabilitySlots,
+          title: l.availabilitySlots,
           child: const Padding(
             padding: EdgeInsets.only(top: Spacing.s8 + 2),
             child: AvailabilityGridSkeleton(),
@@ -498,64 +495,64 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       return Padding(
         padding: const EdgeInsets.all(Spacing.s24),
         child: Center(
-          child: TextActionButton(label: l.bookingRetry, onTap: _consultar),
+          child: TextActionButton(label: l.bookingRetry, onTap: _search),
         ),
       );
     }
     return SlotsSection(
-      titulo: l.availabilitySlots,
+      title: l.availabilitySlots,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
             height: 2,
-            child: _consultando ? const LinearProgressIndicator() : null,
+            child: _searching ? const LinearProgressIndicator() : null,
           ),
           const SizedBox(height: Spacing.s8),
-          _contenidoDeLaGrilla(grilla, hours),
+          _gridContent(grid, hours),
         ],
       ),
     );
   }
 
   /// Mientras llega otra grilla, sus lugares se muestran como bloques.
-  Widget _contenidoDeLaGrilla(AvailabilityGrid grilla, int hours) {
-    if (_consultando) return const AvailabilityGridSkeleton();
+  Widget _gridContent(AvailabilityGrid grid, int hours) {
+    if (_searching) return const AvailabilityGridSkeleton();
     final l = AppLocalizations.of(context);
-    if (!grilla.hasFree) {
+    if (!grid.hasFree) {
       return EmptyState(
         title: l.availabilityNoSlots,
-        text: _porQueNoHay(grilla, hours),
+        text: _emptyReason(grid, hours),
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_datos?.$1 case final venue?) ...[
-          Heartbeat(trigger: _horas, child: _lineaDelDia(venue, grilla, hours)),
+        if (_data?.$1 case final venue?) ...[
+          Heartbeat(trigger: _hours, child: _dayLine(venue, grid, hours)),
           const SizedBox(height: Spacing.s12),
         ],
         PairedGrid(
-          alto: Spacing.controlHeight,
-          hijos: [
-            for (final f in grilla.slots)
+          height: Spacing.controlHeight,
+          children: [
+            for (final f in grid.slots)
               SlotCard(
-                franja: f,
-                actual: _esLaActual(f.start),
-                elegida: f.start == _inicio,
-                alTocar: f.available
-                    ? () => setState(() => _inicio = f.start)
+                slot: f,
+                actual: _isCurrent(f.start),
+                chosen: f.start == _start,
+                onTap: f.available
+                    ? () => setState(() => _start = f.start)
                     : null,
               ),
           ],
         ),
-        if (grilla.unavailableCount > 0) ...[
+        if (grid.unavailableCount > 0) ...[
           const SizedBox(height: Spacing.s12),
           AvailabilityNote(
-            texto: hours == 1
-                ? l.availabilitySomeTaken(grilla.unavailableCount)
+            text: hours == 1
+                ? l.availabilitySomeTaken(grid.unavailableCount)
                 : l.availabilityFewerStarts(
-                    grilla.unavailableCount,
+                    grid.unavailableCount,
                     l.bookingDuration(hours),
                   ),
           ),
@@ -566,24 +563,24 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   /// Una celda por hora, de la apertura a la última antes del cierre: libre si alguna
   /// franja libre la cubre, elegida si la cubre la franja elegida.
-  Widget _lineaDelDia(Venue venue, AvailabilityGrid grilla, int hours) {
-    int hora(String hhmm) => int.parse(hhmm.split(':').first);
-    final desde = hora(venue.opening);
-    final cierre = hora(venue.closing);
-    final hasta = cierre == 0 ? 24 : cierre;
-    bool cubre(Slot f, int h) {
-      final start = hora(f.start);
+  Widget _dayLine(Venue venue, AvailabilityGrid grid, int hours) {
+    int hour(String hhmm) => int.parse(hhmm.split(':').first);
+    final from = hour(venue.opening);
+    final closing = hour(venue.closing);
+    final to = closing == 0 ? 24 : closing;
+    bool covers(Slot f, int h) {
+      final start = hour(f.start);
       return start <= h && h < start + hours;
     }
 
-    final elegida = grilla.slots.where((f) => f.start == _inicio);
+    final chosen = grid.slots.where((f) => f.start == _start);
     return DayTimeline(
-      from: desde,
+      from: from,
       slots: [
-        for (var h = desde; h < hasta; h++)
-          if (elegida.any((f) => cubre(f, h)))
+        for (var h = from; h < to; h++)
+          if (chosen.any((f) => covers(f, h)))
             SlotState.chosen
-          else if (grilla.slots.any((f) => f.available && cubre(f, h)))
+          else if (grid.slots.any((f) => f.available && covers(f, h)))
             SlotState.free
           else
             SlotState.taken,
@@ -591,14 +588,14 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  String _porQueNoHay(AvailabilityGrid grilla, int hours) {
+  String _emptyReason(AvailabilityGrid grid, int hours) {
     final l = AppLocalizations.of(context);
-    if (!grilla.opens) return l.availabilityVenueClosed;
+    if (!grid.opens) return l.availabilityVenueClosed;
     if (hours > 1) return l.availabilityNoFit(l.bookingDuration(hours));
     return l.availabilityNoneLeft;
   }
 }
 
-/// El día de [momento], en la hora del club.
-DateTime _diaDe(DateTime momento) =>
-    DateTime.utc(momento.year, momento.month, momento.day);
+/// El día de [moment], en la hora del club.
+DateTime _dayOf(DateTime moment) =>
+    DateTime.utc(moment.year, moment.month, moment.day);

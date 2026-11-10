@@ -231,15 +231,15 @@ ApiClient _myBookingsApi(Completer<void>? historyPending) {
   final routes = venueRoutes();
   return ApiClient(
     'http://api.falsa',
-    cliente: MockClient((request) async {
-      final historial = request.url.queryParameters['when'] == 'history';
-      if (request.url.path == '/bookings' && historial) {
+    client: MockClient((request) async {
+      final history = request.url.queryParameters['when'] == 'history';
+      if (request.url.path == '/bookings' && history) {
         await historyPending?.future;
       }
       final (code, body) = request.url.path == '/bookings'
           ? (
               200,
-              '{"bookings": [${historial ? bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'completed') : bookingJson()}]}',
+              '{"bookings": [${history ? bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'completed') : bookingJson()}]}',
             )
           : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
@@ -255,7 +255,7 @@ ApiClient _venueApi(Completer<void>? pending) {
   final routes = venueRoutes();
   return ApiClient(
     'http://api.falsa',
-    cliente: MockClient((request) async {
+    client: MockClient((request) async {
       final filtered =
           request.url.path == '/spaces' &&
           request.url.queryParameters.containsKey('sport');
@@ -322,7 +322,7 @@ class _Host extends StatelessWidget {
 
 Widget _cancellation() => _Host(
   open: (context) =>
-      unawaited(confirmarCancelacion(context, 'Fútbol 5 · Sede Morón')),
+      unawaited(confirmCancellation(context, 'Fútbol 5 · Sede Morón')),
 );
 
 void main() {
@@ -334,7 +334,7 @@ void main() {
     'switching to «Historial» changes only the list with a 150 ms fade @RED-04-S5',
     (tester) async {
       final pending = Completer<void>();
-      await mountUser(tester, api: _myBookingsApi(pending), start: '/reservas');
+      await mountUser(tester, api: _myBookingsApi(pending), start: '/bookings');
       final title = tester.element(find.text('Mis reservas'));
       final selector = tester.element(find.text('Historial'));
       final list = _listFade;
@@ -385,7 +385,7 @@ void main() {
       await mountUser(
         tester,
         api: _venueApi(pending),
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
       );
       const tennis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
       const football = 'Moron_Rivadavia_19850_Futbol_F5_1';
@@ -432,7 +432,7 @@ void main() {
     'with reduce motion the list changes on the first frame @RED-04-S14',
     (tester) async {
       _reduceMotion(tester);
-      await mountUser(tester, api: _myBookingsApi(null), start: '/reservas');
+      await mountUser(tester, api: _myBookingsApi(null), start: '/bookings');
       expect(find.text('ACTIVA'), findsOneWidget);
 
       await tester.tap(find.text('Historial'));
@@ -448,7 +448,7 @@ void main() {
     'the list of the other tab is not visible while loading @RED-04-ASM-07',
     (tester) async {
       final pending = Completer<void>();
-      await mountUser(tester, api: _myBookingsApi(pending), start: '/reservas');
+      await mountUser(tester, api: _myBookingsApi(pending), start: '/bookings');
       expect(find.text('ACTIVA'), findsOneWidget);
 
       await tester.tap(find.text('Historial'));
@@ -882,7 +882,7 @@ void main() {
   ) async {
     await _mountFree(
       tester,
-      BookingConfirmedScreen(reserva: _confirmedBooking()),
+      BookingConfirmedScreen(booking: _confirmedBooking()),
     );
     expect(find.byType(Celebration), findsOneWidget);
     final title = find.text('¡Reserva confirmada!');
@@ -915,7 +915,7 @@ void main() {
         tester,
         api: apiRoutes(venueRoutes()),
         start:
-            '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+            '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       );
       final line = find.byType(DayTimeline);
       expect(
@@ -1041,7 +1041,7 @@ void main() {
       // The celebration.
       await _mountFree(
         tester,
-        BookingConfirmedScreen(reserva: _confirmedBooking()),
+        BookingConfirmedScreen(booking: _confirmedBooking()),
       );
       final title = find.text('¡Reserva confirmada!');
       final receipt = find.text('Horario');
@@ -1246,7 +1246,7 @@ void main() {
           appearance: Appearance.inMemory(),
         ),
         'reserva confirmada': BookingConfirmedScreen(
-          reserva: _confirmedBooking(),
+          booking: _confirmedBooking(),
         ),
       };
       for (final MapEntry(key: name, value: screen) in screens.entries) {

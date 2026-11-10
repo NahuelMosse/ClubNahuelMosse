@@ -32,18 +32,18 @@ void main() {
             builder: (context, _) => Scaffold(
               body: TextButton(
                 onPressed: () =>
-                    showNetworkError(context, const ErrorDelServidor(403)),
+                    showNetworkError(context, const ServerError(403)),
                 child: const Text('ABRIR'),
               ),
             ),
           ),
           GoRoute(
-            path: '/admin/acceso-denegado',
+            path: '/admin/access-denied',
             builder: (context, _) =>
                 AccessDeniedScreen(session: FakeSession(userProfile)),
           ),
           GoRoute(
-            path: '/reservas',
+            path: '/bookings',
             builder: (context, _) => const Scaffold(body: Text('Mis reservas')),
           ),
         ],
@@ -72,14 +72,14 @@ void main() {
             body: TextButton(
               onPressed: () async => outcome = await handleNetworkError(
                 context,
-                const ErrorDelServidor(403),
+                const ServerError(403),
               ),
               child: const Text('ABRIR'),
             ),
           ),
         ),
         GoRoute(
-          path: '/admin/acceso-denegado',
+          path: '/admin/access-denied',
           builder: (context, _) =>
               AccessDeniedScreen(session: FakeSession(userProfile)),
         ),

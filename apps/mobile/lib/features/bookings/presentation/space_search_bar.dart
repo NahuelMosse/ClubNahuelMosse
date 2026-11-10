@@ -8,14 +8,14 @@ import '../../../theme/tokens.dart';
 class SpaceSearchBar extends StatelessWidget {
   const SpaceSearchBar({
     super.key,
-    required this.alLimpiar,
-    required this.alConsultar,
-    required this.consultando,
+    required this.onClear,
+    required this.onSearch,
+    required this.searching,
   });
 
-  final VoidCallback? alLimpiar;
-  final VoidCallback? alConsultar;
-  final bool consultando;
+  final VoidCallback? onClear;
+  final VoidCallback? onSearch;
+  final bool searching;
 
   @override
   Widget build(BuildContext context) {
@@ -25,13 +25,13 @@ class SpaceSearchBar extends StatelessWidget {
       color: p.bgSurface,
       child: Row(
         children: [
-          TextActionButton(label: l.spaceSearchClear, onTap: alLimpiar),
+          TextActionButton(label: l.spaceSearchClear, onTap: onClear),
           const SizedBox(width: Spacing.s12),
           Expanded(
             child: PrimaryButton(
               label: l.spaceSearchRun,
-              onTap: alConsultar,
-              loading: consultando,
+              onTap: onSearch,
+              loading: searching,
             ),
           ),
         ],

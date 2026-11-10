@@ -245,7 +245,7 @@ void main() {
         await mountScreen(
           tester,
           AdminPanelScreen(
-            history: BookingHistory(api: panelApi, sesion: adminSession),
+            history: BookingHistory(api: panelApi, session: adminSession),
             venues: Venues(
               repository: VenuesRepository(
                 api: panelApi,

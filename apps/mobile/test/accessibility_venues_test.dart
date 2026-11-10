@@ -80,7 +80,7 @@ void main() {
       await mountUser(
         tester,
         dark: dark,
-        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/venues/00000000-0000-7000-8000-000000000001',
         api: apiRoutes(venueRoutes()),
       );
       await withPhotos(tester);
@@ -96,7 +96,7 @@ void main() {
         tester,
         dark: dark,
         start:
-            '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+            '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
         api: apiRoutes(venueRoutes()),
       );
       await meetsGuidelines(tester);
@@ -110,7 +110,7 @@ void main() {
       await mountUser(
         tester,
         dark: dark,
-        start: '/inicio/buscar',
+        start: '/home/search',
         api: apiRoutes(venueRoutes()),
       );
       await meetsGuidelines(tester);
@@ -124,7 +124,7 @@ void main() {
         await mountUser(
           tester,
           dark: dark,
-          start: '/inicio',
+          start: '/home',
           api: apiRoutes({
             ...venueRoutes(),
             'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
@@ -142,7 +142,7 @@ void main() {
       await mountUser(
         tester,
         dark: dark,
-        start: '/reservas',
+        start: '/bookings',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),

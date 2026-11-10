@@ -27,7 +27,7 @@ class NoticeTapped {
   final bool legacy;
 
   /// A dónde abre tocarlo: el centro de notificaciones si es un aviso antiguo.
-  String get route => legacy ? '/notificaciones' : noticeRoute(kind, bookingId);
+  String get route => legacy ? '/notifications' : noticeRoute(kind, bookingId);
 }
 
 /// El sistema de notificaciones del teléfono: el permiso, el token del dispositivo y lo que

@@ -41,6 +41,6 @@ Future<void> deactivateVenue(
     notifyChange: venues.notifyChange,
     session: session,
     submitting: submitting,
-    returnTo: returnToList ? '/admin/sedes' : null,
+    returnTo: returnToList ? '/admin/venues' : null,
   );
 }

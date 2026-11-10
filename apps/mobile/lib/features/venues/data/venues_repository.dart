@@ -17,21 +17,21 @@ class VenuesRepository {
 
   /// Las sedes activas, por nombre.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<List<Venue>> active() async {
     final r = await _api.get('/venues', token: await _session.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
-    if (r.cuerpo case {'venues': final List<Object?> venues}) {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code != 200) throw ServerError(r.code);
+    if (r.body case {'venues': final List<Object?> venues}) {
       final parsed = [for (final s in venues) Venue.fromJson(s)];
       if (!parsed.contains(null)) return [...parsed.nonNulls];
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 
   /// Da de alta la sede y devuelve la que quedó guardada.
   ///
-  /// Lanza [VenueRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [VenueRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<Venue> create({
     required String name,
     required String address,
@@ -53,7 +53,7 @@ class VenuesRepository {
   /// horario se guarda aunque deje afuera reservas futuras.
   ///
   /// Lanza [BookingsOutsideHours], [VenueUnavailable], [VenueRejected], [SessionExpired],
-  /// [SinConexion] o [ErrorDelServidor].
+  /// [NoConnection] o [ServerError].
   Future<Venue> update(
     String id, {
     required String name,
@@ -71,10 +71,8 @@ class VenuesRepository {
       'open_days': days,
       'confirm': confirm,
     }, token: await _session.token());
-    if (r.codigo == 404) throw const VenueUnavailable();
-    if (r.cuerpo case {
-      'bookings_outside': final int count,
-    } when r.codigo == 409) {
+    if (r.code == 404) throw const VenueUnavailable();
+    if (r.body case {'bookings_outside': final int count} when r.code == 409) {
       throw BookingsOutsideHours(count);
     }
     return _saved(r, 200);
@@ -82,26 +80,26 @@ class VenuesRepository {
 
   /// Da de baja la sede [id] y sus espacios.
   ///
-  /// Lanza [VenueUnavailable], [VenueHasBookings], [SessionExpired], [SinConexion] o
-  /// [ErrorDelServidor].
+  /// Lanza [VenueUnavailable], [VenueHasBookings], [SessionExpired], [NoConnection] o
+  /// [ServerError].
   Future<void> deactivate(String id) async {
     final r = await _api.delete('/venues/$id', token: await _session.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 404) throw const VenueUnavailable();
-    if (r.codigo == 409) throw const VenueHasBookings();
-    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 404) throw const VenueUnavailable();
+    if (r.code == 409) throw const VenueHasBookings();
+    if (r.code != 204) throw ServerError(r.code);
   }
 
-  Venue _saved(Respuesta r, int success) {
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 409 || r.codigo == 422) {
-      final errors = fieldErrors(r.cuerpo);
+  Venue _saved(ApiResponse r, int success) {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 409 || r.code == 422) {
+      final errors = fieldErrors(r.body);
       if (errors.isNotEmpty) {
-        throw VenueRejected(errors, duplicate: r.codigo == 409);
+        throw VenueRejected(errors, duplicate: r.code == 409);
       }
     }
-    final venue = r.codigo == success ? Venue.fromJson(r.cuerpo) : null;
-    if (venue == null) throw ErrorDelServidor(r.codigo);
+    final venue = r.code == success ? Venue.fromJson(r.body) : null;
+    if (venue == null) throw ServerError(r.code);
     return venue;
   }
 }

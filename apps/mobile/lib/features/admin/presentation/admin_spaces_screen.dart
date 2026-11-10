@@ -76,7 +76,7 @@ class _AdminSpacesScreenState extends State<AdminSpacesScreen> {
       title: l10n.adminSpacesTitle,
       session: widget.session,
       createText: l10n.adminAddSpace,
-      createRoute: '/admin/espacios/nuevo',
+      createRoute: '/admin/spaces/new',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: data != null,

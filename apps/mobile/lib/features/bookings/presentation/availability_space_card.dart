@@ -11,40 +11,40 @@ import 'selectable_frame.dart';
 class AvailabilitySpaceCard extends StatelessWidget {
   const AvailabilitySpaceCard({
     super.key,
-    required this.cancha,
-    required this.elegida,
-    required this.alTocar,
+    required this.space,
+    required this.chosen,
+    required this.onTap,
   });
 
-  final Space cancha;
-  final bool elegida;
-  final VoidCallback alTocar;
+  final Space space;
+  final bool chosen;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final condition = conditionText(l, cancha);
+    final condition = conditionText(l, space);
     return SelectableFrame(
-      etiqueta: l.availabilityCourtLabel(condition, cancha.number),
-      elegido: elegida,
-      alTocar: alTocar,
+      label: l.availabilityCourtLabel(condition, space.number),
+      selected: chosen,
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(Spacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l.availabilityCourt(cancha.number),
+              l.availabilityCourt(space.number),
               style: Texts.bodyStrong.copyWith(
-                color: elegida ? p.accentOn : p.textPrimary,
+                color: chosen ? p.accentOn : p.textPrimary,
               ),
             ),
             const SizedBox(height: Spacing.s4),
             Text(
               condition,
               style: Texts.caption.copyWith(
-                color: elegida ? p.accentOn : p.textSecondary,
+                color: chosen ? p.accentOn : p.textSecondary,
               ),
             ),
           ],

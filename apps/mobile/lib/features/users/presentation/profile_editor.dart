@@ -152,12 +152,12 @@ class _ProfileEditorState extends State<ProfileEditor> {
       }
       return;
     }
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: outcome.expired,
       error: outcome.error,
-      reintentar: _save,
+      retry: _save,
     );
   }
 

@@ -66,7 +66,7 @@ void main() {
         tester,
         dark: dark,
         size: size,
-        start: '/inicio/buscar',
+        start: '/home/search',
         api: apiRoutes({...venueRoutes(), 'GET /spaces/available': response}),
       );
 
@@ -75,7 +75,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/inicio',
+          start: '/home',
           api: apiRoutes({
             ...venueRoutes(),
             'GET /bookings': (200, '{"bookings": []}'),

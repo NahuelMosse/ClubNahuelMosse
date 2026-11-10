@@ -45,7 +45,7 @@ class _AccessDeniedScreenState extends State<AccessDeniedScreen> {
 
   Future<void> _goToMyBookings() async {
     await _profile;
-    if (mounted) context.go('/reservas');
+    if (mounted) context.go('/bookings');
   }
 
   @override

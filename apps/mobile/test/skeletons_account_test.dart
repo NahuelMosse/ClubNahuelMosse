@@ -108,7 +108,7 @@ void main() {
     'the home loads with the shape of the next booking and the sports @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_homeAnswers);
-      await _open(tester, api, '/inicio');
+      await _open(tester, api, '/home');
 
       final card = tester.getRect(find.byKey(_skeletonCard));
       final tile = tester.getRect(find.byKey(_skeletonTile).first);
@@ -137,7 +137,7 @@ void main() {
     '«Notificaciones» loads with the shape of the notice card @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
-      await _open(tester, api, '/notificaciones');
+      await _open(tester, api, '/notifications');
 
       final frames = tester.widgetList(find.byKey(_skeletonCard)).length;
       final first = tester.getRect(find.byKey(_skeletonCard).first);
@@ -166,7 +166,7 @@ void main() {
     (tester) async {
       final api = HeldApi({});
       final session = _HeldSession();
-      await _open(tester, api, '/perfil', session: session);
+      await _open(tester, api, '/profile', session: session);
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.byType(Skeleton), findsWidgets);
@@ -200,13 +200,13 @@ void main() {
       final semantics = tester.ensureSemantics();
       addTearDown(semantics.dispose);
       final screens = <(String, HeldApi, Session?)>[
-        ('/inicio', HeldApi(_homeAnswers), null),
+        ('/home', HeldApi(_homeAnswers), null),
         (
-          '/notificaciones',
+          '/notifications',
           HeldApi(_noticeAnswers, held: {'GET /notifications'}),
           null,
         ),
-        ('/perfil', HeldApi({}), _HeldSession()),
+        ('/profile', HeldApi({}), _HeldSession()),
       ];
 
       for (final (route, api, session) in screens) {

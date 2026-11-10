@@ -71,7 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) setState(() => _sent = true);
     } on EmailRejected catch (e) {
       if (mounted) setState(() => _serverError = e.message);
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);

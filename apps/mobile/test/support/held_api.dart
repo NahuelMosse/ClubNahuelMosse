@@ -24,7 +24,7 @@ class HeldApi {
 
   late final ApiClient client = ApiClient(
     'http://api.falsa',
-    cliente: MockClient((request) async {
+    client: MockClient((request) async {
       final key = '${request.method} ${request.url.path}';
       if (held.contains('*') || held.contains(key)) await _gate.future;
       final (status, body) = answers[key] ?? (404, '{}');

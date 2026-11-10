@@ -31,10 +31,10 @@ import 'home_skeleton.dart';
 import 'home_sports.dart';
 import 'next_booking.dart';
 
-typedef _Datos = ({
-  Booking? proxima,
-  int cuantas,
-  Catalog catalogo,
+typedef _Loaded = ({
+  Booking? next,
+  int count,
+  Catalog catalog,
   List<Venue> venues,
 });
 
@@ -43,226 +43,229 @@ typedef _Datos = ({
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
-    required this.sesion,
-    required this.reservas,
-    required this.espacios,
+    required this.session,
+    required this.bookings,
+    required this.spaces,
     required this.venues,
-    this.centro,
+    this.center,
   });
 
-  final Session sesion;
-  final Bookings reservas;
-  final Spaces espacios;
+  final Session session;
+  final Bookings bookings;
+  final Spaces spaces;
   final Venues venues;
 
   /// Sin él no hay campana: la pantalla no avisa de notificaciones.
-  final NotificationCenter? centro;
+  final NotificationCenter? center;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  _Datos? _datos;
-  bool _fallo = false;
+  _Loaded? _data;
+  bool _failure = false;
 
   /// Sube con cada lectura: la respuesta de una lectura que ya no vale se descarta.
-  int _pedido = 0;
+  int _request = 0;
 
   /// La reserva que se está cancelando: su botón muestra que espera.
-  String? _cancelando;
+  String? _cancelling;
 
   /// Ya se vieron los bloques con datos: los que se vuelven a armar al recargar nacen
   /// terminados, sin repetir la entrada.
-  bool _yaEntro = false;
+  bool _alreadyEntered = false;
 
   @override
   void initState() {
     super.initState();
-    widget.reservas.addListener(_alCambiarLasReservas);
-    _cargar();
+    widget.bookings.addListener(_onBookingsChanged);
+    _load();
   }
 
   @override
-  void didUpdateWidget(HomeScreen anterior) {
-    super.didUpdateWidget(anterior);
-    if (anterior.reservas != widget.reservas) {
-      anterior.reservas.removeListener(_alCambiarLasReservas);
-      widget.reservas.addListener(_alCambiarLasReservas);
+  void didUpdateWidget(HomeScreen previous) {
+    super.didUpdateWidget(previous);
+    if (previous.bookings != widget.bookings) {
+      previous.bookings.removeListener(_onBookingsChanged);
+      widget.bookings.addListener(_onBookingsChanged);
     }
-    if (anterior.reservas != widget.reservas ||
-        anterior.espacios != widget.espacios ||
-        anterior.venues != widget.venues) {
-      _cargar();
+    if (previous.bookings != widget.bookings ||
+        previous.spaces != widget.spaces ||
+        previous.venues != widget.venues) {
+      _load();
     }
   }
 
   @override
   void dispose() {
-    widget.reservas.removeListener(_alCambiarLasReservas);
+    widget.bookings.removeListener(_onBookingsChanged);
     super.dispose();
   }
 
   /// Una reserva cambió desde otra pantalla: la próxima puede ser otra. Las que cambian
   /// desde acá se releen al terminar.
-  void _alCambiarLasReservas() {
-    if (_cancelando == null) _releerSinAvisar();
+  void _onBookingsChanged() {
+    if (_cancelling == null) _reloadQuietly();
   }
 
-  Future<_Datos> _leer() async {
-    final catalogo = await widget.espacios.repository.catalog();
-    final proximas = await widget.reservas.mine(history: false);
+  Future<_Loaded> _read() async {
+    final catalog = await widget.spaces.repository.catalog();
+    final upcoming = await widget.bookings.mine(history: false);
     final venues = await widget.venues.repository.active();
     return (
-      proxima: proximas.firstOrNull,
-      cuantas: proximas.length,
-      catalogo: catalogo,
+      next: upcoming.firstOrNull,
+      count: upcoming.length,
+      catalog: catalog,
       venues: venues,
     );
   }
 
-  /// Con [deCero] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
+  /// Con [fromScratch] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
   /// había hasta que llega lo nuevo, y se quita si la lectura falla.
-  Future<void> _cargar({bool deCero = true}) async {
-    final request = ++_pedido;
+  Future<void> _load({bool fromScratch = true}) async {
+    final request = ++_request;
     setState(() {
-      if (deCero) _datos = null;
-      _fallo = false;
+      if (fromScratch) _data = null;
+      _failure = false;
     });
-    Object? fallo;
+    Object? failure;
     var vencida = false;
     try {
-      final data = await _leer();
-      if (mounted && request == _pedido) setState(() => _datos = data);
+      final data = await _read();
+      if (mounted && request == _request) setState(() => _data = data);
       return;
     } on SessionExpired {
       vencida = true;
-    } on FalloDeRed catch (e) {
-      fallo = e;
+    } on NetworkFailure catch (e) {
+      failure = e;
     }
-    if (!mounted || request != _pedido) return;
+    if (!mounted || request != _request) return;
     setState(() {
-      _datos = null;
-      _fallo = true;
+      _data = null;
+      _failure = true;
     });
-    await avisarFalloDeCarga(
+    await notifyLoadFailure(
       context,
-      session: widget.sesion,
+      session: widget.session,
       expired: vencida,
-      error: fallo,
-      reintentar: _cargar,
+      error: failure,
+      retry: _load,
     );
   }
 
   /// Vuelve a leer sin avisos: si no se puede, queda lo que había.
-  Future<void> _releerSinAvisar() async {
-    final request = ++_pedido;
+  Future<void> _reloadQuietly() async {
+    final request = ++_request;
     try {
-      final data = await _leer();
-      if (mounted && request == _pedido) setState(() => _datos = data);
-    } on Exception catch (e, pila) {
+      final data = await _read();
+      if (mounted && request == _request) setState(() => _data = data);
+    } on Exception catch (e, stack) {
       // Sin red o con el servidor caído, lo que había sigue siendo lo mejor que hay.
-      logError(e, pila);
+      logError(e, stack);
     }
   }
 
   /// Pide confirmación y cancela [r]. Al terminar, bien o porque la reserva ya había
   /// cambiado, el Home se vuelve a leer.
-  Future<void> _cancelar(Booking r, Catalog catalogo) async {
-    if (_cancelando != null) return;
-    final confirmo = await confirmarCancelacion(
+  Future<void> _cancel(Booking r, Catalog catalog) async {
+    if (_cancelling != null) return;
+    final confirmed = await confirmCancellation(
       context,
-      textoDeCancelacion(AppLocalizations.of(context), r, catalogo),
+      cancellationText(AppLocalizations.of(context), r, catalog),
     );
-    if (!confirmo || !mounted) return;
+    if (!confirmed || !mounted) return;
     // Una lectura que venía en camino (deslizar para refrescar) ya no vale.
-    _pedido++;
+    _request++;
     await cancelWithNotices(
       context,
-      sesion: widget.sesion,
-      reservas: widget.reservas,
-      reserva: r,
-      marcar: (id) => setState(() => _cancelando = id),
-      alCancelar: () => setState(() {
-        if (_datos case final data?) {
-          _datos = (
-            proxima: null,
-            cuantas: data.cuantas > 0 ? data.cuantas - 1 : 0,
-            catalogo: data.catalogo,
+      session: widget.session,
+      bookings: widget.bookings,
+      booking: r,
+      mark: (id) => setState(() => _cancelling = id),
+      onCancel: () => setState(() {
+        if (_data case final data?) {
+          _data = (
+            next: null,
+            count: data.count > 0 ? data.count - 1 : 0,
+            catalog: data.catalog,
             venues: data.venues,
           );
         }
-        _cancelando = null;
+        _cancelling = null;
       }),
-      recargar: () => _cargar(deCero: false),
-      releer: _releerSinAvisar,
+      reload: () => _load(fromScratch: false),
+      reread: _reloadQuietly,
     );
   }
 
   /// Abre la grilla para cambiar [r] de horario y, al volver, lee el Home de nuevo.
-  Future<void> _modificar(Booking r) async {
-    if (await abrirModificar(context, r, ruta: '?desde=inicio')) {
-      await _releerSinAvisar();
+  Future<void> _modify(Booking r) async {
+    if (await openModify(context, r, route: '?from=home')) {
+      await _reloadQuietly();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final data = _datos;
-    final proxima = data?.proxima;
-    final yaEntro = _yaEntro;
-    if (data != null) _yaEntro = true;
+    final data = _data;
+    final next = data?.next;
+    final alreadyEntered = _alreadyEntered;
+    if (data != null) _alreadyEntered = true;
     return PopScope(
-      canPop: _cancelando == null,
+      canPop: _cancelling == null,
       child: Scaffold(
         backgroundColor: p.bgBase,
         bottomNavigationBar: IgnorePointer(
-          ignoring: _cancelando != null,
+          ignoring: _cancelling != null,
           child: const BottomBar(current: Section.home),
         ),
         body: AbsorbPointer(
-          absorbing: _cancelando != null,
+          absorbing: _cancelling != null,
           child: RefreshIndicator(
-            onRefresh: () => _cargar(deCero: false),
+            onRefresh: () => _load(fromScratch: false),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   HomeHero(
-                    sesion: widget.sesion,
-                    centro: widget.centro,
-                    celdas: data == null
+                    session: widget.session,
+                    center: widget.center,
+                    cells: data == null
                         ? null
-                        : _celdas(AppLocalizations.of(context), data),
-                    yaEntro: yaEntro,
+                        : _cells(AppLocalizations.of(context), data),
+                    alreadyEntered: alreadyEntered,
                   ),
-                  if (data == null && !_fallo) const HomeSkeleton(),
-                  if (data == null && _fallo) ListRetry(onTap: _cargar),
+                  if (data == null && !_failure) const HomeSkeleton(),
+                  if (data == null && _failure) ListRetry(onTap: _load),
                   if (data != null) ...[
-                    if (proxima != null)
+                    if (next != null)
                       FadeIn(
                         delay: const Duration(milliseconds: 450),
                         fromY: 26,
-                        alreadyEntered: yaEntro,
+                        alreadyEntered: alreadyEntered,
                         child: NextBooking(
-                          reserva: proxima,
-                          catalogo: data.catalogo,
-                          cancelando: _cancelando == proxima.id,
-                          alCancelar: _cancelando == null
-                              ? () => _cancelar(proxima, data.catalogo)
+                          booking: next,
+                          catalog: data.catalog,
+                          cancelling: _cancelling == next.id,
+                          onCancel: _cancelling == null
+                              ? () => _cancel(next, data.catalog)
                               : null,
-                          alModificar: _cancelando == null
-                              ? () => _modificar(proxima)
+                          onModify: _cancelling == null
+                              ? () => _modify(next)
                               : null,
                         ),
                       ),
-                    HomeSports(catalogo: data.catalogo, yaEntro: yaEntro),
+                    HomeSports(
+                      catalog: data.catalog,
+                      alreadyEntered: alreadyEntered,
+                    ),
                     HomeShortcuts(
-                      primero:
-                          tileEntrance + tileStep * data.catalogo.sports.length,
-                      yaEntro: yaEntro,
+                      first:
+                          tileEntrance + tileStep * data.catalog.sports.length,
+                      alreadyEntered: alreadyEntered,
                     ),
                   ],
                 ],
@@ -275,16 +278,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-List<MarkerCell> _celdas(AppLocalizations l10n, _Datos data) {
-  final canchas = data.venues.fold(0, (total, s) => total + s.spaceCount);
+List<MarkerCell> _cells(AppLocalizations l10n, _Loaded data) {
+  final spaceOptions = data.venues.fold(0, (total, s) => total + s.spaceCount);
   return [
     MarkerCell(
       figure: twoDigits(data.venues.length),
       label: l10n.homeMarkerVenues,
     ),
-    MarkerCell(figure: twoDigits(canchas), label: l10n.homeMarkerCourts),
+    MarkerCell(figure: twoDigits(spaceOptions), label: l10n.homeMarkerCourts),
     MarkerCell(
-      figure: twoDigits(data.cuantas),
+      figure: twoDigits(data.count),
       label: l10n.homeMarkerUpcoming,
       highlighted: true,
     ),

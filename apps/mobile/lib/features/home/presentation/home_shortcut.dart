@@ -6,21 +6,21 @@ import '../../../theme/tokens.dart';
 class HomeShortcut extends StatelessWidget {
   const HomeShortcut({
     super.key,
-    required this.icono,
-    required this.titulo,
-    required this.texto,
-    required this.alTocar,
+    required this.icon,
+    required this.title,
+    required this.text,
+    required this.onTap,
   });
 
-  final IconData icono;
-  final String titulo;
-  final String texto;
-  final VoidCallback alTocar;
+  final IconData icon;
+  final String title;
+  final String text;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final forma = RoundedRectangleBorder(
+    final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(Spacing.radiusLg),
       side: BorderSide(color: p.borderDefault),
     );
@@ -28,24 +28,24 @@ class HomeShortcut extends StatelessWidget {
       button: true,
       child: Material(
         color: p.bgSurfaceRaised,
-        shape: forma,
+        shape: shape,
         child: InkWell(
-          onTap: alTocar,
-          customBorder: forma,
+          onTap: onTap,
+          customBorder: shape,
           child: Padding(
             padding: const EdgeInsets.all(Spacing.s16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icono, color: p.accentInk),
+                Icon(icon, color: p.accentInk),
                 const SizedBox(height: Spacing.s16),
                 Text(
-                  titulo,
+                  title,
                   style: Texts.bodyStrong.copyWith(color: p.textPrimary),
                 ),
                 const SizedBox(height: Spacing.s4),
                 Text(
-                  texto,
+                  text,
                   style: Texts.caption.copyWith(color: p.textSecondary),
                 ),
               ],

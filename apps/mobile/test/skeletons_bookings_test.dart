@@ -131,7 +131,7 @@ void main() {
   testWidgets(
     '«Horarios» loads shaped like its cover, days and grid @VIS-03-S1',
     (tester) async {
-      final held = await _mount(tester, '/sedes/$_moron/canchas/$_f5');
+      final held = await _mount(tester, '/venues/$_moron/spaces/$_f5');
       expect(find.byType(AvailabilitySkeleton), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       final blocks = skeletonRects(tester);
@@ -164,7 +164,7 @@ void main() {
   testWidgets(
     '«Horarios» on day change loads the grid aligned with its columns and rows @VIS-03-S1 @assumption:VIS-03-ASM-01',
     (tester) async {
-      final held = await _mount(tester, '/sedes/$_moron/canchas/$_f5');
+      final held = await _mount(tester, '/venues/$_moron/spaces/$_f5');
       held.release();
       await tester.pumpAndSettle();
       final slots = [
@@ -203,7 +203,7 @@ void main() {
   testWidgets('«Buscar cancha» loads shaped like its form @VIS-03-S1', (
     tester,
   ) async {
-    final held = await _mount(tester, '/inicio/buscar');
+    final held = await _mount(tester, '/home/search');
     expect(find.byType(SpaceSearchSkeleton), findsOneWidget);
     expect(find.text('Consultar canchas'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -234,7 +234,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       final held = await _mount(
         tester,
-        '/inicio/buscar',
+        '/home/search',
         extra: {
           'GET /spaces/available': (
             200,
@@ -279,7 +279,7 @@ void main() {
     final second = bookingJson(id: '00000000-0000-7000-8000-000000000002');
     final held = await _mount(
       tester,
-      '/reservas',
+      '/bookings',
       extra: {
         'GET /bookings': (200, '{"bookings": [${bookingJson()}, $second]}'),
       },

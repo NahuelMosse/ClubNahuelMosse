@@ -58,7 +58,7 @@ Future<void> signOut(BuildContext context, Session session) async {
     await session.close();
   } on Exception {
     if (context.mounted) {
-      await showNetworkError(context, const ErrorDelServidor(0));
+      await showNetworkError(context, const ServerError(0));
     }
   }
 }

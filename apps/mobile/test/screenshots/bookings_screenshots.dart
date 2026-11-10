@@ -49,10 +49,10 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/reservas',
+          start: '/bookings',
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient((request) async {
+            client: MockClient((request) async {
               final (c, body) = request.url.path == '/bookings'
                   ? (
                       200,

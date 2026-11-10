@@ -26,7 +26,7 @@ void main() {
   Future<GoRouter> mountApp(
     WidgetTester tester,
     FakeSession session, {
-    String start = '/inicio',
+    String start = '/home',
   }) async {
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
@@ -76,7 +76,7 @@ void main() {
       expect(find.text('CERRAR SESIÓN'), findsOneWidget);
       expect(find.text('Cerrar sesión'), findsNothing);
 
-      routes.go('/inicio');
+      routes.go('/home');
       await tester.pumpAndSettle();
       await openCard(tester);
       await tester.tap(find.text('Mis reservas'));
@@ -217,7 +217,7 @@ void main() {
       FakeSession(adminProfile),
       start: '/admin',
     );
-    admin.go('/perfil');
+    admin.go('/profile');
     await tester.pumpAndSettle();
     expect(find.text('PANEL ADMIN'), findsOneWidget);
   });

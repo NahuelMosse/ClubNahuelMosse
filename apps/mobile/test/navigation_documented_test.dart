@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/mount.dart';
 
-const _accessDenied = '/admin/acceso-denegado';
+const _accessDenied = '/admin/access-denied';
 
 /// Each row of the page's route table: the route with example values and who may enter.
 List<(String, String)> _rows() {

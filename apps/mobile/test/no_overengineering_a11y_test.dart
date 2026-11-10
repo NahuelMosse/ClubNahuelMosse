@@ -28,10 +28,10 @@ void main() {
     final routes = venueRoutes();
     await mountUser(
       tester,
-      start: '/reservas',
+      start: '/bookings',
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           final (code, body) = request.url.path == '/bookings'
               ? (
                   200,
@@ -86,7 +86,7 @@ void main() {
       await mountScreen(
         tester,
         AdminPanelScreen(
-          history: BookingHistory(api: api, sesion: session),
+          history: BookingHistory(api: api, session: session),
           venues: Venues(
             repository: VenuesRepository(api: api, session: session),
           ),

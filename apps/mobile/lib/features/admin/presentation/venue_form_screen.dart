@@ -95,13 +95,13 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   void _done(Venue venue) {
     if (!mounted) return;
     if (!_form.isEditing) {
-      context.go('/admin/sedes/creada', extra: venue);
+      context.go('/admin/venues/created', extra: venue);
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).adminChangesSaved)),
     );
-    context.go('/admin/sedes');
+    context.go('/admin/venues');
   }
 
   Future<void> _save({bool confirm = false}) async {
@@ -139,14 +139,14 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
     } else if (pending.gone) {
       await showChangedMeanwhile(context);
       widget.venues.notifyChange();
-      if (mounted) context.go('/admin/sedes');
+      if (mounted) context.go('/admin/venues');
     } else {
-      await avisarFalloDeEnvio(
+      await notifySendFailure(
         context,
         session: widget.session,
         expired: pending.expired,
         error: pending.failure,
-        reintentar: () => _save(confirm: confirm),
+        retry: () => _save(confirm: confirm),
       );
     }
   }

@@ -14,7 +14,7 @@ void main() {
     (tester) async {
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((_) async => throw http.ClientException('sin red')),
+        client: MockClient((_) async => throw http.ClientException('sin red')),
       );
       await mountUser(tester, api: api);
 

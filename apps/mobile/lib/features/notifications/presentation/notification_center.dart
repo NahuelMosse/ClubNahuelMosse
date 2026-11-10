@@ -203,7 +203,7 @@ class NotificationCenter extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Lee el centro. Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lee el centro. Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<void> load() async {
     final session = _currentSession;
     await _checkPermission();
@@ -226,7 +226,7 @@ class NotificationCenter extends ChangeNotifier {
   void _apply(CenterReading reading) {
     _list = reading.notifications;
     _unread = reading.unread;
-    if (location() == '/reservas') {
+    if (location() == '/bookings') {
       _silenced.addAll([
         for (final n in _list)
           if (!n.read &&

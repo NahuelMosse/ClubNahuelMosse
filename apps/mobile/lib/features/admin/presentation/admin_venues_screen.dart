@@ -76,7 +76,7 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
       title: l10n.adminVenuesTitle,
       session: widget.session,
       createText: l10n.adminAddVenue,
-      createRoute: '/admin/sedes/nueva',
+      createRoute: '/admin/venues/new',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: venues != null,

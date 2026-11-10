@@ -9,45 +9,45 @@ import 'booking_action.dart';
 class BookingActions extends StatelessWidget {
   const BookingActions({
     super.key,
-    required this.deQue,
-    required this.grande,
-    required this.alModificar,
-    required this.alCancelar,
+    required this.subject,
+    required this.large,
+    required this.onModify,
+    required this.onCancel,
   });
 
   /// La descripción de la reserva para las etiquetas accesibles.
-  final String deQue;
-  final bool grande;
-  final VoidCallback? alModificar;
-  final VoidCallback? alCancelar;
+  final String subject;
+  final bool large;
+  final VoidCallback? onModify;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Flex(
-      direction: grande ? Axis.vertical : Axis.horizontal,
-      crossAxisAlignment: grande
+      direction: large ? Axis.vertical : Axis.horizontal,
+      crossAxisAlignment: large
           ? CrossAxisAlignment.stretch
           : CrossAxisAlignment.center,
       children: [
         BookingAction(
-          expandir: !grande,
-          etiqueta: l.bookingModifyLabel(deQue),
-          alTocar: alModificar,
+          expand: !large,
+          label: l.bookingModifyLabel(subject),
+          onTap: onModify,
           child: OutlineButton(
             label: l.bookingModify,
-            onTap: alModificar,
+            onTap: onModify,
             compact: true,
           ),
         ),
         const SizedBox(width: Spacing.s8, height: Spacing.s8),
         BookingAction(
-          expandir: !grande,
-          etiqueta: l.bookingCancelLabel(deQue),
-          alTocar: alCancelar,
+          expand: !large,
+          label: l.bookingCancelLabel(subject),
+          onTap: onCancel,
           child: OutlineButton(
             label: l.bookingCancel,
-            onTap: alCancelar,
+            onTap: onCancel,
             danger: true,
             compact: true,
           ),

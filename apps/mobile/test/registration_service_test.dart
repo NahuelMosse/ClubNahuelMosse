@@ -38,7 +38,7 @@ void main() {
           password: 'Clave1234',
         ),
       );
-      expect(r.codigo, 201);
+      expect(r.code, 201);
       expect(requests, hasLength(1));
       expect(requests.single.url.path, '/register');
       expect(jsonDecode(requests.single.body), {

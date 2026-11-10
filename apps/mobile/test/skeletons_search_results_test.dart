@@ -32,7 +32,7 @@ void main() {
         tester,
         api: held.client,
         session: FakeSession(userProfile),
-        route: '/inicio/buscar',
+        route: '/home/search',
         pumps: 0,
       );
       await submitSearch(tester, held);

@@ -53,7 +53,7 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
 
-      await open(tester, '/inicio/buscar');
+      await open(tester, '/home/search');
       expectTexts([
         'Find a court',
         'Check courts',
@@ -75,7 +75,7 @@ void main() {
       expect(find.text('CONSULTAR'), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
-      await open(tester, '/sedes/$_venueId/canchas/$_spaceId');
+      await open(tester, '/venues/$_venueId/spaces/$_spaceId');
       expectTexts([
         'SELECT A COURT',
         'Court 1',
@@ -126,7 +126,7 @@ void main() {
   testWidgets('venues and their spaces show English @ENG-19-S1', (
     tester,
   ) async {
-    await open(tester, '/sedes');
+    await open(tester, '/venues');
     expectTexts([
       'Venues',
       '2 venues · 2 courts · each with its own hours',

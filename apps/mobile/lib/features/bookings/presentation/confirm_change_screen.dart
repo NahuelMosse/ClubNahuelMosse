@@ -25,16 +25,16 @@ import 'detail_row.dart';
 /// Cómo terminó la modificación, para los horarios y Mis reservas, que quedan debajo.
 enum ModifyResult {
   /// Se guardó el horario nuevo.
-  modificada,
+  modified,
 
   /// El horario nuevo se ocupó o dejó de valer: se vuelve a la grilla releída.
-  ocupado,
+  taken,
 
   /// La reserva ya no se puede modificar: se vuelve a Mis reservas.
-  cambio,
+  change,
 
   /// Se desistió: la reserva queda como estaba.
-  desistida,
+  abandoned,
 }
 
 /// «Confirmá el cambio»: el horario de antes, el de ahora y el total nuevo, y GUARDAR EL
@@ -42,112 +42,112 @@ enum ModifyResult {
 class ConfirmChangeScreen extends StatefulWidget {
   const ConfirmChangeScreen({
     super.key,
-    required this.reserva,
-    required this.eleccion,
-    required this.reservas,
-    required this.sesion,
+    required this.booking,
+    required this.choice,
+    required this.bookings,
+    required this.session,
   });
 
-  final Booking reserva;
-  final BookingChoice eleccion;
-  final Bookings reservas;
-  final Session sesion;
+  final Booking booking;
+  final BookingChoice choice;
+  final Bookings bookings;
+  final Session session;
 
   @override
   State<ConfirmChangeScreen> createState() => _ConfirmChangeScreenState();
 }
 
 class _ConfirmChangeScreenState extends State<ConfirmChangeScreen> {
-  bool _enviando = false;
+  bool _sending = false;
 
-  void _volver([ModifyResult? resultado]) {
-    if (_enviando) return;
+  void _goBack([ModifyResult? result]) {
+    if (_sending) return;
     if (context.canPop()) {
-      context.pop(resultado);
+      context.pop(result);
     } else {
-      context.go('/reservas');
+      context.go('/bookings');
     }
   }
 
-  Future<void> _guardar() async {
-    if (_enviando) return;
-    setState(() => _enviando = true);
-    Object? fallo;
-    ModifyResult? cambio;
+  Future<void> _save() async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    Object? failure;
+    ModifyResult? change;
     try {
-      await widget.reservas.modify(widget.reserva, widget.eleccion);
+      await widget.bookings.modify(widget.booking, widget.choice);
       if (!mounted) return;
-      setState(() => _enviando = false);
-      _volver(ModifyResult.modificada);
+      setState(() => _sending = false);
+      _goBack(ModifyResult.modified);
       return;
     } on SlotTaken {
-      cambio = ModifyResult.ocupado;
+      change = ModifyResult.taken;
     } on BookingChanged {
-      cambio = ModifyResult.cambio;
+      change = ModifyResult.change;
     } on SpaceUnavailable {
-      cambio = ModifyResult.cambio;
+      change = ModifyResult.change;
     } on BookingRejected catch (r) {
       if (!mounted) return;
-      setState(() => _enviando = false);
+      setState(() => _sending = false);
       await showTimeSlotRejected(context, r.errors.values.first);
-      if (mounted) _volver(ModifyResult.ocupado);
+      if (mounted) _goBack(ModifyResult.taken);
       return;
     } on SessionExpired {
       if (!mounted) return;
-      setState(() => _enviando = false);
-      await avisarSesionVencida(context, widget.sesion);
+      setState(() => _sending = false);
+      await notifySessionExpired(context, widget.session);
       return;
-    } on FalloDeRed catch (x) {
-      fallo = x;
+    } on NetworkFailure catch (x) {
+      failure = x;
     }
     if (!mounted) return;
-    setState(() => _enviando = false);
-    if (fallo != null) {
-      await avisarFalloDeEnvio(
+    setState(() => _sending = false);
+    if (failure != null) {
+      await notifySendFailure(
         context,
-        session: widget.sesion,
+        session: widget.session,
         expired: false,
-        error: fallo,
-        reintentar: _guardar,
+        error: failure,
+        retry: _save,
       );
       return;
     }
     await showChangedMeanwhile(context);
-    if (mounted) _volver(cambio);
+    if (mounted) _goBack(change);
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final r = widget.reserva;
-    final e = widget.eleccion;
+    final r = widget.booking;
+    final e = widget.choice;
     final l = AppLocalizations.of(context);
-    final antes =
+    final before =
         '${shortDay(r.startsAt)} · ${timeRange(r.startsAt, r.endsAt)}';
-    final ahora = '${shortDay(e.date)} · ${e.start} – ${e.end}';
+    final now = '${shortDay(e.date)} · ${e.start} – ${e.end}';
     // Mientras se guarda no se sale: el cambio podría quedar hecho sin que se vea.
     return ConfirmationSkeleton(
-      titulo: l.bookingChangeTitle,
-      enviando: _enviando,
-      alVolver: _volver,
-      textoPrimario: l.bookingChangeSave,
-      alPrimario: _guardar,
-      textoSecundario: l.bookingChangeKeep,
-      alSecundario: () => _volver(ModifyResult.desistida),
-      tarjeta: BookingChoiceCard(
-        eleccion: e,
-        filas: [
-          ChangeSlot(titulo: l.bookingBefore, valor: antes, nuevo: false),
-          ChangeSlot(titulo: l.bookingNow, valor: ahora, nuevo: true),
+      title: l.bookingChangeTitle,
+      sending: _sending,
+      onBack: _goBack,
+      primaryText: l.bookingChangeSave,
+      onPrimary: _save,
+      secondaryText: l.bookingChangeKeep,
+      onSecondary: () => _goBack(ModifyResult.abandoned),
+      card: BookingChoiceCard(
+        choice: e,
+        rows: [
+          ChangeSlot(title: l.bookingBefore, value: before, isNew: false),
+          ChangeSlot(title: l.bookingNow, value: now, isNew: true),
           Divider(height: Spacing.s16, color: p.borderDefault),
           DetailRow(
-            dato: l.bookingRowCourt,
-            valor: l.bookingCourtValue(
+            label: l.bookingRowCourt,
+            value: l.bookingCourtValue(
               conditionText(l, e.space),
               e.space.number,
             ),
           ),
-          DetailRow(dato: l.bookingRowDate, valor: longDate(e.date)),
+          DetailRow(label: l.bookingRowDate, value: longDate(e.date)),
           const SizedBox(height: Spacing.s8),
         ],
       ),

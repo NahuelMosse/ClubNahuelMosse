@@ -106,13 +106,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   Future<void> _load() async {
     final failure = await _pages.load(_filters);
     if (failure == null || !mounted) return;
-    await avisarFalloDeCarga(
+    await notifyLoadFailure(
       context,
       session: widget.session,
       expired: failure.expired,
       error: failure.error,
-      reintentar: _load,
-      alVencer: () => widget.pending.save(_filters),
+      retry: _load,
+      onExpired: () => widget.pending.save(_filters),
     );
   }
 
@@ -158,7 +158,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Future<void> _openDetail(BookingHistoryEntry booking) async {
     await context.push<bool>(
-      '/admin/reserva/${booking.id}',
+      '/admin/booking/${booking.id}',
       extra: (booking, _filters),
     );
     if (mounted) unawaited(_load());

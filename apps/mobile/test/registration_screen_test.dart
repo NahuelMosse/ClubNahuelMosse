@@ -45,7 +45,7 @@ void main() {
     final second = Completer<http.Response>();
     final api = ApiClient(
       'http://api.falsa',
-      cliente: MockClient((_) {
+      client: MockClient((_) {
         requests++;
         if (requests == 1) throw const SocketException('sin red');
         return second.future;

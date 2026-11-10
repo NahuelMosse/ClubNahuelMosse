@@ -84,7 +84,7 @@ class _VenueScreenState extends State<VenueScreen> {
         await showChangedMeanwhile(context);
         if (!mounted) return;
         widget.venues.notifyChange();
-        context.go('/sedes');
+        context.go('/venues');
         return;
       }
       final spaces = await widget.spaces.repository.active(venueId: venue.id);
@@ -121,7 +121,7 @@ class _VenueScreenState extends State<VenueScreen> {
       return;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (!mounted || request != _request) return;
@@ -132,19 +132,19 @@ class _VenueScreenState extends State<VenueScreen> {
     });
     if (ModalRoute.of(context)?.isCurrent == false) return;
     if (expired) {
-      await avisarSesionVencida(context, widget.session);
+      await notifySessionExpired(context, widget.session);
     } else if (failure != null) {
       final outcome = await handleNetworkError(context, failure);
       if (!mounted) return;
       if (outcome == ErrorOutcome.retry) {
         await _load();
       } else if (outcome == ErrorOutcome.closed && _data == null) {
-        context.go('/sedes');
+        context.go('/venues');
       }
     }
   }
 
-  /// Los tipos de [deporte] que tienen canchas, en el orden del catálogo.
+  /// Los tipos de [sport] que tienen canchas, en el orden del catálogo.
   static List<String> _kindsInOrder(
     List<Space> spaces,
     Catalog catalog,
@@ -157,7 +157,7 @@ class _VenueScreenState extends State<VenueScreen> {
     ];
   }
 
-  /// Pide a la API las canchas con ese [deporte] y [tipo]; si falla, avisa y todo queda
+  /// Pide a la API las canchas con ese [sport] y [kind]; si falla, avisa y todo queda
   /// como estaba.
   Future<void> _applyFilter({
     required String? sport,
@@ -194,18 +194,18 @@ class _VenueScreenState extends State<VenueScreen> {
       });
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _filtering = false);
     }
     if (!mounted || request != _request) return;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: expired,
       error: failure,
-      reintentar: () => _applyFilter(sport: sport, kind: kind),
+      retry: () => _applyFilter(sport: sport, kind: kind),
     );
   }
 
@@ -221,7 +221,7 @@ class _VenueScreenState extends State<VenueScreen> {
       ),
       body: data == null
           ? (_loading
-                ? VenueSkeleton(onBack: () => context.go('/sedes'))
+                ? VenueSkeleton(onBack: () => context.go('/venues'))
                 : const SafeArea(child: SizedBox.shrink()))
           : VenueContent(
               venue: data.$1,

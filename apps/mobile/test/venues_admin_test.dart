@@ -69,7 +69,7 @@ void main() {
           '{"venues": [{"id": "00000000-0000-7000-8000-000000000001"}]}',
         ),
       });
-      expect(venues(api).repository.active(), throwsA(isA<ErrorDelServidor>()));
+      expect(venues(api).repository.active(), throwsA(isA<ServerError>()));
     });
 
     test('create sends the data and returns the saved venue', () async {
@@ -127,7 +127,7 @@ void main() {
 
     test('a 403 is not a create: it is an error', () {
       final api = apiRoutes({'POST /venues': (403, '')});
-      expect(create(api), throwsA(isA<ErrorDelServidor>()));
+      expect(create(api), throwsA(isA<ServerError>()));
     });
   });
 
@@ -172,7 +172,7 @@ void main() {
       var attempts = 0;
       final api = ApiClient(
         'http://api.falsa',
-        cliente: _Client((_) async {
+        client: _Client((_) async {
           attempts++;
           if (attempts == 1) throw const _Outage();
           return http.Response('{"venues": []}', 200);
@@ -199,7 +199,7 @@ void main() {
       final requests = <http.Request>[];
       await mountAdmin(
         tester,
-        start: '/admin/sedes/nueva',
+        start: '/admin/venues/new',
         api: apiRoutes({
           'POST /venues': response,
           'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),
@@ -350,7 +350,7 @@ void main() {
     ) async {
       await mountAdmin(
         tester,
-        start: '/admin/sedes/creada',
+        start: '/admin/venues/created',
         api: apiRoutes({'GET /venues': (200, '{"venues": [$venueHaedoJson]}')}),
       );
       expect(find.text('¡Sede creada!'), findsNothing);
@@ -383,7 +383,7 @@ void main() {
         var saved = false;
         final api = ApiClient(
           'http://api.falsa',
-          cliente: _Client((request) async {
+          client: _Client((request) async {
             if (request.method == 'POST') {
               saved = true;
               return http.Response(venueHaedoJson, 201);
@@ -413,7 +413,7 @@ void main() {
         var reads = 0;
         final api = ApiClient(
           'http://api.falsa',
-          cliente: _Client((request) async {
+          client: _Client((request) async {
             if (request.method == 'POST')
               return http.Response(venueHaedoJson, 201);
             reads++;
@@ -436,7 +436,7 @@ void main() {
         var creates = 0;
         final api = ApiClient(
           'http://api.falsa',
-          cliente: _Client((request) async {
+          client: _Client((request) async {
             if (request.method == 'POST') {
               creates++;
               if (creates == 1) throw const _Outage();
@@ -477,7 +477,7 @@ void main() {
         api: apiRoutes({}),
         session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
-        initialLocation: '/admin/sedes/nueva',
+        initialLocation: '/admin/venues/new',
       ),
     );
     await tester.pumpAndSettle();

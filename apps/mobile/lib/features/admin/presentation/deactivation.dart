@@ -44,7 +44,7 @@ Future<void> deactivate(
       result = await request();
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       submitting(false);
@@ -72,14 +72,14 @@ Future<void> deactivate(
         return;
       case null:
         if (expired) {
-          await avisarSesionVencida(context, session);
+          await notifySessionExpired(context, session);
           return;
         }
         if (failure == null) return;
         if (!await askRetry(context, failure) || !context.mounted) {
           return;
         }
-        if (failure is SinConexion) hadCutoff = true;
+        if (failure is NoConnection) hadCutoff = true;
     }
   }
 }

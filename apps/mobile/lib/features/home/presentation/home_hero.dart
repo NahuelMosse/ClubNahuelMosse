@@ -19,25 +19,25 @@ import 'home_greeting.dart';
 class HomeHero extends StatelessWidget {
   const HomeHero({
     super.key,
-    required this.sesion,
-    required this.celdas,
-    required this.yaEntro,
-    this.centro,
+    required this.session,
+    required this.cells,
+    required this.alreadyEntered,
+    this.center,
   });
 
-  final Session sesion;
-  final bool yaEntro;
+  final Session session;
+  final bool alreadyEntered;
 
-  final NotificationCenter? centro;
+  final NotificationCenter? center;
 
   /// `null` mientras se lee.
-  final List<MarkerCell>? celdas;
+  final List<MarkerCell>? cells;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final arriba = MediaQuery.paddingOf(context).top;
-    final marcador = celdas;
+    final top = MediaQuery.paddingOf(context).top;
+    final marker = cells;
     return PhotoWithScrim(
       image: sportPhoto('Futbol'),
       child: Stack(
@@ -46,7 +46,7 @@ class HomeHero extends StatelessWidget {
           Padding(
             padding: EdgeInsets.fromLTRB(
               Spacing.s24,
-              arriba + Spacing.s24,
+              top + Spacing.s24,
               Spacing.s16,
               Spacing.s24,
             ),
@@ -58,12 +58,12 @@ class HomeHero extends StatelessWidget {
                     Expanded(
                       child: FadeIn(
                         delay: const Duration(milliseconds: 50),
-                        child: HomeGreeting(sesion: sesion),
+                        child: HomeGreeting(session: session),
                       ),
                     ),
-                    if (centro case final centro?)
-                      NotificationsButton(center: centro),
-                    AccountButton(session: sesion),
+                    if (center case final center?)
+                      NotificationsButton(center: center),
+                    AccountButton(session: session),
                   ],
                 ),
                 const SizedBox(height: Spacing.s48),
@@ -74,7 +74,7 @@ class HomeHero extends StatelessWidget {
                     style: Texts.display.copyWith(color: p.textOnMedia),
                   ),
                 ),
-                if (marcador != null) ...[
+                if (marker != null) ...[
                   const SizedBox(height: Spacing.s24),
                   Padding(
                     padding: const EdgeInsets.only(right: Spacing.s8),
@@ -84,8 +84,8 @@ class HomeHero extends StatelessWidget {
                       fromY: 0,
                       scaleFrom: 0.85,
                       curve: AppMotion.fast,
-                      alreadyEntered: yaEntro,
-                      child: AppMarker(cells: marcador),
+                      alreadyEntered: alreadyEntered,
+                      child: AppMarker(cells: marker),
                     ),
                   ),
                 ] else

@@ -6,28 +6,28 @@ import 'request_failure.dart';
 import 'session.dart';
 
 /// Avisa el fallo de una carga de pantalla: la sesión vencida cierra la sesión; un error
-/// de red ofrece reintentar con [reintentar].
+/// de red ofrece reintentar con [retry].
 ///
 /// Tapada por otra pantalla no avisa: al volver, el listado ofrece REINTENTAR.
-/// [alVencer] corre antes del aviso de sesión vencida; [alNoReintentar], si la persona no
+/// [onExpired] corre antes del aviso de sesión vencida; [onGiveUp], si la persona no
 /// reintenta.
-Future<void> avisarFalloDeCarga(
+Future<void> notifyLoadFailure(
   BuildContext context, {
   required Session session,
   required bool expired,
   required Object? error,
-  required Future<void> Function() reintentar,
-  VoidCallback? alVencer,
-  VoidCallback? alNoReintentar,
-}) => avisarFalloDeEnvio(
+  required Future<void> Function() retry,
+  VoidCallback? onExpired,
+  VoidCallback? onGiveUp,
+}) => notifySendFailure(
   context,
   session: session,
   expired: expired,
   error: error,
-  reintentar: reintentar,
-  soloAlFrente: true,
-  alVencer: alVencer,
-  alNoReintentar: alNoReintentar,
+  retry: retry,
+  onlyWhenFront: true,
+  onExpired: onExpired,
+  onGiveUp: onGiveUp,
 );
 
 /// Runs the screen load [load]; when it ends in an expired session or a network failure,
@@ -44,49 +44,49 @@ Future<void> loadOrNotify(
   if (failure.expired == false && failure.error == null) return;
   if (!context.mounted) return;
   onFailed();
-  await avisarFalloDeCarga(
+  await notifyLoadFailure(
     context,
     session: session,
     expired: failure.expired,
     error: failure.error,
-    reintentar: retry,
+    retry: retry,
   );
 }
 
 /// Avisa el fallo de un pedido: la sesión vencida cierra la sesión; un error de red
-/// ofrece reintentar con [reintentar]. Sin fallo ni vencimiento no hace nada.
+/// ofrece reintentar con [retry]. Sin fallo ni vencimiento no hace nada.
 ///
-/// Con [soloAlFrente], tapada por otra pantalla no avisa. [alVencer] corre antes del aviso
-/// de sesión vencida; [alNoReintentar], si la persona no reintenta y la pantalla sigue.
-Future<void> avisarFalloDeEnvio(
+/// Con [onlyWhenFront], tapada por otra pantalla no avisa. [onExpired] corre antes del aviso
+/// de sesión vencida; [onGiveUp], si la persona no reintenta y la pantalla sigue.
+Future<void> notifySendFailure(
   BuildContext context, {
   required Session session,
   required bool expired,
   required Object? error,
-  required Future<void> Function() reintentar,
-  bool soloAlFrente = false,
-  VoidCallback? alVencer,
-  VoidCallback? alNoReintentar,
+  required Future<void> Function() retry,
+  bool onlyWhenFront = false,
+  VoidCallback? onExpired,
+  VoidCallback? onGiveUp,
 }) async {
-  if (soloAlFrente && ModalRoute.of(context)?.isCurrent == false) return;
+  if (onlyWhenFront && ModalRoute.of(context)?.isCurrent == false) return;
   if (expired) {
-    await avisarSesionVencida(context, session, antes: alVencer);
+    await notifySessionExpired(context, session, before: onExpired);
   } else if (error != null) {
     if (await askRetry(context, error)) {
-      if (context.mounted) await reintentar();
+      if (context.mounted) await retry();
     } else if (context.mounted) {
-      alNoReintentar?.call();
+      onGiveUp?.call();
     }
   }
 }
 
-/// Avisa que la sesión venció y la cierra; [antes] corre antes del aviso.
-Future<void> avisarSesionVencida(
+/// Avisa que la sesión venció y la cierra; [before] corre antes del aviso.
+Future<void> notifySessionExpired(
   BuildContext context,
   Session session, {
-  VoidCallback? antes,
+  VoidCallback? before,
 }) async {
-  antes?.call();
+  before?.call();
   await showSessionExpired(context);
   if (context.mounted) await signOut(context, session);
 }

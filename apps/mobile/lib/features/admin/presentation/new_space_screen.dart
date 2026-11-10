@@ -56,7 +56,7 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     final failure = await _form.load();
     if (failure == null || !mounted) return;
     if (failure.expired) {
-      await avisarSesionVencida(context, widget.session);
+      await notifySessionExpired(context, widget.session);
       return;
     }
     final error = failure.failure;
@@ -66,14 +66,14 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     if (outcome == ErrorOutcome.retry) {
       await _load();
     } else if (outcome == ErrorOutcome.closed) {
-      context.go('/admin/espacios');
+      context.go('/admin/spaces');
     }
   }
 
   /// Avisa que la sesión venció si [expired] lo dice.
   Future<void> _notifyIfExpired(Future<bool> expired) async {
     if (await expired && mounted) {
-      await avisarSesionVencida(context, widget.session);
+      await notifySessionExpired(context, widget.session);
     }
   }
 
@@ -115,12 +115,12 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     if (!mounted) return true;
     final failure = _form.nameFailure;
     if (failure == null) return false;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: false,
       error: failure,
-      reintentar: _save,
+      retry: _save,
     );
     return true;
   }
@@ -133,16 +133,16 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     FocusScope.of(context).unfocus();
     final pending = await _form.submit(
       onCreated: (space) {
-        if (mounted) context.go('/admin/espacios/creado', extra: space);
+        if (mounted) context.go('/admin/spaces/created', extra: space);
       },
     );
     if (pending == null || !mounted) return;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: pending.expired,
       error: pending.failure,
-      reintentar: _save,
+      retry: _save,
     );
   }
 

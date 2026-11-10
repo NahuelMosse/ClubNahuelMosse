@@ -66,10 +66,10 @@ void main() {
     var canceled = false;
     await mountUser(
       tester,
-      start: '/reservas',
+      start: '/bookings',
       api: ApiClient(
         'http://api.falsa',
-        cliente: _withOutage(
+        client: _withOutage(
           '/bookings/00000000-0000-7000-8000-000000000001/cancel',
           [
             null,
@@ -105,7 +105,7 @@ void main() {
   testWidgets('void: a 409 after an outage counts as voided', (tester) async {
     final api = ApiClient(
       'http://api.falsa',
-      cliente: _withOutage(
+      client: _withOutage(
         '/bookings/00000000-0000-7000-8000-000000000001/void',
         [null, (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}')],
         (request) => switch (request.url.path) {
@@ -119,7 +119,7 @@ void main() {
     await mountScreen(
       tester,
       AdminPanelScreen(
-        history: BookingHistory(api: api, sesion: session),
+        history: BookingHistory(api: api, session: session),
         venues: Venues(
           repository: VenuesRepository(api: api, session: session),
         ),

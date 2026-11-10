@@ -112,12 +112,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     });
     if (mounted) setState(() => _submitting = false);
     if (!mounted) return;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: outcome.expired,
       error: outcome.error,
-      reintentar: _save,
+      retry: _save,
     );
   }
 

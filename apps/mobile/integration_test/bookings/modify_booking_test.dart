@@ -67,10 +67,7 @@ void main() {
     await tapText(tester, 'RESERVAS');
     await waitUntil(tester, find.text(court));
     await tapText(tester, 'MODIFICAR');
-    await waitUntil(
-      tester,
-      find.textContaining('Estás modificando tu reserva'),
-    );
+    await waitUntil(tester, find.textContaining('Estás modifying tu reserva'));
   }
 
   /// Picks the 19 slot and reaches «Confirmá el cambio».
@@ -176,7 +173,7 @@ void main() {
       await tapText(tester, 'VER LO ACTUALIZADO');
       await waitUntil(
         tester,
-        find.textContaining('Estás modificando tu reserva'),
+        find.textContaining('Estás modifying tu reserva'),
       );
       expect(flags(tester, slot(19)).isEnabled, isFalse);
       expect(await bookingsOf(email), [(court, '21:00')]);

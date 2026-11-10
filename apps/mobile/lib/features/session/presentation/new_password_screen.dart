@@ -81,7 +81,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       if (mounted) {
         setState(() => _stage = valid ? _Stage.form : _Stage.invalid);
       }
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (failure != null && mounted) {
@@ -120,7 +120,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       if (mounted) setState(() => _stage = _Stage.invalid);
     } on PasswordRejected catch (e) {
       if (mounted) setState(() => _serverError = e.errors['new_password']);
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -191,7 +191,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               ? l10n.newPasswordInvalidAfterCutoff
               : l10n.newPasswordInvalid,
           primary: l10n.newPasswordRequestNew,
-          onPrimaryTap: () => context.go('/recuperar-contrasena'),
+          onPrimaryTap: () => context.go('/password-recovery'),
           secondary: l10n.newPasswordBackToSignIn,
           onSecondaryTap: () => context.go('/'),
         );

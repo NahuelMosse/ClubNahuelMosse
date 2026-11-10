@@ -55,7 +55,7 @@ void main() {
     await mountScreen(
       tester,
       AdminPanelScreen(
-        history: BookingHistory(api: api, sesion: session),
+        history: BookingHistory(api: api, session: session),
         venues: Venues(
           repository: VenuesRepository(api: api, session: session),
         ),
@@ -225,7 +225,7 @@ void main() {
                     MaterialPageRoute(
                       builder: (_) => BookingDetailScreen(
                         booking: booking,
-                        history: BookingHistory(api: api, sesion: session),
+                        history: BookingHistory(api: api, session: session),
                         session: session,
                         spaces: Spaces(
                           repository: SpacesRepository(

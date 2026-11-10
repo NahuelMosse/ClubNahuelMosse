@@ -31,7 +31,7 @@ class AdminVenueCard extends StatelessWidget {
   final bool enabled;
 
   void _edit(BuildContext context) =>
-      context.go('/admin/sedes/${venue.id}/editar', extra: venue);
+      context.go('/admin/venues/${venue.id}/edit', extra: venue);
 
   @override
   Widget build(BuildContext context) {

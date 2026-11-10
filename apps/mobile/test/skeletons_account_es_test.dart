@@ -77,7 +77,7 @@ void main() {
     'the home loads with the shape of the next booking and the sports @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_homeAnswers);
-      await _open(tester, api, '/inicio');
+      await _open(tester, api, '/home');
 
       final card = tester.getRect(find.byKey(_skeletonCard));
       final tile = tester.getRect(find.byKey(_skeletonTile).first);
@@ -106,7 +106,7 @@ void main() {
     '«Notificaciones» loads with the shape of the notice card @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
-      await _open(tester, api, '/notificaciones');
+      await _open(tester, api, '/notifications');
 
       final frames = tester.widgetList(find.byKey(_skeletonCard)).length;
       final first = tester.getRect(find.byKey(_skeletonCard).first);

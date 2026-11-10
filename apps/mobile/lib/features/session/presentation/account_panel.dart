@@ -60,12 +60,12 @@ class AccountPanel extends StatelessWidget {
                   AccountOption(
                     icon: Icons.person_outline_rounded,
                     text: l10n.accountFullProfile,
-                    onTap: () => onNavigate('/perfil'),
+                    onTap: () => onNavigate('/profile'),
                   ),
                   AccountOption(
                     icon: Icons.calendar_today_outlined,
                     text: l10n.accountMyBookings,
-                    onTap: () => onNavigate('/reservas'),
+                    onTap: () => onNavigate('/bookings'),
                   ),
                 ],
                 AccountOption(

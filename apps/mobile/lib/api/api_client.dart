@@ -5,152 +5,152 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'rutas.dart';
+import 'api_routes.dart';
 
-/// Un pedido a la API que falló sin que la persona tenga la culpa: [SinConexion] o
-/// [ErrorDelServidor]. Se atrapa con `on FalloDeRed` donde ambos se tratan igual.
-abstract interface class FalloDeRed implements Exception {}
+/// Un pedido a la API que falló sin que la persona tenga la culpa: [NoConnection] o
+/// [ServerError]. Se atrapa con `on FalloDeRed` donde ambos se tratan igual.
+abstract interface class NetworkFailure implements Exception {}
 
 /// No se llegó a la API: sin red, o la API no responde a tiempo.
-class SinConexion implements FalloDeRed {
-  const SinConexion();
+class NoConnection implements NetworkFailure {
+  const NoConnection();
 }
 
 /// La API respondió con un error propio (5xx) o con algo que no es la API.
-class ErrorDelServidor implements FalloDeRed {
-  const ErrorDelServidor(this.codigo, {this.mensaje});
-  final int codigo;
+class ServerError implements NetworkFailure {
+  const ServerError(this.code, {this.message});
+  final int code;
 
   /// Lo que el servidor dice a la persona: sólo viene con un 429 (demasiados intentos).
-  final String? mensaje;
+  final String? message;
 }
 
 /// El pedido salió pero la API no contestó dentro del límite. Es un error del servidor, no
-/// de la red de la persona: lo atrapan donde se atrapa [ErrorDelServidor].
-class ServidorSinRespuesta extends ErrorDelServidor {
-  const ServidorSinRespuesta() : super(0);
+/// de la red de la persona: lo atrapan donde se atrapa [ServerError].
+class ServerNotResponding extends ServerError {
+  const ServerNotResponding() : super(0);
 }
 
 /// Una respuesta de la API con su código y su cuerpo JSON ya leído.
-class Respuesta {
-  const Respuesta(this.codigo, this.cuerpo);
-  final int codigo;
-  final Map<String, Object?> cuerpo;
+class ApiResponse {
+  const ApiResponse(this.code, this.body);
+  final int code;
+  final Map<String, Object?> body;
 }
 
 class ApiClient {
   ApiClient(
     String base, {
-    http.Client? cliente,
-    this.limite = const Duration(seconds: 30),
-    this.verificarRutas = kDebugMode,
+    http.Client? client,
+    this.limit = const Duration(seconds: 30),
+    this.verifyRoutes = kDebugMode,
   }) : _base = Uri.parse(base),
-       _cliente = cliente ?? http.Client();
+       _client = client ?? http.Client();
 
   final Uri _base;
-  final http.Client _cliente;
+  final http.Client _client;
 
-  /// Si pedir una ruta que la app no declara en [rutasDeLaApi] falla. Es así en debug,
+  /// Si pedir una ruta que la app no declara en [apiRoutes] falla. Es así en debug,
   /// así lo vigilan todos los tests; en release el pedido sale igual.
-  final bool verificarRutas;
+  final bool verifyRoutes;
 
-  void _declarada(String metodo, String ruta) {
-    if (verificarRutas && !rutaDeclarada(metodo, ruta)) {
+  void _declared(String method, String route) {
+    if (verifyRoutes && !isRouteDeclared(method, route)) {
       throw AssertionError(
-        'La app no declara pedir $metodo $ruta (lib/api/rutas.dart)',
+        'La app no declara pedir $method $route (lib/api/api_routes.dart)',
       );
     }
   }
 
   /// Cuánto espera una respuesta antes de rendirse.
-  final Duration limite;
+  final Duration limit;
 
-  Future<Respuesta> post(
-    String ruta,
-    Map<String, Object?> cuerpo, {
+  Future<ApiResponse> post(
+    String route,
+    Map<String, Object?> body, {
     String? token,
-  }) => _enviar(
+  }) => _send(
     'POST',
-    ruta,
-    () => _cliente.post(
-      _base.resolve(ruta),
+    route,
+    () => _client.post(
+      _base.resolve(route),
       headers: {
         'content-type': 'application/json',
         if (token != null) 'authorization': 'Bearer $token',
       },
-      body: jsonEncode(cuerpo),
+      body: jsonEncode(body),
     ),
   );
 
-  Future<Respuesta> put(
-    String ruta,
-    Map<String, Object?> cuerpo, {
+  Future<ApiResponse> put(
+    String route,
+    Map<String, Object?> body, {
     String? token,
-  }) => _enviar(
+  }) => _send(
     'PUT',
-    ruta,
-    () => _cliente.put(
-      _base.resolve(ruta),
+    route,
+    () => _client.put(
+      _base.resolve(route),
       headers: {
         'content-type': 'application/json',
         if (token != null) 'authorization': 'Bearer $token',
       },
-      body: jsonEncode(cuerpo),
+      body: jsonEncode(body),
     ),
   );
 
-  Future<Respuesta> delete(String ruta, {required String token}) => _enviar(
+  Future<ApiResponse> delete(String route, {required String token}) => _send(
     'DELETE',
-    ruta,
-    () => _cliente.delete(
-      _base.resolve(ruta),
+    route,
+    () => _client.delete(
+      _base.resolve(route),
       headers: {'authorization': 'Bearer $token'},
     ),
   );
 
   /// [token] es el ID token de Firebase de quien inició sesión.
-  Future<Respuesta> get(String ruta, {String? token}) => _enviar(
+  Future<ApiResponse> get(String route, {String? token}) => _send(
     'GET',
-    ruta,
-    () => _cliente.get(
-      _base.resolve(ruta),
+    route,
+    () => _client.get(
+      _base.resolve(route),
       headers: {if (token != null) 'authorization': 'Bearer $token'},
     ),
   );
 
-  Future<Respuesta> _enviar(
-    String metodo,
-    String ruta,
-    Future<http.Response> Function() pedido,
+  Future<ApiResponse> _send(
+    String method,
+    String route,
+    Future<http.Response> Function() request,
   ) async {
-    _declarada(metodo, ruta);
+    _declared(method, route);
     final http.Response r;
     try {
-      r = await pedido().timeout(limite);
+      r = await request().timeout(limit);
     } on TimeoutException {
-      throw const ServidorSinRespuesta();
+      throw const ServerNotResponding();
     } on Exception {
       // Sin red, DNS, TLS o la conexión cortada.
-      throw const SinConexion();
+      throw const NoConnection();
     }
-    if (r.statusCode >= 500) throw ErrorDelServidor(r.statusCode);
-    final Object? datos;
+    if (r.statusCode >= 500) throw ServerError(r.statusCode);
+    final Object? data;
     try {
-      final texto = utf8.decode(r.bodyBytes);
-      datos = texto.isEmpty ? null : jsonDecode(texto);
+      final text = utf8.decode(r.bodyBytes);
+      data = text.isEmpty ? null : jsonDecode(text);
     } on FormatException {
       // Respondió algo que no es la API (un proxy, un portal cautivo).
-      throw ErrorDelServidor(r.statusCode);
+      throw ServerError(r.statusCode);
     }
-    final Map<String, Object?> cuerpo = datos is Map<String, Object?>
-        ? datos
+    final Map<String, Object?> body = data is Map<String, Object?>
+        ? data
         : const {};
     if (r.statusCode == 429) {
-      final mensaje = cuerpo['message'];
-      throw ErrorDelServidor(429, mensaje: mensaje is String ? mensaje : null);
+      final message = body['message'];
+      throw ServerError(429, message: message is String ? message : null);
     }
-    return Respuesta(r.statusCode, cuerpo);
+    return ApiResponse(r.statusCode, body);
   }
 
-  void cerrar() => _cliente.close();
+  void close() => _client.close();
 }

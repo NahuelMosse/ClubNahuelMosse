@@ -115,9 +115,9 @@ void main() {
     await mountScreen(
       tester,
       HomeScreen(
-        sesion: session,
-        reservas: Bookings(BookingsApi(api: api, sesion: session)),
-        espacios: Spaces(
+        session: session,
+        bookings: Bookings(BookingsApi(api: api, session: session)),
+        spaces: Spaces(
           repository: SpacesRepository(api: api, session: session),
         ),
         venues: Venues(

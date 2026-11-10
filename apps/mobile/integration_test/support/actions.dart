@@ -247,6 +247,6 @@ Future<void> enterAndLeave(WidgetTester tester, String field) async {
 
 /// Opens the app from the link in the recovery email, as Android would.
 Future<void> openRecoveryLink(WidgetTester tester, String code) async {
-  await tester.binding.handlePushRoute('/recuperar?codigo=$code');
+  await tester.binding.handlePushRoute('/recover?code=$code');
   await tester.pumpAndSettle();
 }

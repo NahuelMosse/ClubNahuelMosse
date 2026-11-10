@@ -20,7 +20,7 @@ class NotificationsButton extends StatelessWidget {
       final p = context.palette;
       final l10n = AppLocalizations.of(context);
       final unread = center.unread;
-      void open() => context.push('/notificaciones');
+      void open() => context.push('/notifications');
       return Semantics(
         container: true,
         button: true,

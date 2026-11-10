@@ -80,7 +80,7 @@ class AdminSpaceCard extends StatelessWidget {
       editText: l10n.adminEditSpace,
       editLabel: l10n.adminEditSpaceNamed(space.name),
       onEdit: enabled
-          ? () => context.go('/admin/espacios/${space.id}/editar', extra: space)
+          ? () => context.go('/admin/spaces/${space.id}/edit', extra: space)
           : null,
       deactivateText: l10n.adminDeactivateSpace,
       deactivateLabel: l10n.adminDeactivateSpaceNamed(space.name),

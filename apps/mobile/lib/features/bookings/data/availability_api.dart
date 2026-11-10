@@ -11,24 +11,24 @@ import 'availability_json.dart';
 
 /// The availability of the spaces, read from the API with the session open.
 class AvailabilityApi {
-  AvailabilityApi({required ApiClient api, required TokenSource sesion})
+  AvailabilityApi({required ApiClient api, required TokenSource session})
     : _api = api,
-      _sesion = sesion;
+      _session = session;
 
   final ApiClient _api;
-  final TokenSource _sesion;
+  final TokenSource _session;
 
   /// Reads [query] with the session token; a 401 is an expired session.
-  Future<Respuesta> _fetch(Uri query) async {
-    final r = await _api.get(query.toString(), token: await _sesion.token());
-    if (r.codigo == 401) throw const SessionExpired();
+  Future<ApiResponse> _fetch(Uri query) async {
+    final r = await _api.get(query.toString(), token: await _session.token());
+    if (r.code == 401) throw const SessionExpired();
     return r;
   }
 
   /// The grid of space [spaceId] for [date] (today if absent) with slots of [hours].
   ///
-  /// Throws [SpaceUnavailable], [DateExpired], [SesionVencida], [SinConexion] or
-  /// [ErrorDelServidor].
+  /// Throws [SpaceUnavailable], [DateExpired], [SesionVencida], [NoConnection] or
+  /// [ServerError].
   ///
   /// [bookingId] is the booking being modified: it does not count as taken.
   Future<AvailabilityGrid> grid(
@@ -47,22 +47,22 @@ class AvailabilityApi {
       },
     );
     final r = await _fetch(query);
-    final errors = fieldErrors(r.cuerpo);
-    if (r.codigo == 404 && errors.containsKey('space_id')) {
+    final errors = fieldErrors(r.body);
+    if (r.code == 404 && errors.containsKey('space_id')) {
       throw const SpaceUnavailable();
     }
-    if (r.codigo == 422 && errors.containsKey('date')) {
+    if (r.code == 422 && errors.containsKey('date')) {
       throw const DateExpired();
     }
-    final grid = r.codigo == 200 ? availabilityGridFromJson(r.cuerpo) : null;
-    if (grid == null) throw ErrorDelServidor(r.codigo);
+    final grid = r.code == 200 ? availabilityGridFromJson(r.body) : null;
+    if (grid == null) throw ServerError(r.code);
     return grid;
   }
 
   /// The spaces of [venueId] and [sport] (and [kind] if present) free for the whole range
   /// [from] to [to] (`HH:MM`) on [date].
   ///
-  /// Throws [RangeRejected], [SesionVencida], [SinConexion] or [ErrorDelServidor].
+  /// Throws [RangeRejected], [SesionVencida], [NoConnection] or [ServerError].
   Future<List<Space>> freeSpaces({
     required String venueId,
     required String sport,
@@ -83,10 +83,10 @@ class AvailabilityApi {
       },
     );
     final r = await _fetch(query);
-    final errors = fieldErrors(r.cuerpo);
-    if (r.codigo == 422 && errors.isNotEmpty) throw RangeRejected(errors);
-    final found = r.codigo == 200 ? Space.listFromBody(r.cuerpo) : null;
+    final errors = fieldErrors(r.body);
+    if (r.code == 422 && errors.isNotEmpty) throw RangeRejected(errors);
+    final found = r.code == 200 ? Space.listFromBody(r.body) : null;
     if (found != null) return found;
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 }

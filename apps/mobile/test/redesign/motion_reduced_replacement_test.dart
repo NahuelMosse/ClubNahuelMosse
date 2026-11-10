@@ -101,7 +101,7 @@ void main() {
       // The celebration.
       await _mountFree(
         tester,
-        BookingConfirmedScreen(reserva: _confirmedBooking()),
+        BookingConfirmedScreen(booking: _confirmedBooking()),
       );
       final title = find.text('¡Reserva confirmada!');
       final receipt = find.text('Horario');

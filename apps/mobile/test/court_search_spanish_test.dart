@@ -103,7 +103,7 @@ void main() {
       final requests = <http.Request>[];
       await mountUser(
         tester,
-        start: '/inicio/buscar',
+        start: '/home/search',
         size: scale > 1 ? const Size(360, 800) : const Size(393, 852),
         api: apiRoutes({
           ...venueRoutes(),

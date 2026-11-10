@@ -13,22 +13,22 @@ import 'booking_card.dart';
 class BookingDetail extends StatelessWidget {
   const BookingDetail({
     super.key,
-    required this.reserva,
+    required this.booking,
     required this.account,
-    required this.porque,
+    required this.reason,
   });
 
-  final Booking reserva;
+  final Booking booking;
   final String? account;
-  final String? porque;
+  final String? reason;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final r = reserva;
+    final r = booking;
     final account = this.account;
-    final porque = this.porque;
-    final anulada = r.status == BookingStatus.voided;
+    final reason = this.reason;
+    final voided = r.status == BookingStatus.voided;
     return Padding(
       padding: const EdgeInsets.all(Spacing.s16),
       child: Column(
@@ -49,8 +49,8 @@ class BookingDetail extends StatelessWidget {
           ],
           Text(r.space, style: Texts.mono.copyWith(color: p.textMuted)),
           const SizedBox(height: Spacing.s8),
-          BookingDateAndTime(date: longDate(r.startsAt), time: horarioDe(r)),
-          if (porque != null) ...[
+          BookingDateAndTime(date: longDate(r.startsAt), time: scheduleOf(r)),
+          if (reason != null) ...[
             const SizedBox(height: Spacing.s8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,14 +58,14 @@ class BookingDetail extends StatelessWidget {
                 Icon(
                   Icons.error_outline_rounded,
                   size: 16,
-                  color: anulada ? p.stateDangerInk : p.textSecondary,
+                  color: voided ? p.stateDangerInk : p.textSecondary,
                 ),
                 const SizedBox(width: Spacing.s8),
                 Expanded(
                   child: Text(
-                    porque,
+                    reason,
                     style: Texts.caption.copyWith(
-                      color: anulada ? p.stateDangerInk : p.textSecondary,
+                      color: voided ? p.stateDangerInk : p.textSecondary,
                     ),
                   ),
                 ),

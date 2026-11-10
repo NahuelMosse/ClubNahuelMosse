@@ -12,12 +12,12 @@ import 'total_row.dart';
 
 /// El aviso de la hora y el troquel con espacio, fecha, horario y total de la reserva.
 class BookingReceipt extends StatelessWidget {
-  const BookingReceipt({super.key, required this.reserva});
+  const BookingReceipt({super.key, required this.booking});
 
-  final Booking reserva;
+  final Booking booking;
 
-  String _horario(AppLocalizations l) {
-    final r = reserva;
+  String _schedule(AppLocalizations l) {
+    final r = booking;
     final hours = r.endsAt.difference(r.startsAt).inHours;
     return '${timeRange(r.startsAt, r.endsAt)} · ${l.bookingDuration(hours)}';
   }
@@ -26,7 +26,7 @@ class BookingReceipt extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final r = reserva;
+    final r = booking;
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -48,15 +48,15 @@ class BookingReceipt extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DetailRow(
-                        dato: l.bookingRowSpace,
-                        valor: r.space,
-                        codigo: true,
+                        label: l.bookingRowSpace,
+                        value: r.space,
+                        code: true,
                       ),
                       DetailRow(
-                        dato: l.bookingRowDate,
-                        valor: longDate(r.startsAt),
+                        label: l.bookingRowDate,
+                        value: longDate(r.startsAt),
                       ),
-                      DetailRow(dato: l.bookingRowTime, valor: _horario(l)),
+                      DetailRow(label: l.bookingRowTime, value: _schedule(l)),
                     ],
                   ),
                 ),

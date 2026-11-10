@@ -14,18 +14,18 @@ import 'home_title.dart';
 class NextBooking extends StatelessWidget {
   const NextBooking({
     super.key,
-    required this.reserva,
-    required this.catalogo,
-    required this.cancelando,
-    required this.alCancelar,
-    required this.alModificar,
+    required this.booking,
+    required this.catalog,
+    required this.cancelling,
+    required this.onCancel,
+    required this.onModify,
   });
 
-  final Booking reserva;
-  final Catalog catalogo;
-  final bool cancelando;
-  final VoidCallback? alCancelar;
-  final VoidCallback? alModificar;
+  final Booking booking;
+  final Catalog catalog;
+  final bool cancelling;
+  final VoidCallback? onCancel;
+  final VoidCallback? onModify;
 
   @override
   Widget build(BuildContext context) {
@@ -45,19 +45,19 @@ class NextBooking extends StatelessWidget {
               Expanded(child: HomeTitle(l10n.homeNextBooking)),
               TextActionButton(
                 label: l10n.homeViewAll,
-                onTap: () => context.go('/reservas'),
+                onTap: () => context.go('/bookings'),
               ),
             ],
           ),
           const SizedBox(height: Spacing.s12),
           BookingCard(
-            reserva: reserva,
-            catalogo: catalogo,
-            cancelable: reserva.cancelable,
-            cancelando: cancelando,
-            cuentaRegresiva: true,
-            alCancelar: alCancelar,
-            alModificar: alModificar,
+            booking: booking,
+            catalog: catalog,
+            cancelable: booking.cancelable,
+            cancelling: cancelling,
+            countdown: true,
+            onCancel: onCancel,
+            onModify: onModify,
           ),
         ],
       ),

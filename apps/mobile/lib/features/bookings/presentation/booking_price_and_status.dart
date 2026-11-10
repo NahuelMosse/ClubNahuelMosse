@@ -10,29 +10,29 @@ import 'status_label.dart';
 class BookingPriceAndStatus extends StatelessWidget {
   const BookingPriceAndStatus({
     super.key,
-    required this.reserva,
-    required this.grande,
+    required this.booking,
+    required this.large,
   });
 
-  final Booking reserva;
+  final Booking booking;
 
   /// Con la letra grande se alinea a la izquierda en vez de a la derecha.
-  final bool grande;
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return Column(
-      crossAxisAlignment: grande
+      crossAxisAlignment: large
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.end,
       children: [
         Text(
-          formatPesos(reserva.total),
+          formatPesos(booking.total),
           style: Texts.bodyStrong.copyWith(color: p.accentInk),
         ),
         const SizedBox(height: Spacing.s8),
-        StatusLabel(estado: reserva.status),
+        StatusLabel(status: booking.status),
       ],
     );
   }

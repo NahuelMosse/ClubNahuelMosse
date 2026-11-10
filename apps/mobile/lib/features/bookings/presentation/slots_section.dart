@@ -3,9 +3,9 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
 class SlotsSection extends StatelessWidget {
-  const SlotsSection({super.key, required this.titulo, required this.child});
+  const SlotsSection({super.key, required this.title, required this.child});
 
-  final String titulo;
+  final String title;
   final Widget child;
 
   @override
@@ -19,7 +19,7 @@ class SlotsSection extends StatelessWidget {
           Semantics(
             header: true,
             child: Text(
-              titulo,
+              title,
               style: Texts.overline.copyWith(color: p.textMuted),
             ),
           ),

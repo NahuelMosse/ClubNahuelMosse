@@ -134,7 +134,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).adminChangesSaved)),
       );
-      context.go('/admin/espacios');
+      context.go('/admin/spaces');
       return;
     } on SpaceUnavailable {
       gone = true;
@@ -147,7 +147,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       }
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -156,14 +156,14 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
     if (gone) {
       await showChangedMeanwhile(context);
       widget.spaces.notifyChange();
-      if (mounted) context.go('/admin/espacios');
+      if (mounted) context.go('/admin/spaces');
     } else {
-      await avisarFalloDeEnvio(
+      await notifySendFailure(
         context,
         session: widget.session,
         expired: expired,
         error: failure,
-        reintentar: _save,
+        retry: _save,
       );
     }
   }

@@ -14,19 +14,19 @@ import 'booking_price_and_status.dart';
 class BookingHeader extends StatelessWidget {
   const BookingHeader({
     super.key,
-    required this.reserva,
-    required this.catalogo,
-    required this.grande,
+    required this.booking,
+    required this.catalog,
+    required this.large,
   });
 
-  final Booking reserva;
-  final Catalog catalogo;
-  final bool grande;
+  final Booking booking;
+  final Catalog catalog;
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final r = reserva;
+    final r = booking;
     return Padding(
       padding: const EdgeInsets.all(Spacing.s16),
       child: Row(
@@ -53,7 +53,7 @@ class BookingHeader extends StatelessWidget {
                     const SizedBox(width: Spacing.s4),
                     Flexible(
                       child: Text(
-                        catalogo.shortKind(r.sport, r.kind),
+                        catalog.shortKind(r.sport, r.kind),
                         style: Texts.title.copyWith(color: p.textPrimary),
                       ),
                     ),
@@ -67,9 +67,9 @@ class BookingHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (!grande) ...[
+          if (!large) ...[
             const SizedBox(width: Spacing.s8),
-            BookingPriceAndStatus(reserva: r, grande: grande),
+            BookingPriceAndStatus(booking: r, large: large),
           ],
         ],
       ),

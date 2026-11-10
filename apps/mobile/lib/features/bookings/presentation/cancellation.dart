@@ -13,83 +13,83 @@ import '../domain/booking_exceptions.dart';
 import 'bookings.dart';
 import 'confirm_change_screen.dart';
 
-/// Cancela [reserva] con los avisos de cada desenlace; la repite mientras la persona
+/// Cancela [booking] con los avisos de cada desenlace; la repite mientras la persona
 /// elija reintentar tras un corte. Las pantallas que la usan ya pidieron confirmación.
 ///
-/// - [marcar] pone la reserva que espera (o `null` al soltarla) en el estado de la pantalla.
-/// - [alCancelar] quita la reserva de lo que se ve y suelta la espera.
-/// - [recargar] vuelve a leer con avisos; [releer] sin ellos.
-/// - [toleraCorte]: tras un corte, que la reserva ya esté cancelada es que el pedido
+/// - [mark] pone la reserva que espera (o `null` al soltarla) en el estado de la pantalla.
+/// - [onCancel] quita la reserva de lo que se ve y suelta la espera.
+/// - [reload] vuelve a leer con avisos; [reread] sin ellos.
+/// - [toleratesOutage]: tras un corte, que la reserva ya esté cancelada es que el pedido
 ///   cortado la canceló.
 Future<void> cancelWithNotices(
   BuildContext context, {
-  required Session sesion,
-  required Bookings reservas,
-  required Booking reserva,
-  required void Function(String? id) marcar,
-  required void Function() alCancelar,
-  required Future<void> Function() recargar,
-  required Future<void> Function() releer,
-  bool toleraCorte = false,
+  required Session session,
+  required Bookings bookings,
+  required Booking booking,
+  required void Function(String? id) mark,
+  required void Function() onCancel,
+  required Future<void> Function() reload,
+  required Future<void> Function() reread,
+  bool toleratesOutage = false,
 }) async {
-  marcar(reserva.id);
-  var huboCorte = false;
+  mark(booking.id);
+  var hadOutage = false;
   while (context.mounted) {
-    Object? fallo;
+    Object? failure;
     try {
       try {
-        await reservas.cancel(reserva);
+        await bookings.cancel(booking);
       } on BookingChanged {
-        if (!(toleraCorte && huboCorte)) rethrow;
+        if (!(toleratesOutage && hadOutage)) rethrow;
       }
       if (!context.mounted) return;
-      alCancelar();
+      onCancel();
       await showBookingCanceled(context);
-      if (context.mounted) await recargar();
+      if (context.mounted) await reload();
       return;
     } on BookingChanged {
       if (!context.mounted) return;
-      marcar(null);
+      mark(null);
       await showChangedMeanwhile(context);
-      if (context.mounted) await recargar();
+      if (context.mounted) await reload();
       return;
     } on SessionExpired {
       if (!context.mounted) return;
-      marcar(null);
-      await avisarSesionVencida(context, sesion);
+      mark(null);
+      await notifySessionExpired(context, session);
       return;
-    } on SinConexion catch (e) {
-      huboCorte = true;
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
-      fallo = e;
+    } on NoConnection catch (e) {
+      hadOutage = true;
+      failure = e;
+    } on ServerError catch (e) {
+      failure = e;
     }
     if (!context.mounted) return;
-    marcar(null);
-    final otraVez = await askRetry(context, fallo);
+    mark(null);
+    final again = await askRetry(context, failure);
     if (!context.mounted) return;
-    if (!otraVez) {
+    if (!again) {
       // Si el corte llegó después de que el servidor la canceló, la lectura lo muestra.
-      await releer();
+      await reread();
       return;
     }
-    marcar(reserva.id);
+    mark(booking.id);
   }
 }
 
 /// Abre la grilla para cambiar [r] de horario y, al volver, avisa si se modificó.
 /// Devuelve `false` si la pantalla ya no está.
-Future<bool> abrirModificar(
+Future<bool> openModify(
   BuildContext context,
   Booking r, {
-  String ruta = '',
+  String route = '',
 }) async {
-  final resultado = await context.push<ModifyResult>(
-    '/reservas/${r.id}/modificar$ruta',
+  final result = await context.push<ModifyResult>(
+    '/bookings/${r.id}/modify$route',
     extra: r,
   );
   if (!context.mounted) return false;
-  if (resultado == ModifyResult.modificada) {
+  if (result == ModifyResult.modified) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).bookingModified)),
     );

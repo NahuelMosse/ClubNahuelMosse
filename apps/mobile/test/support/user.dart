@@ -55,7 +55,7 @@ Map<String, (int, String)> venueRoutes({
 Future<void> mountUser(
   WidgetTester tester, {
   required ApiClient api,
-  String start = '/sedes',
+  String start = '/venues',
   bool dark = true,
   Size size = const Size(393, 852),
   NotificationCenter Function(Session)? center,

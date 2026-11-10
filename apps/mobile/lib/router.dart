@@ -128,7 +128,7 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
-          path: 'registro',
+          path: 'register',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
@@ -136,12 +136,12 @@ class AppRouter {
           ),
         ),
         GoRoute(
-          path: 'registro/exitoso',
+          path: 'register/success',
           pageBuilder: (context, state) =>
               resultPage(context, state, const RegistrationDoneScreen()),
         ),
         GoRoute(
-          path: 'recuperar-contrasena',
+          path: 'password-recovery',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
@@ -150,11 +150,11 @@ class AppRouter {
         ),
       ],
     ),
-    // Adonde abre el enlace del correo: clubnahuelmosse://app/recuperar?codigo=…
+    // Adonde abre el enlace del correo: clubnahuelmosse://app/recover?code=…
     GoRoute(
-      path: '/recuperar',
+      path: '/recover',
       pageBuilder: (context, state) {
-        final code = state.uri.queryParameters['codigo'] ?? '';
+        final code = state.uri.queryParameters['code'] ?? '';
         // Un enlace nuevo con la pantalla ya abierta es otra pantalla, no la misma.
         return forwardPage(
           context,
@@ -172,37 +172,37 @@ class AppRouter {
 
   List<RouteBase> _homeRoutes() => [
     GoRoute(
-      path: '/inicio',
+      path: '/home',
       pageBuilder: (context, state) => rootPage(
         context,
         state,
         HomeScreen(
-          sesion: session,
-          reservas: bookings,
-          espacios: spaces,
+          session: session,
+          bookings: bookings,
+          spaces: spaces,
           venues: venues,
-          centro: center,
+          center: center,
         ),
       ),
       routes: [
         GoRoute(
-          path: 'buscar',
+          path: 'search',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
             SpaceSearchScreen(
               venues: venues,
-              espacios: spaces,
-              horarios: availability,
-              sesion: session,
-              deporte: state.uri.queryParameters['deporte'],
+              spaces: spaces,
+              availability: availability,
+              session: session,
+              sport: state.uri.queryParameters['sport'],
             ),
           ),
         ),
       ],
     ),
     GoRoute(
-      path: '/notificaciones',
+      path: '/notifications',
       pageBuilder: (context, state) =>
           forwardPage(context, state, switch (center) {
             final NotificationCenter center => NotificationsScreen(
@@ -215,7 +215,7 @@ class AppRouter {
           }),
     ),
     GoRoute(
-      path: '/perfil',
+      path: '/profile',
       pageBuilder: (context, state) => rootPage(
         context,
         state,
@@ -223,7 +223,7 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
-          path: 'contrasena',
+          path: 'password',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
@@ -236,7 +236,7 @@ class AppRouter {
 
   List<RouteBase> _venueRoutes() => [
     GoRoute(
-      path: '/sedes',
+      path: '/venues',
       pageBuilder: (context, state) => rootPage(
         context,
         state,
@@ -244,13 +244,13 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
-          path: ':sede',
+          path: ':venue',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
             VenueScreen(
-              key: ValueKey(state.pathParameters['sede']),
-              venueId: state.pathParameters['sede'] ?? '',
+              key: ValueKey(state.pathParameters['venue']),
+              venueId: state.pathParameters['venue'] ?? '',
               venues: venues,
               spaces: spaces,
               session: session,
@@ -258,30 +258,30 @@ class AppRouter {
           ),
           routes: [
             GoRoute(
-              path: 'canchas/:cancha',
+              path: 'spaces/:space',
               pageBuilder: (context, state) => forwardPage(
                 context,
                 state,
                 AvailabilityScreen(
-                  key: ValueKey(state.pathParameters['cancha']),
-                  sedeId: state.pathParameters['sede'] ?? '',
-                  espacioId: state.pathParameters['cancha'] ?? '',
+                  key: ValueKey(state.pathParameters['space']),
+                  venueId: state.pathParameters['venue'] ?? '',
+                  spaceId: state.pathParameters['space'] ?? '',
                   venues: venues,
-                  espacios: spaces,
-                  horarios: availability,
-                  sesion: session,
-                  date: _day(state.uri.queryParameters['fecha']),
-                  hours: int.tryParse(state.uri.queryParameters['horas'] ?? ''),
-                  start: state.uri.queryParameters['inicio'],
+                  spaces: spaces,
+                  availability: availability,
+                  session: session,
+                  date: _day(state.uri.queryParameters['date']),
+                  hours: int.tryParse(state.uri.queryParameters['hours'] ?? ''),
+                  start: state.uri.queryParameters['start'],
                 ),
               ),
               routes: [
                 GoRoute(
-                  path: 'reservar',
+                  path: 'book',
                   redirect: (context, state) => state.extra is BookingChoice
                       ? null
-                      : '/sedes/${state.pathParameters['sede']}'
-                            '/canchas/${state.pathParameters['cancha']}',
+                      : '/venues/${state.pathParameters['venue']}'
+                            '/spaces/${state.pathParameters['space']}',
                   pageBuilder: (context, state) =>
                       forwardPage(context, state, _confirmBooking(state)),
                 ),
@@ -295,40 +295,40 @@ class AppRouter {
 
   /// La confirmación de una reserva nueva; sin la elección, nada que mostrar.
   Widget _confirmBooking(GoRouterState state) => switch (state.extra) {
-    final BookingChoice eleccion => ConfirmBookingScreen(
-      eleccion: eleccion,
-      reservas: bookings,
-      pendiente: pending,
-      sesion: session,
+    final BookingChoice choice => ConfirmBookingScreen(
+      choice: choice,
+      bookings: bookings,
+      pending: pending,
+      session: session,
     ),
     _ => const SizedBox.shrink(),
   };
 
   List<RouteBase> _bookingRoutes() => [
     GoRoute(
-      path: '/reservas',
+      path: '/bookings',
       pageBuilder: (context, state) => rootPage(
         context,
         state,
         MyBookingsScreen(
-          reservas: bookings,
-          espacios: spaces,
-          sesion: session,
-          reservaId: state.uri.queryParameters['reserva'],
-          enHistorial: state.uri.queryParameters['historial'] == '1',
+          bookings: bookings,
+          spaces: spaces,
+          session: session,
+          bookingId: state.uri.queryParameters['booking'],
+          inHistory: state.uri.queryParameters['history'] == '1',
         ),
       ),
       routes: [
         _changeBookingRoute(),
         GoRoute(
-          path: 'confirmada',
+          path: 'confirmed',
           redirect: (context, state) =>
-              state.extra is Booking ? null : '/reservas',
+              state.extra is Booking ? null : '/bookings',
           pageBuilder: (context, state) => resultPage(
             context,
             state,
             switch (state.extra) {
-              final Booking reserva => BookingConfirmedScreen(reserva: reserva),
+              final Booking booking => BookingConfirmedScreen(booking: booking),
               _ => const SizedBox.shrink(),
             },
           ),
@@ -337,32 +337,32 @@ class AppRouter {
     ),
     // La reserva que quedó pendiente cuando venció la sesión, al volver a entrar.
     GoRoute(
-      path: '/reservar',
+      path: '/book',
       redirect: (context, state) =>
-          state.extra is BookingChoice ? null : '/inicio',
+          state.extra is BookingChoice ? null : '/home',
       pageBuilder: (context, state) =>
           forwardPage(context, state, _confirmBooking(state)),
     ),
   ];
 
   GoRoute _changeBookingRoute() => GoRoute(
-    path: ':reserva/modificar',
+    path: ':booking/modify',
     // La confirmación está anidada acá y trae su propio extra.
     redirect: (context, state) => switch (state.extra) {
       Booking() || (Booking(), BookingChoice()) => null,
-      _ => '/reservas',
+      _ => '/bookings',
     },
     pageBuilder: (context, state) =>
         forwardPage(context, state, switch (state.extra) {
-          final Booking reserva => AvailabilityScreen(
-            sedeId: reserva.venueId,
-            espacioId: reserva.spaceId,
+          final Booking booking => AvailabilityScreen(
+            venueId: booking.venueId,
+            spaceId: booking.spaceId,
             venues: venues,
-            espacios: spaces,
-            horarios: availability,
-            sesion: session,
-            modificando: reserva,
-            volverA: state.uri.queryParameters['desde'] == 'inicio'
+            spaces: spaces,
+            availability: availability,
+            session: session,
+            modifying: booking,
+            backLabel: state.uri.queryParameters['from'] == 'home'
                 ? AppLocalizations.of(context).homeBackLabel
                 : AppLocalizations.of(context).accountMyBookings,
           ),
@@ -370,17 +370,17 @@ class AppRouter {
         }),
     routes: [
       GoRoute(
-        path: 'confirmar',
+        path: 'confirm',
         redirect: (context, state) =>
-            state.extra is (Booking, BookingChoice) ? null : '/reservas',
+            state.extra is (Booking, BookingChoice) ? null : '/bookings',
         pageBuilder: (context, state) =>
             forwardPage(context, state, switch (state.extra) {
-              (final Booking reserva, final BookingChoice eleccion) =>
+              (final Booking booking, final BookingChoice choice) =>
                 ConfirmChangeScreen(
-                  reserva: reserva,
-                  eleccion: eleccion,
-                  reservas: bookings,
-                  sesion: session,
+                  booking: booking,
+                  choice: choice,
+                  bookings: bookings,
+                  session: session,
                 ),
               _ => const SizedBox.shrink(),
             }),
@@ -391,7 +391,7 @@ class AppRouter {
   List<RouteBase> _adminRoutes() => [
     ..._adminBookingRoutes(),
     GoRoute(
-      path: '/admin/acceso-denegado',
+      path: '/admin/access-denied',
       pageBuilder: (context, state) =>
           forwardPage(context, state, AccessDeniedScreen(session: session)),
     ),
@@ -415,7 +415,7 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
-          path: 'reserva/:id',
+          path: 'booking/:id',
           // Sin la reserva y los filtros del listado de donde se vino (un enlace, la app
           // reabierta), vuelve al listado.
           redirect: (context, state) =>
@@ -442,7 +442,7 @@ class AppRouter {
 
   List<RouteBase> _adminVenueRoutes() => [
     GoRoute(
-      path: '/admin/sedes',
+      path: '/admin/venues',
       pageBuilder: (context, state) => rootPage(
         context,
         state,
@@ -450,7 +450,7 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
-          path: 'nueva',
+          path: 'new',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
@@ -458,11 +458,11 @@ class AppRouter {
           ),
         ),
         GoRoute(
-          path: ':sede/editar',
+          path: ':venue/edit',
           // Sin la sede que se tocó en el listado (un enlace, la app reabierta), vuelve al
           // listado.
           redirect: (context, state) =>
-              state.extra is Venue ? null : '/admin/sedes',
+              state.extra is Venue ? null : '/admin/venues',
           pageBuilder: (context, state) =>
               forwardPage(context, state, switch (state.extra) {
                 final Venue venue => VenueFormScreen(
@@ -474,11 +474,11 @@ class AppRouter {
               }),
         ),
         GoRoute(
-          path: 'creada',
+          path: 'created',
           // Sin la sede recién guardada (un enlace, la app reabierta) no hay éxito que
           // mostrar: va al listado, donde está.
           redirect: (context, state) =>
-              state.extra is Venue ? null : '/admin/sedes',
+              state.extra is Venue ? null : '/admin/venues',
           pageBuilder: (context, state) =>
               resultPage(context, state, switch (state.extra) {
                 final Venue venue => VenueCreatedScreen(venue: venue),
@@ -491,7 +491,7 @@ class AppRouter {
 
   List<RouteBase> _adminSpaceRoutes() => [
     GoRoute(
-      path: '/admin/espacios',
+      path: '/admin/spaces',
       pageBuilder: (context, state) => rootPage(
         context,
         state,
@@ -499,11 +499,11 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
-          path: ':espacio/editar',
+          path: ':space/edit',
           // Sin el espacio que se tocó en el listado (un enlace, la app reabierta), vuelve
           // al listado.
           redirect: (context, state) =>
-              state.extra is Space ? null : '/admin/espacios',
+              state.extra is Space ? null : '/admin/spaces',
           pageBuilder: (context, state) =>
               forwardPage(context, state, switch (state.extra) {
                 final Space space => EditSpaceScreen(
@@ -515,7 +515,7 @@ class AppRouter {
               }),
         ),
         GoRoute(
-          path: 'nuevo',
+          path: 'new',
           pageBuilder: (context, state) => forwardPage(
             context,
             state,
@@ -523,10 +523,10 @@ class AppRouter {
           ),
         ),
         GoRoute(
-          path: 'creado',
+          path: 'created',
           // Sin el espacio recién guardado no hay éxito que mostrar: va al listado.
           redirect: (context, state) =>
-              state.extra is Space ? null : '/admin/espacios',
+              state.extra is Space ? null : '/admin/spaces',
           pageBuilder: (context, state) =>
               resultPage(context, state, switch (state.extra) {
                 final Space space => SpaceCreatedScreen(space: space),

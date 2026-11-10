@@ -7,28 +7,28 @@ import '../../../theme/tokens.dart';
 class SelectableFrame extends StatelessWidget {
   const SelectableFrame({
     super.key,
-    required this.etiqueta,
-    required this.elegido,
-    required this.alTocar,
+    required this.label,
+    required this.selected,
+    required this.onTap,
     required this.child,
-    this.atenuado = false,
+    this.dimmed = false,
   });
 
-  final String etiqueta;
-  final bool elegido;
-  final VoidCallback? alTocar;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
   final Widget child;
-  final bool atenuado;
+  final bool dimmed;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final forma = RoundedRectangleBorder(
+    final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(Spacing.radiusMd),
       side: BorderSide(
-        color: elegido
+        color: selected
             ? p.accentEdge
-            : atenuado
+            : dimmed
             ? p.borderDefault
             : p.borderControl,
       ),
@@ -36,17 +36,17 @@ class SelectableFrame extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      label: etiqueta,
+      selected: selected,
+      enabled: onTap != null,
+      label: label,
       excludeSemantics: true,
-      onTap: alTocar,
+      onTap: onTap,
       child: Opacity(
-        opacity: atenuado ? 0.45 : 1,
+        opacity: dimmed ? 0.45 : 1,
         child: Material(
-          color: elegido ? p.accentBase : p.bgSurfaceRaised,
-          shape: forma,
-          child: InkWell(onTap: alTocar, customBorder: forma, child: child),
+          color: selected ? p.accentBase : p.bgSurfaceRaised,
+          shape: shape,
+          child: InkWell(onTap: onTap, customBorder: shape, child: child),
         ),
       ),
     );

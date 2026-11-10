@@ -12,25 +12,25 @@ import '../domain/slot.dart';
 class BookingSummary extends StatelessWidget {
   const BookingSummary({
     super.key,
-    required this.tipo,
-    required this.precio,
-    required this.horas,
-    required this.franja,
-    required this.fecha,
+    required this.kind,
+    required this.price,
+    required this.hours,
+    required this.slot,
+    required this.date,
   });
 
-  final String tipo;
-  final int precio;
-  final int horas;
-  final Slot? franja;
-  final DateTime? fecha;
+  final String kind;
+  final int price;
+  final int hours;
+  final Slot? slot;
+  final DateTime? date;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final elegida = franja;
-    final dia = fecha;
+    final chosen = slot;
+    final day = date;
     return Semantics(
       container: true,
       liveRegion: true,
@@ -46,11 +46,11 @@ class BookingSummary extends StatelessWidget {
               spacing: Spacing.s8,
               runSpacing: Spacing.s4,
               children: [
-                Text(tipo, style: Texts.body.copyWith(color: p.textSecondary)),
+                Text(kind, style: Texts.body.copyWith(color: p.textSecondary)),
                 Text(
-                  elegida == null
-                      ? l.bookingPerHour(formatPesos(precio))
-                      : '${formatPesos(precio)} × $horas',
+                  chosen == null
+                      ? l.bookingPerHour(formatPesos(price))
+                      : '${formatPesos(price)} × $hours',
                   style: Texts.body.copyWith(color: p.textSecondary),
                 ),
               ],
@@ -72,7 +72,7 @@ class BookingSummary extends StatelessWidget {
                     ),
                     const SizedBox(height: Spacing.s4),
                     Text(
-                      elegida == null ? '—' : formatPesos(precio * horas),
+                      chosen == null ? '—' : formatPesos(price * hours),
                       style: Texts.h1.copyWith(color: p.accentInk),
                     ),
                   ],
@@ -81,16 +81,14 @@ class BookingSummary extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      elegida?.text ?? l.bookingNoTimeChosen,
+                      chosen?.text ?? l.bookingNoTimeChosen,
                       style: Texts.bodyStrong.copyWith(
-                        color: elegida == null
-                            ? p.textSecondary
-                            : p.textPrimary,
+                        color: chosen == null ? p.textSecondary : p.textPrimary,
                       ),
                     ),
-                    if (dia != null)
+                    if (day != null)
                       Text(
-                        longDate(dia),
+                        longDate(day),
                         style: Texts.caption.copyWith(color: p.textMuted),
                       ),
                   ],

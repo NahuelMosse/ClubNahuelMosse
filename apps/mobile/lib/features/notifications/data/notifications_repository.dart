@@ -16,12 +16,12 @@ class NotificationsRepository {
   final ApiClient _api;
   final TokenSource _session;
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<CenterReading> center() async {
     final r = await _api.get('/notifications', token: await _session.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 200) {
-      if (r.cuerpo case {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 200) {
+      if (r.body case {
         'notifications': final List<Object?> list,
         'unread': final int unread,
       }) {
@@ -31,10 +31,10 @@ class NotificationsRepository {
         }
       }
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<void> read(String id) async {
     final r = await _api.post(
       '/notifications/$id/read',
@@ -44,7 +44,7 @@ class NotificationsRepository {
     _expect204(r);
   }
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<void> readAll() async {
     final r = await _api.post(
       '/notifications/read-all',
@@ -57,7 +57,7 @@ class NotificationsRepository {
   /// Le dice a la API que este teléfono recibe los avisos de la cuenta, con el permiso que
   /// le dio al sistema operativo.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<void> registerDevice({
     required String token,
     required String platform,
@@ -73,7 +73,7 @@ class NotificationsRepository {
 
   /// Este teléfono deja de recibir los avisos de la cuenta.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   ///
   /// [session] es el token de la sesión que se está cerrando, tomado antes de que se cierre.
   Future<void> unregisterDevice(String token, {required String session}) async {
@@ -83,8 +83,8 @@ class NotificationsRepository {
     _expect204(r);
   }
 
-  void _expect204(Respuesta r) {
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+  void _expect204(ApiResponse r) {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code != 204) throw ServerError(r.code);
   }
 }

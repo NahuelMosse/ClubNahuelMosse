@@ -18,7 +18,7 @@ void main() {
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": []}'),
         }),
-        start: '/inicio',
+        start: '/home',
         size: const Size(393, 1400),
       );
 
@@ -39,9 +39,7 @@ void main() {
 
       expect(find.byType(SpaceSearchScreen), findsOneWidget);
       expect(
-        tester
-            .widget<SpaceSearchScreen>(find.byType(SpaceSearchScreen))
-            .deporte,
+        tester.widget<SpaceSearchScreen>(find.byType(SpaceSearchScreen)).sport,
         'Tenis',
       );
       expect(find.text('Tenis'), findsOneWidget);

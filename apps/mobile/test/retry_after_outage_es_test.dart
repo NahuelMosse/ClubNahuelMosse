@@ -54,7 +54,7 @@ void main() {
       List<(int, String)?> responses,
     ) async {
       final routes = GoRouter(
-        initialLocation: '/registro',
+        initialLocation: '/register',
         routes: [
           GoRoute(
             path: '/',
@@ -62,12 +62,12 @@ void main() {
                 const Scaffold(body: Text('Iniciar sesión')),
           ),
           GoRoute(
-            path: '/registro',
+            path: '/register',
             builder: (context, _) => RegistrationScreen(
               registration: RegistrationService(
                 ApiClient(
                   'http://api.falsa',
-                  cliente: _withOutage(
+                  client: _withOutage(
                     '/register',
                     responses,
                     (_) => (404, '{}'),
