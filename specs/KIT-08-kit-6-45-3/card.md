@@ -39,3 +39,6 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.45.1 a
 - L2 · 2026-11-10 · replaces: tests/kit.test.mjs "the installed kit is 6.45.1 @KIT-07-S1" · el kit pasa a 6.45.3 · by: tests/kit.test.mjs "the installed kit is 6.45.3 @KIT-08-S1"
 - L3 · 2026-11-10 · replaces: tests/kit.test.mjs "the install source is the kit-v6.45.1 tag commit @KIT-07-ASM-01" · la fuente pasa al tag kit-v6.45.3 · by: tests/kit.test.mjs "the install source is the kit-v6.45.3 tag commit @KIT-08-ASM-01"
 - L4 · 2026-11-10 · kit updated b2ab219bf5afa9bda90c3c24f3a3c043372fc1b0 → 2ab9b5405b15b5170e1e6e332814e4d21502c435 · KIT-08 es la actualización del kit a 6.45.3
+- L5 · 2026-11-10 · declared · fault-db · la card no toca la base
+- L6 · 2026-11-10 · declared · attacks · la card no toca la API
+- L7 · 2026-11-10 · kit: la suite propia del kit (.claude/tests) no se instala en este repo; las novedades de 6.45.2 y 6.45.3 no tienen prueba acá más allá de tests/kit.test.mjs
