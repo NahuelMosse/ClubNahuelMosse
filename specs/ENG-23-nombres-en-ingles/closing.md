@@ -31,7 +31,7 @@ ENG-23 · los nombres del código y la configuración en inglés
 - 3 · every tag is a spec of card.md — 4 tagged files
 - 4 · each ASM is tagged or declared uncovered — 7 of 7 tagged
 - 5 · no tagged test touched since RED — declared refactor-tests: los tests congelados que sólo citan una ruta de pantalla, una clave de consulta, una variable, una opción, una etiqueta o un símbolo que esta card renombra pasan al nombre nuevo; lo que verifican no cambia (ENG-23-ASM-06); 1 file tagged for ENG-23 edited since RED; the frozen tests of earlier cards it edited are listed in ## Needs a person
-- 6 · diff and Tasks agree — 424 files in the diff against 8abb9ae65e37faf053b5ed9a3d0ff7b5303cf284~1; tests/spanish-detector.mjs is in Tasks, not in the diff; .github/workflows/ci.yml is in Tasks, not in the diff; apps/api/app/modules/spaces/rules.py is in Tasks, not in the diff
+- 6 · diff and Tasks agree — 426 files in the diff against 8abb9ae65e37faf053b5ed9a3d0ff7b5303cf284~1; tests/spanish-detector.mjs is in Tasks, not in the diff; apps/api/app/modules/spaces/rules.py is in Tasks, not in the diff
 - 7 · gate green — 7 lines passed on this code
 - 8 · judge — 3 ACT (3 of plan), every one closed or declared
 - 9 · required.mjs — mutation, linter and scope ran and passed on this code
@@ -166,11 +166,11 @@ risk large · high · lenses contract, integrity, interpretation, security · 3 
 
 ## Decisions of the repo
 - module docs off by decision: not chosen at install: no signal found in the repo
-- tests renamed by the refactor (los tests congelados que sólo citan una ruta de pantalla, una clave de consulta, una variable, una opción, una etiqueta o un símbolo que esta card renombra pasan al nombre nuevo; lo que verifican no cambia (ENG-23-ASM-06)): 14 replaced keeping their tags — apps/mobile/test/loading_skeletons_test.dart, apps/api/tests/unit/test_config_in_english.py, apps/api/tests/unit/test_api_in_english.py, apps/api/tests/unit/test_brevo_email.py, apps/api/tests/integration/test_contract_in_english.py, apps/api/tests/scenarios/test_english_schema.py
+- tests renamed by the refactor (los tests congelados que sólo citan una ruta de pantalla, una clave de consulta, una variable, una opción, una etiqueta o un símbolo que esta card renombra pasan al nombre nuevo; lo que verifican no cambia (ENG-23-ASM-06)): 18 replaced keeping their tags — apps/mobile/test/loading_skeletons_test.dart, apps/api/tests/unit/test_config_in_english.py, apps/api/tests/unit/test_api_in_english.py, apps/api/tests/unit/test_brevo_email.py, apps/api/tests/integration/test_contract_in_english.py, apps/api/tests/scenarios/test_english_schema.py
 - grade: mvp — the app is an university project
 
-Cost: USD 15.78 (builder 9.93, card-runner 5.33, main 0.53) · the messages of this card
-close.mjs seal: ENG-23 sha256:2f292e905cd4050a3235c7738371af7b9ae08c71f0f7ed149a052200bb1f9db6
+Cost: USD 18.53 (builder 9.93, card-runner 7.43, main 1.18) · the messages of this card
+close.mjs seal: ENG-23 sha256:5b5d4cdaec18eabe6c4a394f12a969f76f5e8a299866b0663a0eb082ff888fd9
 <!-- close.mjs:end -->
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
