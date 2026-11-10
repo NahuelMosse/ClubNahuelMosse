@@ -43,3 +43,6 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.44.1 a
 - L5 · 2026-11-10 · declared · fault-db · la card no toca la base
 - L6 · 2026-11-10 · declared · attacks · la card no toca la API
 - L7 · 2026-11-10 · kit updated e5da1ab1db40bebc8d1852d6c104c4d79a1b87b3 → b2ab219bf5afa9bda90c3c24f3a3c043372fc1b0 · KIT-07 es la actualización del kit a 6.45.1
+- L8 · 2026-11-10 · kit: la suite propia del kit (.claude/tests) no se instala en este repo; las novedades de 6.45.1 no tienen prueba acá más allá de tests/kit.test.mjs
+- L9 · 2026-11-10 · kit: el hook de commits exige Conventional Commits en una card nueva, aunque las cards KIT-01 a KIT-06 del repo usaron `KIT-NN: …`; el primer commit de la card no tiene convención propia que conservar
+- L10 · 2026-11-10 · kit: install.mjs --update --card-open escribe `kit updated …` en el Log de card.md, no `<ID>-KIT-NN` en ambiguities.md como dice su ayuda
