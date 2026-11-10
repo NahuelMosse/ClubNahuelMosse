@@ -88,7 +88,7 @@ There are no alerts defined and no `runbook_url`. What follows is by symptom, fo
   the API is awake.
 - **Confirm:** the sweep runs inside the web process every `REMINDERS_EVERY` seconds and does not run while Render puts
   the service to sleep. In the `notification` table, the `delivery` of the notice says what happened: `no_permission` (the person gave no permission),
-  `no_channel` (`FIREBASE_CREDENTIALS_JSON` is missing), `failed` (FCM failed; the log carries `aviso_sin_enviar` with the notice
+  `no_channel` (`FIREBASE_CREDENTIALS_JSON` is missing), `failed` (FCM failed; the log carries `notice_not_sent` with the notice
   number).
 - **Mitigate:** trigger the sweep from outside with `uv run python -m app.modules.notifications.sweep --una-vez` (for example, with an external
   cron), or keep the service awake in the hour before the slots.

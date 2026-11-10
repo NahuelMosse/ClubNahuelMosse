@@ -143,5 +143,5 @@ def test_the_catalog_keeps_mains_keys_with_english_names_and_the_seed_keeps_its_
     names = {name for _, name in shown}
     assert {"Football", "Football 5", "Tennis", "Volleyball", "Basketball 3x3"} <= names
     seed = (ROOT / "apps/api/app/modules/users/seed_admin.py").read_text(encoding="utf-8")
-    for option in ("--correo", "--nombre", "--apellido", "--dni", "--nacimiento", "--promover"):
+    for option in ("--email", "--first-name", "--last-name", "--dni", "--birth-date", "--promote"):
         assert option.lstrip("-") in seed

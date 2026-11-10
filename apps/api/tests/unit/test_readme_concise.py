@@ -12,7 +12,7 @@ LINKS_THE_TESTS_READ = [
     "docs/technical/runbook.md",
     "specs/asvs.md",
 ]
-COMMANDS_THE_TESTS_READ = ("sh scripts/test.sh", "npm run emuladores", "npm run build")
+COMMANDS_THE_TESTS_READ = ("sh scripts/test.sh", "npm run emulators", "npm run build")
 SECRET_PATTERNS = [r"Test1234", r"xkeysib-", r"rnd_", r"contraseña:"]
 MAX_LINES = 70
 MAX_WHAT_IT_DOES_BULLETS = 6

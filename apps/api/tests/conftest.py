@@ -17,11 +17,9 @@ TEST_DATABASE_URL = os.environ.get(
 # The API under test uses the same test database and the Firebase Auth emulator.
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ.setdefault("FIREBASE_PROJECT_ID", "demo-clubnahuelmosse")
-os.environ.setdefault("CORREO_MODO", "buzon")
+os.environ.setdefault("EMAIL_MODE", "outbox")
 # The reminder sweep does not run by itself in the tests: each one fires it with its own clock.
-os.environ["RECORDATORIOS_CADA"] = "0"
-# The test client sends the Host «testserver».
-os.environ.setdefault("HOSTS_PERMITIDOS", "testserver")
+os.environ["REMINDERS_EVERY"] = "0"
 API_ROOT = Path(__file__).resolve().parents[1]
 
 

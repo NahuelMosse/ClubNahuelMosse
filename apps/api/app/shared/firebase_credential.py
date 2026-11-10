@@ -16,5 +16,5 @@ def service_credential(content: str | None = None) -> credentials.Base | None:
     except ValueError as error:
         # Without the cause text: it could carry pieces of the key.
         raise RuntimeError(
-            "FIREBASE_CREDENCIALES_JSON is not the JSON of a valid service account"
+            "FIREBASE_CREDENTIALS_JSON is not the JSON of a valid service account"
         ) from error

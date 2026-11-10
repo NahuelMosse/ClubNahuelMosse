@@ -18,8 +18,8 @@ String dniOf(String s) =>
     (10000000 + int.parse(s.substring(s.length - 7))).toString();
 
 /// The administrator account that `scripts/e2e.sh` seeds in the run's database.
-const adminEmail = String.fromEnvironment('ADMIN_CORREO');
-const adminPassword = String.fromEnvironment('ADMIN_CONTRASENA');
+const adminEmail = String.fromEnvironment('ADMIN_EMAIL');
+const adminPassword = String.fromEnvironment('ADMIN_PASSWORD');
 
 /// A Firebase Auth emulator and an API where nobody listens: the app without a network.
 const offline = '127.0.0.1:9';
@@ -107,8 +107,8 @@ Future<void> choose(WidgetTester tester, String field, String option) async {
 /// the notification permission. It is set after opening the app and before signing in.
 Future<void> setNotificationPermission({required bool granted}) async {
   await (await SharedPreferences.getInstance()).setString(
-    'permiso_notificaciones_simulado',
-    granted ? 'concedido' : 'denegado',
+    'simulated_notification_permission',
+    granted ? 'granted' : 'denied',
   );
 }
 

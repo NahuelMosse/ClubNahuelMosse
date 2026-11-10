@@ -10,9 +10,7 @@ from app.shared.club_timezone import CLUB_TIMEZONE
 from app.shared.email_template import html_email
 from app.shared.message import Message
 
-NoticeKind = Literal[
-    "reminder", "five_minute_reminder", "forced_cancellation", "user_cancellation"
-]
+NoticeKind = Literal["reminder", "five_minute_reminder", "forced_cancellation", "user_cancellation"]
 ReminderKind = Literal["reminder", "five_minute_reminder"]
 Delivery = Literal["pending", "sending", "sent", "no_permission", "no_channel", "failed"]
 
@@ -202,8 +200,7 @@ def cancellation_message(r: BookingData) -> Notice:
     return Notice(
         title="Booking cancelled",
         body=(
-            f"{short_kind(r.sport, r.kind)} · {r.venue} · {_when(r.starts_at)}. "
-            "The slot was freed."
+            f"{short_kind(r.sport, r.kind)} · {r.venue} · {_when(r.starts_at)}. The slot was freed."
         ),
         data=notice_data("user_cancellation", r.id),
     )

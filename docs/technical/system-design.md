@@ -66,8 +66,8 @@ flowchart LR
 
 - **Environments:** there are two, local and Render; there is no staging.
   - **local:** the API with `uvicorn` against a local Postgres and the Firebase Auth emulator (`firebase.json`, port 9099,
-    `npm run emuladores`), `EMAIL_MODE=outbox`, no Firebase credentials: the push channel is the null one
-    (`apps/api/app/modules/notifications/push.py`, `NullChannel`). The app points to `http://10.0.2.2:8000` with `AUTH_EMULADOR`. The tests use
+    `npm run emulators`), `EMAIL_MODE=outbox`, no Firebase credentials: the push channel is the null one
+    (`apps/api/app/modules/notifications/push.py`, `NullChannel`). The app points to `http://10.0.2.2:8000` with `AUTH_EMULATOR`. The tests use
     a `*_test` database (`apps/api/README.md`, "Run the tests").
   - **Render:** `render.yaml` defines the Python web service `clubnahuelmosse-api` and the database `clubnahuelmosse-db`, both
     `plan: free`, and it is the only source of the deployment configuration. The deployment has not been made yet: scenario

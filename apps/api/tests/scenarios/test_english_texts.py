@@ -49,8 +49,8 @@ def _literals(path: Path) -> list[tuple[int, str]]:
 
 
 CLI_INTERFACE = {
-    "correo", "nombre", "apellido", "dni", "nacimiento", "promover",
-    "--promover", "ADMIN_CONTRASENA", "--una-vez", "clubnahuelmosse.correo",
+    "email", "first-name", "last-name", "dni", "birth-date", "promote",
+    "--promote", "ADMIN_PASSWORD", "--una-vez", "clubnahuelmosse.correo",
 }  # fmt: skip
 
 
@@ -190,10 +190,10 @@ def test_the_seeded_data_is_english() -> None:
 def test_the_admin_seed_command_prints_english_and_keeps_its_options() -> None:
     """the admin seed command prints English and keeps its options @ENG-20-ASM-04"""
     source = (APP / "modules/users/seed_admin.py").read_text(encoding="utf-8")
-    for option in ("correo", "nombre", "apellido", "dni", "nacimiento"):
+    for option in ("email", "first-name", "last-name", "dni", "birth-date"):
         assert f'"{option}"' in source
-    assert '"--promover"' in source
-    assert "ADMIN_CONTRASENA" in source
+    assert '"--promote"' in source
+    assert "ADMIN_PASSWORD" in source
 
 
 def test_no_migration_of_this_card_rewrites_stored_rows() -> None:

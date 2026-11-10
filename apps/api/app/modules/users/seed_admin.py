@@ -1,10 +1,11 @@
 """Creates the first admin account, or promotes an existing one.
 
     ADMIN_PASSWORD=... uv run python -m app.modules.users.seed_admin \\
-        --correo admin@club.com --nombre Ana --apellido Díaz --dni 30111222 --nacimiento 1985-06-01
+        --email admin@club.com --first-name Ana --last-name Díaz --dni 30111222 \\
+        --birth-date 1985-06-01
 
 The password arrives through an environment variable so it does not stay in the terminal history.
-If that email already has an account, it is only promoted with `--promover`; the password stays.
+If that email already has an account, it is only promoted with `--promote`; the password stays.
 """
 
 import argparse
@@ -23,17 +24,17 @@ from app.shared.identity import FirebaseProvider
 
 def _parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
-    for option in ("correo", "nombre", "apellido", "dni", "nacimiento"):
+    for option in ("email", "first-name", "last-name", "dni", "birth-date"):
         parser.add_argument(f"--{option}", required=True)
     parser.add_argument(
-        "--promover", action="store_true", help="promote the account that already has that email"
+        "--promote", action="store_true", help="promote the account that already has that email"
     )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse(argv)
-    password = os.environ.get("ADMIN_PASSWORD") or os.environ.get("ADMIN_CONTRASENA", "")
+    password = os.environ.get("ADMIN_PASSWORD", "")
     if not password:
         print("The ADMIN_PASSWORD environment variable is missing", file=sys.stderr)
         return 2
@@ -42,22 +43,22 @@ def main(argv: list[str] | None = None) -> int:
         try:
             seed_admin(
                 RegistrationData(
-                    first_name=args.nombre,
-                    last_name=args.apellido,
+                    first_name=args.first_name,
+                    last_name=args.last_name,
                     dni=args.dni,
-                    birth_date=args.nacimiento,
-                    email=args.correo,
+                    birth_date=args.birth_date,
+                    email=args.email,
                     password=password,
                 ),
                 today=datetime.now(CLUB_TIMEZONE).date(),
                 identity=FirebaseProvider(),
                 users=UsersSql(conn),
-                promote=args.promover,
+                promote=args.promote,
             )
         except AccountExists:
             print(
-                f"an account with {args.correo} already exists; "
-                "use --promover to make it an administrator",
+                f"an account with {args.email} already exists; "
+                "use --promote to make it an administrator",
                 file=sys.stderr,
             )
             return 1
@@ -69,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
             fields = " and ".join(e.fields)
             print(f"another active account already has that {fields}", file=sys.stderr)
             return 1
-    print(f"administrator ready: {args.correo}")
+    print(f"administrator ready: {args.email}")
     return 0
 
 

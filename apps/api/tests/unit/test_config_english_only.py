@@ -106,7 +106,14 @@ def test_render_yaml_and_scripts_e2e_sh_use_the_english_names_and_the_configurat
     """render.yaml and scripts/e2e.sh use the English names and the configuration reads them @assumption:ENG-01-ASM-02 @ENG-23-S4"""
     render = (ROOT / "render.yaml").read_text(encoding="utf-8")
     e2e = (ROOT / "scripts" / "e2e.sh").read_text(encoding="utf-8")
-    for name in ("PUBLIC_URL", "EMAIL_MODE", "EMAIL_SENDER", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD"):
+    for name in (
+        "PUBLIC_URL",
+        "EMAIL_MODE",
+        "EMAIL_SENDER",
+        "SMTP_PORT",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+    ):
         assert f"key: {name}" in render
     assert "E2E_TESTING=1 EMAIL_MODE=outbox" in e2e
 

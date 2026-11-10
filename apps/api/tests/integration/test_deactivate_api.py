@@ -126,16 +126,16 @@ def test_an_admin_is_not_deactivated(
 ) -> None:
     s = unique()
     email = f"admin.{s}@club.com"
-    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    monkeypatch.setenv("ADMIN_PASSWORD", PASSWORD)
     arguments = [
-        "--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
-        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
+        "--email", email, "--first-name", "Ana", "--last-name", "Díaz",
+        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--birth-date", "1985-06-01",
     ]  # fmt: skip
     assert seed(arguments) == 0
     token = sign_in(email, PASSWORD)
     assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 403
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 200
-    os.environ.pop("ADMIN_CONTRASENA", None)
+    os.environ.pop("ADMIN_PASSWORD", None)
 
 
 def test_no_session_no_deactivation(api: TestClient) -> None:

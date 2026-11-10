@@ -20,5 +20,5 @@ def test_without_a_configured_server_the_email_is_not_sent_and_stays_in_the_log(
 def test_the_default_is_smtp_and_not_the_outbox(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.shared.config import Settings
 
-    monkeypatch.delenv("CORREO_MODO", raising=False)
+    monkeypatch.delenv("EMAIL_MODE", raising=False)
     assert Settings(_env_file=None).email_mode == "smtp"

@@ -110,7 +110,7 @@ void main() {
       expect(await system.isAllowed(), isTrue);
 
       SharedPreferences.setMockInitialValues({
-        'permiso_notificaciones_simulado': 'denegado',
+        'simulated_notification_permission': 'denied',
       });
       system = SimulatedNotificationSystem();
       expect(await system.wasAsked(), isTrue);

@@ -28,7 +28,7 @@ from app.shared.errors import ConcurrentChange, InvalidData, SlotTaken, Unavaila
 from app.shared.input_validation import Identifier, parse_time
 from app.shared.responses import conflict
 
-router = APIRouter(tags=["reservas"])
+router = APIRouter(tags=["bookings"])
 
 # With 20 per page, ten thousand pages are two hundred thousand bookings.
 MAX_PAGE = 10_000

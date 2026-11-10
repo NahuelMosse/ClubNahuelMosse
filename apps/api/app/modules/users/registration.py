@@ -7,7 +7,7 @@ from uuid import UUID
 from app.modules.users.rules import Registration, RegistrationData, validate_registration
 from app.shared.errors import Duplicate, InvalidData
 
-registration_log = logging.getLogger("clubnahuelmosse.registro")
+registration_log = logging.getLogger("clubnahuelmosse.registration")
 
 
 class IdentityProvider(Protocol):

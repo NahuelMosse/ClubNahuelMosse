@@ -194,7 +194,7 @@ def test_a_failure_on_the_first_notice_leaves_it_failed_and_does_not_block_the_r
 def test_each_notice_given_as_failed_is_in_the_log_with_its_number_and_its_type(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """the lost notice shows in the log as `aviso_sin_enviar` @REV-03-S5"""
+    """the lost notice shows in the log as `notice_not_sent` @REV-03-S5"""
     repo = InMemoryRepository([], ["t"])
     repo.lost = [
         LostNotice(_id(8), "forced_cancellation"),
@@ -205,8 +205,8 @@ def test_each_notice_given_as_failed_is_in_the_log_with_its_number_and_its_type(
         dispatch_pending(repo, AcceptingChannel())
 
     assert [(r.levelname, r.getMessage()) for r in caplog.records] == [
-        ("ERROR", f"aviso_sin_enviar notificacion_id={_id(8)} tipo=forced_cancellation"),
-        ("ERROR", f"aviso_sin_enviar notificacion_id={_id(9)} tipo=reminder"),
+        ("ERROR", f"notice_not_sent notification_id={_id(8)} kind=forced_cancellation"),
+        ("ERROR", f"notice_not_sent notification_id={_id(9)} kind=reminder"),
     ]
 
 

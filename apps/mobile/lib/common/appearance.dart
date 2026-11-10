@@ -11,7 +11,7 @@ class Appearance extends ChangeNotifier {
   /// Saves nothing: to show individual screens, as in the screenshots.
   Appearance.inMemory({bool dark = true}) : this._(null, dark);
 
-  static const _key = 'modo_oscuro';
+  static const _key = 'dark_mode';
 
   static Future<Appearance> load() async {
     final preferences = await SharedPreferences.getInstance();

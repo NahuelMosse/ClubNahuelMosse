@@ -113,7 +113,7 @@ void main() {
       Brightness.light,
     );
     final saved = await SharedPreferences.getInstance();
-    expect(saved.getBool('modo_oscuro'), isFalse);
+    expect(saved.getBool('dark_mode'), isFalse);
     semantics.dispose();
   });
 

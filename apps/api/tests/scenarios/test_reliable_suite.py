@@ -337,10 +337,10 @@ def admin(
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, str]:
     s = unique()
-    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    monkeypatch.setenv("ADMIN_PASSWORD", PASSWORD)
     arguments = [
-        "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
-        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
+        "--email", f"admin.{s}@club.com", "--first-name", "Ana", "--last-name", "Díaz",
+        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--birth-date", "1985-06-01",
     ]  # fmt: skip
     assert seed_admin(arguments) == 0
     token = sign_in(f"admin.{s}@club.com", PASSWORD)

@@ -19,7 +19,7 @@ from app.shared.errors import InvalidData
 
 VALIDITY_MINUTES = 30
 MAX_PER_HOUR = 3
-recovery_log = logging.getLogger("clubnahuelmosse.recuperacion")
+recovery_log = logging.getLogger("clubnahuelmosse.password_recovery")
 
 
 class InvalidLink(Exception):
@@ -130,6 +130,4 @@ def use_link(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
         # With the change date, the other links issued before stop being valid.
         users.mark_password_changed(claimed.user_id)
     except Exception:
-        recovery_log.exception(
-            "could not record the password change of %s", claimed.user_id
-        )
+        recovery_log.exception("could not record the password change of %s", claimed.user_id)

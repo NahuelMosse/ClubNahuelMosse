@@ -120,7 +120,7 @@ To work fully locally (server, database and a fake Firebase on your machine) the
 [the API](../apps/api/README.md) and of [the app](../apps/mobile/README.md). In short:
 
 1. A local PostgreSQL database.
-2. The Firebase emulator: `npm ci` and `npm run emuladores` at the root of the repo.
+2. The Firebase emulator: `npm ci` and `npm run emulators` at the root of the repo.
 3. The API: `cd apps/api`, `uv sync`, `uv run alembic upgrade head` and `uv run uvicorn app.main:app` with the variables from the
    README.
 4. The app pointing to `http://10.0.2.2:8000`, which is how the Android emulator sees your machine.

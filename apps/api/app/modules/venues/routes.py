@@ -20,7 +20,7 @@ from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings
 from app.shared.input_validation import Identifier, parse_time
 from app.shared.responses import conflict
 
-router = APIRouter(tags=["sedes"])
+router = APIRouter(tags=["venues"])
 
 
 class VenueView(BaseModel):
@@ -187,7 +187,5 @@ def remove_venue(
     try:
         deactivate_venue(profile, venue_id, venues)
     except HasFutureBookings:
-        return conflict(
-            {"venue": "The venue cannot be deleted because it has future bookings."}
-        )
+        return conflict({"venue": "The venue cannot be deleted because it has future bookings."})
     return Response(status_code=status.HTTP_204_NO_CONTENT)

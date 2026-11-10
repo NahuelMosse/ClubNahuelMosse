@@ -27,15 +27,15 @@ process environment: in the `.env` they have no effect.
 | `DATABASE_URL` | PostgreSQL connection, `postgresql+psycopg://<user>:<password>@host:port/database`. By default, user, password and database `club` on `localhost:5432` |
 | `FIREBASE_PROJECT_ID` | Identifier of the Firebase project that issues the tokens |
 | `FIREBASE_API_KEY` | Web key of the project; the API uses it to check passwords. Not needed with the emulator |
-| `PUBLIC_URL` (or `URL_PUBLICA`) | Public address of this API; the links in the emails point there |
-| `EMAIL_MODE` (or `CORREO_MODO`) | `smtp` (default) sends emails over SMTP; `brevo` sends them through the Brevo API; `buzon` leaves them in the `correo_saliente` table and is only for development |
+| `PUBLIC_URL` | Public address of this API; the links in the emails point there |
+| `EMAIL_MODE` | `smtp` (default) sends emails over SMTP; `brevo` sends them through the Brevo API; `outbox` leaves them in the `outgoing_email` table and is only for development |
 | `BREVO_API_KEY` | Key of the Brevo API; needed with `EMAIL_MODE=brevo` |
-| `FIREBASE_CREDENTIALS_JSON` (or `FIREBASE_CREDENCIALES_JSON`) | Content of the Firebase service account JSON, an alternative to `GOOGLE_APPLICATION_CREDENTIALS` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Outgoing mail server with `EMAIL_MODE=smtp`; each is also read as `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` |
-| `E2E_TESTING` (or `PRUEBAS`) | `1` enables `/_testing`, which is mounted only if `FIREBASE_AUTH_EMULATOR_HOST` also exists; in a real environment it is not defined |
-| `REMINDERS_EVERY` (or `RECORDATORIOS_CADA`) | How many seconds between the sweeps that send reminders; 30 by default, 0 turns it off |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Path to the Firebase service account file. In production this one or `FIREBASE_CREDENCIALES_JSON` is needed: without the emulator, the API needs it to create and delete users, verify tokens with `check_revoked` and send notifications through Firebase Cloud Messaging |
-| `FIREBASE_CREDENCIALES_JSON` | The content of the service account JSON, for platforms that do not mount files (Render, with a Blueprint). If `GOOGLE_APPLICATION_CREDENTIALS` is also defined, the JSON wins |
+| `FIREBASE_CREDENTIALS_JSON` | Content of the Firebase service account JSON, an alternative to `GOOGLE_APPLICATION_CREDENTIALS` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Outgoing mail server with `EMAIL_MODE=smtp`; each is also read as `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` |
+| `E2E_TESTING` | `1` enables `/_testing`, which is mounted only if `FIREBASE_AUTH_EMULATOR_HOST` also exists; in a real environment it is not defined |
+| `REMINDERS_EVERY` | How many seconds between the sweeps that send reminders; 30 by default, 0 turns it off |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to the Firebase service account file. In production this one or `FIREBASE_CREDENTIALS_JSON` is needed: without the emulator, the API needs it to create and delete users, verify tokens with `check_revoked` and send notifications through Firebase Cloud Messaging |
+| `FIREBASE_CREDENTIALS_JSON` | The content of the service account JSON, for platforms that do not mount files (Render, with a Blueprint). If `GOOGLE_APPLICATION_CREDENTIALS` is also defined, the JSON wins |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:port` of the Firebase Auth emulator; with it the API does not use the real project |
 | `ADMIN_PASSWORD` | Password of the admin account, only for the command that seeds it |
 | `TEST_DATABASE_URL` | Database of the tests (its name ends in `_test`); only `conftest.py` in the tests folder reads it |
@@ -51,18 +51,18 @@ The admin account is not registered from the app; it is seeded:
 
 ```sh
 ADMIN_PASSWORD=<password> uv run python -m app.modules.users.seed_admin \
-  --correo <email> --nombre <first name> --apellido <last name> --dni <dni> --nacimiento YYYY-MM-DD
+  --email <email> --first-name <first name> --last-name <last name> --dni <dni> --birth-date YYYY-MM-DD
 ```
 
 ## Run
 
 Locally, against the Firebase Auth emulator (from the repo root, in another terminal, `npm ci` the
-first time and then `npm run emuladores`, which listens on port 9099):
+first time and then `npm run emulators`, which listens on port 9099):
 
 ```sh
 cd apps/api
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_PROJECT_ID=demo-clubnahuelmosse \
-  CORREO_MODO=buzon uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+  EMAIL_MODE=outbox uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 The documentation is at `http://localhost:8000/docs`. From the Android emulator the API is seen as
@@ -133,9 +133,9 @@ uv run python -m app.modules.notifications.sweep --una-vez
 
 It exits with code 0 if the sweep ran and 1 if it failed. Who triggers it is not decided:
 `render.yaml` does not add a paid job. A notification that was not sent leaves an error line
-`aviso_sin_enviar` in the log, with the notification number and the error type, without the token.
+`notice_not_sent` in the log, with the notification number and the error type, without the token.
 
-**Logs.** A notification that was not sent leaves an error line `aviso_sin_enviar` in the log, with
+**Logs.** A notification that was not sent leaves an error line `notice_not_sent` in the log, with
 the notification number and the error type, without the token.
 
 ## Data decisions
@@ -172,19 +172,19 @@ The `render.yaml` at the repo root describes everything: a Python web service fo
    | Variable | Value |
    |---|---|
    | `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` | those of step 2 |
-   | `FIREBASE_CREDENCIALES_JSON` | the **complete content** of the service account `.json` |
-   | `URL_PUBLICA` | `https://<service name>.onrender.com`, the address Render shows for `clubnahuelmosse-api` |
-   | `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | those of the outgoing mail account (`SMTP_PUERTO` is already 587) |
+   | `FIREBASE_CREDENTIALS_JSON` | the **complete content** of the service account `.json` |
+   | `PUBLIC_URL` | `https://<service name>.onrender.com`, the address Render shows for `clubnahuelmosse-api` |
+   | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | those of the outgoing mail account (`SMTP_PORT` is already 587) |
 
    Render asks for these values only when creating the Blueprint; to change them later, edit them in
    the service's *Environment*. `DATABASE_URL` comes from the database: `config.py` adds the `psycopg`
-   driver to the `postgresql://` that Render provides. `PRUEBAS` and `FIREBASE_AUTH_EMULATOR_HOST`
+   driver to the `postgresql://` that Render provides. `E2E_TESTING` and `FIREBASE_AUTH_EMULATOR_HOST`
    are not defined.
 5. **Seed the admin**, once, from this machine against the Render database. In the
    database (*Connections* in the dashboard) copy the **External Database URL** and, from `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<project id> FIREBASE_API_KEY=<web key>    GOOGLE_APPLICATION_CREDENTIALS=<path to the downloaded .json>    ADMIN_PASSWORD=<password>    uv run python -m app.modules.users.seed_admin      --correo <email> --nombre <first name> --apellido <last name> --dni <dni> --nacimiento YYYY-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<project id> FIREBASE_API_KEY=<web key>    GOOGLE_APPLICATION_CREDENTIALS=<path to the downloaded .json>    ADMIN_PASSWORD=<password>    uv run python -m app.modules.users.seed_admin      --email <email> --first-name <first name> --last-name <last name> --dni <dni> --birth-date YYYY-MM-DD
    ```
 
 6. **Check.** `https://<service>.onrender.com/openapi.json` returns the schema and
@@ -201,7 +201,7 @@ Limits of the `free` plan:
 - `preDeployCommand` does not exist on the free plan; that is why migrations run in the build.
   With a paid plan, move that part to `preDeployCommand` in `render.yaml`.
 
-The app receives the address with `--dart-define=API_URL=<URL_PUBLICA>` when built; see the README of
+The app receives the address with `--dart-define=API_URL=<PUBLIC_URL>` when built; see the README of
 `apps/mobile`.
 
 To roll back a deployment, rotate a secret or handle an incident: `docs/technical/runbook.md`.

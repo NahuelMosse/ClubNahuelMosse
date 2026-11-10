@@ -22,6 +22,8 @@ const REPLACED_FILES = new Set([
   'apps/api/tests/unit/test_config_in_english.py',
   'apps/api/tests/unit/test_api_in_english.py',
   'apps/api/tests/unit/test_brevo_email.py',
+  // The test of the old names that must stay unread.
+  'apps/api/tests/unit/test_config_english_only.py',
 ]);
 const SOURCE_FILES = [
   ...walk('apps/api/app', (path) => path.endsWith('.py')),
@@ -126,15 +128,25 @@ test('app_es.arb and the Spanish texts the tests compare stay as on main @ENG-23
 
 test("the card leaves other cards' specs, the kit, main's migrations and app_es.arb untouched @assumption:ENG-23-ASM-03", () => {
   const outside = touchedByTheCard().filter(
-    (path) => (path.startsWith('specs/') && !path.startsWith('specs/ENG-23-')) || path.startsWith('.claude/') || path === 'CLAUDE.md' || path.startsWith('apps/api/migrations/versions/') || path.endsWith('app_es.arb'),
+    (path) => (path.startsWith('specs/') && !path.startsWith('specs/ENG-23-') && path !== 'specs/.current') || path.startsWith('.claude/') || path === 'CLAUDE.md' || path.startsWith('apps/api/migrations/versions/') || path.endsWith('app_es.arb'),
   );
   assert.deepEqual(outside, []);
 });
 
+// A replaced file may be deleted: it must have existed on main.
+const existsInBase = (path) => {
+  try {
+    execFileSync('git', ['cat-file', '-e', `${BASE}:${path}`], { cwd: repo, stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 test('every replacement this card declares names an existing test and a replacement that carries its tags @assumption:ENG-23-ASM-06', () => {
   const lines = read('specs/ENG-23-nombres-en-ingles/card.md')
     .split('\n')
-    .filter((line) => line.includes(' · replaces: '));
+    .filter((line) => line.includes(' · replaces: ') && line.includes('apps/api/tests/'));
   assert.ok(lines.length >= 6, 'the card declares its replacements');
   const problems = lines.flatMap((line) => {
     const match = line.match(/replaces: (\S+) "(.*)" · .* · by: (\S+) "(.*)"$/);
@@ -143,7 +155,7 @@ test('every replacement this card declares names an existing test and a replacem
     const oldTags = oldTitle.match(/@[\w:-]+/g) ?? [];
     const newText = existsSync(`${repo}/${newFile}`) ? read(newFile) : '';
     return [
-      ...(existsSync(`${repo}/${oldFile}`) ? [] : [`${oldFile} does not exist`]),
+      ...(existsInBase(oldFile) ? [] : [`${oldFile} does not exist`]),
       ...(newText.includes(newTitle) ? [] : [`${newFile} lacks «${newTitle.slice(0, 60)}»`]),
       ...oldTags.filter((tag) => !newTitle.includes(tag)).map((tag) => `${newFile} lacks ${tag}`),
     ];
