@@ -6,8 +6,9 @@
 // exist, their path for the rest) and the words of `## Specs` and of L1 that bring risk (auth, password, payment…),
 // which count only when `## Tasks` names a production code file.
 // - size: `small` when no file marks ui, api or data, no risk word appears and there are 1 or 2 tasks; else `large`.
-// - review: `high` with risk words, security-l2 on and touched, or two or more of ui/api/data; `medium` with exactly
-//   one of them; `low` with none.
+// - review: `high` with risk words or security-l2 on and touched; `medium` with one or more of ui/api/data; `low` with none.
+//   A migration word counts only in a repo that already holds data (a committed migration, data-layer file or `.sql`): the
+//   first schema of a new repo migrates nothing.
 // - lenses: ui → visual, api → contract, data → integrity; a `high` review with auth or payment words (or security-l2
 //   touched) adds interpretation and security.
 // Before it freezes anything it judges the plan (plan.mjs): a test planned for each S# and ASM, a layer for each production
@@ -41,6 +42,16 @@ const SIZE_LIMIT = 200_000;
 const API_PATH = /(^|\/)(api|routes?|controllers?|handlers?|endpoints?)\//;
 const DATA_PATH = /(^|\/)(db|database|models?|repositor(?:y|ies)|migrations?)\//;
 
+// What the repo already committed: a repo that git cannot list is taken as holding data, so the word keeps its weight.
+const MIGRATION_WORD = /^migra/i;
+const holdsData = (root) => {
+  if (!root) return true;
+  let r;
+  try { r = git(root, ['ls-files']); } catch { return true; }
+  if (r.status !== 0) return true;
+  return r.stdout.split('\n').some((f) => DATA_PATH.test(f) || /\.sql$/i.test(f));
+};
+
 const linesOf = (root, file) => {
   const path = join(root, file);
   try { return statSync(path).size <= SIZE_LIMIT ? readFileSync(path, 'utf8').split('\n').map((text) => ({ f: file, text })) : []; } catch { return []; }
@@ -58,11 +69,13 @@ export const classify = ({ files, taskCount, text, root, securityL2On = false, n
   };
   // A risk word weighs only on a card that writes production code: docs, specs and tests do not log anyone in.
   const writesCode = files.some((f) => IS_RISK_CODE(f) && !IS_TEST.test(f) && !NOT_PRODUCTION.test(f));
-  const words = writesCode ? [...new Set(riskWordsIn(text).map((w) => w.toLowerCase()))] : [];
+  const spoken = writesCode ? [...new Set(riskWordsIn(text).map((w) => w.toLowerCase()))] : [];
+  const words = spoken.some((w) => MIGRATION_WORD.test(w)) && !holdsData(root) ? spoken.filter((w) => !MIGRATION_WORD.test(w)) : spoken;
   const touched = Object.keys(modules).filter((m) => modules[m]);
   const securityTouched = securityL2On && Boolean(found['auth-dependency']);
   const size = !touched.length && !words.length && taskCount >= 1 && taskCount <= 2 ? 'small' : 'large';
-  const review = words.length || securityTouched || touched.length >= 2 ? 'high' : touched.length === 1 ? 'medium' : 'low';
+  // Several modules are a larger card, not a riskier one: the gate's checks per lens hold each of them.
+  const review = words.length || securityTouched ? 'high' : touched.length ? 'medium' : 'low';
   const lenses = [
     ...(modules.ui ? ['visual'] : []), ...(modules.api ? ['contract'] : []), ...(modules.data ? ['integrity'] : []),
     ...(review === 'high' && (securityTouched || AUTH_OR_PAYMENT.test(words.join(' '))) ? ['interpretation', 'security'] : []),

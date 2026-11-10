@@ -52,7 +52,7 @@ const ADVICE = {
   secret: 'Secrets are not read or written by the agent. The variable names are in .env.example ' +
     '(`cat .env.example`); the value is set by a person.',
   frozen: 'has tagged tests and a commit already holds them: frozen, and the shell does not edit them either. If one is wrong, replace it: a new file with the same tag, and ' +
-    '`node .claude/tools/log.mjs specs/<card> "replaces: <test file> · <why>"`.',
+    '`node .claude/tools/log.mjs specs/<card> "replaces: <test file> \\"<test>\\" · <why wrong> · by: <new file> \\"<test>\\""`.',
 };
 let shell;
 let paths;
@@ -395,7 +395,8 @@ if (input.agent_id) {
   const NODE_TEST = /^(?:npx\s+(?:-\S+\s+)*)?node(?:@\S+)?(?:\.exe)?\s+(?:-\S+\s+)*?--test(?=\s|$)/;
   if (commandsOf(cmd).some((c) => NODE_TEST.test(c) && !/(?:^|\s)--test-force-exit(?=[\s=]|$)/.test(c))) {
     reject('node --test without `--test-force-exit` waits for every handle the tests leave open (a server, a browser) and blocks the call for its whole timeout. ' +
-           'Run it as `timeout <s> node --test --test-timeout=8000 --test-force-exit <files>`, and never two runs of the same browser suite at once.');
+           'Run it as `timeout <s> node --test --test-timeout=8000 --test-force-exit <files>`, and never two runs of the same browser suite at once. ' +
+           'If the runtime aborts at the forced exit (UV_HANDLE_CLOSING, Windows), a test leaves a keep-alive connection open: close the server in `after` with `server.closeAllConnections()` before `server.close()`.');
   }
 }
 

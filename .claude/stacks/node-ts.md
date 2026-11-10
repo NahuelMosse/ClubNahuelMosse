@@ -24,6 +24,8 @@ whole profile would be re-read on every request of the card.
   new tests ×3 stable (`npx playwright test --grep "@$ID" --repeat-each=3`, or
   `node .claude/tools/repeat.mjs 3 -- node --test --test-concurrency=1 <files>`); the red run with `--timeout=5000 --retries=0`
   (Node: `timeout 30 node --test --test-timeout=5000 --test-force-exit <files>`), never in the final suite.
+- A test that starts a server closes it in `after` with `server.closeAllConnections()` before `server.close()`: a keep-alive connection
+  that `fetch` leaves open makes Node abort at the forced exit on Windows (UV_HANDLE_CLOSING) with every test green.
 - Mutation of a logic file: `node .claude/tools/mutate.mjs <file> --since <card-start> --equivalents specs/<card>/equivalents.md -- <unit suite>`,
   never over the browser suite. ZAP: once per card, at the end.
 - `node --test` takes a glob (`"test/**/*.test.mjs"`), never a folder: Node 24 runs a folder as if it were a test file, and fails.

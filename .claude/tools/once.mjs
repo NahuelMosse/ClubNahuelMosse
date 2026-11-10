@@ -102,7 +102,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     // the tests passed: the runtime's failure, not the code's. The same run without the forced exit decides; the
     // test timeout still cuts a hung test, and the line's own limit the rest.
     const again = expandVars(withTestTimeout(command).replace(/\s--test-force-exit(?=\s|$)/g, ''));
-    const note = `\n[once] the runtime aborted at the forced exit (UV_HANDLE_CLOSING: a connection fetch keeps alive, on Windows); run again without --test-force-exit\n`;
+    const note = `\n[once] the runtime aborted at the forced exit (UV_HANDLE_CLOSING: a connection fetch keeps alive, on Windows); run again without --test-force-exit; the test that leaves it open closes its server with server.closeAllConnections() before server.close()\n`;
     process.stdout.write(note); log.write(note); seen += note;
     const q = spawn(again, { shell: true, stdio: ['inherit', 'pipe', 'pipe'] });
     q.stdout.on('data', (d) => { process.stdout.write(d); log.write(d); seen += d; });

@@ -495,7 +495,7 @@
               </div>
               <div class="field" id="f-s-email">
                 <label class="field__label" for="s-email">Correo de facturación</label>
-                <span class="field__control"><input class="input" id="s-email" type="email" value="facturas@ledger.com" required data-error="Escribí un correo válido"><svg class="icon field__icon field__icon--valid" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg></span>
+                <span class="field__control"><input class="input" id="s-email" type="email" value="facturas@ledger.example" required data-error="Escribí un correo válido"><svg class="icon field__icon field__icon--valid" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg></span>
                 <span class="field__message" aria-live="polite"><span class="field__error"><span></span></span></span>
               </div>
               <div class="field">
@@ -675,7 +675,7 @@
             <h2 class="comp__title">Campos</h2>
             <div class="field" id="f-email">
               <label class="field__label" for="c-email">Correo</label>
-              <span class="field__control"><input class="input" id="c-email" type="email" required placeholder="nombre@empresa.com" data-error="Escribí un correo válido"><svg class="icon field__icon field__icon--valid" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg></span>
+              <span class="field__control"><input class="input" id="c-email" type="email" required placeholder="nombre@empresa.example" data-error="Escribí un correo válido"><svg class="icon field__icon field__icon--valid" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg></span>
               <span class="field__foot"><span>Acá enviamos la factura.</span></span>
               <span class="field__message" aria-live="polite"><span class="field__error"><span></span></span></span>
             </div>
@@ -1145,7 +1145,7 @@
       </div>
       <div class="field">
         <label class="field__label" for="k-email">Correo de contacto</label>
-        <span class="field__control"><input class="input" id="k-email" type="email" placeholder="nombre@empresa.com" data-error="Escribí un correo válido"></span>
+        <span class="field__control"><input class="input" id="k-email" type="email" placeholder="nombre@empresa.example" data-error="Escribí un correo válido"></span>
         <span class="field__message" aria-live="polite"><span class="field__error"><span></span></span></span>
       </div>
     </div>
@@ -1161,7 +1161,7 @@
 
 <dialog class="dialog" id="d-confirm" aria-labelledby="d-confirm-title">
   <div class="dialog__head"><h2 class="text-title" id="d-confirm-title">¿Enviar la factura?</h2><button class="btn btn--ghost btn--icon btn--sm" type="button" data-close aria-label="Cerrar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-  <div class="dialog__body"><p class="text-soft">María Soto la recibirá en maria@northwind.com.</p></div>
+  <div class="dialog__body"><p class="text-soft">María Soto la recibirá en maria@northwind.example.</p></div>
   <form method="dialog" class="dialog__foot"><button class="btn">Cancelar</button><button class="btn btn--primary">Enviar</button></form>
 </dialog>
 
@@ -2180,7 +2180,7 @@
   // ── The user menu, in the sidebar's foot: the Profile Dropdown port ──
   const profile = $('user-profile');
   mountProfile(profile, {
-    data: { name: 'Nahuel Mosse', email: 'nahuel@ledger.studio', company: 'Ledger Studio S.L.', plan: 'PRO' },
+    data: { name: 'Nahuel Mosse', email: 'nahuel@ledger.example', company: 'Ledger Studio S.L.', plan: 'PRO' },
     items: [
       { id: 'profile', label: 'Mi perfil', icon: 'user', href: '#' },
       { id: 'company', label: 'Empresa', value: 'Ledger Studio S.L.', tone: 'info', icon: 'building', href: '#' },

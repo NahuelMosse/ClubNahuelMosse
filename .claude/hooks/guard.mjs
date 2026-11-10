@@ -80,10 +80,23 @@ try {
   }
 
   // card.md: the first write creates it; after that L1 stays as the card gave it and `## Log` is append-only.
-  if (/(^|\/)specs\/[^/]+\/card\.md$/.test(key) && existsSync(path)) {
-    const current = readFileSync(path, 'utf8');
-    const why = logViolation(current, applyEdit(current, data));
+  if (/(^|\/)specs\/[^/]+\/card\.md$/.test(key)) {
+    const current = existsSync(path) ? readFileSync(path, 'utf8') : '';
+    const next = existsSync(path) ? applyEdit(current, data) : String(data.content ?? '');
+    const why = existsSync(path) && logViolation(current, next);
     if (why) reject(`card.md: ${why}. The requirement is frozen; a later doubt or an answer is a new line at the end of \`## Log\`: \`node .claude/tools/log.mjs specs/<card> "<line>"\`.`);
+    // The public bar is skipped only by the user (tools/public-bar.mjs): a new `public-skip:` line needs their last message to order it.
+    const skips = (t) => new Set(t.split('\n').map((l) => l.trim()).filter((l) => /^public-skip\s*:/i.test(l)));
+    const before = skips(current);
+    if ([...skips(next)].some((l) => !before.has(l))) {
+      const { lastUserText } = await import('../tools/transcript.mjs');
+      const { ordersSkip } = await import('../tools/public-bar.mjs');
+      if (!ordersSkip(lastUserText(input.transcript_path))) {
+        reject('card.md: `public-skip:` turns off the public bar for the whole card, and only the user does that. Their last message has to order it ' +
+          '("salteá la barra pública", "skip the public bar"), with no question. A line a public repo does carry is declared instead: ' +
+          '`public-allow: <file> [<kind>] · <why>` in ## Gate.');
+      }
+    }
   }
   // risk.json is the classification that decides the size, the review and the lenses: written once by risk.mjs.
   if (/(^|\/)specs\/[^/]+\/risk\.json$/.test(key) && existsSync(path)) {
@@ -126,7 +139,7 @@ try {
       reject(
         `${root ? relativeTo(root, path) : path} has tagged tests${own ? (mine ? ' by this card' : ' by another card') : ''} and a commit already holds them: frozen. ` +
         'Whoever implements does not edit them. If one is wrong, replace it: a new file with the same tag, and ' +
-        '`node .claude/tools/log.mjs specs/<card> "replaces: <test file> · <why>"`. A mechanical change that has to touch many of them ' +
+        '`node .claude/tools/log.mjs specs/<card> "replaces: <test file> \\"<test>\\" · <why wrong> · by: <new file> \\"<test>\\""`. A mechanical change that has to touch many of them ' +
         'declares `refactor-tests: <why>` in ## Gate: they are edited in place and the close lists each one for review.'
       );
     }

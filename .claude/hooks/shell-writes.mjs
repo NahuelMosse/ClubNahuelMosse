@@ -37,7 +37,8 @@ try {
 
   // The production files git reports, with what tells that one was written: its status, size and time.
   const fingerprint = () => {
-    const status = git('status', '--porcelain', '-z', '--untracked-files=all');
+    // Twice per shell call: without --no-optional-locks each one may rewrite the index and take its lock.
+    const status = git('--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=all');
     const entries = status.stdout.split('\0');
     const state = {};
     for (let i = 0; i < entries.length; i++) {

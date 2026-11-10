@@ -144,7 +144,8 @@ const snapshotPage = () => {
     .flatMap((b) => [...b.querySelectorAll('[role=progressbar], [class*=spin], [class*=loader]')])
     .filter((s) => { const r = s.getBoundingClientRect(); const st = getComputedStyle(s); return r.width > 0 && r.height > 0 && st.visibility !== 'hidden' && st.display !== 'none'; })
     .map(label);
-  return { activeElement: focus, announcements, scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, animations, lang: doc.getAttribute('lang') || '', text: (document.body?.innerText ?? '').slice(0, 600), busyNotTrue, hiddenSpinners, idleSpinners };
+  const submits = document.querySelectorAll('form, button[type=submit], input[type=submit]').length;
+  return { activeElement: focus, announcements, submits, scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, animations, lang: doc.getAttribute('lang') || '', text: (document.body?.innerText ?? '').slice(0, 600), busyNotTrue, hiddenSpinners, idleSpinners };
 };
 
 // Runs in the page: the colors, size and weight of the first element of each selector. The background is the
@@ -163,12 +164,19 @@ const measureContrast = ([selectors, withStatus]) => {
     return a === 0 ? [0, 0, 0, 0] : [r, g, b, a / 255];
   };
   const over = (top, under) => [0, 1, 2].map((i) => Math.round(top[i] * top[3] + under[i] * (1 - top[3])));
-  const shows = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (e.textContent.trim() || e.value); };
+  // A box with text is not enough: `visibility: hidden` and `opacity: 0` keep the box and show nothing.
+  const shows = (e) => {
+    const r = e.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0 && (e.textContent.trim() || e.value))) return false;
+    if (getComputedStyle(e).visibility !== 'visible') return false;
+    for (let a = e; a && a.nodeType === 1; a = a.parentElement) if (parseFloat(getComputedStyle(a).opacity) === 0) return false;
+    return true;
+  };
   const nameOf = (e) => (e.id ? `#${e.id}` : `${e.tagName.toLowerCase()}${e.getAttribute('role') ? `[role=${e.getAttribute('role')}]` : ''}`);
   const busy = (e) => e.matches('[aria-busy=true]') || !!e.closest('[aria-busy=true]') || /(…|\.\.\.)\s*$/.test(e.textContent || e.value || '');
   const entries = selectors.map((selector) => ({ selector, el: document.querySelector(selector) }));
   if (withStatus) {
-    const found = new Set([...document.querySelectorAll('[role=alert],[aria-live],[aria-invalid=true]')]);
+    const found = new Set([...document.querySelectorAll('[role=alert],[role=status],[aria-live],[aria-invalid=true]')]);
     for (const field of document.querySelectorAll('[aria-describedby]')) {
       for (const id of field.getAttribute('aria-describedby').split(/\s+/).filter(Boolean)) { const target = document.getElementById(id); if (target) found.add(target); }
     }

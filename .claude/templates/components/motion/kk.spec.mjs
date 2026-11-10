@@ -1292,7 +1292,7 @@ test.describe('profile-dropdown', () => {
     await expect(trigger(page)).toHaveAttribute('aria-haspopup', 'menu');
     await expect(trigger(page)).toHaveAttribute('aria-expanded', 'false');
     await expect(page.locator('#account .pd__name')).toHaveText('Camila Ríos');
-    await expect(page.locator('#account .pd__email')).toHaveText('camila@ledger.app');
+    await expect(page.locator('#account .pd__email')).toHaveText('camila@ledger.example');
     await expect(page.locator('#account .pd__face')).toHaveText('CR');
     await expect(menu(page)).toBeHidden();
     expect(Math.round((await box(page, '#account .pd__ring')).width)).toBe(40);

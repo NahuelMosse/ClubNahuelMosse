@@ -87,8 +87,8 @@ export const skips = (name, input, card, hookUrl) => {
       }
       // The main thread is never capped.
       case 'context-cap': return !input.agent_id || !CAPPED.has(input.agent_type);
-      // Only a subagent has turns; the main thread never has an `agent_id`.
-      case 'turn-budget': return !input.agent_id;
+      // Only a subagent has turns; the main thread never has an `agent_id`, and is looked at only when it resumes one.
+      case 'turn-budget': return !input.agent_id && input.tool_name !== 'SendMessage';
       case 'require-at-close': {
         const tool = input.tool_name;
         const closingFile = ['Write', 'Edit'].includes(tool) && /(^|\/)specs\/[^/]+\/closing\.md$/.test(String(data.file_path ?? '').replaceAll('\\', '/'));

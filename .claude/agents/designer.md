@@ -96,6 +96,8 @@ holds, and the gate's `busy` and `focus` checks fail otherwise. `<html lang>` is
 1. Run the whole round in one call: `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/rondas/r<k> [--steps <steps>.json]`
    (viewport captures at 390, 768, 1024 and 1440, load at 0/600/2000 ms, one per section, the rules of `.claude/reference/excellence.md` measured,
    waves, console, renderer). Never a full page. A software renderer (SwiftShader) in `round.json` voids the motion timings.
+   An image over 1568 px a side (an asset, a reference sheet) is read through `python .claude/tools/image-view.py <img>`
+   (a copy at 1568 px) or `--crop X,Y,W,H` (one region at full resolution, for a detail the reduced copy loses).
 2. `Read` the key captures of the round (within the image budget above) next to the sheet of the reference, the same state and width, and copy the numbers of the rules
    (ratio, line height, tracking, sizes, grain, waves) into `rondas.md` under `## Round <k>`. Run the same `motion-audit.mjs` on your screen
    (`--measure --frames --click <cta> --scroll-story --out specs/<card>/rondas/r<k>`, which writes `report.json` there; stdout is not the report) and `node

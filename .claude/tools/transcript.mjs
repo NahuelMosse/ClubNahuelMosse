@@ -1,6 +1,6 @@
 // What the hooks read from a transcript: where it is and the `usage` of its last assistant message.
 // context-cap.mjs measures the context with it; guard-shell.mjs reads which prompt cache the author writes.
-import { closeSync, fstatSync, openSync, readSync } from 'node:fs';
+import { closeSync, existsSync, fstatSync, openSync, readSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
 const TAIL_BYTES = 512 * 1024;
@@ -77,6 +77,49 @@ export const onlyCommit = (command) => {
   const bare = command.replace(/<<-?\s*['"]?(\w+)['"]?[\s\S]*?\n\s*\1\b/g, '').replace(/"[^"]*"|'[^']*'/g, '""');
   const segments = bare.split(/&&|;|\||\n/).map((s) => s.trim()).filter(Boolean);
   return segments.some((s) => GIT_ONLY.test(s)) && segments.every((s) => GIT_ONLY.test(s) || /^cd\s+\S+$/.test(s));
+};
+
+// The user's last message in the session: a typed prompt or one sent while the agent worked; tool results,
+// reminders, background-task notices (stored as user messages that start with `<`), the summary a compaction writes
+// as a user message and subagents are not theirs.
+const userTextOf = (line) => {
+  if (!line.includes('"user"') && !line.includes('queued_command')) return '';
+  let e;
+  try { e = JSON.parse(line); } catch { return ''; }
+  const own = e.type === 'user' && !e.isMeta && !e.isSidechain && !e.isCompactSummary && !e.isVisibleInTranscriptOnly;
+  if (own && typeof e.message?.content === 'string') return e.message.content.startsWith('<') ? '' : e.message.content;
+  if (own && Array.isArray(e.message?.content) && e.message.content.length && e.message.content.every((c) => c.type === 'text')) {
+    return e.message.content.map((c) => c.text).filter((t) => !t.startsWith('<')).join('\n');
+  }
+  if (e.type === 'attachment' && e.attachment?.type === 'queued_command' && e.attachment.origin?.kind === 'human') return String(e.attachment.prompt ?? '');
+  return '';
+};
+// Read from the end in blocks: a long session's transcript passes the largest string Node can hold.
+const TAIL_BLOCK = 1 << 22;
+export const lastUserText = (path) => {
+  if (!path || !existsSync(path)) return '';
+  const fd = openSync(path, 'r');
+  try {
+    let end = fstatSync(fd).size;
+    let rest = Buffer.alloc(0);
+    while (end > 0) {
+      const start = Math.max(0, end - TAIL_BLOCK);
+      const chunk = Buffer.alloc(end - start);
+      readSync(fd, chunk, 0, chunk.length, start);
+      const buf = Buffer.concat([chunk, rest]);
+      end = start;
+      // Bytes before the first newline may be the tail of a line that starts in an earlier block.
+      const cut = start === 0 ? -1 : buf.indexOf(10);
+      if (start > 0 && cut === -1) { rest = buf; continue; }
+      rest = cut === -1 ? Buffer.alloc(0) : buf.subarray(0, cut);
+      const lines = buf.subarray(cut + 1).toString('utf8').split('\n');
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const text = userTextOf(lines[i]);
+        if (text) return text;
+      }
+    }
+    return '';
+  } finally { closeSync(fd); }
 };
 
 // The context the last assistant message with usage was sent with.

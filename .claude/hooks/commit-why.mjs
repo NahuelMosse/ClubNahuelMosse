@@ -7,7 +7,9 @@
 // Contract: exit 0 lets it through, exit 2 blocks and Claude reads stderr. On its own error it blocks.
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { hookCard } from '../tools/card.mjs';
+import { baseOf } from '../tools/migrations.mjs';
 
 const CONVENTIONAL = /^(feat|fix|perf|refactor|docs|test|chore|style|build|ci|revert)(\([^)]+\))?!?: .+/;
 
@@ -69,6 +71,31 @@ for (let i = 0; i < flat.length; i++) {
 }
 if (word !== null) words.push(word);
 
+// Inside a card the commit is held to the public bar (tools/public-bar.mjs) before it enters the history, where a fix later
+// does not remove it: at any grade the staged lines carry no secret, local path or real email.
+const inCard = hookCard(cwd, process.env, { tool_name: 'Bash', tool_input: { command: cmd } });
+// The grade comes from the installed kit's manifest; a repo without one (the kit's source, a bare test repo) has no grade to hold.
+let grade = null;
+let declared = { allow: [], skip: null };
+let bar = null;
+if (inCard) {
+  bar = await import('../tools/public-bar.mjs');
+  if (existsSync(join(inCard.root, '.claude', 'kit.json'))) {
+    try { grade = (await import('../tools/kit.mjs')).active(inCard.root).grade ?? 'production'; } catch { grade = 'production'; }
+  }
+  const { readCard } = await import('../tools/card-doc.mjs');
+  declared = bar.publicDeclarations(readCard(inCard.card) ?? '');
+  if (!declared.skip) {
+    const all = words.some((w) => w === '--all' || /^-[a-zA-Z]*a[a-zA-Z]*$/.test(w));
+    const diff = spawnSync('git', ['diff', all ? 'HEAD' : '--cached', '-U0', '--no-color'], { cwd: inCard.root, encoding: 'utf8', maxBuffer: 1 << 28 });
+    const found = diff.status === 0 ? bar.publicFindings(bar.addedLines(diff.stdout), { level: 'poc', allow: declared.allow }) : [];
+    if (found.length) {
+      reject(`The commit carries what a public repo never does (${found.length}): ${found.slice(0, 5).join('; ')}.\n` +
+        'Fix the lines and stage them again, or declare in ## Gate `public-allow: <file> [<kind>] · <why>`; only the user skips the whole bar.');
+    }
+  }
+}
+
 if (words.some((w) => /^(--no-edit|--file(=.*)?|-F.*|-C.*|-c.*|--reuse-message(=.*)?|--reedit-message(=.*)?)$/.test(w))) process.exit(0);
 
 const messages = [];
@@ -76,6 +103,26 @@ for (let i = 0; i < words.length; i++) {
   const w = words[i];
   if (/^--message=/.test(w)) messages.push(w.slice(10));
   else if (w === '--message' || /^-[a-zA-Z]*m$/.test(w)) messages.push(words[++i] ?? '');
+}
+
+// From mvp a card's commits are Conventional Commits, as a public repo's maintainer asks, and none is a wip or a fixup:
+// the history is read by others. A repo declared `Visibility: public` writes them in English.
+const subject = (messages[0] ?? '').split('\n')[0];
+if (messages.length > 0 && inCard && grade && grade !== 'poc' && !declared.skip) {
+  if (/^(?:wip\b|fixup!|squash!|amend!)/i.test(subject)) reject(`A card's commit says what it changes: "${subject}" is a wip or a fixup. Commit the finished step with its own subject.`);
+  // A card keeps the convention it started with: a kit update that arrives mid-card does not reject the subjects its
+  // history already uses ("PF-1 T6 …").
+  const started = () => {
+    const base = (() => { try { return baseOf(inCard.root)?.sha; } catch { return null; } })();
+    if (!base) return false;
+    const log = spawnSync('git', ['log', '--format=%s', `${base}..HEAD`], { cwd: inCard.root, encoding: 'utf8', timeout: 20_000 });
+    return log.status === 0 && log.stdout.split('\n').some((s) => s && !CONVENTIONAL.test(s) && !/^Merge /.test(s));
+  };
+  if (!CONVENTIONAL.test(subject) && !started()) {
+    reject('A card\'s commits are Conventional Commits: `type(scope)!: subject`, with type feat | fix | perf | refactor | docs | test | chore | style | build | ci | revert. ' +
+      'Example: git commit -m "feat(customers): search by partial name" -m "why".');
+  }
+  if (bar.isPublic(inCard.root) && bar.looksSpanish(messages.join('\n'))) reject('The repo is declared `Visibility: public`: its commits are in English, subject and body.');
 }
 
 // The kit's source repo: its commits are Conventional Commits, which tools/release.mjs reads to set the version.
@@ -89,6 +136,6 @@ if (messages.length === 0 || messages.length > 1) process.exit(0);
 if (/\n\s*\n\s*\S/.test(messages[0])) process.exit(0);
 
 // Only a card in progress asks for it.
-if (!hookCard(cwd, process.env, { tool_name: 'Bash', tool_input: { command: cmd } })) process.exit(0);
+if (!inCard) process.exit(0);
 
 reject('The commit needs the why in its body: a second -m with what the change decides and why. Example: git commit -m "<subject>" -m "<why>"');

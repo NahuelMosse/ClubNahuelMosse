@@ -45,7 +45,7 @@ path of `specs/<card>/card.md`, your task IDs with their `S#`, and the gate comm
 **By batches.** The context cap (the hook's message says when) leaves only the commit and `specs/<card>/handoff.md`: write it before, with what is done, what is left, files and the gate lines that pass with how to run them. A builder launched with a handoff reads it once and does not reopen the files it marks done. At 85 % of your turns only `.md` writes and the commit are allowed: return with what you covered and what you did not.
 
 **Verify by what you touched.** While writing run only the tests of your files (`node .claude/tools/affected.mjs <files>` lists them,
-`timeout <s> node --test --test-timeout=8000 --test-force-exit <files>`), never a whole suite; the whole gate is step 4. A long run
+`timeout <s> node --test --test-timeout=8000 --test-force-exit <files>`; a test that starts a server closes it with `server.closeAllConnections()` before `server.close()`, or Node aborts at the forced exit on Windows), never a whole suite; the whole gate is step 4. A long run
 (`verify.mjs`, `mutate.mjs`, a browser suite) goes in the background to a log (`.validation/<name>.log`); wait as the hook prints (`wait.mjs`, which ends on the tool's final line `<tool>: exit <N>`), never with `sleep` loops, `Monitor`, `until` or `tail -f`. If the card has `app:`, run `node .claude/tools/app.mjs down` when you finish. A live mutant is killed with a test; one that changes
 nothing is declared in `specs/<card>/equivalents.md`. A report lists every survivor: answer all of them before the next run, never one per round (a case fold, a number or a flag is one exact-value assertion each). Same survivors after two rounds: stop and return them.
 
