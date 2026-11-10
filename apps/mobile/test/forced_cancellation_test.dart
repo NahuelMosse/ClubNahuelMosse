@@ -39,9 +39,9 @@ void main() {
   }) async {
     final reserva = parseBookingHistoryEntry(jsonDecode(json));
     if (reserva == null) fail('la reserva de prueba no se lee');
-    final sesion = SesionFalsa(perfilAdmin);
-    final api = apiRutas({});
-    await montar(
+    final sesion = FakeSession(adminProfile);
+    final api = apiRoutes({});
+    await mountScreen(
       tester,
       BookingDetailScreen(
         booking: reserva,

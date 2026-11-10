@@ -7,7 +7,7 @@ import 'support/mount.dart';
 const _english = [Locale('en', 'US')];
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> tap(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
@@ -20,9 +20,9 @@ void main() {
     final semantics = tester.ensureSemantics();
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montar(
+    await mountScreen(
       tester,
-      inicioFalso(SesionFalsa(perfilUsuario)),
+      fakeHome(FakeSession(userProfile)),
       tema: darkTheme,
     );
     expect(

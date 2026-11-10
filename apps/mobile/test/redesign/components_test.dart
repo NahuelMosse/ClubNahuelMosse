@@ -29,7 +29,7 @@ final _foto = MemoryImage(
 
 const _p = Palette.dark;
 
-Future<void> _montar(WidgetTester tester, Widget hijo) => montar(
+Future<void> _montar(WidgetTester tester, Widget hijo) => mountScreen(
   tester,
   Scaffold(body: Center(child: hijo)),
   tema: darkTheme,

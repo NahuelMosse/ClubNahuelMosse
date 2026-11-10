@@ -50,7 +50,7 @@ void main() {
         return segundo.future;
       }),
     );
-    await montar(
+    await mountScreen(
       tester,
       RegistrationScreen(registration: RegistrationService(api)),
       tema: darkTheme,
@@ -89,11 +89,11 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montar(
+    await mountScreen(
       tester,
       RegistrationScreen(
         registration: RegistrationService(
-          apiFalsa(
+          fakeApi(
             codigo: 409,
             cuerpo:
                 '{"message": "El usuario ya está registrado. Modificá el correo o el DNI.",'
@@ -131,11 +131,11 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montar(
+    await mountScreen(
       tester,
       RegistrationScreen(
         registration: RegistrationService(
-          apiFalsa(codigo: 404, cuerpo: '<html>no</html>'),
+          fakeApi(codigo: 404, cuerpo: '<html>no</html>'),
         ),
       ),
       tema: darkTheme,
@@ -151,9 +151,9 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montar(
+    await mountScreen(
       tester,
-      RegistrationScreen(registration: RegistrationService(apiFalsa())),
+      RegistrationScreen(registration: RegistrationService(fakeApi())),
       tema: darkTheme,
     );
 

@@ -11,9 +11,9 @@ void main() {
   testWidgets(
     'el contador de la tarjeta de sede es el dorsal sobre la foto, en el color del texto sobre foto @RED-01-ASM-04 @RED-03-ASM-14',
     (tester) async {
-      await montarUsuario(
+      await mountUser(
         tester,
-        api: apiRutas(rutasDeSedes(sedes: '[$sedeMoronConDeportes]')),
+        api: apiRoutes(venueRoutes(sedes: '[$venueMoronWithSports]')),
       );
 
       final dorsal = find.descendant(

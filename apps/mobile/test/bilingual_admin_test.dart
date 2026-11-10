@@ -20,7 +20,7 @@ const _bookingJson =
     ' "canceled_by_name": null, "space_deactivated": false}';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   void device(WidgetTester tester, List<Locale> locales) {
     tester.platformDispatcher.localesTestValue = locales;
@@ -40,17 +40,17 @@ void main() {
       device(tester, _english);
       final semantics = tester.ensureSemantics();
 
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin',
-        api: apiRutas({
+        api: apiRoutes({
           'GET /bookings/all': (
             200,
             '{"bookings": [$_bookingJson], "total": 1, "page": 1,'
                 ' "per_page": 20, "contadores": {"todas": 1, "activas": 1,'
                 ' "completadas": 0, "anuladas": 0}}',
           ),
-          'GET /spaces/catalog': (200, catalogoJson),
+          'GET /spaces/catalog': (200, catalogJson),
         }),
       );
       expect(find.text('ADMIN PANEL'), findsOneWidget);
@@ -60,9 +60,9 @@ void main() {
       expect(find.text('VOID BOOKING'), findsOneWidget);
       expect(find.text('Activas (1)'), findsNothing);
 
-      await montarAdmin(
+      await mountAdmin(
         tester,
-        api: apiRutas({'GET /venues': (200, '{"venues": [$sedeMoronJson]}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": [$venueMoronJson]}')}),
       );
       expect(find.text('Venues'), findsOneWidget);
       expect(find.text('ADD VENUE'), findsOneWidget);
@@ -70,20 +70,20 @@ void main() {
       expect(find.bySemanticsLabel('Edit venue Sede Morón'), findsOneWidget);
       expect(find.text('AGREGAR SEDE'), findsNothing);
 
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/espacios',
-        api: apiRutas(rutasDeEspacios()),
+        api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('Spaces'), findsOneWidget);
       expect(find.text('ADD SPACE'), findsOneWidget);
       expect(find.text('1 ACTIVE SPACE'), findsOneWidget);
       expect(find.text('ALTA ESPACIO'), findsNothing);
 
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       expect(find.text('New venue'), findsOneWidget);
       expect(find.text('VENUE NAME'), findsOneWidget);
@@ -93,10 +93,10 @@ void main() {
       expect(find.text('SAVE VENUE'), findsOneWidget);
       expect(find.text('GUARDAR SEDE'), findsNothing);
 
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/espacios/nuevo',
-        api: apiRutas(rutasDeEspacios()),
+        api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('New sports space'), findsOneWidget);
       expect(find.text('SAVE SPACE'), findsOneWidget);
@@ -136,10 +136,10 @@ void main() {
         ),
       ]) {
         device(tester, locales);
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+          api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tap(tester, save);
         for (final message in messages) {

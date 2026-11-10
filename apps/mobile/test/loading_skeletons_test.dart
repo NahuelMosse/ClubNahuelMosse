@@ -32,7 +32,7 @@ Future<void> _cargando(
   await tester.pumpWidget(
     App(
       api: _apiColgada(),
-      session: SesionFalsa(admin ? perfilAdmin : perfilUsuario),
+      session: FakeSession(admin ? adminProfile : userProfile),
       appearance: Appearance.inMemory(dark: oscuro),
       initialLocation: inicio,
     ),

@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'notifications_test.dart'
-    show ApiFalsa, ahoraClub, centroDe, notif, recordatorio;
+    show FakeApi, noticesNow, centerOf, noticeJson, reminderNotice;
 import 'support/mount.dart';
 import 'support/user.dart';
 
-final cancelada = notif(
+final cancelada = noticeJson(
   id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 59),
   tipo: 'user_cancellation',
@@ -19,24 +19,24 @@ final cancelada = notif(
 );
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   group('la confirmación de una cancelación en el panel', () {
-    Future<(ApiFalsa, NotificationCenter)> abrir(
+    Future<(FakeApi, NotificationCenter)> abrir(
       WidgetTester tester, {
       required String ubicacion,
       Size tamano = const Size(393, 852),
       double escala = 1,
     }) async {
-      final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion)..location = () => ubicacion;
-      await montar(
+      final api = FakeApi();
+      final sesion = FakeSession(userProfile);
+      final centro = centerOf(api, sesion)..location = () => ubicacion;
+      await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
+            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
         tema: darkTheme,
@@ -48,7 +48,7 @@ void main() {
 
     Future<void> llega(
       WidgetTester tester,
-      ApiFalsa api,
+      FakeApi api,
       NotificationCenter centro,
       List<String> avisos,
     ) async {
@@ -96,7 +96,7 @@ void main() {
         await llega(tester, api, centro, [cancelada]);
 
         await llega(tester, api, centro, [
-          recordatorio.replaceFirst(
+          reminderNotice.replaceFirst(
             '"id": "00000000-0000-7000-8000-000000000003"',
             '"id": "00000000-0000-7000-8000-000000000006"',
           ),
@@ -137,14 +137,14 @@ void main() {
     testWidgets('abre Mis reservas en el historial @supuesto:CU-24.3-SUP-06', (
       tester,
     ) async {
-      final api = ApiFalsa()
+      final api = FakeApi()
         ..avisos = [cancelada]
         ..unread = 1;
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (sesion) => centerOf(api, sesion),
       );
       api.pedidos.clear();
 
@@ -159,14 +159,14 @@ void main() {
     });
 
     testWidgets('un recordatorio sigue abriendo las próximas', (tester) async {
-      final api = ApiFalsa()
-        ..avisos = [recordatorio]
+      final api = FakeApi()
+        ..avisos = [reminderNotice]
         ..unread = 1;
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (sesion) => centerOf(api, sesion),
       );
       api.pedidos.clear();
 

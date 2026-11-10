@@ -8,7 +8,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-  final manana = hoyEnElClub().add(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
   const titulo = 'El club anuló tu reserva';
   const motivo = 'mantenimiento de la cancha';
 
@@ -18,17 +18,17 @@ void main() {
 
   /// Una sede nueva con un Fútbol 5 y una reserva de [correo] mañana a las [hora].
   Future<(String, String)> otraReserva(String correo, {int hora = 21}) async {
-    final sede = 'Sede Morón ${unico()}';
-    await crearSede(sede, 'Av. Rivadavia 19850');
-    final cancha = await crearEspacio(sede);
-    await ocupar(cancha, manana, hora, correo: correo);
+    final sede = 'Sede Morón ${unique()}';
+    await createVenue(sede, 'Av. Rivadavia 19850');
+    final cancha = await createSpace(sede);
+    await occupy(cancha, manana, hora, correo: correo);
     return (sede, cancha);
   }
 
   /// Una cuenta nueva con una reserva mañana a las 21.
   Future<(String, String, String)> reservaDeManana() async {
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
+    final correo = 'socio.${unique()}@correo.com';
+    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
     final (sede, cancha) = await otraReserva(correo);
     return (correo, sede, cancha);
   }
@@ -38,12 +38,12 @@ void main() {
     String correo, {
     bool permiso = true,
   }) async {
-    await abrirApp(tester);
-    await fijarPermisoDeNotificaciones(concedido: permiso);
-    await escribir(tester, 'Correo', correo);
-    await escribir(tester, 'Contraseña', 'ClubNahuel1');
-    await tocar(tester, 'INICIAR SESIÓN');
-    await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+    await openApp(tester);
+    await setNotificationPermission(concedido: permiso);
+    await typeInto(tester, 'Correo', correo);
+    await typeInto(tester, 'Contraseña', 'ClubNahuel1');
+    await tapText(tester, 'INICIAR SESIÓN');
+    await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
   Finder campana(int sinLeer) => find.bySemanticsLabel(
@@ -51,10 +51,10 @@ void main() {
   );
 
   Future<void> abrirCentro(WidgetTester tester, {int sinLeer = 0}) async {
-    await esperarA(tester, campana(sinLeer));
+    await waitUntil(tester, campana(sinLeer));
     await tester.tap(campana(sinLeer));
     await tester.pumpAndSettle();
-    await esperarA(tester, find.text('Notificaciones'));
+    await waitUntil(tester, find.text('Notificaciones'));
   }
 
   bool resaltada(WidgetTester tester, String sede) => tester
@@ -72,9 +72,9 @@ void main() {
       await entrar(tester, correo);
 
       // La anulación llega desde el club: acá la persona está en el Home.
-      final [reserva] = await proximasDe(correo);
-      expect(await anularDesdeElAdmin(reserva), 200);
-      await esperarA(tester, find.text(titulo));
+      final [reserva] = await upcomingOf(correo);
+      expect(await voidFromAdmin(reserva), 200);
+      await waitUntil(tester, find.text(titulo));
 
       // Verifica: la tarjeta superior trae la reserva y el motivo, sobre la pantalla en la
       // que estaba.
@@ -91,15 +91,15 @@ void main() {
       final semantica = tester.ensureSemantics();
       final (correo, sede, cancha) = await reservaDeManana();
       await entrar(tester, correo);
-      final [reserva] = await proximasDe(correo);
-      expect(await anularDesdeElAdmin(reserva), 200);
-      await esperarA(tester, find.text(titulo));
+      final [reserva] = await upcomingOf(correo);
+      expect(await voidFromAdmin(reserva), 200);
+      await waitUntil(tester, find.text(titulo));
 
       await tester.tap(find.text(titulo));
       await tester.pumpAndSettle();
 
       // Verifica: Mis reservas en el historial, con la reserva anulada, su motivo y resaltada.
-      await esperarA(tester, find.text('ANULADA'));
+      await waitUntil(tester, find.text('ANULADA'));
       expect(find.text('Mis reservas'), findsOneWidget);
       expect(find.text(cancha), findsOneWidget);
       expect(
@@ -116,18 +116,18 @@ void main() {
     'el envío del aviso consta en la trazabilidad de la reserva que ve el administrador @CU-24.2-H01-03 @supuesto:CU-24.2-SUP-07',
     (tester) async {
       final (correo, sede, cancha) = await reservaDeManana();
-      final [reserva] = await proximasDe(correo);
-      expect(await anularDesdeElAdmin(reserva), 200);
+      final [reserva] = await upcomingOf(correo);
+      expect(await voidFromAdmin(reserva), 200);
       // La corrida no tiene servicio de notificaciones: el aviso queda en el centro.
-      expect(await esperarElEnvioDelAviso(cancha), 'sin_canal');
+      expect(await waitForNoticeDelivery(cancha), 'sin_canal');
 
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', sede);
-      await esperarA(tester, find.text(cancha));
-      await tocar(tester, cancha);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', sede);
+      await waitUntil(tester, find.text(cancha));
+      await tapText(tester, cancha);
 
       // Verifica: el detalle deja el aviso en la trazabilidad, junto con la anulación.
-      await esperarA(tester, find.text('Detalle de reserva'));
+      await waitUntil(tester, find.text('Detalle de reserva'));
       expect(find.text('Anulada por el administrador'), findsOneWidget);
       expect(find.text('Aviso en el centro del usuario'), findsOneWidget);
       expect(find.text('El push no salió'), findsOneWidget);
@@ -142,8 +142,8 @@ void main() {
       await otraReserva(correo, hora: 22);
       await entrar(tester, correo, permiso: false);
 
-      for (final reserva in await proximasDe(correo)) {
-        expect(await anularDesdeElAdmin(reserva), 200);
+      for (final reserva in await upcomingOf(correo)) {
+        expect(await voidFromAdmin(reserva), 200);
       }
       await abrirCentro(tester, sinLeer: 1);
 
@@ -157,7 +157,7 @@ void main() {
       );
       await tester.tap(find.text('El club anuló 2 de tus reservas'));
       await tester.pumpAndSettle();
-      await esperarA(tester, find.text('Mis reservas'));
+      await waitUntil(tester, find.text('Mis reservas'));
       expect(find.text('ANULADA'), findsNWidgets(2));
       semantica.dispose();
     },
@@ -170,8 +170,8 @@ void main() {
       final (correo, sede, cancha) = await reservaDeManana();
       await entrar(tester, correo, permiso: false);
 
-      final [reserva] = await proximasDe(correo);
-      expect(await anularDesdeElAdmin(reserva), 200);
+      final [reserva] = await upcomingOf(correo);
+      expect(await voidFromAdmin(reserva), 200);
       await abrirCentro(tester, sinLeer: 1);
 
       // Verifica: el centro avisa que están desactivadas y trae la anulación igual; la API
@@ -180,7 +180,7 @@ void main() {
       expect(find.text(titulo), findsOneWidget);
       expect(find.text(cuerpo(sede)), findsOneWidget);
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(await esperarElEnvioDelAviso(cancha), 'sin_permiso');
+      expect(await waitForNoticeDelivery(cancha), 'sin_permiso');
       semantica.dispose();
     },
   );
@@ -190,20 +190,20 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (correo, sede, cancha) = await reservaDeManana();
-      final [reserva] = await proximasDe(correo);
+      final [reserva] = await upcomingOf(correo);
       // Sin permiso el panel no se abre solo en el Home y la campana abre el centro.
       await entrar(tester, correo, permiso: false);
-      await tocar(tester, 'RESERVAS');
-      await esperarA(tester, find.text(cancha));
-      await tocar(tester, 'CANCELAR');
-      await esperarA(tester, find.text('¿Cancelar la reserva?'));
-      await tocar(tester, 'CANCELAR RESERVA');
-      await esperarA(tester, find.text('Reserva cancelada con éxito'));
-      await tocar(tester, 'ACEPTAR');
-      await tocar(tester, 'INICIO');
+      await tapText(tester, 'RESERVAS');
+      await waitUntil(tester, find.text(cancha));
+      await tapText(tester, 'CANCELAR');
+      await waitUntil(tester, find.text('¿Cancelar la reserva?'));
+      await tapText(tester, 'CANCELAR RESERVA');
+      await waitUntil(tester, find.text('Reserva cancelada con éxito'));
+      await tapText(tester, 'ACEPTAR');
+      await tapText(tester, 'INICIO');
 
       // El club intenta anularla después: la reserva ya no está activa.
-      expect(await anularDesdeElAdmin(reserva), 409);
+      expect(await voidFromAdmin(reserva), 409);
       await abrirCentro(tester, sinLeer: 1);
 
       // Verifica: el centro sólo trae la confirmación de su propia cancelación.

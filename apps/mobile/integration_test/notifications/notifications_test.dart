@@ -7,12 +7,12 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = hoyEnElClub().add(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
   const titulo = 'Tu reserva es en 1 hora';
 
   Future<String> nuevaCuenta() async {
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
+    final correo = 'socio.${unique()}@correo.com';
+    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
     return correo;
   }
 
@@ -21,10 +21,10 @@ void main() {
     String correo, {
     int hora = 21,
   }) async {
-    final sede = 'Sede Morón ${unico()}';
-    await crearSede(sede, 'Av. Rivadavia 19850');
-    final cancha = await crearEspacio(sede);
-    await ocupar(cancha, manana, hora, correo: correo);
+    final sede = 'Sede Morón ${unique()}';
+    await createVenue(sede, 'Av. Rivadavia 19850');
+    final cancha = await createSpace(sede);
+    await occupy(cancha, manana, hora, correo: correo);
     return (sede, cancha);
   }
 
@@ -36,17 +36,17 @@ void main() {
     bool permiso = true,
     String? apiUrl,
   }) async {
-    await abrirApp(tester, apiUrl: apiUrl);
-    await fijarPermisoDeNotificaciones(concedido: permiso);
-    await escribir(tester, 'Correo', correo);
-    await escribir(tester, 'Contraseña', 'ClubNahuel1');
-    await tocar(tester, 'INICIAR SESIÓN');
-    await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+    await openApp(tester, apiUrl: apiUrl);
+    await setNotificationPermission(concedido: permiso);
+    await typeInto(tester, 'Correo', correo);
+    await typeInto(tester, 'Contraseña', 'ClubNahuel1');
+    await tapText(tester, 'INICIAR SESIÓN');
+    await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
   /// El barrido de recordatorios de la API corriendo a las [hora] de mañana.
   Future<int> barrido(String correo, int hora, {int minuto = 0}) =>
-      despacharRecordatorios(
+      dispatchReminders(
         correo: correo,
         dia: manana,
         hora: hora,
@@ -58,10 +58,10 @@ void main() {
   );
 
   Future<void> abrirCentro(WidgetTester tester, {int sinLeer = 0}) async {
-    await esperarA(tester, campana(sinLeer));
+    await waitUntil(tester, campana(sinLeer));
     await tester.tap(campana(sinLeer));
     await tester.pumpAndSettle();
-    await esperarA(tester, find.text('Notificaciones'));
+    await waitUntil(tester, find.text('Notificaciones'));
   }
 
   Future<void> cerrarPanel(WidgetTester tester) async {
@@ -85,21 +85,21 @@ void main() {
       final (otraSede, otraCancha) = await reservaDeManana(correo, hora: 22);
       await entrar(tester, correo);
       await barrido(correo, 20, minuto: 30);
-      await esperarA(tester, find.text(titulo));
+      await waitUntil(tester, find.text(titulo));
 
       await tester.tap(find.text(titulo));
       await tester.pumpAndSettle();
 
       // Verifica: abre Mis reservas, con las dos reservas y sólo la avisada resaltada.
-      await esperarA(tester, find.text(cancha));
+      await waitUntil(tester, find.text(cancha));
       expect(find.text('Mis reservas'), findsOneWidget);
       expect(find.text(otraCancha), findsOneWidget);
       expect(resaltada(tester, sede), isTrue);
       expect(resaltada(tester, otraSede), isFalse);
       // Verifica: el panel se cerró y el aviso tocado quedó leído.
       expect(find.text('MARCAR TODAS'), findsNothing);
-      await tocar(tester, 'INICIO');
-      await esperarA(tester, campana(0));
+      await tapText(tester, 'INICIO');
+      await waitUntil(tester, campana(0));
       semantica.dispose();
     },
   );
@@ -112,7 +112,7 @@ void main() {
       final (sede, _) = await reservaDeManana(correo);
       await entrar(tester, correo);
       await barrido(correo, 20);
-      await esperarA(tester, find.text(titulo));
+      await waitUntil(tester, find.text(titulo));
       await cerrarPanel(tester);
 
       await abrirCentro(tester, sinLeer: 1);
@@ -132,11 +132,11 @@ void main() {
       final correo = await nuevaCuenta();
       final (sede, cancha) = await reservaDeManana(correo);
       await entrar(tester, correo);
-      await tocar(tester, 'RESERVAS');
-      await esperarA(tester, find.text(cancha));
+      await tapText(tester, 'RESERVAS');
+      await waitUntil(tester, find.text(cancha));
 
       await barrido(correo, 20);
-      await esperarA(tester, find.text(titulo));
+      await waitUntil(tester, find.text(titulo));
 
       // Verifica: la tarjeta trae el aviso completo y la pantalla de abajo sigue siendo
       // Mis reservas.
@@ -173,7 +173,7 @@ void main() {
       );
       expect(find.text('ACTIVAR NOTIFICACIONES'), findsOneWidget);
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(await dispositivosDe(correo), [false]);
+      expect(await devicesOf(correo), [false]);
       // Verifica: el recordatorio quedó en el centro igual.
       expect(find.text('Fútbol 5 · $sede · 21:00 – 22:00'), findsOneWidget);
       semantica.dispose();
@@ -189,18 +189,18 @@ void main() {
       await entrar(tester, correo, permiso: false);
       await abrirCentro(tester);
       expect(find.text('Notificaciones desactivadas'), findsOneWidget);
-      expect(await dispositivosDe(correo), [false]);
+      expect(await devicesOf(correo), [false]);
 
-      await tocar(tester, 'ACTIVAR NOTIFICACIONES');
+      await tapText(tester, 'ACTIVAR NOTIFICACIONES');
 
       // Verifica: el centro deja de decir que están desactivadas y la API registra el
       // dispositivo con permiso.
-      await esperarA(tester, find.text('Todavía no tenés notificaciones'));
+      await waitUntil(tester, find.text('Todavía no tenés notificaciones'));
       expect(find.text('Notificaciones desactivadas'), findsNothing);
-      expect(await dispositivosDe(correo), [true]);
+      expect(await devicesOf(correo), [true]);
       // Verifica: el recordatorio siguiente llega a la app abierta.
       await barrido(correo, 20);
-      await esperarA(tester, find.text('Fútbol 5 · $sede · 21:00 – 22:00'));
+      await waitUntil(tester, find.text('Fútbol 5 · $sede · 21:00 – 22:00'));
       semantica.dispose();
     },
   );
@@ -213,7 +213,7 @@ void main() {
       final (sede, _) = await reservaDeManana(correo);
       await entrar(tester, correo);
       await barrido(correo, 20);
-      await esperarA(tester, find.text(titulo));
+      await waitUntil(tester, find.text(titulo));
       await cerrarPanel(tester);
 
       await abrirCentro(tester, sinLeer: 1);
@@ -227,7 +227,7 @@ void main() {
       );
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      await esperarA(tester, campana(1));
+      await waitUntil(tester, campana(1));
       semantica.dispose();
     },
   );
@@ -241,22 +241,22 @@ void main() {
       final (otraSede, _) = await reservaDeManana(correo);
       await entrar(tester, correo);
       expect(await barrido(correo, 20), 2);
-      await esperarA(tester, find.text('MARCAR TODAS'));
+      await waitUntil(tester, find.text('MARCAR TODAS'));
 
       await tester.tap(find.text('MARCAR TODAS'));
       await tester.pumpAndSettle();
 
       // Verifica: el panel se cierra y la campana ya no cuenta ninguna sin leer.
       expect(find.text('MARCAR TODAS'), findsNothing);
-      await esperarA(tester, campana(0));
+      await waitUntil(tester, campana(0));
       // Verifica: en el centro las dos están leídas.
       await abrirCentro(tester);
       expect(find.bySemanticsLabel(RegExp('sin leer')), findsNothing);
       expect(find.textContaining(sede), findsOneWidget);
       expect(find.textContaining(otraSede), findsOneWidget);
       // Verifica: persistió; al reabrir la app siguen leídas.
-      await reabrirApp(tester);
-      await esperarA(tester, campana(0));
+      await reopenApp(tester);
+      await waitUntil(tester, campana(0));
       semantica.dispose();
     },
   );
@@ -290,10 +290,10 @@ void main() {
       final (segunda, _) = await reservaDeManana(correo, hora: 22);
       await entrar(tester, correo);
       await barrido(correo, 20, minuto: 30);
-      await esperarA(tester, find.text(titulo));
+      await waitUntil(tester, find.text(titulo));
       await cerrarPanel(tester);
       await barrido(correo, 21, minuto: 30);
-      await esperarA(tester, campana(2));
+      await waitUntil(tester, campana(2));
 
       await abrirCentro(tester, sinLeer: 2);
 
@@ -313,15 +313,15 @@ void main() {
       final semantica = tester.ensureSemantics();
       final correo = await nuevaCuenta();
       await entrar(tester, correo);
-      expect(await dispositivosDe(correo), [true]);
+      expect(await devicesOf(correo), [true]);
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
       await tester.pumpAndSettle();
-      await tocar(tester, 'Cerrar sesión');
+      await tapText(tester, 'Cerrar sesión');
 
       // Verifica: la API ya no tiene ningún dispositivo activo de esa cuenta (decisión 14).
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      expect(await dispositivosDe(correo), isEmpty);
+      expect(await devicesOf(correo), isEmpty);
       semantica.dispose();
     },
   );
@@ -333,14 +333,14 @@ void main() {
       final correo = await nuevaCuenta();
       final api = await ApiIntermedia.abrir();
       await entrar(tester, correo, apiUrl: api.url);
-      await esperarA(tester, campana(0));
+      await waitUntil(tester, campana(0));
 
-      api.estado = EstadoApi.sinRed;
+      api.estado = ApiState.offline;
       await tester.tap(campana(0));
       await tester.pumpAndSettle();
 
       // Verifica: el aviso de red con reintento, no un centro vacío que engaña.
-      await esperarA(tester, find.text('Error de conexión'));
+      await waitUntil(tester, find.text('Error de conexión'));
       expect(find.text('REINTENTAR'), findsOneWidget);
       expect(find.text('Todavía no tenés notificaciones'), findsNothing);
       semantica.dispose();

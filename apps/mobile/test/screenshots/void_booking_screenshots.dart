@@ -7,7 +7,7 @@ import '../support/fixed_clock.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo (CU-15).
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   const modos = {'dark': true, 'light': false};
@@ -26,18 +26,18 @@ void main() {
     required bool oscuro,
     required Size tamano,
   }) async {
-    await montarAdmin(
+    await mountAdmin(
       tester,
       inicio: '/admin',
       oscuro: oscuro,
       tamano: tamano,
-      api: apiRutas({
+      api: apiRoutes({
         'GET /bookings/all': (
           200,
           '{"bookings": [$reservaJson], "total": 1, "page": 1, "per_page": 20,'
               ' "counters": {"all": 1, "active": 1, "completed": 0, "voided": 0}}',
         ),
-        'GET /spaces/catalog': (200, catalogoJson),
+        'GET /spaces/catalog': (200, catalogJson),
       }),
     );
   }

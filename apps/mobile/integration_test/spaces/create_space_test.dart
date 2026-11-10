@@ -12,16 +12,16 @@ void main() {
 
   /// Una sede propia del test y la parte del nombre compuesto que le corresponde.
   Future<(String, String)> sedePropia() async {
-    final s = unico();
-    await crearSede('Sede Haedo $s', 'Av. Vergara 1850');
+    final s = unique();
+    await createVenue('Sede Haedo $s', 'Av. Vergara 1850');
     return ('Sede Haedo $s', 'Haedo${s}_Vergara_1850');
   }
 
   Future<void> abrirAlta(WidgetTester tester) async {
-    await tocar(tester, 'ESPACIOS');
-    await esperarA(tester, find.text('ALTA ESPACIO'));
-    await tocar(tester, 'ALTA ESPACIO');
-    await esperarA(tester, find.text('Nuevo espacio deportivo'));
+    await tapText(tester, 'ESPACIOS');
+    await waitUntil(tester, find.text('ALTA ESPACIO'));
+    await tapText(tester, 'ALTA ESPACIO');
+    await waitUntil(tester, find.text('Nuevo espacio deportivo'));
   }
 
   Future<void> completar(
@@ -29,12 +29,12 @@ void main() {
     String sede, {
     String tipo = 'Fútbol 5',
   }) async {
-    await elegir(tester, 'Sede', sede);
-    await elegir(tester, 'Deporte', 'Fútbol');
-    await elegir(tester, 'Tipo', tipo);
-    await elegir(tester, 'Condición', 'Al aire libre');
-    await elegir(tester, 'Iluminación', 'Iluminada');
-    await escribir(tester, 'Precio por hora', '38000');
+    await choose(tester, 'Sede', sede);
+    await choose(tester, 'Deporte', 'Fútbol');
+    await choose(tester, 'Tipo', tipo);
+    await choose(tester, 'Condición', 'Al aire libre');
+    await choose(tester, 'Iluminación', 'Iluminada');
+    await typeInto(tester, 'Precio por hora', '38000');
   }
 
   testWidgets(
@@ -42,22 +42,22 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
-      await entrarComoAdmin(tester);
+      await signInAsAdmin(tester);
       await abrirAlta(tester);
 
       await completar(tester, sede);
-      await tocar(tester, 'GUARDAR ESPACIO');
+      await tapText(tester, 'GUARDAR ESPACIO');
 
       // Verifica: confirma el alta con el nombre del espacio.
-      await esperarA(tester, find.text('¡Espacio deportivo creado!'));
+      await waitUntil(tester, find.text('¡Espacio deportivo creado!'));
       expect(find.text('${prefijo}_Futbol_F5_1'), findsOneWidget);
 
       // Verifica: un usuario ya lo ve entre los espacios disponibles.
       expect(
-        await espaciosQueVeUnUsuario(),
+        await spacesAUserSees(),
         contains('${prefijo}_Futbol_F5_1'),
       );
-      expect((await sedesQueVeUnUsuario())[sede], 1);
+      expect((await venuesAUserSees())[sede], 1);
       semantica.dispose();
     },
   );
@@ -67,8 +67,8 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
-      await crearEspacio(sede);
-      await entrarComoAdmin(tester);
+      await createSpace(sede);
+      await signInAsAdmin(tester);
       await abrirAlta(tester);
 
       // Verifica: sin sede, deporte y tipo no hay nombre todavía.
@@ -76,11 +76,11 @@ void main() {
 
       // Verifica: con un Fútbol 5 ya cargado en la sede, el siguiente es el 2.
       await completar(tester, sede);
-      await esperarA(tester, find.text('${prefijo}_Futbol_F5_2'));
+      await waitUntil(tester, find.text('${prefijo}_Futbol_F5_2'));
 
       // Verifica: otro tipo arranca su propia numeración.
-      await elegir(tester, 'Tipo', 'Fútbol 7');
-      await esperarA(tester, find.text('${prefijo}_Futbol_F7_1'));
+      await choose(tester, 'Tipo', 'Fútbol 7');
+      await waitUntil(tester, find.text('${prefijo}_Futbol_F7_1'));
       semantica.dispose();
     },
   );
@@ -90,25 +90,25 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
-      await entrarComoAdmin(tester);
+      await signInAsAdmin(tester);
       await abrirAlta(tester);
       await completar(tester, sede);
-      await tocar(tester, 'GUARDAR ESPACIO');
-      await esperarA(tester, find.text('¡Espacio deportivo creado!'));
+      await tapText(tester, 'GUARDAR ESPACIO');
+      await waitUntil(tester, find.text('¡Espacio deportivo creado!'));
 
       // Verifica: «Crear otro» abre el formulario vacío.
-      await tocar(tester, 'Crear otro');
-      await esperarA(tester, find.text('Nuevo espacio deportivo'));
+      await tapText(tester, 'Crear otro');
+      await waitUntil(tester, find.text('Nuevo espacio deportivo'));
       expect(find.text('Completá sede, deporte y tipo'), findsOneWidget);
       expect(find.text(sede), findsNothing);
 
       await completar(tester, sede, tipo: 'Fútbol 7');
-      await tocar(tester, 'GUARDAR ESPACIO');
-      await esperarA(tester, find.text('¡Espacio deportivo creado!'));
+      await tapText(tester, 'GUARDAR ESPACIO');
+      await waitUntil(tester, find.text('¡Espacio deportivo creado!'));
 
       // Verifica: «IR AL LISTADO» vuelve al panel con los dos espacios nuevos.
-      await tocar(tester, 'IR AL LISTADO');
-      await esperarA(tester, find.text('${prefijo}_Futbol_F7_1'));
+      await tapText(tester, 'IR AL LISTADO');
+      await waitUntil(tester, find.text('${prefijo}_Futbol_F7_1'));
       expect(find.text('${prefijo}_Futbol_F5_1'), findsOneWidget);
       expect(find.text('ALTA ESPACIO'), findsOneWidget);
       semantica.dispose();
@@ -120,23 +120,23 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
-      await entrarComoAdmin(tester);
+      await signInAsAdmin(tester);
       await abrirAlta(tester);
       await completar(tester, sede);
-      await esperarA(tester, find.text('${prefijo}_Futbol_F5_1'));
+      await waitUntil(tester, find.text('${prefijo}_Futbol_F5_1'));
 
       // Otro administrador carga el mismo tipo en la misma sede mientras tanto.
-      await crearEspacio(sede);
-      await tocar(tester, 'GUARDAR ESPACIO');
+      await createSpace(sede);
+      await tapText(tester, 'GUARDAR ESPACIO');
 
       // Verifica: avisa del duplicado y el nombre pasa al número siguiente.
-      await esperarA(tester, find.text(duplicado));
-      await esperarA(tester, find.text('${prefijo}_Futbol_F5_2'));
+      await waitUntil(tester, find.text(duplicado));
+      await waitUntil(tester, find.text('${prefijo}_Futbol_F5_2'));
       expect(find.text('¡Espacio deportivo creado!'), findsNothing);
 
       // Verifica: al volver a guardar, queda con el número nuevo.
-      await tocar(tester, 'GUARDAR ESPACIO');
-      await esperarA(tester, find.text('¡Espacio deportivo creado!'));
+      await tapText(tester, 'GUARDAR ESPACIO');
+      await waitUntil(tester, find.text('¡Espacio deportivo creado!'));
       expect(find.text('${prefijo}_Futbol_F5_2'), findsOneWidget);
       semantica.dispose();
     },
@@ -147,21 +147,21 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final (sede, prefijo) = await sedePropia();
-    await entrarComoAdmin(tester);
+    await signInAsAdmin(tester);
     await abrirAlta(tester);
-    await elegir(tester, 'Sede', sede);
-    await elegir(tester, 'Deporte', 'Fútbol');
-    await elegir(tester, 'Condición', 'Al aire libre');
-    await elegir(tester, 'Iluminación', 'Iluminada');
-    await escribir(tester, 'Precio por hora', '38000');
+    await choose(tester, 'Sede', sede);
+    await choose(tester, 'Deporte', 'Fútbol');
+    await choose(tester, 'Condición', 'Al aire libre');
+    await choose(tester, 'Iluminación', 'Iluminada');
+    await typeInto(tester, 'Precio por hora', '38000');
 
-    await tocar(tester, 'GUARDAR ESPACIO');
+    await tapText(tester, 'GUARDAR ESPACIO');
 
     // Verifica: marca el tipo como obligatorio y no se crea nada.
     expect(find.text('Este campo es obligatorio'), findsOneWidget);
     expect(find.text('¡Espacio deportivo creado!'), findsNothing);
     expect(
-      (await espaciosQueVeUnUsuario()).where((n) => n.startsWith(prefijo)),
+      (await spacesAUserSees()).where((n) => n.startsWith(prefijo)),
       isEmpty,
     );
     semantica.dispose();
@@ -173,28 +173,28 @@ void main() {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
       final api = await ApiIntermedia.abrir();
-      await entrarComoAdmin(tester, apiUrl: api.url);
+      await signInAsAdmin(tester, apiUrl: api.url);
       await abrirAlta(tester);
       await completar(tester, sede);
-      await esperarA(tester, find.text('${prefijo}_Futbol_F5_1'));
+      await waitUntil(tester, find.text('${prefijo}_Futbol_F5_1'));
 
       // Verifica: con el servidor caído avisa y lo cargado sigue en el formulario.
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'GUARDAR ESPACIO');
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'GUARDAR ESPACIO');
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
       expect(find.text(sede), findsOneWidget);
       expect(find.text('${prefijo}_Futbol_F5_1'), findsOneWidget);
 
       // Verifica: sin conexión avisa, y al reintentar con la red de vuelta lo guarda.
-      api.estado = EstadoApi.sinRed;
-      await tocar(tester, 'GUARDAR ESPACIO');
-      await esperarA(tester, find.text('Error de conexión'));
-      api.estado = EstadoApi.normal;
-      await tocar(tester, 'REINTENTAR');
-      await esperarA(tester, find.text('¡Espacio deportivo creado!'));
+      api.estado = ApiState.offline;
+      await tapText(tester, 'GUARDAR ESPACIO');
+      await waitUntil(tester, find.text('Error de conexión'));
+      api.estado = ApiState.normal;
+      await tapText(tester, 'REINTENTAR');
+      await waitUntil(tester, find.text('¡Espacio deportivo creado!'));
       expect(
-        await espaciosQueVeUnUsuario(),
+        await spacesAUserSees(),
         contains('${prefijo}_Futbol_F5_1'),
       );
       semantica.dispose();

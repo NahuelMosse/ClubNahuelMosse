@@ -23,8 +23,8 @@ Set<String> _queContienen(Pattern patron) => {
 };
 
 /// Una sesión que Firebase no puede cerrar.
-class _SesionQueNoCierra extends SesionFalsa {
-  _SesionQueNoCierra() : super(perfilUsuario);
+class _SesionQueNoCierra extends FakeSession {
+  _SesionQueNoCierra() : super(userProfile);
 
   @override
   Future<void> close() async => throw Exception('Firebase no respondió');
@@ -48,7 +48,7 @@ void main() {
     'si Firebase no puede cerrar la sesión, la persona queda adentro y ve el error del servidor @ARQ-03-ASM-05',
     (tester) async {
       final sesion = _SesionQueNoCierra();
-      await montar(
+      await mountScreen(
         tester,
         Scaffold(
           body: Builder(

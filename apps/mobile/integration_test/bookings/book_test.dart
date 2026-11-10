@@ -18,7 +18,7 @@ void main() {
     'Sábado',
     'Domingo',
   ];
-  final manana = hoyEnElClub().add(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
 
   String chip(DateTime dia) => '${dias[dia.weekday - 1]} ${dia.day}';
 
@@ -29,14 +29,14 @@ void main() {
 
   /// Una sede de 08:00 a 23:00 con un Fútbol 5 techado de $ 43.000 la hora.
   Future<(String, String)> sedeConCancha() async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
-    return (sede, await crearEspacio(sede));
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850');
+    return (sede, await createSpace(sede));
   }
 
   Future<String> cuenta() async {
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
+    final correo = 'socio.${unique()}@correo.com';
+    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
     return correo;
   }
 
@@ -46,16 +46,16 @@ void main() {
     String contrasena = 'ClubNahuel1',
     String? apiUrl,
   }) async {
-    await abrirApp(tester, apiUrl: apiUrl);
-    await escribir(tester, 'Correo', correo);
-    await escribir(tester, 'Contraseña', contrasena);
-    await tocar(tester, 'INICIAR SESIÓN');
-    await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+    await openApp(tester, apiUrl: apiUrl);
+    await typeInto(tester, 'Correo', correo);
+    await typeInto(tester, 'Contraseña', contrasena);
+    await tapText(tester, 'INICIAR SESIÓN');
+    await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
   Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
     final control = find.bySemanticsLabel(etiqueta);
-    await esperarA(tester, control);
+    await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
     await tester.tap(control);
@@ -71,15 +71,15 @@ void main() {
     String sede, {
     int horas = 1,
   }) async {
-    await tocar(tester, 'SEDES');
+    await tapText(tester, 'SEDES');
     final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-    await esperarA(tester, tarjeta);
+    await waitUntil(tester, tarjeta);
     await tester.ensureVisible(tarjeta);
     await tester.pumpAndSettle();
     await tester.tap(tarjeta);
     await tester.pumpAndSettle();
-    await tocar(tester, 'VER HORARIOS / RESERVAR');
-    await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+    await tapText(tester, 'VER HORARIOS / RESERVAR');
+    await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
     await tocarEtiqueta(tester, chip(manana));
     for (var i = 1; i < horas; i++) {
       await tocarEtiqueta(tester, 'Una hora más');
@@ -95,8 +95,8 @@ void main() {
   }) async {
     await abrirHorarios(tester, sede, horas: horas);
     await tocarEtiqueta(tester, franja(hora, horas));
-    await tocar(tester, 'CONTINUAR');
-    await esperarA(tester, find.text('Confirmá tu reserva'));
+    await tapText(tester, 'CONTINUAR');
+    await waitUntil(tester, find.text('Confirmá tu reserva'));
   }
 
   testWidgets(
@@ -107,17 +107,17 @@ void main() {
       await entrar(tester, correo);
       await irAConfirmar(tester, sede);
 
-      await tocar(tester, 'CONFIRMAR RESERVA');
+      await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: el comprobante con el espacio y el horario.
-      await esperarA(tester, find.text('¡Reserva confirmada!'));
+      await waitUntil(tester, find.text('¡Reserva confirmada!'));
       expect(find.text(cancha), findsOneWidget);
       expect(find.textContaining(franja(18)), findsOneWidget);
 
-      await tocar(tester, 'VER MIS RESERVAS');
+      await tapText(tester, 'VER MIS RESERVAS');
 
       // Verifica: en Mis reservas, activa y con todos sus datos.
-      await esperarA(tester, find.text(cancha));
+      await waitUntil(tester, find.text(cancha));
       expect(find.text('$sede · Av. Vergara 1850'), findsOneWidget);
       expect(find.text(franja(18)), findsOneWidget);
       expect(find.textContaining('43.000'), findsOneWidget);
@@ -132,8 +132,8 @@ void main() {
       final (sede, _) = await sedeConCancha();
       await entrar(tester, await cuenta());
       await irAConfirmar(tester, sede, hora: 11);
-      await tocar(tester, 'CONFIRMAR RESERVA');
-      await esperarA(tester, find.text('¡Reserva confirmada!'));
+      await tapText(tester, 'CONFIRMAR RESERVA');
+      await waitUntil(tester, find.text('¡Reserva confirmada!'));
 
       // Otra persona entra a los horarios de la misma cancha.
       await entrar(tester, await cuenta());
@@ -155,12 +155,12 @@ void main() {
       await irAConfirmar(tester, sede, hora: 15, horas: 3);
       expect(find.text('${franja(15, 3)} · 3 horas'), findsOneWidget);
 
-      await tocar(tester, 'CONFIRMAR RESERVA');
+      await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: tres horas a $ 43.000.
-      await esperarA(tester, find.text('¡Reserva confirmada!'));
+      await waitUntil(tester, find.text('¡Reserva confirmada!'));
       expect(find.textContaining('129.000'), findsOneWidget);
-      expect(await reservasDe(correo), hasLength(1));
+      expect(await bookingsOf(correo), hasLength(1));
     },
   );
 
@@ -172,11 +172,11 @@ void main() {
       await entrar(tester, correo);
       await irAConfirmar(tester, sede);
 
-      await tocar(tester, 'CANCELAR');
+      await tapText(tester, 'CANCELAR');
 
       // Verifica: vuelve a los horarios y no hay reserva.
-      await esperarA(tester, find.text('HORARIO DISPONIBLE'));
-      expect(await reservasDe(correo), isEmpty);
+      await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
+      expect(await bookingsOf(correo), isEmpty);
     },
   );
 
@@ -186,13 +186,13 @@ void main() {
       final (sede, _) = await sedeConCancha();
       await entrar(tester, await cuenta());
       await irAConfirmar(tester, sede);
-      await tocar(tester, 'CONFIRMAR RESERVA');
-      await esperarA(tester, find.text('¡Reserva confirmada!'));
+      await tapText(tester, 'CONFIRMAR RESERVA');
+      await waitUntil(tester, find.text('¡Reserva confirmada!'));
 
       // Verifica: las dos salidas están.
       expect(find.text('VER MIS RESERVAS'), findsOneWidget);
-      await tocar(tester, 'Volver al inicio');
-      await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+      await tapText(tester, 'Volver al inicio');
+      await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
     },
   );
 
@@ -206,15 +206,15 @@ void main() {
       await irAConfirmar(tester, sede, hora: 20);
 
       // Mientras confirma, otra persona toma ese horario.
-      await ocupar(cancha, manana, 20);
-      await tocar(tester, 'CONFIRMAR RESERVA');
+      await occupy(cancha, manana, 20);
+      await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: el aviso, y al volver a la grilla el horario está ocupado.
-      await esperarA(tester, find.text('Ese horario se ocupó'));
-      await tocar(tester, 'ELEGIR OTRO HORARIO');
-      await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+      await waitUntil(tester, find.text('Ese horario se ocupó'));
+      await tapText(tester, 'ELEGIR OTRO HORARIO');
+      await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
       expect(banderas(tester, franja(20)).isEnabled, isFalse);
-      expect(await reservasDe(correo), isEmpty);
+      expect(await bookingsOf(correo), isEmpty);
       semantica.dispose();
     },
   );
@@ -244,23 +244,23 @@ void main() {
       await irAConfirmar(tester, sede, hora: 16);
 
       // La contraseña cambia desde otro teléfono y la sesión vence.
-      await cambiarDesdeOtroDispositivo(correo, 'ClubNahuel1', 'ClubNahuel2');
-      await tocar(tester, 'CONFIRMAR RESERVA');
+      await changeFromAnotherDevice(correo, 'ClubNahuel1', 'ClubNahuel2');
+      await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: avisa y lleva al inicio de sesión.
-      await esperarA(tester, find.text('Tu sesión expiró'));
-      await tocar(tester, 'IR AL INICIO DE SESIÓN');
-      await esperarA(tester, find.text('INICIAR SESIÓN'));
-      await escribir(tester, 'Correo', correo);
-      await escribir(tester, 'Contraseña', 'ClubNahuel2');
-      await tocar(tester, 'INICIAR SESIÓN');
+      await waitUntil(tester, find.text('Tu sesión expiró'));
+      await tapText(tester, 'IR AL INICIO DE SESIÓN');
+      await waitUntil(tester, find.text('INICIAR SESIÓN'));
+      await typeInto(tester, 'Correo', correo);
+      await typeInto(tester, 'Contraseña', 'ClubNahuel2');
+      await tapText(tester, 'INICIAR SESIÓN');
 
       // Verifica: vuelve a la confirmación con la misma cancha y el mismo horario.
-      await esperarA(tester, find.text('Confirmá tu reserva'));
+      await waitUntil(tester, find.text('Confirmá tu reserva'));
       expect(find.text('${franja(16)} · 1 hora'), findsOneWidget);
-      await tocar(tester, 'CONFIRMAR RESERVA');
-      await esperarA(tester, find.text('¡Reserva confirmada!'));
-      expect(await reservasDe(correo, contrasena: 'ClubNahuel2'), [
+      await tapText(tester, 'CONFIRMAR RESERVA');
+      await waitUntil(tester, find.text('¡Reserva confirmada!'));
+      expect(await bookingsOf(correo, contrasena: 'ClubNahuel2'), [
         (cancha, '16:00'),
       ]);
     },
@@ -275,14 +275,14 @@ void main() {
       await entrar(tester, correo, apiUrl: api.url);
       await irAConfirmar(tester, sede);
 
-      api.estado = EstadoApi.sinRed;
-      await tocar(tester, 'CONFIRMAR RESERVA');
+      api.estado = ApiState.offline;
+      await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: el aviso de conexión, sigue en la confirmación y no hay reserva.
-      await esperarA(tester, find.text('Error de conexión'));
-      await tocar(tester, 'Volver');
+      await waitUntil(tester, find.text('Error de conexión'));
+      await tapText(tester, 'Volver');
       expect(find.text('Confirmá tu reserva'), findsOneWidget);
-      expect(await reservasDe(correo), isEmpty);
+      expect(await bookingsOf(correo), isEmpty);
     },
   );
 
@@ -295,14 +295,14 @@ void main() {
       await entrar(tester, correo, apiUrl: api.url);
       await irAConfirmar(tester, sede);
 
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'CONFIRMAR RESERVA');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: el error del servidor, sigue en la confirmación y no hay reserva.
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
       expect(find.text('Confirmá tu reserva'), findsOneWidget);
-      expect(await reservasDe(correo), isEmpty);
+      expect(await bookingsOf(correo), isEmpty);
     },
   );
 }

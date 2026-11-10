@@ -8,7 +8,7 @@ const _english = [Locale('en', 'US')];
 const _spanish = [Locale('es', 'AR')];
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   void device(WidgetTester tester, List<Locale> locales) {
     tester.platformDispatcher.localesTestValue = locales;
@@ -52,10 +52,10 @@ void main() {
       ]) {
         device(tester, locales);
         await tester.pumpWidget(const SizedBox());
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+          api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tap(tester, save);
         for (final message in messages) {

@@ -16,17 +16,17 @@ import 'package:go_router/go_router.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> montarLogin(
     WidgetTester tester,
-    CredencialesFalsas credenciales, {
+    FakeCredentials credenciales, {
     ApiClient? api,
   }) async {
     final session = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        api: api ?? fakeApi(codigo: 200, cuerpo: profileJson()),
       ),
     );
     final rutas = GoRouter(
@@ -75,7 +75,7 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    final credenciales = CredencialesFalsas();
+    final credenciales = FakeCredentials();
     await montarLogin(tester, credenciales);
 
     await ingresar(tester, '   ', '');
@@ -94,7 +94,7 @@ void main() {
 
   testWidgets('manda el correo sin espacios y en minúsculas', (tester) async {
     final semantica = tester.ensureSemantics();
-    final credenciales = CredencialesFalsas();
+    final credenciales = FakeCredentials();
     await montarLogin(tester, credenciales);
 
     await ingresar(tester, '  Nahuel@Correo.COM ', ' Clave 1 ');
@@ -109,8 +109,8 @@ void main() {
     final semantica = tester.ensureSemantics();
     await montarLogin(
       tester,
-      CredencialesFalsas(),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson(rol: 'admin')),
+      FakeCredentials(),
+      api: fakeApi(codigo: 200, cuerpo: profileJson(rol: 'admin')),
     );
 
     await ingresar(tester, 'admin@club.com', 'Clave1234');
@@ -125,7 +125,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     await montarLogin(
       tester,
-      CredencialesFalsas(
+      FakeCredentials(
         alIngresar: (_, _) async => throw const InvalidCredentials(),
       ),
     );
@@ -143,11 +143,11 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    final credenciales = CredencialesFalsas();
+    final credenciales = FakeCredentials();
     await montarLogin(
       tester,
       credenciales,
-      api: apiFalsa(codigo: 401, cuerpo: '{"detail": "Sesión inválida"}'),
+      api: fakeApi(codigo: 401, cuerpo: '{"detail": "Sesión inválida"}'),
     );
 
     await ingresar(tester, 'baja@correo.com', 'Clave1234');
@@ -162,11 +162,11 @@ void main() {
     'si la API falla, avisa del servidor y cierra la sesión de Firebase',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final credenciales = CredencialesFalsas();
+      final credenciales = FakeCredentials();
       await montarLogin(
         tester,
         credenciales,
-        api: apiFalsa(codigo: 500, cuerpo: 'Internal Server Error'),
+        api: fakeApi(codigo: 500, cuerpo: 'Internal Server Error'),
       );
 
       await ingresar(tester, 'nahuel@correo.com', 'Clave1234');
@@ -186,7 +186,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       var fallar = true;
-      final credenciales = CredencialesFalsas(
+      final credenciales = FakeCredentials(
         alIngresar: (_, _) async {
           if (fallar) throw const SinConexion();
         },
@@ -210,7 +210,7 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final espera = Completer<void>();
-    final credenciales = CredencialesFalsas(
+    final credenciales = FakeCredentials(
       alIngresar: (_, _) => espera.future,
     );
     await montarLogin(tester, credenciales);
@@ -234,7 +234,7 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montarLogin(tester, CredencialesFalsas());
+    await montarLogin(tester, FakeCredentials());
 
     await tester.tap(find.text('¿Olvidaste tu contraseña?'));
     await tester.pumpAndSettle();
@@ -245,7 +245,7 @@ void main() {
 
   testWidgets('el ojo muestra y oculta la contraseña', (tester) async {
     final semantica = tester.ensureSemantics();
-    await montarLogin(tester, CredencialesFalsas());
+    await montarLogin(tester, FakeCredentials());
     bool oculta() => tester
         .widget<TextField>(
           find.descendant(

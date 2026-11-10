@@ -3,12 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:clubnahuelmosse/features/bookings/presentation/my_bookings_screen.dart';
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> cumpleLasGuias(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -69,10 +69,10 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
-        api: apiRutas(rutasDeSedes()),
+        api: apiRoutes(venueRoutes()),
       );
       await conFotos(tester);
       await cumpleLasGuias(tester);
@@ -83,11 +83,11 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: apiRutas(rutasDeSedes()),
+        api: apiRoutes(venueRoutes()),
       );
       await conFotos(tester);
       await cumpleLasGuias(tester);
@@ -98,12 +98,12 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
         inicio:
             '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-        api: apiRutas(rutasDeSedes()),
+        api: apiRoutes(venueRoutes()),
       );
       await cumpleLasGuias(tester);
       semantica.dispose();
@@ -113,11 +113,11 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
         inicio: '/inicio/buscar',
-        api: apiRutas(rutasDeSedes()),
+        api: apiRoutes(venueRoutes()),
       );
       await cumpleLasGuias(tester);
       semantica.dispose();
@@ -127,13 +127,13 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
         inicio: '/inicio',
-        api: apiRutas({
-          ...rutasDeSedes(),
-          'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+        api: apiRoutes({
+          ...venueRoutes(),
+          'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
         }),
       );
       await cumpleLasGuias(tester);
@@ -142,13 +142,13 @@ void main() {
 
     testWidgets('mis reservas cumple las guías en modo $modo', (tester) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
         inicio: '/reservas',
-        api: apiRutas({
-          ...rutasDeSedes(),
-          'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+        api: apiRoutes({
+          ...venueRoutes(),
+          'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
         }),
       );
       await conFotos(tester);

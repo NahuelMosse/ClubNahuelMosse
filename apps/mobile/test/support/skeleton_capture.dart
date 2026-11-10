@@ -28,7 +28,7 @@ Future<void> mountApp(
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  await cargarFuentes();
+  await loadFonts();
   await tester.pumpWidget(
     App(
       api: api,

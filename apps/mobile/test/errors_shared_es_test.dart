@@ -20,7 +20,7 @@ Widget _app(GoRouter rutas) => MaterialApp.router(
 );
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'un 403 de la API muestra «Acceso denegado» y lleva a Mis reservas',
@@ -40,7 +40,7 @@ void main() {
           GoRoute(
             path: '/admin/acceso-denegado',
             builder: (context, _) =>
-                AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
+                AccessDeniedScreen(session: FakeSession(userProfile)),
           ),
           GoRoute(
             path: '/reservas',
@@ -81,7 +81,7 @@ void main() {
         GoRoute(
           path: '/admin/acceso-denegado',
           builder: (context, _) =>
-              AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
+              AccessDeniedScreen(session: FakeSession(userProfile)),
         ),
       ],
     );

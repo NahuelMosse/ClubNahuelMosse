@@ -32,8 +32,8 @@ void main() {
   testWidgets(
     'con veinte próximas el marcador dice 20 en su celda PRÓXIMAS, en el color del texto sobre foto @RED-03-ASM-13',
     (tester) async {
-      final sesion = SesionFalsa(perfilUsuario);
-      final api = apiRutas({
+      final sesion = FakeSession(userProfile);
+      final api = apiRoutes({
         'GET /bookings': (
           200,
           '{"bookings": [${[for (var i = 1; i <= 20; i++) _reserva(i)].join(', ')}]}',
@@ -41,7 +41,7 @@ void main() {
         'GET /spaces/catalog': (200, '{"sports": []}'),
         'GET /venues': (200, '{"venues": []}'),
       });
-      await montar(
+      await mountScreen(
         tester,
         HomeScreen(
           sesion: sesion,

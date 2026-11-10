@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/user.dart';
 
 /// Una API con una reserva activa que se puede cancelar, y que cancela cuando [frenar]
@@ -29,11 +29,11 @@ class _Servidor {
 
   Future<http.Response> _responder(http.Request pedido) async {
     pedidos.add(pedido);
-    final rutas = rutasDeSedes();
+    final rutas = venueRoutes();
     final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
       ('GET', '/bookings') => (
         200,
-        '{"bookings": [${_activa ? reservaJson() : ''}]}',
+        '{"bookings": [${_activa ? bookingJson() : ''}]}',
       ),
       ('POST', '/bookings/00000000-0000-7000-8000-000000000001/cancel') =>
         await _cancelar(),
@@ -49,7 +49,7 @@ class _Servidor {
   Future<(int, String)> _cancelar() async {
     await frenar;
     _activa = false;
-    return (200, reservaJson(estado: 'canceled'));
+    return (200, bookingJson(estado: 'canceled'));
   }
 }
 
@@ -66,7 +66,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final servidor = _Servidor();
-      await montarUsuario(tester, api: servidor.api, inicio: '/inicio');
+      await mountUser(tester, api: servidor.api, inicio: '/inicio');
       expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
@@ -89,7 +89,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     final cancelacion = Completer<void>();
     final servidor = _Servidor(frenar: cancelacion.future);
-    await montarUsuario(tester, api: servidor.api, inicio: '/inicio');
+    await mountUser(tester, api: servidor.api, inicio: '/inicio');
 
     await tocar(tester, find.text('CANCELAR'));
     await tester.tap(find.text('CANCELAR RESERVA'));
@@ -123,7 +123,7 @@ void main() {
     tester,
   ) async {
     final servidor = _Servidor();
-    await montarUsuario(tester, api: servidor.api, inicio: '/inicio');
+    await mountUser(tester, api: servidor.api, inicio: '/inicio');
     final antes = servidor.lecturas;
 
     await tocar(tester, find.text('MODIFICAR'));

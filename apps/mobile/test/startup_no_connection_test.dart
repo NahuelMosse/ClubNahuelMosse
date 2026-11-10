@@ -11,7 +11,7 @@ import 'package:http/testing.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'al arrancar sin conexión la app muestra el diálogo de error con Reintentar @SIM-01-S4 @assumption:SIM-01-ASM-08 (widget)',
@@ -22,7 +22,7 @@ void main() {
       );
       final sesion = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(conCuenta: true),
+          credentials: FakeCredentials(conCuenta: true),
           api: api,
         ),
       );

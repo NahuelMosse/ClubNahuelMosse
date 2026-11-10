@@ -20,7 +20,7 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     var dadoDeBaja = false;
-    await montarAdmin(
+    await mountAdmin(
       tester,
       inicio: '/admin/espacios',
       tamano: tamano,
@@ -35,9 +35,9 @@ void main() {
             }(),
             ('GET', '/spaces') => (
               200,
-              '{"spaces": [${dadoDeBaja ? espacioTenisJson : '$espacioF5Json, $espacioTenisJson'}]}',
+              '{"spaces": [${dadoDeBaja ? spaceTennisJson : '$spaceF5Json, $spaceTennisJson'}]}',
             ),
-            ('GET', '/spaces/catalog') => (200, catalogoJson),
+            ('GET', '/spaces/catalog') => (200, catalogJson),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
@@ -166,7 +166,7 @@ void main() {
       codigo,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
-    await montarAdmin(
+    await mountAdmin(
       tester,
       inicio: '/admin/espacios',
       tamano: tamano,
@@ -182,9 +182,9 @@ void main() {
           return switch (pedido.url.path) {
             '/spaces' => json(
               200,
-              '{"spaces": [${dadoDeBaja ? espacioTenisJson : '$espacioF5Json, $espacioTenisJson'}]}',
+              '{"spaces": [${dadoDeBaja ? spaceTennisJson : '$spaceF5Json, $spaceTennisJson'}]}',
             ),
-            '/spaces/catalog' => json(200, catalogoJson),
+            '/spaces/catalog' => json(200, catalogJson),
             _ => json(404, '{}'),
           };
         }),

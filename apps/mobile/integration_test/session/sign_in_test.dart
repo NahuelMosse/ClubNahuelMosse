@@ -15,24 +15,24 @@ void main() {
     String correo,
     String clave,
   ) async {
-    if (correo.isNotEmpty) await escribir(tester, 'Correo', correo);
-    if (clave.isNotEmpty) await escribir(tester, 'Contraseña', clave);
-    await tocar(tester, 'INICIAR SESIÓN');
+    if (correo.isNotEmpty) await typeInto(tester, 'Correo', correo);
+    if (clave.isNotEmpty) await typeInto(tester, 'Contraseña', clave);
+    await tapText(tester, 'INICIAR SESIÓN');
   }
 
   testWidgets(
     'inicia sesión con correo y contraseña correctos y llega al Home @CU-01-H01-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: contrasena);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: contrasena);
+      await openApp(tester);
 
       // Verifica CU-01-SUP-03: el correo con mayúsculas y espacios alrededor entra igual.
       await ingresar(tester, '  ${correo.toUpperCase()} ', contrasena);
 
       // Verifica: llega al Home con su nombre. Si falla, queda en el login sin poder reservar.
-      await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+      await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
       expect(find.text('Nahuel'), findsOneWidget);
       expect(find.text('INICIAR SESIÓN'), findsNothing);
       semantica.dispose();
@@ -43,13 +43,13 @@ void main() {
     'inicia sesión con una cuenta de administrador y llega al panel de administración @CU-01-H01-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrirApp(tester);
+      await openApp(tester);
 
-      await ingresar(tester, correoAdmin, contrasenaAdmin);
+      await ingresar(tester, adminEmail, adminPassword);
 
       // Verifica: el rol sale de la cuenta, sin elegirlo en el login. Si falla, el admin
       // cae en el Home de usuario y no llega a las herramientas de administración.
-      await esperarA(tester, find.text('PANEL ADMIN'));
+      await waitUntil(tester, find.text('PANEL ADMIN'));
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
       semantica.dispose();
     },
@@ -61,7 +61,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       // Sin red: si la app mandara las credenciales, al asentarse la pantalla ya estaría el
       // error de conexión.
-      await abrirApp(tester, apiUrl: apiSinRed, authEmulador: sinRed);
+      await openApp(tester, apiUrl: offlineApi, authEmulador: offline);
 
       await ingresar(tester, '', contrasena);
 
@@ -79,7 +79,7 @@ void main() {
     'intenta ingresar con la contraseña vacía y no se envía nada al backend @CU-01-H02-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrirApp(tester, apiUrl: apiSinRed, authEmulador: sinRed);
+      await openApp(tester, apiUrl: offlineApi, authEmulador: offline);
 
       await ingresar(tester, 'socio@correo.com', '');
 
@@ -96,13 +96,13 @@ void main() {
     'ingresa un correo que no está registrado y ve el mensaje genérico @CU-01-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrirApp(tester);
+      await openApp(tester);
 
-      await ingresar(tester, 'nadie.${unico()}@correo.com', contrasena);
+      await ingresar(tester, 'nadie.${unique()}@correo.com', contrasena);
 
       // Verifica: el mensaje no dice qué dato está mal. Si falla, la app revela qué correos
       // tienen cuenta.
-      await esperarA(tester, find.text(generico));
+      await waitUntil(tester, find.text(generico));
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
       semantica.dispose();
@@ -113,14 +113,14 @@ void main() {
     'ingresa una contraseña incorrecta y ve el mismo mensaje genérico @CU-01-H03-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: contrasena);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: contrasena);
+      await openApp(tester);
 
       await ingresar(tester, correo, 'OtraClave9');
 
       // Verifica: el mismo texto que con un correo sin cuenta, y no entra.
-      await esperarA(tester, find.text(generico));
+      await waitUntil(tester, find.text(generico));
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
       semantica.dispose();
@@ -131,9 +131,9 @@ void main() {
     'toca «¿Olvidaste tu contraseña?» y llega a Recuperar contraseña @CU-01-H04-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrirApp(tester);
+      await openApp(tester);
 
-      await tocar(tester, '¿Olvidaste tu contraseña?');
+      await tapText(tester, '¿Olvidaste tu contraseña?');
 
       // Verifica: el enlace lleva a recuperar la contraseña. Si falla, quien la olvidó no
       // tiene cómo volver a entrar.
@@ -147,14 +147,14 @@ void main() {
     'el servidor falla al iniciar sesión y se le pide reintentar más tarde @CU-01-H05-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: contrasena);
-      await abrirApp(tester, apiUrl: await apiQueFalla());
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: contrasena);
+      await openApp(tester, apiUrl: await failingApi());
 
       await ingresar(tester, correo, contrasena);
 
       // Verifica: avisa que el servidor falló y pide intentar más tarde.
-      await esperarA(tester, find.text('Error del servidor'));
+      await waitUntil(tester, find.text('Error del servidor'));
       expect(
         find.text(
           'No pudimos procesar la operación en este momento. Intentá más tarde.',
@@ -163,7 +163,7 @@ void main() {
       );
 
       // Verifica: al cerrar el aviso sigue en el login, sin una sesión a medias.
-      await tocar(tester, 'ACEPTAR');
+      await tapText(tester, 'ACEPTAR');
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
       semantica.dispose();
@@ -174,13 +174,13 @@ void main() {
     'sin conexión a internet, se le pide restablecer la conexión @CU-01-H06-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrirApp(tester, apiUrl: apiSinRed, authEmulador: sinRed);
+      await openApp(tester, apiUrl: offlineApi, authEmulador: offline);
 
       await ingresar(tester, 'socio@correo.com', contrasena);
 
       // Verifica: dice que no hay conexión y ofrece reintentar, en vez del mensaje de
       // credenciales inválidas.
-      await esperarA(tester, find.text('Error de conexión'));
+      await waitUntil(tester, find.text('Error de conexión'));
       expect(
         find.text(
           'No pudimos conectarnos. Revisá tu conexión a internet y volvé a intentar.',

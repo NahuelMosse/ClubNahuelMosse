@@ -13,8 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'void_booking_test.dart' as anular show listado, reservaJson;
-import 'my_bookings_test.dart' show reservaJson;
+import 'void_booking_test.dart' as anular show listing, bookingJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/admin.dart';
 import 'support/mount.dart';
 import 'support/user.dart';
@@ -52,20 +52,20 @@ MockClient _conCorte(
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets('cancelar: un 409 después de un corte cuenta como cancelada', (
     tester,
   ) async {
     final futura = DateTime.now().toUtc().add(const Duration(days: 2));
     final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
-    final proxima = reservaJson(
+    final proxima = bookingJson(
       inicio: inicio.toIso8601String(),
       fin: inicio.add(const Duration(hours: 1)).toIso8601String(),
     );
-    final rutas = rutasDeSedes();
+    final rutas = venueRoutes();
     var cancelada = false;
-    await montarUsuario(
+    await mountUser(
       tester,
       inicio: '/reservas',
       api: ApiClient(
@@ -111,14 +111,14 @@ void main() {
         '/bookings/00000000-0000-7000-8000-000000000001/void',
         [null, (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}')],
         (pedido) => switch (pedido.url.path) {
-          '/bookings/all' => (200, anular.listado(anular.reservaJson())),
-          '/spaces/catalog' => (200, catalogoJson),
+          '/bookings/all' => (200, anular.listing(anular.bookingJson())),
+          '/spaces/catalog' => (200, catalogJson),
           _ => (404, '{}'),
         },
       ),
     );
-    final sesion = SesionFalsa(perfilAdmin);
-    await montar(
+    final sesion = FakeSession(adminProfile);
+    await mountScreen(
       tester,
       AdminPanelScreen(
         history: BookingHistory(api: api, sesion: sesion),

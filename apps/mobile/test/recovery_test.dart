@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   late List<http.Request> pedidos;
 
@@ -38,7 +38,7 @@ void main() {
 
   PasswordRecovery recuperacion(Map<String, (int, String)> respuestas) {
     pedidos = [];
-    return PasswordRecovery(apiRutas(respuestas, pedidos: pedidos));
+    return PasswordRecovery(apiRoutes(respuestas, pedidos: pedidos));
   }
 
   bool habilitado(WidgetTester tester, String boton) =>
@@ -131,7 +131,7 @@ void main() {
   group('crear la contraseña nueva', () {
     Widget pantalla(Map<String, (int, String)> respuestas) => NewPasswordScreen(
       recovery: recuperacion(respuestas),
-      session: SesionFalsa(null),
+      session: FakeSession(null),
       code: 'abc',
     );
 
@@ -154,7 +154,7 @@ void main() {
         tester,
         NewPasswordScreen(
           recovery: recuperacion({}),
-          session: SesionFalsa(null),
+          session: FakeSession(null),
           code: '',
         ),
       );
@@ -253,13 +253,13 @@ void main() {
       'un enlace nuevo con la pantalla abierta se vuelve a comprobar',
       (tester) async {
         final pedidos = <http.Request>[];
-        final api = apiRutas({
+        final api = apiRoutes({
           'POST /password-recovery/check': (410, ''),
         }, pedidos: pedidos);
         await tester.pumpWidget(
           App(
             api: api,
-            session: SesionFalsa(null),
+            session: FakeSession(null),
             appearance: Appearance.inMemory(),
             initialLocation: '/recuperar?codigo=viejo',
           ),
@@ -279,10 +279,10 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final sesion = SesionFalsa(perfilUsuario);
+      final sesion = FakeSession(userProfile);
       await tester.pumpWidget(
         App(
-          api: apiRutas({
+          api: apiRoutes({
             'POST /password-recovery/check': (204, ''),
             'PUT /password-recovery': (204, ''),
           }),

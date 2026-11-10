@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../support/mount.dart';
 
 Future<void> _montar(WidgetTester tester, ThemeData tema, Widget boton) =>
-    montar(
+    mountScreen(
       tester,
       Scaffold(
         body: Padding(padding: const EdgeInsets.all(24), child: boton),

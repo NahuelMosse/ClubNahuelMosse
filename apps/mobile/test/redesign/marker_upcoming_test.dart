@@ -31,8 +31,8 @@ void main() {
   testWidgets(
     'inicio el marcador de próximas muestra la cantidad de reservas próximas @RED-03-ASM-13',
     (tester) async {
-      final sesion = SesionFalsa(perfilUsuario);
-      final api = apiRutas({
+      final sesion = FakeSession(userProfile);
+      final api = apiRoutes({
         'GET /bookings': (
           200,
           '{"bookings": [${[for (var i = 1; i <= 23; i++) _reserva(i)].join(', ')}]}',
@@ -40,7 +40,7 @@ void main() {
         'GET /spaces/catalog': (200, '{"sports": []}'),
         'GET /venues': (200, '{"venues": []}'),
       });
-      await montar(
+      await mountScreen(
         tester,
         HomeScreen(
           sesion: sesion,

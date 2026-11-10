@@ -9,7 +9,7 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final hoy = hoyEnElClub();
+  final hoy = todayAtClub();
   final ayer = hoy.subtract(const Duration(days: 1));
   final manana = hoy.add(const Duration(days: 1));
 
@@ -23,9 +23,9 @@ void main() {
     'sin ninguna reserva en el sistema ve «No hay reservas», sin «Limpiar filtros» @CU-14-H07-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await vaciarReservas();
-      await entrarComoAdmin(tester);
-      await esperarA(tester, find.text('No hay reservas'));
+      await clearBookings();
+      await signInAsAdmin(tester);
+      await waitUntil(tester, find.text('No hay reservas'));
       expect(
         find.text('Todavía no se registró ninguna reserva en el sistema.'),
         findsOneWidget,
@@ -39,19 +39,19 @@ void main() {
     've las reservas de todos los usuarios con usuario, sede, espacio, horario, precio y estado, y el total @CU-14-H01-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Haedo ${unico()}';
-      await crearSede(nombreSede, 'Av. Vergara 1850');
-      final cancha = await crearEspacio(nombreSede);
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(
+      final nombreSede = 'Sede Haedo ${unique()}';
+      await createVenue(nombreSede, 'Av. Vergara 1850');
+      final cancha = await createSpace(nombreSede);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(
         correo: correo,
         contrasena: 'ClubNahuel1',
         nombre: 'Nahuel',
       );
-      await ocupar(cancha, manana, 21, correo: correo);
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.text(cancha));
+      await occupy(cancha, manana, 21, correo: correo);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.text(cancha));
 
       // Verifica: los datos de la reserva y el total ya filtrado por la búsqueda.
       expect(find.textContaining('1 RESULTADO'), findsOneWidget);
@@ -65,19 +65,19 @@ void main() {
     'una reserva recién hecha por un usuario aparece en el panel @CU-14-H01-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Ramos Mejia ${unico()}';
-      await crearSede(nombreSede, 'Calle Belgrano 1240');
-      final cancha = await crearEspacio(nombreSede);
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.text('Sin resultados'));
+      final nombreSede = 'Sede Ramos Mejia ${unique()}';
+      await createVenue(nombreSede, 'Calle Belgrano 1240');
+      final cancha = await createSpace(nombreSede);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.text('Sin resultados'));
 
-      await ocupar(cancha, manana, 20);
-      await tocar(tester, 'Filtros');
-      await esperarA(tester, find.text('APLICAR'));
-      await tocar(tester, 'APLICAR');
+      await occupy(cancha, manana, 20);
+      await tapText(tester, 'Filtros');
+      await waitUntil(tester, find.text('APLICAR'));
+      await tapText(tester, 'APLICAR');
 
-      await esperarA(tester, find.text(cancha));
+      await waitUntil(tester, find.text(cancha));
       semantica.dispose();
     },
   );
@@ -86,32 +86,32 @@ void main() {
     'las pestañas de estado filtran el listado y actualizan el contador @CU-14-H01-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Castelar ${unico()}';
-      await crearSede(nombreSede, 'Av. Rivadavia 23500');
-      final activo = await crearEspacio(nombreSede);
-      final completo = await crearEspacio(nombreSede);
-      final anulado = await crearEspacio(nombreSede);
-      await ocupar(activo, manana, 9);
-      await ocupar(completo, ayer, 9);
-      await ocupar(
+      final nombreSede = 'Sede Castelar ${unique()}';
+      await createVenue(nombreSede, 'Av. Rivadavia 23500');
+      final activo = await createSpace(nombreSede);
+      final completo = await createSpace(nombreSede);
+      final anulado = await createSpace(nombreSede);
+      await occupy(activo, manana, 9);
+      await occupy(completo, ayer, 9);
+      await occupy(
         anulado,
         manana,
         15,
         estado: 'voided',
         motivo: 'mantenimiento',
       );
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.textContaining('3 RESULTADOS'));
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.textContaining('3 RESULTADOS'));
 
-      await esperarA(tester, find.text('Activas (1)'));
-      await tocar(tester, 'Activas (1)');
-      await esperarA(tester, find.text(activo));
+      await waitUntil(tester, find.text('Activas (1)'));
+      await tapText(tester, 'Activas (1)');
+      await waitUntil(tester, find.text(activo));
       expect(find.text(completo), findsNothing);
       expect(find.text(anulado), findsNothing);
 
-      await tocar(tester, 'Anuladas (1)');
-      await esperarA(tester, find.text(anulado));
+      await tapText(tester, 'Anuladas (1)');
+      await waitUntil(tester, find.text(anulado));
       expect(find.text(activo), findsNothing);
       semantica.dispose();
     },
@@ -121,31 +121,31 @@ void main() {
     'aplica filtros de sede, deporte y fechas y ve sólo las reservas que cumplen todos @CU-14-H01-04',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede San Justo ${unico()}';
-      await crearSede(nombreSede, 'Av. Rivadavia 5000');
-      final futbol = await crearEspacio(nombreSede);
-      final tenis = await crearEspacio(
+      final nombreSede = 'Sede San Justo ${unique()}';
+      await createVenue(nombreSede, 'Av. Rivadavia 5000');
+      final futbol = await createSpace(nombreSede);
+      final tenis = await createSpace(
         nombreSede,
         deporte: 'Tenis',
         tipo: 'PDL',
       );
-      final futbolViejo = await crearEspacio(nombreSede);
-      await ocupar(futbol, manana, 10);
-      await ocupar(tenis, manana, 10);
-      await ocupar(futbolViejo, hoy.subtract(const Duration(days: 10)), 10);
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.textContaining('3 RESULTADOS'));
+      final futbolViejo = await createSpace(nombreSede);
+      await occupy(futbol, manana, 10);
+      await occupy(tenis, manana, 10);
+      await occupy(futbolViejo, hoy.subtract(const Duration(days: 10)), 10);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.textContaining('3 RESULTADOS'));
 
-      await tocar(tester, 'Filtros');
-      await esperarA(tester, find.text('APLICAR'));
-      await tocar(tester, nombreSede);
-      await tocar(tester, 'Fútbol');
-      await escribir(tester, 'Desde', fechaTexto(hoy));
-      await escribir(tester, 'Hasta', fechaTexto(manana));
-      await tocar(tester, 'APLICAR');
+      await tapText(tester, 'Filtros');
+      await waitUntil(tester, find.text('APLICAR'));
+      await tapText(tester, nombreSede);
+      await tapText(tester, 'Fútbol');
+      await typeInto(tester, 'Desde', fechaTexto(hoy));
+      await typeInto(tester, 'Hasta', fechaTexto(manana));
+      await tapText(tester, 'APLICAR');
 
-      await esperarA(tester, find.textContaining('1 RESULTADO'));
+      await waitUntil(tester, find.textContaining('1 RESULTADO'));
       expect(find.text(futbol), findsOneWidget);
       expect(find.text(tenis), findsNothing);
       expect(find.text(futbolViejo), findsNothing);
@@ -157,34 +157,34 @@ void main() {
     'busca por nombre de usuario y la búsqueda se combina con los filtros @CU-14-H01-05',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Moron ${unico()}';
-      await crearSede(nombreSede, 'Av. Rivadavia 19850');
-      final canchaUno = await crearEspacio(nombreSede);
-      final canchaDos = await crearEspacio(nombreSede);
-      final correoUno = 'valentina.${unico()}@correo.com';
-      final correoDos = 'bruno.${unico()}@correo.com';
-      await crearCuenta(
+      final nombreSede = 'Sede Moron ${unique()}';
+      await createVenue(nombreSede, 'Av. Rivadavia 19850');
+      final canchaUno = await createSpace(nombreSede);
+      final canchaDos = await createSpace(nombreSede);
+      final correoUno = 'valentina.${unique()}@correo.com';
+      final correoDos = 'bruno.${unique()}@correo.com';
+      await createAccount(
         correo: correoUno,
         contrasena: 'ClubNahuel1',
         nombre: 'Valentina',
       );
-      await crearCuenta(
+      await createAccount(
         correo: correoDos,
         contrasena: 'ClubNahuel1',
         nombre: 'Bruno',
       );
-      await ocupar(canchaUno, manana, 9, correo: correoUno);
-      await ocupar(canchaDos, manana, 9, correo: correoDos);
-      await entrarComoAdmin(tester);
+      await occupy(canchaUno, manana, 9, correo: correoUno);
+      await occupy(canchaDos, manana, 9, correo: correoDos);
+      await signInAsAdmin(tester);
 
-      await tocar(tester, 'Filtros');
-      await esperarA(tester, find.text('APLICAR'));
-      await tocar(tester, nombreSede);
-      await tocar(tester, 'APLICAR');
-      await esperarA(tester, find.textContaining('2 RESULTADOS'));
+      await tapText(tester, 'Filtros');
+      await waitUntil(tester, find.text('APLICAR'));
+      await tapText(tester, nombreSede);
+      await tapText(tester, 'APLICAR');
+      await waitUntil(tester, find.textContaining('2 RESULTADOS'));
 
-      await escribir(tester, 'Buscar reserva', 'Valentina');
-      await esperarA(tester, find.textContaining('1 RESULTADO'));
+      await typeInto(tester, 'Buscar reserva', 'Valentina');
+      await waitUntil(tester, find.textContaining('1 RESULTADO'));
       expect(find.text('Valentina Mosse'), findsOneWidget);
       expect(find.text('Bruno Mosse'), findsNothing);
       semantica.dispose();
@@ -195,23 +195,23 @@ void main() {
     'abre el detalle y ve cuándo y quién creó la reserva @CU-14-H01-06',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Haedo ${unico()}';
-      await crearSede(nombreSede, 'Av. Vergara 1850');
-      final cancha = await crearEspacio(nombreSede);
-      final correo = 'camila.${unico()}@correo.com';
-      await crearCuenta(
+      final nombreSede = 'Sede Haedo ${unique()}';
+      await createVenue(nombreSede, 'Av. Vergara 1850');
+      final cancha = await createSpace(nombreSede);
+      final correo = 'camila.${unique()}@correo.com';
+      await createAccount(
         correo: correo,
         contrasena: 'ClubNahuel1',
         nombre: 'Camila',
       );
-      await ocupar(cancha, manana, 11, correo: correo);
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.text(cancha));
+      await occupy(cancha, manana, 11, correo: correo);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.text(cancha));
 
-      await tocar(tester, cancha);
+      await tapText(tester, cancha);
 
-      await esperarA(tester, find.text('Detalle de reserva'));
+      await waitUntil(tester, find.text('Detalle de reserva'));
       expect(find.text('Reserva creada'), findsOneWidget);
       expect(find.textContaining('Por Camila Mosse'), findsOneWidget);
       semantica.dispose();
@@ -222,20 +222,20 @@ void main() {
     'vuelve del detalle al listado con los mismos filtros @CU-14-H01-08',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Ramos Mejia ${unico()}';
-      await crearSede(nombreSede, 'Calle Belgrano 1240');
-      final cancha = await crearEspacio(nombreSede);
-      await ocupar(cancha, manana, 12);
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.text(cancha));
+      final nombreSede = 'Sede Ramos Mejia ${unique()}';
+      await createVenue(nombreSede, 'Calle Belgrano 1240');
+      final cancha = await createSpace(nombreSede);
+      await occupy(cancha, manana, 12);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.text(cancha));
 
-      await tocar(tester, cancha);
-      await esperarA(tester, find.text('Detalle de reserva'));
-      await tocar(tester, 'VOLVER AL LISTADO');
+      await tapText(tester, cancha);
+      await waitUntil(tester, find.text('Detalle de reserva'));
+      await tapText(tester, 'VOLVER AL LISTADO');
 
       // Verifica: sigue con la búsqueda aplicada, sin volver a pedirla a mano.
-      await esperarA(tester, find.text(cancha));
+      await waitUntil(tester, find.text(cancha));
       expect(find.bySemanticsLabel('Buscar reserva'), findsOneWidget);
       semantica.dispose();
     },
@@ -246,8 +246,8 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final api = await ApiIntermedia.abrir();
-      api.estado = EstadoApi.lenta;
-      await entrarComoAdmin(tester, apiUrl: api.url);
+      api.estado = ApiState.slow;
+      await signInAsAdmin(tester, apiUrl: api.url);
 
       // Verifica: mientras el pedido lento no volvió, se ve el aviso y no una pantalla vacía.
       expect(find.text('Cargando reservas…'), findsOneWidget);
@@ -260,22 +260,22 @@ void main() {
     'los filtros no encuentran nada y ve «Sin resultados» con «Limpiar filtros» @CU-14-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede San Justo ${unico()}';
-      await crearSede(nombreSede, 'Av. Rivadavia 5000');
-      final cancha = await crearEspacio(nombreSede);
-      await ocupar(cancha, manana, 13);
-      await entrarComoAdmin(tester);
+      final nombreSede = 'Sede San Justo ${unique()}';
+      await createVenue(nombreSede, 'Av. Rivadavia 5000');
+      final cancha = await createSpace(nombreSede);
+      await occupy(cancha, manana, 13);
+      await signInAsAdmin(tester);
 
-      await escribir(tester, 'Buscar reserva', '$nombreSede-sin-coincidencia');
-      await esperarA(tester, find.text('Sin resultados'));
+      await typeInto(tester, 'Buscar reserva', '$nombreSede-sin-coincidencia');
+      await waitUntil(tester, find.text('Sin resultados'));
       expect(
         find.text('Ninguna reserva coincide con los filtros aplicados.'),
         findsOneWidget,
       );
 
-      await tocar(tester, 'LIMPIAR FILTROS');
+      await tapText(tester, 'LIMPIAR FILTROS');
       // La lista perezosa deja la reserva fuera de pantalla entre las demás de la corrida.
-      await esperarA(tester, find.textContaining('RESERVAS EN TOTAL'));
+      await waitUntil(tester, find.textContaining('RESERVAS EN TOTAL'));
       await tester.scrollUntilVisible(
         find.text(cancha),
         400,
@@ -296,21 +296,21 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final api = await ApiIntermedia.abrir();
-      await entrarComoAdmin(tester, apiUrl: api.url);
-      await esperarA(tester, find.textContaining('RESERVA'));
+      await signInAsAdmin(tester, apiUrl: api.url);
+      await waitUntil(tester, find.textContaining('RESERVA'));
 
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'Filtros');
-      await esperarA(tester, find.text('APLICAR'));
-      await tocar(tester, 'APLICAR');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'Filtros');
+      await waitUntil(tester, find.text('APLICAR'));
+      await tapText(tester, 'APLICAR');
 
-      await esperarA(tester, find.text('Error del servidor'));
+      await waitUntil(tester, find.text('Error del servidor'));
       expect(find.textContaining('RESERVAS EN TOTAL'), findsNothing);
       expect(find.textContaining('RESULTADO'), findsNothing);
 
-      api.estado = EstadoApi.normal;
-      await tocar(tester, 'REINTENTAR');
-      await esperarA(tester, find.textContaining('RESERVA'));
+      api.estado = ApiState.normal;
+      await tapText(tester, 'REINTENTAR');
+      await waitUntil(tester, find.textContaining('RESERVA'));
       semantica.dispose();
     },
   );
@@ -319,9 +319,9 @@ void main() {
     'pone «desde» después de «hasta» y no puede aplicar @CU-14-H04-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await entrarComoAdmin(tester);
-      await tocar(tester, 'Filtros');
-      await esperarA(tester, find.text('APLICAR'));
+      await signInAsAdmin(tester);
+      await tapText(tester, 'Filtros');
+      await waitUntil(tester, find.text('APLICAR'));
       // Con las sedes de la corrida el rango de fechas queda debajo de lo que arma el listado.
       await tester.scrollUntilVisible(
         find.text('RANGO DE FECHAS'),
@@ -335,12 +335,12 @@ void main() {
             .first,
       );
 
-      await escribir(
+      await typeInto(
         tester,
         'Desde',
         fechaTexto(manana.add(const Duration(days: 10))),
       );
-      await escribir(tester, 'Hasta', fechaTexto(manana));
+      await typeInto(tester, 'Hasta', fechaTexto(manana));
 
       expect(find.text('Desde no puede ser posterior a Hasta'), findsOneWidget);
       expect(
@@ -358,17 +358,17 @@ void main() {
     'un usuario sin rol de administrador no ve el panel y, si entra por enlace, ve «Acceso denegado» @CU-14-H05-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await entrarComoUsuario(tester, correo: correo);
+      final correo = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, correo: correo);
       expect(find.text('PANEL ADMIN'), findsNothing);
 
       final contexto = tester.element(find.byType(Scaffold).first);
       GoRouter.of(contexto).go('/admin');
       await tester.pumpAndSettle();
 
-      await esperarA(tester, find.text('Acceso denegado'));
-      await tocar(tester, 'IR A MIS RESERVAS');
-      await esperarA(tester, find.text('Mis reservas'));
+      await waitUntil(tester, find.text('Acceso denegado'));
+      await tapText(tester, 'IR A MIS RESERVAS');
+      await waitUntil(tester, find.text('Mis reservas'));
       semantica.dispose();
     },
   );
@@ -377,31 +377,31 @@ void main() {
     'con la sesión vencida va al login y vuelve al historial con sus filtros @CU-14-H06-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Haedo ${unico()}';
-      await crearSede(nombreSede, 'Av. Vergara 1850');
+      final nombreSede = 'Sede Haedo ${unique()}';
+      await createVenue(nombreSede, 'Av. Vergara 1850');
       final api = await ApiIntermedia.abrir();
-      await entrarComoAdmin(tester, apiUrl: api.url);
-      await escribir(tester, 'Buscar reserva', nombreSede);
-      await esperarA(tester, find.text('Sin resultados'));
+      await signInAsAdmin(tester, apiUrl: api.url);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
+      await waitUntil(tester, find.text('Sin resultados'));
 
-      api.estado = EstadoApi.sesionVencida;
-      await tocar(tester, 'Filtros');
-      await esperarA(tester, find.text('APLICAR'));
-      await tocar(tester, 'APLICAR');
+      api.estado = ApiState.sessionExpired;
+      await tapText(tester, 'Filtros');
+      await waitUntil(tester, find.text('APLICAR'));
+      await tapText(tester, 'APLICAR');
 
-      await esperarA(tester, find.text('Tu sesión expiró'));
-      await tocar(tester, 'IR AL INICIO DE SESIÓN');
-      await esperarA(tester, find.text('INICIAR SESIÓN'));
+      await waitUntil(tester, find.text('Tu sesión expiró'));
+      await tapText(tester, 'IR AL INICIO DE SESIÓN');
+      await waitUntil(tester, find.text('INICIAR SESIÓN'));
 
-      api.estado = EstadoApi.normal;
-      await escribir(tester, 'Correo', correoAdmin);
-      await escribir(tester, 'Contraseña', contrasenaAdmin);
-      await tocar(tester, 'INICIAR SESIÓN');
+      api.estado = ApiState.normal;
+      await typeInto(tester, 'Correo', adminEmail);
+      await typeInto(tester, 'Contraseña', adminPassword);
+      await tapText(tester, 'INICIAR SESIÓN');
 
       // Verifica: vuelve al historial con la búsqueda que tenía.
-      await esperarA(tester, find.text('PANEL ADMIN'));
+      await waitUntil(tester, find.text('PANEL ADMIN'));
       expect(find.bySemanticsLabel('Buscar reserva'), findsOneWidget);
-      await esperarA(tester, find.text('Sin resultados'));
+      await waitUntil(tester, find.text('Sin resultados'));
       semantica.dispose();
     },
   );
@@ -410,18 +410,18 @@ void main() {
     'las reservas de un espacio dado de baja siguen en el historial marcadas «Baja del espacio deportivo» @CU-14-H09-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final nombreSede = 'Sede Castelar ${unico()}';
-      await crearSede(nombreSede, 'Av. Rivadavia 23500');
-      final cancha = await crearEspacio(nombreSede);
+      final nombreSede = 'Sede Castelar ${unique()}';
+      await createVenue(nombreSede, 'Av. Rivadavia 23500');
+      final cancha = await createSpace(nombreSede);
       // Sin reservas futuras: la baja del espacio no está bloqueada (decisión 5, CU-14-AMB-07).
-      await ocupar(cancha, ayer, 9);
-      await darDeBajaEspacioDesdeOtraSesion(cancha);
-      await entrarComoAdmin(tester);
-      await escribir(tester, 'Buscar reserva', nombreSede);
+      await occupy(cancha, ayer, 9);
+      await deactivateSpaceFromAnotherSession(cancha);
+      await signInAsAdmin(tester);
+      await typeInto(tester, 'Buscar reserva', nombreSede);
 
-      await esperarA(tester, find.text('Baja del espacio deportivo'));
-      await tocar(tester, cancha);
-      await esperarA(tester, find.text('Detalle de reserva'));
+      await waitUntil(tester, find.text('Baja del espacio deportivo'));
+      await tapText(tester, cancha);
+      await waitUntil(tester, find.text('Detalle de reserva'));
       expect(find.text('Baja del espacio deportivo'), findsOneWidget);
       semantica.dispose();
     },

@@ -20,12 +20,12 @@ Future<HeldApi> _mount(WidgetTester tester, String route) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  await cargarFuentes();
-  final held = HeldApi(rutasDeSedes());
+  await loadFonts();
+  final held = HeldApi(venueRoutes());
   await tester.pumpWidget(
     App(
       api: held.client,
-      session: SesionFalsa(perfilUsuario),
+      session: FakeSession(userProfile),
       appearance: Appearance.inMemory(dark: true),
       initialLocation: route,
     ),

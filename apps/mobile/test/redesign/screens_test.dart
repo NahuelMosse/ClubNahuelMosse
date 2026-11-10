@@ -103,9 +103,9 @@ Future<void> _montarInicio(
   ThemeData? tema,
   Size tamano = const Size(393, 852),
 }) {
-  final sesion = SesionFalsa(perfilUsuario);
+  final sesion = FakeSession(userProfile);
   final lista = (reservas ?? [_reserva()]).join(', ');
-  final api = apiRutas({
+  final api = apiRoutes({
     'GET /bookings': (
       200,
       '{"bookings": [$lista]'
@@ -114,7 +114,7 @@ Future<void> _montarInicio(
     'GET /spaces/catalog': (200, catalogo),
     'GET /venues': (200, _sedes),
   });
-  return montar(
+  return mountScreen(
     tester,
     HomeScreen(
       sesion: sesion,
@@ -138,8 +138,8 @@ Future<void> _montarMisReservas(
   String inicio = '/reservas',
   bool oscuro = true,
 }) {
-  final rutas = rutasDeSedes();
-  return montarUsuario(
+  final rutas = venueRoutes();
+  return mountUser(
     tester,
     inicio: inicio,
     oscuro: oscuro,
@@ -211,7 +211,7 @@ void _sinCuenta() {
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   group('inicio', () {
     testWidgets(
@@ -586,11 +586,11 @@ void main() {
 
   group('mi perfil', () {
     Future<void> montarPerfil(WidgetTester tester, {bool oscuro = true}) =>
-        montarUsuario(
+        mountUser(
           tester,
           inicio: '/perfil',
           oscuro: oscuro,
-          api: apiRutas(rutasDeSedes()),
+          api: apiRoutes(venueRoutes()),
         );
 
     Finder enLaFicha(Finder hijo) =>
@@ -644,13 +644,13 @@ void main() {
     testWidgets(
       'cada tarjeta de sede lleva el dorsal con sus canchas @RED-03-S4',
       (tester) async {
-        await montarUsuario(
+        await mountUser(
           tester,
           tamano: const Size(393, 1800),
-          api: apiRutas(
-            rutasDeSedes(
+          api: apiRoutes(
+            venueRoutes(
               sedes:
-                  '[$sedeMoronConDeportes, $sedeHaedoSinCanchas, '
+                  '[$venueMoronWithSports, $venueHaedoWithoutCourts, '
                   '${_sede('00000000-0000-7000-8000-000000000007', 'Sede Ituzaingó', 'Blas Parera 300', 12)}]',
             ),
           ),
@@ -688,12 +688,12 @@ void main() {
     Future<void> abrirHorarios(
       WidgetTester tester, {
       String? grilla,
-    }) => montarUsuario(
+    }) => mountUser(
       tester,
       inicio:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       tamano: const Size(393, 2400),
-      api: apiRutas(rutasDeSedes(grilla: grilla)),
+      api: apiRoutes(venueRoutes(grilla: grilla)),
     );
 
     String estadoDe(int hora) {
@@ -796,8 +796,8 @@ void main() {
         expect(find.byType(DayTimeline), findsOneWidget);
 
         for (final grilla in [
-          grillaJson(abre: false),
-          grillaJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
+          gridJson(abre: false),
+          gridJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
         ]) {
           await abrirHorarios(tester, grilla: grilla);
 
@@ -815,8 +815,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       final sesion = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(),
-          api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+          credentials: FakeCredentials(),
+          api: fakeApi(codigo: 200, cuerpo: profileJson()),
         ),
       );
       final rutas = GoRouter(

@@ -71,7 +71,7 @@ class _System implements NotificationSystem {
 }
 
 NotificationCenter _center(List<String> notices, {bool allowed = true}) {
-  final session = SesionFalsa(perfilUsuario);
+  final session = FakeSession(userProfile);
   final api = ApiClient(
     'http://api.falsa',
     cliente: MockClient((request) async {
@@ -80,7 +80,7 @@ NotificationCenter _center(List<String> notices, {bool allowed = true}) {
           200,
           '{"notifications": [${notices.join(', ')}], "unread": ${notices.length}}',
         ),
-        ('GET', '/me') => (200, perfilJson()),
+        ('GET', '/me') => (200, profileJson()),
         _ => (204, ''),
       };
       return http.Response.bytes(
@@ -100,12 +100,12 @@ NotificationCenter _center(List<String> notices, {bool allowed = true}) {
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> mountEnglish(WidgetTester tester, Widget widget) async {
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montar(tester, widget, tema: darkTheme);
+    await mountScreen(tester, widget, tema: darkTheme);
   }
 
   group('notifications', () {
@@ -122,7 +122,7 @@ void main() {
           tester,
           NotificationsScreen(
             center: center,
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             now: () => _now,
             onOpen: (_, _) {},
           ),
@@ -146,7 +146,7 @@ void main() {
           tester,
           NotificationsScreen(
             center: empty,
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             now: () => _now,
             onOpen: (_, _) {},
           ),
@@ -162,7 +162,7 @@ void main() {
           tester,
           NotificationsScreen(
             center: off,
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             now: () => _now,
             onOpen: (_, _) {},
           ),

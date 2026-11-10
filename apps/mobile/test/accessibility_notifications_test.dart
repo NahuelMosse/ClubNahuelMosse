@@ -6,18 +6,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'notifications_test.dart'
     show
-        ApiFalsa,
-        SistemaFalso,
-        ahoraClub,
-        alerta,
-        centroDe,
-        confirmacion,
-        recordatorio;
+        FakeApi,
+        FakeSystem,
+        noticesNow,
+        alertNotice,
+        centerOf,
+        confirmationNotice,
+        reminderNotice;
 import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> cumpleLasGuias(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -34,20 +34,20 @@ void main() {
       List<String> avisos = const [],
       bool permiso = true,
     }) async {
-      final api = ApiFalsa()
+      final api = FakeApi()
         ..avisos = avisos
         ..unread = avisos.length;
-      final sesion = SesionFalsa(perfilUsuario);
-      await montar(
+      final sesion = FakeSession(userProfile);
+      await mountScreen(
         tester,
         NotificationsScreen(
-          center: centroDe(
+          center: centerOf(
             api,
             sesion,
-            sistema: SistemaFalso(concedido: permiso),
+            sistema: FakeSystem(concedido: permiso),
           ),
           session: sesion,
-          now: () => ahoraClub,
+          now: () => noticesNow,
           onOpen: (_, _) {},
         ),
         tema: tema,
@@ -58,7 +58,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await centro(tester, avisos: [recordatorio, confirmacion, alerta]);
+      await centro(tester, avisos: [reminderNotice, confirmationNotice, alertNotice]);
       await cumpleLasGuias(tester);
       semantica.dispose();
     });
@@ -86,20 +86,20 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final api = ApiFalsa();
-      final avisos = centroDe(api, SesionFalsa(perfilUsuario));
-      await montar(
+      final api = FakeApi();
+      final avisos = centerOf(api, FakeSession(userProfile));
+      await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: SizedBox.expand()),
-            NoticePanel(center: avisos, now: () => ahoraClub, onOpen: (_) {}),
+            NoticePanel(center: avisos, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
         tema: tema,
       );
       api
-        ..avisos = [recordatorio]
+        ..avisos = [reminderNotice]
         ..unread = 1;
       await tester.runAsync(avisos.load);
       await tester.pumpAndSettle();
@@ -111,15 +111,15 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final api = ApiFalsa()
-        ..avisos = [confirmacion, alerta]
+      final api = FakeApi()
+        ..avisos = [confirmationNotice, alertNotice]
         ..unread = 2;
-      await montarUsuario(
+      await mountUser(
         tester,
         oscuro: oscuro,
         inicio: '/inicio',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (sesion) => centerOf(api, sesion),
       );
       await cumpleLasGuias(tester);
       semantica.dispose();

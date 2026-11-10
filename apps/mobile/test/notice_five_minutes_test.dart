@@ -30,7 +30,7 @@ void main() {
         noticeRoute(NotificationKind.reminder, _reserva),
       );
       var toques = 0;
-      await montar(
+      await mountScreen(
         tester,
         Scaffold(
           body: NoticeCard(

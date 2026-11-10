@@ -14,7 +14,7 @@ const _english = [Locale('en', 'US')];
 const _spanish = [Locale('es', 'AR')];
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   // One test per device: the semantics tree of a screen mounted over another one is not
   // rebuilt for the new language, so each language mounts on a clean tester.
@@ -31,11 +31,11 @@ void main() {
         addTearDown(tester.platformDispatcher.clearLocalesTestValue);
         final session = Session(
           repository: SessionRepository(
-            credentials: CredencialesFalsas(),
-            api: apiFalsa(codigo: 429, cuerpo: '{"message": "$message"}'),
+            credentials: FakeCredentials(),
+            api: fakeApi(codigo: 429, cuerpo: '{"message": "$message"}'),
           ),
         );
-        await montar(
+        await mountScreen(
           tester,
           LoginScreen(session: session, pending: PendingBooking()),
           tema: darkTheme,

@@ -51,7 +51,7 @@ Future<void> _abrir(WidgetTester tester, ApiClient api, String inicio) async {
   await tester.pumpWidget(
     App(
       api: api,
-      session: SesionFalsa(perfilAdmin),
+      session: FakeSession(adminProfile),
       appearance: Appearance.inMemory(dark: true),
       initialLocation: inicio,
     ),
@@ -71,8 +71,8 @@ Future<void> _cardShape(
   required Type card,
 }) async {
   final held = HeldApi({
-    ...rutasDeEspacios(),
-    'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
+    ...spaceRoutes(),
+    'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
   });
   await _abrir(tester, held.client, inicio);
   expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -90,7 +90,7 @@ Future<void> _cardShape(
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'Espacios del admin carga con la forma de su tarjeta @VIS-03-S1',
@@ -127,7 +127,7 @@ void main() {
           }
           return Future.value(
             http.Response.bytes(
-              utf8.encode(catalogoJson),
+              utf8.encode(catalogJson),
               pedido.url.path == '/spaces/catalog' ? 200 : 404,
               headers: cabeceras,
             ),
@@ -165,7 +165,7 @@ void main() {
     (tester) async {
       final held = HeldApi({
         'GET /bookings/all': (200, _pagina([1, 2], 1)),
-        'GET /spaces/catalog': (200, catalogoJson),
+        'GET /spaces/catalog': (200, catalogJson),
       });
       await _abrir(tester, held.client, '/admin');
       expect(find.text('Cargando reservas…'), findsOneWidget);
@@ -188,7 +188,7 @@ void main() {
     'Alta de espacio carga con la forma de su formulario, no un spinner '
     '@VIS-03-S2',
     (tester) async {
-      final held = HeldApi(rutasDeEspacios());
+      final held = HeldApi(spaceRoutes());
       await _abrir(tester, held.client, '/admin/espacios/nuevo');
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.text('Nuevo espacio'), findsOneWidget);
@@ -214,7 +214,7 @@ void main() {
     'las pantallas que reciben sus datos cargados no muestran skeleton y los '
     'spinners de botones siguen @assumption:VIS-03-ASM-02',
     (tester) async {
-      final held = HeldApi(rutasDeEspacios());
+      final held = HeldApi(spaceRoutes());
       await _abrir(tester, held.client, '/admin/espacios/nuevo');
       held.release();
       await tester.pumpAndSettle();

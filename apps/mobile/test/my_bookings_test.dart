@@ -10,7 +10,7 @@ import 'package:http/testing.dart';
 
 import 'support/user.dart';
 
-String reservaJson({
+String bookingJson({
   String id = '00000000-0000-7000-8000-000000000001',
   String inicio = '2026-11-13T00:00:00+00:00',
   String fin = '2026-11-13T01:00:00+00:00',
@@ -36,8 +36,8 @@ void main() {
     Size tamano = const Size(393, 852),
   }) async {
     final pedidos = <http.Request>[];
-    final rutas = rutasDeSedes();
-    await montarUsuario(
+    final rutas = venueRoutes();
+    await mountUser(
       tester,
       inicio: '/reservas',
       tamano: tamano,
@@ -65,7 +65,7 @@ void main() {
   testWidgets('las próximas con sus datos y en la hora del club', (
     tester,
   ) async {
-    await abrir(tester, proximas: '[${reservaJson()}]');
+    await abrir(tester, proximas: '[${bookingJson()}]');
 
     expect(find.text('Fútbol 5'), findsOneWidget);
     expect(find.text('Sede Morón · Av. Rivadavia 19850'), findsOneWidget);
@@ -83,9 +83,9 @@ void main() {
     final pedidos = await abrir(
       tester,
       historial:
-          '[${reservaJson(estado: 'canceled')}, '
-          '${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'lluvia')}, '
-          '${reservaJson(id: '00000000-0000-7000-8000-000000000003', estado: 'completed')}]',
+          '[${bookingJson(estado: 'canceled')}, '
+          '${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'lluvia')}, '
+          '${bookingJson(id: '00000000-0000-7000-8000-000000000003', estado: 'completed')}]',
     );
 
     await tester.tap(find.text('Historial'));
@@ -128,7 +128,7 @@ void main() {
     await abrir(
       tester,
       tamano: const Size(360, 800),
-      proximas: '[${reservaJson(estado: 'active')}]',
+      proximas: '[${bookingJson(estado: 'active')}]',
     );
     expect(tester.takeException(), isNull);
   });
@@ -138,9 +138,9 @@ void main() {
     (tester) async {
       final pedidos = await abrir(
         tester,
-        proximas: '[${reservaJson()}]',
+        proximas: '[${bookingJson()}]',
         historial:
-            '[${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'Lluvia')}]',
+            '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'Lluvia')}]',
       );
       expect(find.text('ACTIVA'), findsOneWidget);
 

@@ -9,7 +9,7 @@ import '../support/fixed_clock.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo (CU-14).
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   const modos = {'dark': true, 'light': false};
@@ -54,36 +54,36 @@ void main() {
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
       testWidgets('listado con reservas $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [$reservaActivaJson, $reservaCompletadaJson,'
                   ' $reservaAnuladaJson], "total": 49, "page": 1, "per_page": 20,'
                   ' $contadores}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await capturar(tester, 'admin/bookings_${ancho}_$modo.png');
       });
 
       testWidgets('listado cargando $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [], "total": 0, "page": 1, "per_page": 20, $contadores}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         // Un solo cuadro, antes de que el pedido vuelva.
@@ -95,19 +95,19 @@ void main() {
       });
 
       testWidgets('sin resultados $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
                   ' "counters": {"all": 0, "active": 0, "completed": 0,'
                   ' "voided": 0}}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await tester.enterText(
@@ -121,40 +121,40 @@ void main() {
       });
 
       testWidgets('historial vacío $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
                   ' "counters": {"all": 0, "active": 0, "completed": 0,'
                   ' "voided": 0}}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await capturar(tester, 'admin/bookings_empty_${ancho}_$modo.png');
       });
 
       testWidgets('panel de filtros $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [$reservaActivaJson], "total": 49, "page": 1,'
                   ' "per_page": 20, $contadores}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
             'GET /venues': (
               200,
-              '{"venues": [$sedeMoronJson, $sedeCastelarJson]}',
+              '{"venues": [$venueMoronJson, $venueCastelarJson]}',
             ),
           }),
         );
@@ -163,20 +163,20 @@ void main() {
       });
 
       testWidgets('rango de fechas inválido $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
                   ' "counters": {"all": 0, "active": 0, "completed": 0,'
                   ' "voided": 0}}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
-            'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
+            'GET /spaces/catalog': (200, catalogJson),
+            'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
           }),
         );
         await tester.tap(find.text('Filtros'));
@@ -190,18 +190,18 @@ void main() {
       });
 
       testWidgets('detalle de reserva $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [$reservaActivaJson], "total": 1, "page": 1,'
                   ' "per_page": 20, $contadores}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await tester.tap(find.text('Moron_Rivadavia_19850_Futbol_F5_1'));
@@ -209,18 +209,18 @@ void main() {
       });
 
       testWidgets('detalle de reserva anulada $ancho $modo', (tester) async {
-        await montarAdmin(
+        await mountAdmin(
           tester,
           inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [$reservaAnuladaJson], "total": 1, "page": 1,'
                   ' "per_page": 20, $contadores}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         );
         await tester.tap(find.text('RamosMejia_Belgrano_1240_Hockey_H7_1'));
@@ -231,9 +231,9 @@ void main() {
       });
 
       testWidgets('acceso denegado $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
-          AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
+          AccessDeniedScreen(session: FakeSession(userProfile)),
           tema: oscuro ? darkTheme : lightTheme,
           tamano: tamano,
         );

@@ -8,12 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'el panel admin y Mis reservas muestran la reserva con la misma tarjeta @REV-06-S5 @assumption:REV-06-ASM-04',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         const BookingDateAndTime(
           date: 'sábado 7 de junio',

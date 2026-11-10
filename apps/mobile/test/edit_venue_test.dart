@@ -16,7 +16,7 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     final respuestas = [...alGuardar];
-    await montarAdmin(
+    await mountAdmin(
       tester,
       tamano: tamano,
       api: ApiClient(
@@ -26,9 +26,9 @@ void main() {
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
             ('PUT', '/venues/00000000-0000-7000-8000-000000000001') =>
               respuestas.isEmpty
-                  ? (200, sedeMoronJson)
+                  ? (200, venueMoronJson)
                   : respuestas.removeAt(0),
-            ('GET', '/venues') => (200, '{"venues": [$sedeMoronJson]}'),
+            ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
@@ -125,7 +125,7 @@ void main() {
       tester,
       alGuardar: [(409, '{"bookings_outside": 3}')],
     );
-    await elegir(tester, 'Horario de cierre', '22:00');
+    await choose(tester, 'Horario de cierre', '22:00');
 
     await tocar(tester, 'GUARDAR CAMBIOS');
 
@@ -149,8 +149,8 @@ void main() {
     tester,
   ) async {
     await abrir(tester, alGuardar: [(409, '{"bookings_outside": 1}')]);
-    await elegir(tester, 'Horario de apertura', '10:00');
-    await elegir(tester, 'Días que abre', 'Lunes a viernes');
+    await choose(tester, 'Horario de apertura', '10:00');
+    await choose(tester, 'Días que abre', 'Lunes a viernes');
 
     await tocar(tester, 'GUARDAR CAMBIOS');
 

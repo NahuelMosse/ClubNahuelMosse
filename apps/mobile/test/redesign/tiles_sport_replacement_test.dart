@@ -12,10 +12,10 @@ void main() {
     'los tiles usan las fotos de la app, ninguno está elegido y tocar uno abre «Buscar cancha» con ese deporte @RED-03-ASM-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
-        api: apiRutas({
-          ...rutasDeSedes(),
+        api: apiRoutes({
+          ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": []}'),
         }),
         inicio: '/inicio',

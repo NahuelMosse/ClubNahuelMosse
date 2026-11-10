@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../my_bookings_test.dart' show reservaJson;
+import '../my_bookings_test.dart' show bookingJson;
 import '../notifications_test.dart'
-    show ApiFalsa, ahoraClub, centroDe, recordatorio;
+    show FakeApi, noticesNow, centerOf, reminderNotice;
 import '../support/mount.dart';
 import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
 
@@ -85,13 +85,13 @@ double _ancho(WidgetTester tester, Finder f) =>
     tester.getBottomRight(f).dx - tester.getTopLeft(f).dx;
 
 Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(reservaJson()));
+  final reserva = bookingFromJson(jsonDecode(bookingJson()));
   if (reserva == null) fail('la reserva de prueba no se lee');
   return reserva;
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'con reducir movimiento el festejo, el aviso y la entrada muestran su final en el primer cuadro @RED-04-S14',
@@ -116,20 +116,20 @@ void main() {
       await _desmontar(tester);
 
       // El aviso dentro de la app.
-      final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion);
+      final api = FakeApi();
+      final sesion = FakeSession(userProfile);
+      final centro = centerOf(api, sesion);
       await _montarLibre(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
+            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
       );
       api
-        ..avisos = [recordatorio]
+        ..avisos = [reminderNotice]
         ..unread = 1;
       await tester.runAsync(centro.load);
       await tester.pump();
@@ -142,7 +142,7 @@ void main() {
       await _desmontar(tester);
 
       // La entrada escalonada del inicio.
-      await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
+      await _montarLibre(tester, fakeHome(FakeSession(userProfile)));
       await _hastaQue(
         tester,
         () => find.byType(SportTile).evaluate().isNotEmpty,

@@ -29,7 +29,7 @@ const invalidCredentialsMessage =
     'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
 
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
-ApiClient apiFalsa({
+ApiClient fakeApi({
   int codigo = 201,
   String cuerpo = '{"id": "00000000-0000-7000-8000-000000000001"}',
 }) => ApiClient(
@@ -45,7 +45,7 @@ ApiClient apiFalsa({
 
 /// Un cliente de la API que responde según `MÉTODO /ruta`; lo que no está es un 404.
 /// Guarda cada pedido en [pedidos] para afirmar qué se mandó.
-ApiClient apiRutas(
+ApiClient apiRoutes(
   Map<String, (int, String)> respuestas, {
   List<http.Request>? pedidos,
 }) => ApiClient(
@@ -89,10 +89,10 @@ const _proximaJson =
 
 /// Una API con lo que lee el Home: 4 sedes con 17 canchas (o, con [unaSede], una sede con
 /// una cancha), el catálogo de deportes y, con [conReserva], una próxima reserva.
-ApiClient apiInicio({
+ApiClient homeApi({
   bool conReserva = true,
   bool unaSede = false,
-}) => apiRutas({
+}) => apiRoutes({
   'GET /bookings': (200, '{"bookings": [${conReserva ? _proximaJson : ''}]}'),
   'GET /spaces/catalog': (200, _catalogoJson),
   'GET /venues': (
@@ -107,12 +107,12 @@ ApiClient apiInicio({
 });
 
 /// El Home leyendo de [apiInicio].
-Widget inicioFalso(
+Widget fakeHome(
   Session sesion, {
   bool conReserva = true,
   bool unaSede = false,
 }) {
-  final api = apiInicio(conReserva: conReserva, unaSede: unaSede);
+  final api = homeApi(conReserva: conReserva, unaSede: unaSede);
   return HomeScreen(
     sesion: sesion,
     reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
@@ -126,7 +126,7 @@ Widget inicioFalso(
 }
 
 /// Monta [pantalla] con el tema y el idioma de la app, en un teléfono de [tamano].
-Future<void> montar(
+Future<void> mountScreen(
   WidgetTester tester,
   Widget pantalla, {
   required ThemeData tema,
@@ -160,7 +160,7 @@ Future<void> montar(
 }
 
 /// Carga las fuentes del prototipo y los íconos: en los tests de widgets no vienen solas.
-Future<void> cargarFuentes() async {
+Future<void> loadFonts() async {
   const familias = {
     'Inter': [
       'assets/fuentes/Inter-Regular.ttf',
@@ -183,8 +183,8 @@ Future<void> cargarFuentes() async {
 }
 
 /// Firebase sin red: [alIngresar] decide qué pasa con cada intento.
-class CredencialesFalsas implements Credentials {
-  CredencialesFalsas({this.alIngresar, this.conCuenta = false});
+class FakeCredentials implements Credentials {
+  FakeCredentials({this.alIngresar, this.conCuenta = false});
 
   final Future<void> Function(String correo, String contrasena)? alIngresar;
   bool conCuenta;
@@ -218,11 +218,11 @@ class CredencialesFalsas implements Credentials {
 }
 
 /// El perfil que devuelve `GET /yo` en los tests.
-String perfilJson({String rol = 'user'}) =>
+String profileJson({String rol = 'user'}) =>
     '{"first_name": "Nahuel", "last_name": "Mosse", "email": "nahuel@correo.com", '
     '"role": "$rol", "dni": "42118507", "birth_date": "2000-03-14"}';
 
-final perfilUsuario = Profile(
+final userProfile = Profile(
   firstName: 'Nahuel',
   lastName: 'Mosse',
   email: 'nmosse@unimoron.edu.ar',
@@ -231,7 +231,7 @@ final perfilUsuario = Profile(
   birthDate: DateTime(2000, 3, 14),
 );
 
-final perfilAdmin = Profile(
+final adminProfile = Profile(
   firstName: 'Ana',
   lastName: 'Díaz',
   email: 'admin@clubnahuelmosse.com',
@@ -241,12 +241,12 @@ final perfilAdmin = Profile(
 );
 
 /// Una sesión ya iniciada con [perfil], sin Firebase ni API.
-class SesionFalsa extends Session {
-  SesionFalsa(this._perfilFalso)
+class FakeSession extends Session {
+  FakeSession(this._perfilFalso)
     : super(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(conCuenta: true),
-          api: apiFalsa(),
+          credentials: FakeCredentials(conCuenta: true),
+          api: fakeApi(),
         ),
       );
 
@@ -276,10 +276,10 @@ Widget loginRejectingCredentials() => LoginScreen(
   pending: PendingBooking(),
   session: Session(
     repository: SessionRepository(
-      credentials: CredencialesFalsas(
+      credentials: FakeCredentials(
         alIngresar: (_, _) async => throw const InvalidCredentials(),
       ),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+      api: fakeApi(codigo: 200, cuerpo: profileJson()),
     ),
   ),
 );

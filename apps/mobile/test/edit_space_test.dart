@@ -21,7 +21,7 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     var guardado = false;
-    await montarAdmin(
+    await mountAdmin(
       tester,
       inicio: '/admin/espacios',
       tamano: tamano,
@@ -36,10 +36,10 @@ void main() {
             }(),
             ('GET', '/spaces') => (
               200,
-              '{"spaces": [${guardado ? editado : espacioF5Json}]}',
+              '{"spaces": [${guardado ? editado : spaceF5Json}]}',
             ),
-            ('GET', '/spaces/catalog') => (200, catalogoJson),
-            ('GET', '/venues') => (200, '{"venues": [$sedeMoronJson]}'),
+            ('GET', '/spaces/catalog') => (200, catalogJson),
+            ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
             _ => (404, '{}'),
           };
           return http.Response.bytes(

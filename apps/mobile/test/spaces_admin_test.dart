@@ -92,7 +92,7 @@ void main() {
   });
 
   group('catálogo', () {
-    final catalogo = Catalog.fromJson(jsonDecode(catalogoJson));
+    final catalogo = Catalog.fromJson(jsonDecode(catalogJson));
 
     test('se lee de la API', () {
       expect(catalogo?.sports.map((d) => d.name), ['Fútbol', 'Tenis']);
@@ -107,7 +107,7 @@ void main() {
     });
 
     test('la descripción del espacio lleva tipo, condición y precio', () {
-      final espacio = Space.fromJson(jsonDecode(espacioTenisJson));
+      final espacio = Space.fromJson(jsonDecode(spaceTennisJson));
       final c = catalogo;
       expect(espacio, isNotNull);
       expect(c, isNotNull);
@@ -125,12 +125,12 @@ void main() {
 
   group('Espacios', () {
     Spaces espacios(ApiClient api) => Spaces(
-      repository: SpacesRepository(api: api, session: SesionFalsa(perfilAdmin)),
+      repository: SpacesRepository(api: api, session: FakeSession(adminProfile)),
     );
 
     test('pide el catálogo una sola vez', () async {
       final pedidos = <http.Request>[];
-      final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
+      final e = espacios(apiRoutes(spaceRoutes(), pedidos: pedidos));
       await e.repository.catalog();
       await e.repository.catalog();
       expect(
@@ -141,7 +141,7 @@ void main() {
 
     test('el nombre sugerido va con la sede, el deporte y el tipo', () async {
       final pedidos = <http.Request>[];
-      final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
+      final e = espacios(apiRoutes(spaceRoutes(), pedidos: pedidos));
       final (nombre, numero) = await e.suggestedName(
         venueId: '00000000-0000-7000-8000-000000000001',
         sport: 'Futbol',
@@ -167,7 +167,7 @@ void main() {
 
     test('el alta manda el número que se vio', () async {
       final pedidos = <http.Request>[];
-      final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
+      final e = espacios(apiRoutes(spaceRoutes(), pedidos: pedidos));
       final espacio = await alta(e);
       expect(espacio.name, 'Moron_Rivadavia_19850_Futbol_F5_1');
       expect(jsonDecode(pedidos.single.body), {
@@ -183,8 +183,8 @@ void main() {
 
     test('si otro alta tomó el número, vuelve con el siguiente', () {
       final e = espacios(
-        apiRutas(
-          rutasDeEspacios(
+        apiRoutes(
+          spaceRoutes(
             alta: (
               409,
               '{"errors": {"name": "Ya existe"}, '
@@ -209,8 +209,8 @@ void main() {
 
     test('los datos rechazados vuelven por campo', () {
       final e = espacios(
-        apiRutas(
-          rutasDeEspacios(
+        apiRoutes(
+          spaceRoutes(
             alta: (
               422,
               '{"errors": {"venue_id": "La sede ya no está disponible"}}',
@@ -225,14 +225,14 @@ void main() {
   group('panel de espacios', () {
     testWidgets('cuenta los espacios y las sedes', (tester) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/espacios',
-        api: apiRutas({
-          ...rutasDeEspacios(),
+        api: apiRoutes({
+          ...spaceRoutes(),
           'GET /spaces': (
             200,
-            '{"spaces": [$espacioF5Json, $espacioTenisJson, $espacioCastelarJson]}',
+            '{"spaces": [$spaceF5Json, $spaceTennisJson, $spaceCastelarJson]}',
           ),
         }),
       );
@@ -248,11 +248,11 @@ void main() {
     });
 
     testWidgets('sin espacios lo dice', (tester) async {
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/espacios',
-        api: apiRutas({
-          ...rutasDeEspacios(),
+        api: apiRoutes({
+          ...spaceRoutes(),
           'GET /spaces': (200, '{"spaces": []}'),
         }),
       );
@@ -267,20 +267,20 @@ void main() {
       Map<String, (int, String)>? rutas,
     }) async {
       final pedidos = <http.Request>[];
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/espacios/nuevo',
-        api: apiRutas(rutas ?? rutasDeEspacios(), pedidos: pedidos),
+        api: apiRoutes(rutas ?? spaceRoutes(), pedidos: pedidos),
       );
       return pedidos;
     }
 
     Future<void> completar(WidgetTester tester) async {
-      await elegir(tester, 'Sede', 'Sede Morón');
-      await elegir(tester, 'Deporte', 'Fútbol');
-      await elegir(tester, 'Tipo', 'Fútbol 5');
-      await elegir(tester, 'Condición', 'Al aire libre');
-      await elegir(tester, 'Iluminación', 'Iluminada');
+      await choose(tester, 'Sede', 'Sede Morón');
+      await choose(tester, 'Deporte', 'Fútbol');
+      await choose(tester, 'Tipo', 'Fútbol 5');
+      await choose(tester, 'Condición', 'Al aire libre');
+      await choose(tester, 'Iluminación', 'Iluminada');
       await tester.enterText(find.bySemanticsLabel('Precio por hora'), '38000');
       await tester.pumpAndSettle();
     }
@@ -308,10 +308,10 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(Dialog), findsNothing);
 
-        await elegir(tester, 'Deporte', 'Fútbol');
-        await elegir(tester, 'Tipo', 'Fútbol 7');
+        await choose(tester, 'Deporte', 'Fútbol');
+        await choose(tester, 'Tipo', 'Fútbol 7');
         expect(find.text('Fútbol 7'), findsOneWidget);
-        await elegir(tester, 'Deporte', 'Tenis');
+        await choose(tester, 'Deporte', 'Tenis');
         expect(find.text('Fútbol 7'), findsNothing);
         expect(find.text('Seleccioná el tipo'), findsOneWidget);
         semantica.dispose();
@@ -323,11 +323,11 @@ void main() {
       (tester) async {
         final semantica = tester.ensureSemantics();
         await abrir(tester);
-        await elegir(tester, 'Sede', 'Sede Morón');
+        await choose(tester, 'Sede', 'Sede Morón');
         expect(find.text('Falta el deporte'), findsOneWidget);
-        await elegir(tester, 'Deporte', 'Fútbol');
+        await choose(tester, 'Deporte', 'Fútbol');
         expect(find.text('Falta el tipo de cancha'), findsOneWidget);
-        await elegir(tester, 'Tipo', 'Fútbol 5');
+        await choose(tester, 'Tipo', 'Fútbol 5');
         expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
         semantica.dispose();
       },
@@ -353,7 +353,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await abrir(
         tester,
-        rutas: rutasDeEspacios(
+        rutas: spaceRoutes(
           alta: (
             409,
             '{"errors": {"name": "Ya existe un espacio deportivo con ese nombre '
@@ -382,11 +382,11 @@ void main() {
         final semantica = tester.ensureSemantics();
         final pedidos = await abrir(
           tester,
-          rutas: {...rutasDeEspacios(), 'GET /spaces/name': (500, '{}')},
+          rutas: {...spaceRoutes(), 'GET /spaces/name': (500, '{}')},
         );
-        await elegir(tester, 'Sede', 'Sede Morón');
-        await elegir(tester, 'Deporte', 'Fútbol');
-        await elegir(tester, 'Tipo', 'Fútbol 5');
+        await choose(tester, 'Sede', 'Sede Morón');
+        await choose(tester, 'Deporte', 'Fútbol');
+        await choose(tester, 'Tipo', 'Fútbol 5');
         expect(find.text('No se pudo calcular el nombre'), findsOneWidget);
         expect(find.text('Falta el tipo de cancha'), findsNothing);
         await tester.tap(find.text('REINTENTAR'));
@@ -405,7 +405,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final pedidos = await abrir(
         tester,
-        rutas: {...rutasDeEspacios(), 'GET /spaces/name': (500, '{}')},
+        rutas: {...spaceRoutes(), 'GET /spaces/name': (500, '{}')},
       );
       await completar(tester);
       await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
@@ -422,18 +422,18 @@ void main() {
       final semantica = tester.ensureSemantics();
       await abrir(
         tester,
-        rutas: {...rutasDeEspacios(), 'GET /spaces/name': (401, '{}')},
+        rutas: {...spaceRoutes(), 'GET /spaces/name': (401, '{}')},
       );
-      await elegir(tester, 'Sede', 'Sede Morón');
-      await elegir(tester, 'Deporte', 'Fútbol');
-      await elegir(tester, 'Tipo', 'Fútbol 5');
+      await choose(tester, 'Sede', 'Sede Morón');
+      await choose(tester, 'Deporte', 'Fútbol');
+      await choose(tester, 'Tipo', 'Fútbol 5');
       expect(find.text('Tu sesión expiró'), findsOneWidget);
       semantica.dispose();
     });
 
     testWidgets('sin sedes lo dice y no deja elegir', (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrir(tester, rutas: rutasDeEspacios(sedes: '[]'));
+      await abrir(tester, rutas: spaceRoutes(sedes: '[]'));
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('Sede'));
       await tester.pumpAndSettle();
@@ -444,10 +444,10 @@ void main() {
     testWidgets('el éxito sin el espacio guardado lleva al listado', (
       tester,
     ) async {
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/espacios/creado',
-        api: apiRutas(rutasDeEspacios()),
+        api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('¡Espacio deportivo creado!'), findsNothing);
       expect(find.text('ALTA ESPACIO'), findsOneWidget);
@@ -460,8 +460,8 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
-        api: apiRutas({}),
-        session: SesionFalsa(perfilUsuario),
+        api: apiRoutes({}),
+        session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
         initialLocation: '/admin/espacios/nuevo',
       ),

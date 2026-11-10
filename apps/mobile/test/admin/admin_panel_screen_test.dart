@@ -23,7 +23,7 @@ String _uuid(int n) =>
     '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const reservaJson =
       '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
@@ -35,7 +35,7 @@ void main() {
       ' "canceled_by_name": null, "space_deactivated": false}';
 
   Widget pantalla({required ApiClient api}) {
-    final sesion = SesionFalsa(perfilAdmin);
+    final sesion = FakeSession(adminProfile);
     return AdminPanelScreen(
       history: BookingHistory(api: api, sesion: sesion),
       venues: Venues(
@@ -52,17 +52,17 @@ void main() {
   testWidgets('muestra el listado con el total y el contador de cada pestaña', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
       pantalla(
-        api: apiRutas({
+        api: apiRoutes({
           'GET /bookings/all': (
             200,
             '{"bookings": [$reservaJson], "total": 1, "page": 1,'
                 ' "per_page": 20, "counters": {"all": 1, "active": 1,'
                 ' "completed": 0, "voided": 0}}',
           ),
-          'GET /spaces/catalog': (200, catalogoJson),
+          'GET /spaces/catalog': (200, catalogJson),
         }),
       ),
       tema: darkTheme,
@@ -78,17 +78,17 @@ void main() {
   testWidgets('sin reservas en el sistema muestra «No hay reservas»', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
       pantalla(
-        api: apiRutas({
+        api: apiRoutes({
           'GET /bookings/all': (
             200,
             '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
                 ' "counters": {"all": 0, "active": 0, "completed": 0,'
                 ' "voided": 0}}',
           ),
-          'GET /spaces/catalog': (200, catalogoJson),
+          'GET /spaces/catalog': (200, catalogJson),
         }),
       ),
       tema: darkTheme,
@@ -102,17 +102,17 @@ void main() {
   testWidgets(
     'con el texto al 200% en 360 de ancho no hay overflow ni excepciones',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         pantalla(
-          api: apiRutas({
+          api: apiRoutes({
             'GET /bookings/all': (
               200,
               '{"bookings": [$reservaJson], "total": 1, "page": 1,'
                   ' "per_page": 20, "counters": {"all": 1, "active": 1,'
                   ' "completed": 0, "voided": 0}}',
             ),
-            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogJson),
           }),
         ),
         tema: darkTheme,
@@ -160,13 +160,13 @@ void main() {
             );
           }
           return http.Response.bytes(
-            utf8.encode(catalogoJson),
+            utf8.encode(catalogJson),
             pedido.url.path == '/spaces/catalog' ? 200 : 404,
             headers: cabeceras,
           );
         }),
       );
-      await montar(
+      await mountScreen(
         tester,
         pantalla(api: api),
         tema: darkTheme,

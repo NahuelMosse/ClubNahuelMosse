@@ -50,7 +50,7 @@ void _acentoSobreFoto(String pantalla) {
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   test(
     'el sobretítulo del inicio usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
@@ -111,7 +111,7 @@ void main() {
   testWidgets(
     'el panel admin y Mis reservas muestran la reserva con la misma tarjeta @REV-06-S5 @assumption:REV-06-ASM-04 @ARQ-03-S3',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         const BookingDateAndTime(
           date: 'sábado 7 de junio',

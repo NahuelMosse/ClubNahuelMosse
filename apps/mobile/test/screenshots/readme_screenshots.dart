@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 import 'package:intl/intl.dart';
 
-import '../my_bookings_test.dart' show reservaJson;
+import '../my_bookings_test.dart' show bookingJson;
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 import '../support/user.dart';
@@ -15,7 +15,7 @@ import '../support/user.dart';
 /// It is not a `_test.dart` file, so the default run skips it; the gate runs it by name.
 /// Before writing each PNG it asserts that the screen shows its English text.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const phone = Size(430, 932);
   const spaceId = '00000000-0000-7000-8000-000000000009';
@@ -44,16 +44,16 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile(name));
   }
 
-  Future<void> openVenues(WidgetTester tester, String start) => montarUsuario(
+  Future<void> openVenues(WidgetTester tester, String start) => mountUser(
     tester,
     oscuro: false,
     tamano: phone,
     inicio: start,
-    api: apiRutas({
-      ...rutasDeSedes(),
+    api: apiRoutes({
+      ...venueRoutes(),
       'POST /bookings': (
         201,
-        reservaJson(
+        bookingJson(
           inicio: '2026-11-12T21:00:00+00:00',
           fin: '2026-11-12T22:00:00+00:00',
         ),
@@ -63,7 +63,7 @@ void main() {
 
   testWidgets('01-login', (tester) async {
     useEnglishDevice(tester);
-    await montar(
+    await mountScreen(
       tester,
       loginRejectingCredentials(),
       tema: lightTheme,

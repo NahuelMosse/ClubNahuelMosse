@@ -33,9 +33,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import '../my_bookings_test.dart' show reservaJson;
+import '../my_bookings_test.dart' show bookingJson;
 import '../notifications_test.dart'
-    show ApiFalsa, ahoraClub, centroDe, recordatorio;
+    show FakeApi, noticesNow, centerOf, reminderNotice;
 import '../support/admin.dart';
 import '../support/mount.dart';
 import '../support/user.dart';
@@ -227,7 +227,7 @@ Future<void> _tocarSinEsperar(WidgetTester tester, Finder f) async {
 // ---- las apis ----
 
 ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
-  final rutas = rutasDeSedes();
+  final rutas = venueRoutes();
   return ApiClient(
     'http://api.falsa',
     cliente: MockClient((pedido) async {
@@ -238,7 +238,7 @@ ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
       final (codigo, cuerpo) = pedido.url.path == '/bookings'
           ? (
               200,
-              '{"bookings": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed') : reservaJson()}]}',
+              '{"bookings": [${historial ? bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed') : bookingJson()}]}',
             )
           : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
@@ -251,7 +251,7 @@ ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
 }
 
 ApiClient _apiSede(Completer<void>? espera) {
-  final rutas = rutasDeSedes();
+  final rutas = venueRoutes();
   return ApiClient(
     'http://api.falsa',
     cliente: MockClient((pedido) async {
@@ -260,7 +260,7 @@ ApiClient _apiSede(Completer<void>? espera) {
           pedido.url.queryParameters.containsKey('sport');
       if (filtrado) await espera?.future;
       final (codigo, cuerpo) = filtrado
-          ? (200, '{"spaces": [$espacioF5Json]}')
+          ? (200, '{"spaces": [$spaceF5Json]}')
           : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
         utf8.encode(cuerpo),
@@ -273,11 +273,11 @@ ApiClient _apiSede(Completer<void>? espera) {
 
 // ---- las pantallas ----
 
-Widget _login({CredencialesFalsas? credenciales}) => LoginScreen(
+Widget _login({FakeCredentials? credenciales}) => LoginScreen(
   session: Session(
     repository: SessionRepository(
-      credentials: credenciales ?? CredencialesFalsas(),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+      credentials: credenciales ?? FakeCredentials(),
+      api: fakeApi(codigo: 200, cuerpo: profileJson()),
     ),
   ),
   pending: PendingBooking(),
@@ -295,7 +295,7 @@ Widget _resultado(ResultTone tono) => ResultScreen(
 );
 
 Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(reservaJson()));
+  final reserva = bookingFromJson(jsonDecode(bookingJson()));
   if (reserva == null) fail('la reserva de prueba no se lee');
   return reserva;
 }
@@ -325,7 +325,7 @@ Widget _cancelacion() => _Anfitrion(
 );
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   // ---- T3: la lista cambia en su lugar ----
 
@@ -333,7 +333,7 @@ void main() {
     'cambiar a Historial cambia sólo la lista con un fundido de 150 ms @RED-04-S5',
     (tester) async {
       final espera = Completer<void>();
-      await montarUsuario(
+      await mountUser(
         tester,
         api: _apiMisReservas(espera),
         inicio: '/reservas',
@@ -385,7 +385,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final espera = Completer<void>();
-      await montarUsuario(
+      await mountUser(
         tester,
         api: _apiSede(espera),
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
@@ -435,7 +435,7 @@ void main() {
     'con reducir movimiento la lista cambia en el primer cuadro @RED-04-S14',
     (tester) async {
       _reducirMovimiento(tester);
-      await montarUsuario(
+      await mountUser(
         tester,
         api: _apiMisReservas(null),
         inicio: '/reservas',
@@ -455,7 +455,7 @@ void main() {
     'la lista de la otra pestaña no queda a la vista mientras carga @RED-04-ASM-07',
     (tester) async {
       final espera = Completer<void>();
-      await montarUsuario(
+      await mountUser(
         tester,
         api: _apiMisReservas(espera),
         inicio: '/reservas',
@@ -518,7 +518,7 @@ void main() {
   testWidgets(
     'el inicio entra escalonado: saludo, marcador, próxima reserva y tiles @RED-04-S6',
     (tester) async {
-      await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
+      await _montarLibre(tester, fakeHome(FakeSession(userProfile)));
       await _hastaQue(
         tester,
         () => find.byType(SportTile).evaluate().isNotEmpty,
@@ -581,7 +581,7 @@ void main() {
     await _montarLibre(
       tester,
       MyProfileScreen(
-        session: SesionFalsa(perfilUsuario),
+        session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
       ),
     );
@@ -622,12 +622,12 @@ void main() {
     (tester) async {
       final datos = ValueNotifier<int>(0);
       addTearDown(datos.dispose);
-      final sesion = SesionFalsa(perfilUsuario);
+      final sesion = FakeSession(userProfile);
       await _montarLibre(
         tester,
         ValueListenableBuilder<int>(
           valueListenable: datos,
-          builder: (context, n, _) => inicioFalso(sesion, conReserva: n.isEven),
+          builder: (context, n, _) => fakeHome(sesion, conReserva: n.isEven),
         ),
       );
       await _hastaQue(
@@ -768,7 +768,7 @@ void main() {
   testWidgets(
     'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
     (tester) async {
-      final credenciales = CredencialesFalsas(
+      final credenciales = FakeCredentials(
         alIngresar: (_, _) async => throw const InvalidCredentials(),
       );
       await _montarLibre(tester, _login(credenciales: credenciales));
@@ -929,9 +929,9 @@ void main() {
   testWidgets(
     'cambiar la duración hace latir la línea del día y elegir una franja la hace crecer @RED-04-S10',
     (tester) async {
-      await montarUsuario(
+      await mountUser(
         tester,
-        api: apiRutas(rutasDeSedes()),
+        api: apiRoutes(venueRoutes()),
         inicio:
             '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
@@ -971,21 +971,21 @@ void main() {
   testWidgets('el aviso dentro de la app baja desde arriba @RED-04-S12', (
     tester,
   ) async {
-    final api = ApiFalsa();
-    final sesion = SesionFalsa(perfilUsuario);
-    final centro = centroDe(api, sesion);
-    await montar(
+    final api = FakeApi();
+    final sesion = FakeSession(userProfile);
+    final centro = centerOf(api, sesion);
+    await mountScreen(
       tester,
       Stack(
         children: [
           const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-          NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
+          NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
         ],
       ),
       tema: darkTheme,
     );
     api
-      ..avisos = [recordatorio]
+      ..avisos = [reminderNotice]
       ..unread = 1;
     await tester.runAsync(centro.load);
     await tester.pump();
@@ -1011,7 +1011,7 @@ void main() {
   testWidgets(
     'los botones de boton.dart se achican mientras se presionan @RED-04-S13',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         Scaffold(
           body: Padding(
@@ -1077,20 +1077,20 @@ void main() {
       await _desmontar(tester);
 
       // El aviso dentro de la app.
-      final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion);
+      final api = FakeApi();
+      final sesion = FakeSession(userProfile);
+      final centro = centerOf(api, sesion);
       await _montarLibre(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
+            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
       );
       api
-        ..avisos = [recordatorio]
+        ..avisos = [reminderNotice]
         ..unread = 1;
       await tester.runAsync(centro.load);
       await tester.pump();
@@ -1103,7 +1103,7 @@ void main() {
       await _desmontar(tester);
 
       // La entrada escalonada del inicio.
-      await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
+      await _montarLibre(tester, fakeHome(FakeSession(userProfile)));
       await _hastaQue(
         tester,
         () => find.byType(SportTile).evaluate().isNotEmpty,
@@ -1117,7 +1117,7 @@ void main() {
   testWidgets(
     'un diálogo de DialogFrame entra con fundido y escala de 0,88 a 1 @RED-04-S11',
     (tester) async {
-      await montar(tester, _cancelacion(), tema: darkTheme);
+      await mountScreen(tester, _cancelacion(), tema: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
@@ -1151,7 +1151,7 @@ void main() {
   testWidgets(
     'el selector de opciones entra con la misma escala @RED-04-ASM-01',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         _Anfitrion(
           abrir: (context) => unawaited(
@@ -1184,11 +1184,11 @@ void main() {
   testWidgets(
     'la tarjeta de la cuenta baja 16 y aparece en 350 ms @RED-04-S11',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         Scaffold(
           body: Center(
-            child: AccountButton(session: SesionFalsa(perfilUsuario)),
+            child: AccountButton(session: FakeSession(userProfile)),
           ),
         ),
         tema: darkTheme,
@@ -1220,7 +1220,7 @@ void main() {
   testWidgets(
     'los botones de un diálogo se achican mientras se presionan @RED-04-S13',
     (tester) async {
-      await montar(tester, _cancelacion(), tema: darkTheme);
+      await mountScreen(tester, _cancelacion(), tema: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
 
@@ -1253,7 +1253,7 @@ void main() {
     'con reducir movimiento el diálogo aparece entero en el primer cuadro @RED-04-S14',
     (tester) async {
       _reducirMovimiento(tester);
-      await montar(tester, _cancelacion(), tema: darkTheme);
+      await mountScreen(tester, _cancelacion(), tema: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
@@ -1274,9 +1274,9 @@ void main() {
     (tester) async {
       final pantallas = <String, Widget>{
         'login': _login(),
-        'starts_at': inicioFalso(SesionFalsa(perfilUsuario)),
+        'starts_at': fakeHome(FakeSession(userProfile)),
         'mi perfil': MyProfileScreen(
-          session: SesionFalsa(perfilUsuario),
+          session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
         'reserva confirmada': BookingConfirmedScreen(
@@ -1285,7 +1285,7 @@ void main() {
       };
       for (final MapEntry(key: nombre, value: pantalla) in pantallas.entries) {
         // Como los helpers de test/screenshots: `montar` termina con pumpAndSettle.
-        await montar(tester, pantalla, tema: darkTheme);
+        await mountScreen(tester, pantalla, tema: darkTheme);
         expect(find.byType(FadeIn), findsWidgets, reason: nombre);
         expect(_todasEnSuFinal(tester), isTrue, reason: nombre);
         expect(tester.binding.hasScheduledFrame, isFalse, reason: nombre);

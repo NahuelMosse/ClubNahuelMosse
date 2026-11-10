@@ -85,7 +85,7 @@ void main() {
 
   group('pantalla', () {
     const disponibles =
-        '{"spaces": [$espacioF5Json, '
+        '{"spaces": [$spaceF5Json, '
         '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
         '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
         '"covered": true, "lit": true, "price_per_hour": 43000}]}';
@@ -98,19 +98,19 @@ void main() {
       tester.platformDispatcher.textScaleFactorTestValue = escala;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       final requests = <http.Request>[];
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/inicio/buscar',
         tamano: escala > 1 ? const Size(360, 800) : const Size(393, 852),
-        api: apiRutas({
-          ...rutasDeSedes(),
+        api: apiRoutes({
+          ...venueRoutes(),
           'GET /spaces/available': respuesta,
         }, pedidos: requests),
       );
       return requests;
     }
 
-    Future<void> elegir(
+    Future<void> choose(
       WidgetTester tester,
       String campo,
       String opcion,
@@ -140,8 +140,8 @@ void main() {
     }
 
     Future<void> completar(WidgetTester tester) async {
-      await elegir(tester, 'Sede', 'Sede Morón');
-      await elegir(tester, 'Deporte', 'Fútbol');
+      await choose(tester, 'Sede', 'Sede Morón');
+      await choose(tester, 'Deporte', 'Fútbol');
       await tester.enterText(
         find.descendant(
           of: find.bySemanticsLabel('Fecha'),
@@ -211,7 +211,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('CANCHAS DISPONIBLES'), findsOneWidget);
 
-      await elegir(tester, 'Hasta', '20:00');
+      await choose(tester, 'Hasta', '20:00');
 
       expect(find.textContaining('CANCHAS DISPONIBLES'), findsNothing);
     });
@@ -223,7 +223,7 @@ void main() {
       final requests = await abrir(tester);
       await completar(tester);
 
-      await elegir(tester, 'Hasta', '18:00');
+      await choose(tester, 'Hasta', '18:00');
 
       expect(find.text('La duración mínima es de una hora'), findsOneWidget);
       expect(habilitado(tester, 'CONSULTAR'), isFalse);
@@ -359,7 +359,7 @@ void main() {
 
     testWidgets('un chip sin canchas no se puede elegir', (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrir(tester, respuesta: (200, '{"spaces": [$espacioF5Json]}'));
+      await abrir(tester, respuesta: (200, '{"spaces": [$spaceF5Json]}'));
       await completar(tester);
       await tester.tap(find.text('CONSULTAR'));
       await tester.pumpAndSettle();

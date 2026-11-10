@@ -16,8 +16,8 @@ void main() {
     'cierra la sesión desde la tarjeta del avatar y vuelve al login @CU-02-H01-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await entrarComoUsuario(tester, correo: correo);
+      final correo = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, correo: correo);
 
       await abrirTarjeta(tester);
       // Verifica: la tarjeta muestra quién tiene la sesión abierta y sus opciones.
@@ -26,7 +26,7 @@ void main() {
       expect(find.text('Perfil completo'), findsOneWidget);
       expect(find.text('Mis reservas'), findsOneWidget);
 
-      await tocar(tester, 'Cerrar sesión');
+      await tapText(tester, 'Cerrar sesión');
 
       // Verifica: vuelve al login. Si falla, la sesión queda abierta en un teléfono ajeno.
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
@@ -39,9 +39,9 @@ void main() {
     'después de cerrar la sesión, volver atrás no reabre una pantalla con sesión @CU-02-H01-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
+      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
       await abrirTarjeta(tester);
-      await tocar(tester, 'Cerrar sesión');
+      await tapText(tester, 'Cerrar sesión');
 
       // Verifica: ir de nuevo al Home sin sesión termina en el login.
       final login = tester.element(find.text('INICIAR SESIÓN'));
@@ -52,7 +52,7 @@ void main() {
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
 
       // Verifica: al reabrir la app la sesión sigue cerrada.
-      await reabrirApp(tester);
+      await reopenApp(tester);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);
       semantica.dispose();
@@ -63,12 +63,12 @@ void main() {
     'cierra la sesión desde Mi perfil y vuelve al login @CU-02-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
+      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
       await abrirTarjeta(tester);
-      await tocar(tester, 'Perfil completo');
+      await tapText(tester, 'Perfil completo');
       expect(find.text('MIEMBRO ACTIVO'), findsOneWidget);
 
-      await tocar(tester, 'CERRAR SESIÓN');
+      await tapText(tester, 'CERRAR SESIÓN');
 
       // Verifica: desde el perfil también se sale al login.
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
@@ -81,7 +81,7 @@ void main() {
     'abre la tarjeta del avatar, toca afuera y la tarjeta se cierra sin cerrar la sesión @CU-02-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
+      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
       await abrirTarjeta(tester);
       expect(find.text('Cerrar sesión'), findsOneWidget);
 

@@ -51,7 +51,7 @@ void main() {
   testWidgets(
     'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
     (tester) async {
-      final credenciales = CredencialesFalsas(
+      final credenciales = FakeCredentials(
         alIngresar: (_, _) async => throw const InvalidCredentials(),
       );
       await _montarLibre(tester, _login(credenciales: credenciales));
@@ -139,11 +139,11 @@ Finder _aparecerQue(Finder f, bool Function(FadeIn) cumple) => find.ancestor(
   matching: find.byWidgetPredicate((w) => w is FadeIn && cumple(w)),
 );
 
-Widget _login({CredencialesFalsas? credenciales}) => LoginScreen(
+Widget _login({FakeCredentials? credenciales}) => LoginScreen(
   session: Session(
     repository: SessionRepository(
-      credentials: credenciales ?? CredencialesFalsas(),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+      credentials: credenciales ?? FakeCredentials(),
+      api: fakeApi(codigo: 200, cuerpo: profileJson()),
     ),
   ),
   pending: PendingBooking(),

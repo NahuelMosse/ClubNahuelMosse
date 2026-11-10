@@ -21,7 +21,7 @@ void main() {
         (darkTheme, Palette.dark),
         (lightTheme, Palette.light),
       ]) {
-        await montar(
+        await mountScreen(
           tester,
           const Scaffold(
             body: Center(child: DayTimeline(slots: _franjas, from: 8)),

@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'notifications_spanish_test.dart'
-    show ApiFalsa, SistemaFalso, centroDe, notif, recordatorio, ahoraClub;
+    show FakeApi, FakeSystem, centerOf, noticeJson, reminderNotice, noticesNow;
 import 'support/mount.dart';
 import 'support/user.dart';
 
@@ -18,28 +18,28 @@ const _booking2 = '00000000-0000-7000-8000-000000000002';
 const _idRecordatorio = '00000000-0000-7000-8000-000000000003';
 
 /// Un sistema donde el test decide cuándo la persona toca un aviso de la bandeja.
-class SistemaConToques extends SistemaFalso {
+class SistemaConToques extends FakeSystem {
   final toques = StreamController<NoticeTapped>.broadcast();
 
   @override
   Stream<NoticeTapped> get onTap => toques.stream;
 }
 
-Future<(ApiFalsa, NotificationCenter)> _abrirCentro(
+Future<(FakeApi, NotificationCenter)> _abrirCentro(
   WidgetTester tester, {
   required List<String> avisos,
 }) async {
-  final api = ApiFalsa()
+  final api = FakeApi()
     ..avisos = avisos
     ..unread = avisos.length;
-  final session = SesionFalsa(perfilUsuario);
-  final centro = centroDe(api, session);
-  await montar(
+  final session = FakeSession(userProfile);
+  final centro = centerOf(api, session);
+  await mountScreen(
     tester,
     NotificationsScreen(
       center: centro,
       session: session,
-      now: () => ahoraClub,
+      now: () => noticesNow,
       onOpen: (_, _) {},
     ),
     tema: darkTheme,
@@ -48,21 +48,21 @@ Future<(ApiFalsa, NotificationCenter)> _abrirCentro(
 }
 
 /// La app entera con [avisos] sin leer y un sistema donde el test toca los avisos.
-Future<(ApiFalsa, SistemaConToques, NotificationCenter)> _montarApp(
+Future<(FakeApi, SistemaConToques, NotificationCenter)> _montarApp(
   WidgetTester tester,
   List<String> avisos,
 ) async {
-  final api = ApiFalsa()
+  final api = FakeApi()
     ..avisos = avisos
     ..unread = avisos.length;
   final sistema = SistemaConToques();
   addTearDown(sistema.toques.close);
   late NotificationCenter centro;
-  await montarUsuario(
+  await mountUser(
     tester,
     inicio: '/inicio',
     api: api.cliente,
-    centro: (session) => centro = centroDe(api, session, sistema: sistema),
+    centro: (session) => centro = centerOf(api, session, sistema: sistema),
   );
   return (api, sistema, centro);
 }
@@ -73,7 +73,7 @@ Future<void> _salir(WidgetTester tester) async {
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   group('salir del centro de notificaciones', () {
     testWidgets(
@@ -81,7 +81,7 @@ void main() {
       (tester) async {
         final (api, centro) = await _abrirCentro(
           tester,
-          avisos: [recordatorio],
+          avisos: [reminderNotice],
         );
         expect(centro.unread, 1);
 
@@ -99,7 +99,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         final (api, centro) = await _abrirCentro(
           tester,
-          avisos: [recordatorio],
+          avisos: [reminderNotice],
         );
 
         expect(find.bySemanticsLabel(RegExp('sin leer')), findsOneWidget);
@@ -114,7 +114,7 @@ void main() {
       (tester) async {
         final (api, centro) = await _abrirCentro(
           tester,
-          avisos: [recordatorio],
+          avisos: [reminderNotice],
         );
         api.caida = true;
 
@@ -134,19 +134,19 @@ void main() {
     testWidgets(
       'tocar un push marca leídas las de ese tipo y reserva y abre la reserva @NOT-03-S2',
       (tester) async {
-        final otherBooking = notif(
+        final otherBooking = noticeJson(
           id: '00000000-0000-7000-8000-000000000005',
           club: DateTime.utc(2026, 11, 12, 19, 50),
           reservaId: _booking2,
         );
-        final otroTipo = notif(
+        final otroTipo = noticeJson(
           id: '00000000-0000-7000-8000-000000000006',
           club: DateTime.utc(2026, 11, 12, 19, 40),
           tipo: 'user_cancellation',
           titulo: 'Reserva cancelada',
         );
         final (api, sistema, centro) = await _montarApp(tester, [
-          recordatorio,
+          reminderNotice,
           otherBooking,
           otroTipo,
         ]);
@@ -169,7 +169,7 @@ void main() {
     testWidgets(
       'un push que no se toca sigue sin leer @assumption:NOT-03-ASM-01',
       (tester) async {
-        final (api, _, centro) = await _montarApp(tester, [recordatorio]);
+        final (api, _, centro) = await _montarApp(tester, [reminderNotice]);
 
         expect(centro.unread, 1);
         expect(api.de('POST', '/notifications/$_idRecordatorio/read'), isEmpty);

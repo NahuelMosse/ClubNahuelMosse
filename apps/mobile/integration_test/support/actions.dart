@@ -11,24 +11,24 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Un valor que sólo usa este test: los escenarios afirman sobre datos propios.
-String unico() => DateTime.now().microsecondsSinceEpoch.toString();
+String unique() => DateTime.now().microsecondsSinceEpoch.toString();
 
 /// DNI de 8 dígitos derivado de [s], para que dos tests no choquen.
-String dniDe(String s) =>
+String dniOf(String s) =>
     (10000000 + int.parse(s.substring(s.length - 7))).toString();
 
 /// La cuenta de administrador que `scripts/e2e.sh` siembra en la base de la corrida.
-const correoAdmin = String.fromEnvironment('ADMIN_CORREO');
-const contrasenaAdmin = String.fromEnvironment('ADMIN_CONTRASENA');
+const adminEmail = String.fromEnvironment('ADMIN_CORREO');
+const adminPassword = String.fromEnvironment('ADMIN_CONTRASENA');
 
 /// Un emulador de Firebase Auth y una API donde no escucha nadie: la app sin red.
-const sinRed = '127.0.0.1:9';
-const apiSinRed = 'http://127.0.0.1:9';
+const offline = '127.0.0.1:9';
+const offlineApi = 'http://127.0.0.1:9';
 
 /// Arranca la app real, contra la API y el emulador de Firebase de la corrida.
 ///
 /// [apiUrl] y [authEmulador] reemplazan los de la corrida para simular fallas.
-Future<void> abrirApp(
+Future<void> openApp(
   WidgetTester tester, {
   String? apiUrl,
   String? authEmulador,
@@ -45,13 +45,13 @@ Future<void> abrirApp(
 }
 
 /// Vuelve a bootstrap la app como al reabrirla: con la sesión que haya quedado guardada.
-Future<void> reabrirApp(WidgetTester tester) async {
+Future<void> reopenApp(WidgetTester tester) async {
   await app.bootstrap(AppConfig.fromEnvironment());
   await tester.pumpAndSettle();
 }
 
 /// Crea una cuenta, abre la app e inicia sesión con ella hasta llegar al Home.
-Future<void> entrarComoUsuario(
+Future<void> signInAsUser(
   WidgetTester tester, {
   required String correo,
   String contrasena = 'ClubNahuel1',
@@ -59,32 +59,32 @@ Future<void> entrarComoUsuario(
   String? apiUrl,
 }) async {
   try {
-    await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
-  } on CuentaYaCreada {
+    await createAccount(correo: correo, contrasena: contrasena, nombre: nombre);
+  } on AccountAlreadyCreated {
     // El escenario ya la registró para cargarle datos antes de entrar.
   }
-  await abrirApp(tester, apiUrl: apiUrl);
-  await escribir(tester, 'Correo', correo);
-  await escribir(tester, 'Contraseña', contrasena);
-  await tocar(tester, 'INICIAR SESIÓN');
-  await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+  await openApp(tester, apiUrl: apiUrl);
+  await typeInto(tester, 'Correo', correo);
+  await typeInto(tester, 'Contraseña', contrasena);
+  await tapText(tester, 'INICIAR SESIÓN');
+  await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
 }
 
 /// Abre la app e inicia sesión con la cuenta de administrador hasta llegar al panel.
-Future<void> entrarComoAdmin(WidgetTester tester, {String? apiUrl}) async {
-  await abrirApp(tester, apiUrl: apiUrl);
-  await escribir(tester, 'Correo', correoAdmin);
-  await escribir(tester, 'Contraseña', contrasenaAdmin);
-  await tocar(tester, 'INICIAR SESIÓN');
-  await esperarA(tester, find.text('PANEL ADMIN'));
+Future<void> signInAsAdmin(WidgetTester tester, {String? apiUrl}) async {
+  await openApp(tester, apiUrl: apiUrl);
+  await typeInto(tester, 'Correo', adminEmail);
+  await typeInto(tester, 'Contraseña', adminPassword);
+  await tapText(tester, 'INICIAR SESIÓN');
+  await waitUntil(tester, find.text('PANEL ADMIN'));
 }
 
 /// Abre el selector de hora de [campo] y elige [hora], por ejemplo `08:00`.
-Future<void> elegirHora(WidgetTester tester, String campo, String hora) =>
-    elegir(tester, campo, hora);
+Future<void> chooseTime(WidgetTester tester, String campo, String hora) =>
+    choose(tester, campo, hora);
 
 /// Abre el selector de [campo] y toca [opcion].
-Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
+Future<void> choose(WidgetTester tester, String campo, String opcion) async {
   final selector = find.bySemanticsLabel(campo);
   // Al cerrarse el selector anterior, un campo de texto puede recuperar el foco y abrir el
   // teclado, que corre la pantalla.
@@ -106,7 +106,7 @@ Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
 /// Lo que el sistema operativo simulado del dispositivo de prueba contesta cuando la app
 /// pregunta por el permiso de notificaciones. Se fija después de abrir la app y antes de
 /// iniciar sesión.
-Future<void> fijarPermisoDeNotificaciones({required bool concedido}) async {
+Future<void> setNotificationPermission({required bool concedido}) async {
   await (await SharedPreferences.getInstance()).setString(
     'permiso_notificaciones_simulado',
     concedido ? 'concedido' : 'denegado',
@@ -114,7 +114,7 @@ Future<void> fijarPermisoDeNotificaciones({required bool concedido}) async {
 }
 
 /// Registra una cuenta por la API, como si la persona ya se hubiera registrado.
-Future<void> crearCuenta({
+Future<void> createAccount({
   required String correo,
   required String contrasena,
   String nombre = 'Nahuel',
@@ -125,14 +125,14 @@ Future<void> crearCuenta({
     body: jsonEncode({
       'name': nombre,
       'last_name': 'Mosse',
-      'dni': dniDe(unico()),
+      'dni': dniOf(unique()),
       'birth_date': '2000-03-14',
       'email': correo,
       'password': contrasena,
     }),
   );
   if (r.statusCode == 409 && _soloElCorreoRepetido(r.body)) {
-    throw const CuentaYaCreada();
+    throw const AccountAlreadyCreated();
   }
   if (r.statusCode != 201) {
     throw StateError(
@@ -148,15 +148,15 @@ bool _soloElCorreoRepetido(String cuerpo) {
 }
 
 /// La API ya tiene una cuenta con ese correo.
-class CuentaYaCreada implements Exception {
-  const CuentaYaCreada();
+class AccountAlreadyCreated implements Exception {
+  const AccountAlreadyCreated();
 
   @override
   String toString() => 'la cuenta de prueba ya existe (409)';
 }
 
 /// Una API que responde 500 a todo, en el mismo dispositivo que la app.
-Future<String> apiQueFalla() async {
+Future<String> failingApi() async {
   final servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   servidor.listen((pedido) {
     pedido.response.statusCode = HttpStatus.internalServerError;
@@ -167,7 +167,7 @@ Future<String> apiQueFalla() async {
 }
 
 /// Espera a que [finder] aparezca: la red no avisa cuándo termina.
-Future<void> esperarA(
+Future<void> waitUntil(
   WidgetTester tester,
   Finder finder, {
   Duration limite = const Duration(seconds: 20),
@@ -180,7 +180,7 @@ Future<void> esperarA(
   expect(finder, findsOneWidget);
 }
 
-Future<void> tocar(WidgetTester tester, String texto) async {
+Future<void> tapText(WidgetTester tester, String texto) async {
   final boton = find.text(texto);
   await _esperarPantallaQuieta(tester);
   await tester.ensureVisible(boton);
@@ -205,7 +205,7 @@ Future<void> _esperarPantallaQuieta(WidgetTester tester) async {
   }
 }
 
-Future<void> escribir(WidgetTester tester, String campo, String valor) async {
+Future<void> typeInto(WidgetTester tester, String campo, String valor) async {
   final finder = find.bySemanticsLabel(campo);
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
@@ -236,7 +236,7 @@ Future<void> escribir(WidgetTester tester, String campo, String valor) async {
 }
 
 /// Entra a un campo y lo deja sin escribir nada.
-Future<void> entrarYSalir(WidgetTester tester, String campo) async {
+Future<void> enterAndLeave(WidgetTester tester, String campo) async {
   final finder = find.bySemanticsLabel(campo);
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
@@ -247,7 +247,7 @@ Future<void> entrarYSalir(WidgetTester tester, String campo) async {
 }
 
 /// Abre la app desde el enlace del correo de recuperación, como lo haría Android.
-Future<void> abrirEnlaceDeRecuperacion(
+Future<void> openRecoveryLink(
   WidgetTester tester,
   String codigo,
 ) async {

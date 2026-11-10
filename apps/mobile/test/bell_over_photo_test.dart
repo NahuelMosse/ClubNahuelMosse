@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notifications_test.dart' show ApiFalsa, centroDe;
+import 'notifications_test.dart' show FakeApi, centerOf;
 import 'support/mount.dart';
 
 Future<void> _montarCampana(
@@ -12,11 +12,11 @@ Future<void> _montarCampana(
   required ThemeData tema,
   int noLeidas = 0,
 }) async {
-  final api = ApiFalsa()
+  final api = FakeApi()
     ..avisos = []
     ..unread = noLeidas;
-  final centro = centroDe(api, SesionFalsa(perfilUsuario));
-  await montar(
+  final centro = centerOf(api, FakeSession(userProfile));
+  await mountScreen(
     tester,
     Material(child: NotificationsButton(center: centro)),
     tema: tema,

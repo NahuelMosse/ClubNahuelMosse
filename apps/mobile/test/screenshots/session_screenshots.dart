@@ -19,7 +19,7 @@ import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   final temas = {'dark': darkTheme, 'light': lightTheme};
@@ -39,7 +39,7 @@ void main() {
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: tema) in temas.entries) {
       testWidgets('login vacío $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
           loginRejectingCredentials(),
           tema: tema,
@@ -50,7 +50,7 @@ void main() {
 
       testWidgets('login campos incompletos $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
           loginRejectingCredentials(),
           tema: tema,
@@ -64,7 +64,7 @@ void main() {
 
       testWidgets('login credenciales inválidas $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
           loginRejectingCredentials(),
           tema: tema,
@@ -85,9 +85,9 @@ void main() {
       });
 
       testWidgets('home $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
-          inicioFalso(SesionFalsa(perfilUsuario)),
+          fakeHome(FakeSession(userProfile)),
           tema: tema,
           tamano: tamano,
         );
@@ -96,9 +96,9 @@ void main() {
 
       testWidgets('tarjeta de la cuenta $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
-          inicioFalso(SesionFalsa(perfilUsuario)),
+          fakeHome(FakeSession(userProfile)),
           tema: tema,
           tamano: tamano,
         );
@@ -109,10 +109,10 @@ void main() {
       });
 
       testWidgets('mi perfil $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
           MyProfileScreen(
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             appearance: Appearance.inMemory(dark: modo == 'dark'),
           ),
           tema: tema,
@@ -123,10 +123,10 @@ void main() {
 
       testWidgets('recuperar correo inválido $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
           ForgotPasswordScreen(
-            recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
+            recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
           ),
           tema: tema,
           tamano: tamano,
@@ -143,10 +143,10 @@ void main() {
 
       testWidgets('recuperar enviado $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
           ForgotPasswordScreen(
-            recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
+            recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
           ),
           tema: tema,
           tamano: tamano,
@@ -167,11 +167,11 @@ void main() {
         ('link_invalid', 410),
       ]) {
         testWidgets('recuperar $nombre $ancho $modo', (tester) async {
-          await montar(
+          await mountScreen(
             tester,
             NewPasswordScreen(
-              recovery: PasswordRecovery(apiFalsa(codigo: codigo, cuerpo: '')),
-              session: SesionFalsa(null),
+              recovery: PasswordRecovery(fakeApi(codigo: codigo, cuerpo: '')),
+              session: FakeSession(null),
               code: 'abc',
             ),
             tema: tema,
@@ -190,10 +190,10 @@ void main() {
       ]) {
         testWidgets('mi perfil $nombre $ancho $modo', (tester) async {
           final semantica = tester.ensureSemantics();
-          await montar(
+          await mountScreen(
             tester,
             MyProfileScreen(
-              session: SesionFalsa(perfilUsuario),
+              session: FakeSession(userProfile),
               appearance: Appearance.inMemory(dark: modo == 'dark'),
             ),
             tema: tema,
@@ -223,10 +223,10 @@ void main() {
       }
 
       testWidgets('mi perfil confirmar baja $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
           MyProfileScreen(
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             appearance: Appearance.inMemory(dark: modo == 'dark'),
           ),
           tema: tema,
@@ -240,8 +240,8 @@ void main() {
       });
 
       testWidgets('panel admin $ancho $modo', (tester) async {
-        final sesionAdmin = SesionFalsa(perfilAdmin);
-        final apiPanel = apiRutas({
+        final sesionAdmin = FakeSession(adminProfile);
+        final apiPanel = apiRoutes({
           'GET /bookings/all': (
             200,
             '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
@@ -249,7 +249,7 @@ void main() {
                 ' "voided": 0}}',
           ),
         });
-        await montar(
+        await mountScreen(
           tester,
           AdminPanelScreen(
             history: BookingHistory(api: apiPanel, sesion: sesionAdmin),
@@ -269,10 +269,10 @@ void main() {
       });
 
       testWidgets('recuperar contraseña $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
           ForgotPasswordScreen(
-            recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
+            recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
           ),
           tema: tema,
           tamano: tamano,

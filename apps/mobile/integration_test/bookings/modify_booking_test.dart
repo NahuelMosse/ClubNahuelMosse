@@ -18,7 +18,7 @@ void main() {
     'Sábado',
     'Domingo',
   ];
-  final manana = hoyEnElClub().add(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
 
   String franja(int hora) {
     String dos(int h) => '${(h % 24).toString().padLeft(2, '0')}:00';
@@ -28,13 +28,13 @@ void main() {
   /// Una sede con dos Fútbol 5 y una reserva de la cuenta nueva en la Cancha 1, mañana a
   /// las 21.
   Future<(String, String, String)> reservaDeManana() async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
-    final cancha = await crearEspacio(sede);
-    await crearEspacio(sede);
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
-    await ocupar(cancha, manana, 21, correo: correo);
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850');
+    final cancha = await createSpace(sede);
+    await createSpace(sede);
+    final correo = 'socio.${unique()}@correo.com';
+    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, correo: correo);
     return (sede, cancha, correo);
   }
 
@@ -43,16 +43,16 @@ void main() {
     String correo, {
     String? apiUrl,
   }) async {
-    await abrirApp(tester, apiUrl: apiUrl);
-    await escribir(tester, 'Correo', correo);
-    await escribir(tester, 'Contraseña', 'ClubNahuel1');
-    await tocar(tester, 'INICIAR SESIÓN');
-    await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+    await openApp(tester, apiUrl: apiUrl);
+    await typeInto(tester, 'Correo', correo);
+    await typeInto(tester, 'Contraseña', 'ClubNahuel1');
+    await tapText(tester, 'INICIAR SESIÓN');
+    await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
   Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
     final control = find.bySemanticsLabel(etiqueta);
-    await esperarA(tester, control);
+    await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
     await tester.tap(control);
@@ -64,17 +64,17 @@ void main() {
 
   /// De Mis reservas a la grilla para modificar la reserva de [cancha].
   Future<void> abrirModificar(WidgetTester tester, String cancha) async {
-    await tocar(tester, 'RESERVAS');
-    await esperarA(tester, find.text(cancha));
-    await tocar(tester, 'MODIFICAR');
-    await esperarA(tester, find.textContaining('Estás modificando tu reserva'));
+    await tapText(tester, 'RESERVAS');
+    await waitUntil(tester, find.text(cancha));
+    await tapText(tester, 'MODIFICAR');
+    await waitUntil(tester, find.textContaining('Estás modificando tu reserva'));
   }
 
   /// Elige las 19 y llega a «Confirmá el cambio».
   Future<void> hastaConfirmar(WidgetTester tester) async {
     await tocarEtiqueta(tester, franja(19));
-    await tocar(tester, 'CONTINUAR CON EL CAMBIO');
-    await esperarA(tester, find.text('Confirmá el cambio'));
+    await tapText(tester, 'CONTINUAR CON EL CAMBIO');
+    await waitUntil(tester, find.text('Confirmá el cambio'));
   }
 
   testWidgets(
@@ -82,7 +82,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (_, cancha, correo) = await reservaDeManana();
-      final antes = await numerosDeReservas(correo);
+      final antes = await bookingNumbers(correo);
       await entrar(tester, correo);
       await abrirModificar(tester, cancha);
       await hastaConfirmar(tester);
@@ -90,14 +90,14 @@ void main() {
       expect(find.textContaining(franja(21)), findsWidgets);
       expect(find.textContaining(franja(19)), findsWidgets);
 
-      await tocar(tester, 'GUARDAR EL CAMBIO');
+      await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: Mis reservas muestra el horario nuevo en la misma reserva.
-      await esperarA(tester, find.text('Reserva modificada'));
-      await esperarA(tester, find.text(franja(19)));
+      await waitUntil(tester, find.text('Reserva modificada'));
+      await waitUntil(tester, find.text(franja(19)));
       expect(find.text(franja(21)), findsNothing);
-      expect(await numerosDeReservas(correo), antes);
-      expect(await reservasDe(correo), [(cancha, '19:00')]);
+      expect(await bookingNumbers(correo), antes);
+      expect(await bookingsOf(correo), [(cancha, '19:00')]);
       semantica.dispose();
     },
   );
@@ -110,16 +110,16 @@ void main() {
       await entrar(tester, correo);
       await abrirModificar(tester, cancha);
       await hastaConfirmar(tester);
-      await tocar(tester, 'GUARDAR EL CAMBIO');
-      await esperarA(tester, find.text('Reserva modificada'));
+      await tapText(tester, 'GUARDAR EL CAMBIO');
+      await waitUntil(tester, find.text('Reserva modificada'));
 
       // Otra persona mira los horarios de la Cancha 1.
-      final otra = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: otra, contrasena: 'ClubNahuel1');
+      final otra = 'socio.${unique()}@correo.com';
+      await createAccount(correo: otra, contrasena: 'ClubNahuel1');
       await entrar(tester, otra);
-      await tocar(tester, 'SEDES');
+      await tapText(tester, 'SEDES');
       final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-      await esperarA(tester, tarjeta);
+      await waitUntil(tester, tarjeta);
       await tester.ensureVisible(tarjeta);
       await tester.pumpAndSettle();
       await tester.tap(tarjeta);
@@ -146,11 +146,11 @@ void main() {
       await abrirModificar(tester, cancha);
       await hastaConfirmar(tester);
 
-      await tocar(tester, 'DEJAR LA RESERVA COMO ESTÁ');
+      await tapText(tester, 'DEJAR LA RESERVA COMO ESTÁ');
 
       // Verifica: vuelve a Mis reservas con la reserva en su horario.
-      await esperarA(tester, find.text(franja(21)));
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      await waitUntil(tester, find.text(franja(21)));
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
       semantica.dispose();
     },
   );
@@ -165,18 +165,18 @@ void main() {
       await hastaConfirmar(tester);
 
       // Mientras confirma, otra persona toma las 19.
-      await ocupar(cancha, manana, 19);
-      await tocar(tester, 'GUARDAR EL CAMBIO');
+      await occupy(cancha, manana, 19);
+      await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: el aviso, la grilla actualizada y la reserva donde estaba.
-      await esperarA(tester, find.text('Esto cambió mientras tanto'));
-      await tocar(tester, 'VER LO ACTUALIZADO');
-      await esperarA(
+      await waitUntil(tester, find.text('Esto cambió mientras tanto'));
+      await tapText(tester, 'VER LO ACTUALIZADO');
+      await waitUntil(
         tester,
         find.textContaining('Estás modificando tu reserva'),
       );
       expect(banderas(tester, franja(19)).isEnabled, isFalse);
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
       semantica.dispose();
     },
   );
@@ -208,13 +208,13 @@ void main() {
       await hastaConfirmar(tester);
 
       // Mientras confirma, el turno empieza.
-      await empezarReservasDe(cancha);
-      await tocar(tester, 'GUARDAR EL CAMBIO');
+      await startBookingsOf(cancha);
+      await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: el aviso y, en Mis reservas, ya no se ofrece modificarla.
-      await esperarA(tester, find.text('Esto cambió mientras tanto'));
-      await tocar(tester, 'VER LO ACTUALIZADO');
-      await esperarA(tester, find.text(cancha));
+      await waitUntil(tester, find.text('Esto cambió mientras tanto'));
+      await tapText(tester, 'VER LO ACTUALIZADO');
+      await waitUntil(tester, find.text(cancha));
       expect(find.text('MODIFICAR'), findsNothing);
       semantica.dispose();
     },
@@ -230,14 +230,14 @@ void main() {
       await hastaConfirmar(tester);
 
       // Mientras confirma, el club la anula.
-      await anularReservasDe(cancha);
-      await tocar(tester, 'GUARDAR EL CAMBIO');
+      await voidBookingsOf(cancha);
+      await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: el aviso y la reserva fuera de las próximas.
-      await esperarA(tester, find.text('Esto cambió mientras tanto'));
-      await tocar(tester, 'VER LO ACTUALIZADO');
-      await esperarA(tester, find.text('No hay próximas reservas'));
-      expect(await reservasDe(correo), isEmpty);
+      await waitUntil(tester, find.text('Esto cambió mientras tanto'));
+      await tapText(tester, 'VER LO ACTUALIZADO');
+      await waitUntil(tester, find.text('No hay próximas reservas'));
+      expect(await bookingsOf(correo), isEmpty);
       semantica.dispose();
     },
   );
@@ -252,22 +252,22 @@ void main() {
       await abrirModificar(tester, cancha);
       await hastaConfirmar(tester);
 
-      api.estado = EstadoApi.sinRed;
-      await tocar(tester, 'GUARDAR EL CAMBIO');
+      api.estado = ApiState.offline;
+      await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: sin conexión, el aviso y la reserva intacta.
-      await esperarA(tester, find.text('Error de conexión'));
-      await tocar(tester, 'Volver');
+      await waitUntil(tester, find.text('Error de conexión'));
+      await tapText(tester, 'Volver');
       expect(find.text('Confirmá el cambio'), findsOneWidget);
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
 
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'GUARDAR EL CAMBIO');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: con el servidor caído, lo mismo.
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
       semantica.dispose();
     },
   );

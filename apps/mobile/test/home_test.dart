@@ -18,14 +18,14 @@ Finder _enElMarcador(String texto) =>
     find.descendant(of: find.byType(AppMarker), matching: find.text(texto));
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets('el Home muestra el saludo, el conteo y la próxima reserva', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
-      inicioFalso(SesionFalsa(perfilUsuario)),
+      fakeHome(FakeSession(userProfile)),
       tema: darkTheme,
     );
 
@@ -52,9 +52,9 @@ void main() {
   testWidgets('sin reservas próximas no aparece el bloque de la próxima', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
-      inicioFalso(SesionFalsa(perfilUsuario), conReserva: false),
+      fakeHome(FakeSession(userProfile), conReserva: false),
       tema: darkTheme,
     );
 
@@ -66,9 +66,9 @@ void main() {
   testWidgets('con una sola sede y una cancha el marcador cuenta 01 y 01', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
-      inicioFalso(SesionFalsa(perfilUsuario), unaSede: true),
+      fakeHome(FakeSession(userProfile), unaSede: true),
       tema: darkTheme,
     );
 
@@ -81,9 +81,9 @@ void main() {
     'con el texto al 200 % en 360 px nada se desborda al recorrerlo',
     (tester) async {
       for (final tema in [darkTheme, lightTheme]) {
-        await montar(
+        await mountScreen(
           tester,
-          inicioFalso(SesionFalsa(perfilUsuario)),
+          fakeHome(FakeSession(userProfile)),
           tema: tema,
           tamano: const Size(360, 800),
           escalaTexto: 2,
@@ -107,9 +107,9 @@ void main() {
   );
 
   testWidgets('si la lectura falla avisa y deja reintentar', (tester) async {
-    final sesion = SesionFalsa(perfilUsuario);
-    final api = apiRutas({});
-    await montar(
+    final sesion = FakeSession(userProfile);
+    final api = apiRoutes({});
+    await mountScreen(
       tester,
       HomeScreen(
         sesion: sesion,

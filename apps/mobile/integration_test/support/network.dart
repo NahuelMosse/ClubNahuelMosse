@@ -5,18 +5,18 @@ import 'package:clubnahuelmosse/common/config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-enum EstadoApi {
+enum ApiState {
   normal,
-  sinRed,
-  falla,
+  offline,
+  failing,
 
   /// Reenvía igual que [normal], pero tres segundos más tarde: deja ver lo que la app
   /// muestra mientras espera.
-  lenta,
+  slow,
 
   /// La API responde como si la sesión ya no fuera válida (401), sin llegar a tocar la
   /// API real: simula una sesión vencida sin depender de que Firebase la venza de verdad.
-  sesionVencida,
+  sessionExpired,
 }
 
 /// Una API intermedia en el mismo dispositivo que la app: reenvía a la API de la corrida
@@ -42,7 +42,7 @@ class ApiIntermedia {
   // Una conexión que queda quieta se suelta antes de que la API la cierre por su cuenta
   // (su keep-alive es de cinco segundos): así no se reusa una que ya está cerrada.
   final _cliente = HttpClient()..idleTimeout = const Duration(seconds: 1);
-  EstadoApi estado = EstadoApi.normal;
+  ApiState estado = ApiState.normal;
 
   String get url => 'http://127.0.0.1:${_servidor.port}';
 
@@ -62,19 +62,19 @@ class ApiIntermedia {
 
   Future<void> _reenviar(HttpRequest pedido) async {
     switch (estado) {
-      case EstadoApi.sinRed:
+      case ApiState.offline:
         // La conexión se corta sin respuesta, como cuando se va la señal.
         final socket = await pedido.response.detachSocket(writeHeaders: false);
         socket.destroy();
-      case EstadoApi.falla:
+      case ApiState.failing:
         pedido.response.statusCode = HttpStatus.internalServerError;
         await pedido.response.close();
-      case EstadoApi.sesionVencida:
+      case ApiState.sessionExpired:
         pedido.response.statusCode = HttpStatus.unauthorized;
         await pedido.response.close();
-      case EstadoApi.normal:
-      case EstadoApi.lenta:
-        if (estado == EstadoApi.lenta) {
+      case ApiState.normal:
+      case ApiState.slow:
+        if (estado == ApiState.slow) {
           await Future<void>.delayed(const Duration(seconds: 3));
         }
         final cuerpo = await pedido.fold<List<int>>(
@@ -165,11 +165,11 @@ Future<String?> _token(String correo, String contrasena) async {
 }
 
 /// Si esa contraseña sirve hoy para entrar, preguntado a Firebase y no a la app.
-Future<bool> puedeEntrar(String correo, String contrasena) async =>
+Future<bool> canSignIn(String correo, String contrasena) async =>
     await _token(correo, contrasena) != null;
 
 /// Cambia la contraseña desde otro dispositivo: Firebase invalida las sesiones abiertas.
-Future<void> cambiarDesdeOtroDispositivo(
+Future<void> changeFromAnotherDevice(
   String correo,
   String actual,
   String nueva,
@@ -195,7 +195,7 @@ Future<void> cambiarDesdeOtroDispositivo(
 
 /// Las sedes que ve hoy una persona con cuenta de usuario, preguntado a la API de la
 /// corrida y no a la app: nombre y cantidad de canchas de cada una.
-Future<Map<String, int>> sedesQueVeUnUsuario() async {
+Future<Map<String, int>> venuesAUserSees() async {
   final correo = 'mirada.${DateTime.now().microsecondsSinceEpoch}@correo.com';
   const contrasena = 'ClubNahuel1';
   final api = AppConfig.fromEnvironment().apiUrl;
@@ -231,7 +231,7 @@ Future<Map<String, int>> sedesQueVeUnUsuario() async {
 }
 
 /// Los nombres de los espacios activos que ve hoy una persona con cuenta de usuario.
-Future<List<String>> espaciosQueVeUnUsuario() async {
+Future<List<String>> spacesAUserSees() async {
   final correo = 'mira.${DateTime.now().microsecondsSinceEpoch}@correo.com';
   const contrasena = 'ClubNahuel1';
   final api = AppConfig.fromEnvironment().apiUrl;
@@ -297,7 +297,7 @@ Future<Map<String, Object?>> _comoAdmin(
 
 /// Da de alta una sede por la API, abierta de 08:00 a 23:00 los [dias] de la semana (1 es
 /// lunes): por defecto, todos.
-Future<void> crearSede(
+Future<void> createVenue(
   String nombre,
   String direccion, {
   List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
@@ -313,19 +313,19 @@ Future<void> crearSede(
 
 /// El día de hoy en el club, que está en la hora de Argentina (UTC−3, sin horario de
 /// verano), sea cual sea la zona del teléfono de prueba.
-DateTime hoyEnElClub() {
+DateTime todayAtClub() {
   final ahora = DateTime.now().toUtc().subtract(const Duration(hours: 3));
   return DateTime.utc(ahora.year, ahora.month, ahora.day);
 }
 
 /// La hora en punto que está corriendo ahora en el club.
-int horaEnElClub() =>
+int hourAtClub() =>
     DateTime.now().toUtc().subtract(const Duration(hours: 3)).hour;
 
 /// Una reserva del espacio [nombreEspacio] el [dia] a la [hora] en punto, por [horas]
 /// horas, cargada por fuera de la app: de la cuenta [correo] o, si no viene, de otra
 /// persona. [estado] es `activa`, `cancelada` o `anulada` (con [motivo]).
-Future<void> ocupar(
+Future<void> occupy(
   String nombreEspacio,
   DateTime dia,
   int hora, {
@@ -355,7 +355,7 @@ Future<void> ocupar(
 
 /// Da de alta por la API el próximo espacio de [deporte] y [tipo] en la sede [nombreSede],
 /// y devuelve su nombre compuesto.
-Future<String> crearEspacio(
+Future<String> createSpace(
   String nombreSede, {
   String deporte = 'Futbol',
   String tipo = 'F5',
@@ -395,7 +395,7 @@ Uri _pruebas(String ruta) =>
 
 /// Los correos que la API de la corrida dejó en su buzón para [para], del más viejo al
 /// más nuevo. En la corrida los correos no salen: quedan en el buzón.
-Future<List<String>> correosPara(String para) async {
+Future<List<String>> emailsFor(String para) async {
   final r = await http.get(
     _pruebas('correos?para=${Uri.encodeQueryComponent(para)}'),
   );
@@ -409,8 +409,8 @@ Future<List<String>> correosPara(String para) async {
 }
 
 /// El código del enlace de recuperación del último correo que recibió [correo].
-Future<String> ultimoCodigo(String correo) async {
-  final correos = await correosPara(correo);
+Future<String> lastCode(String correo) async {
+  final correos = await emailsFor(correo);
   if (correos.isEmpty) throw StateError('no llegó ningún correo a $correo');
   final enlace = RegExp(r'codigo=([A-Za-z0-9_-]+)').firstMatch(correos.last);
   final codigo = enlace?.group(1);
@@ -419,14 +419,14 @@ Future<String> ultimoCodigo(String correo) async {
 }
 
 /// Hace vencer el enlace ya, sin esperar los 30 minutos.
-Future<void> vencerEnlace(String codigo) async {
+Future<void> expireLink(String codigo) async {
   final r = await http.post(_pruebas('recuperacion/$codigo/vencer'));
   if (r.statusCode != 204) throw StateError('vencer: ${r.statusCode}');
 }
 
 /// Las próximas reservas de la cuenta [correo], preguntadas a la API y no a la app: el
 /// espacio y la hora de inicio (`HH:MM`, en la hora del club) de cada una.
-Future<List<(String, String)>> reservasDe(
+Future<List<(String, String)>> bookingsOf(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
@@ -459,7 +459,7 @@ Future<List<(String, String)>> reservasDe(
 
 /// Las reservas activas de [nombreEspacio] pasan a haber empezado en la hora en curso del
 /// club, como si el tiempo corriera mientras la app está abierta.
-Future<void> empezarReservasDe(String nombreEspacio) async {
+Future<void> startBookingsOf(String nombreEspacio) async {
   final r = await http.post(
     _pruebas('reservas/empezar'),
     headers: {'content-type': 'application/json'},
@@ -469,13 +469,13 @@ Future<void> empezarReservasDe(String nombreEspacio) async {
 }
 
 /// El sistema queda sin ninguna reserva (ni los avisos que las mencionan).
-Future<void> vaciarReservas() async {
+Future<void> clearBookings() async {
   final r = await http.post(_pruebas('reservas/vaciar'));
   if (r.statusCode != 204) throw StateError('vaciar: ${r.statusCode}');
 }
 
 /// El club anula las reservas activas de [nombreEspacio], como lo haría un administrador.
-Future<void> anularReservasDe(String nombreEspacio) async {
+Future<void> voidBookingsOf(String nombreEspacio) async {
   final r = await http.post(
     _pruebas('reservas/anular'),
     headers: {'content-type': 'application/json'},
@@ -487,7 +487,7 @@ Future<void> anularReservasDe(String nombreEspacio) async {
 /// El barrido de recordatorios de la API corre como si en el club fueran las [hora]:[minuto]
 /// del [dia], sólo para las reservas de la cuenta [correo], y devuelve cuántos avisos
 /// registró.
-Future<int> despacharRecordatorios({
+Future<int> dispatchReminders({
   required String correo,
   required DateTime dia,
   required int hora,
@@ -510,7 +510,7 @@ Future<int> despacharRecordatorios({
 
 /// Si el permiso de cada dispositivo activo de la cuenta [correo] está concedido, según la
 /// API y no según la app.
-Future<List<bool>> dispositivosDe(String correo) async {
+Future<List<bool>> devicesOf(String correo) async {
   final r = await http.get(
     _pruebas('dispositivos?correo=${Uri.encodeQueryComponent(correo)}'),
   );
@@ -525,7 +525,7 @@ Future<List<bool>> dispositivosDe(String correo) async {
 }
 
 /// Los números de las próximas reservas de la cuenta [correo], según la API.
-Future<List<String>> numerosDeReservas(
+Future<List<String>> bookingNumbers(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
@@ -546,7 +546,7 @@ Future<List<String>> numerosDeReservas(
 }
 
 /// Otro administrador da de baja la sede [nombre] mientras la app la sigue mostrando.
-Future<void> darDeBajaSedeDesdeOtraSesion(String nombre) async {
+Future<void> deactivateVenueFromAnotherSession(String nombre) async {
   final r = await http.post(
     _pruebas('sedes/baja'),
     headers: {'content-type': 'application/json'},
@@ -589,7 +589,7 @@ Future<Object?> _leer(String ruta, String token) async {
 
 /// La sede activa [nombre] como la ve un usuario (dirección, apertura, cierre, días), o
 /// `null` si no la ve.
-Future<Map<String, Object?>?> sedeQueVeUnUsuario(String nombre) async {
+Future<Map<String, Object?>?> venueAUserSees(String nombre) async {
   final datos = await _leer('/venues', await _tokenDeOtraPersona());
   if (datos case {'venues': final List<Object?> sedes}) {
     for (final sede in sedes) {
@@ -602,7 +602,7 @@ Future<Map<String, Object?>?> sedeQueVeUnUsuario(String nombre) async {
 }
 
 /// Las horas de inicio (`HH:MM`) que un usuario puede elegir el [dia] en [nombreEspacio].
-Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
+Future<List<String>> freeStarts(String nombreEspacio, DateTime dia) async {
   final token = await _tokenDeOtraPersona();
   final espacios = await _leer('/spaces', token);
   final id = switch (espacios) {
@@ -626,7 +626,7 @@ Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
 }
 
 /// Otro administrador da de baja el espacio [nombre] mientras la app lo sigue mostrando.
-Future<void> darDeBajaEspacioDesdeOtraSesion(String nombre) async {
+Future<void> deactivateSpaceFromAnotherSession(String nombre) async {
   final r = await http.post(
     _pruebas('espacios/baja'),
     headers: {'content-type': 'application/json'},
@@ -637,7 +637,7 @@ Future<void> darDeBajaEspacioDesdeOtraSesion(String nombre) async {
 
 /// El espacio activo [nombre] como lo ve un usuario (precio, condición, iluminación), o
 /// `null` si no lo ve.
-Future<Map<String, Object?>?> espacioQueVeUnUsuario(String nombre) async {
+Future<Map<String, Object?>?> spaceAUserSees(String nombre) async {
   final datos = await _leer('/spaces', await _tokenDeOtraPersona());
   if (datos case {'spaces': final List<Object?> espacios}) {
     for (final espacio in espacios) {
@@ -652,7 +652,7 @@ Future<Map<String, Object?>?> espacioQueVeUnUsuario(String nombre) async {
 
 /// La cuenta [correo] reserva por la API una hora de [nombreEspacio] el [dia] a la [hora]
 /// en punto, y devuelve el total que quedó guardado.
-Future<int> reservarPorLaApi(
+Future<int> bookThroughApi(
   String correo,
   String nombreEspacio,
   DateTime dia,
@@ -695,7 +695,7 @@ Future<int> reservarPorLaApi(
 
 /// Los totales de las próximas reservas de la cuenta [correo], por hora de inicio
 /// (`HH:MM`, en la hora del club).
-Future<Map<String, int>> totalesDeReservas(
+Future<Map<String, int>> bookingTotals(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
@@ -720,13 +720,13 @@ Future<Map<String, int>> totalesDeReservas(
 
 /// La cuenta [correo] cancela por la API todas sus próximas reservas, como si lo hiciera desde
 /// otro teléfono mientras el administrador mira la confirmación.
-Future<void> cancelarProximasDe(
+Future<void> cancelUpcomingOf(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
-  for (final id in await numerosDeReservas(correo, contrasena: contrasena)) {
+  for (final id in await bookingNumbers(correo, contrasena: contrasena)) {
     final r = await http.post(
       Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas/$id/cancelar'),
       headers: {'authorization': 'Bearer $token'},
@@ -737,7 +737,7 @@ Future<void> cancelarProximasDe(
 
 /// La reserva de [nombreEspacio] como la ve el administrador en la API (estado, motivo,
 /// quién y cuándo la anuló), o `null` si el espacio no tiene ninguna.
-Future<Map<String, Object?>?> reservaQueVeElAdmin(String nombreEspacio) async {
+Future<Map<String, Object?>?> bookingAdminSees(String nombreEspacio) async {
   final datos = await _leer(
     '/bookings/all?q=${Uri.encodeQueryComponent(nombreEspacio)}',
     await _tokenAdmin(),
@@ -755,7 +755,7 @@ Future<Map<String, Object?>?> reservaQueVeElAdmin(String nombreEspacio) async {
 
 /// Las reservas del historial de la cuenta [correo] según la API: el espacio, el estado y el
 /// motivo de cada una.
-Future<List<(String, String, String?)>> historialDe(
+Future<List<(String, String, String?)>> historyOf(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
@@ -776,13 +776,13 @@ Future<List<(String, String, String?)>> historialDe(
 
 /// La cuenta [correo] cancela por la API su única reserva próxima, como si lo hiciera desde
 /// otro teléfono.
-Future<void> cancelarDesdeOtroTelefono(
+Future<void> cancelFromAnotherPhone(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
-  final numeros = await numerosDeReservas(correo, contrasena: contrasena);
+  final numeros = await bookingNumbers(correo, contrasena: contrasena);
   if (numeros.length != 1) throw StateError('cancelar: hay ${numeros.length}');
   final r = await http.post(
     Uri.parse(
@@ -794,10 +794,10 @@ Future<void> cancelarDesdeOtroTelefono(
 }
 
 /// Una reserva próxima como la ve quien la hizo: lo que el administrador necesita para anularla.
-typedef ReservaAnulable = ({String id, String espacioId, String inicio});
+typedef VoidableBooking = ({String id, String espacioId, String inicio});
 
 /// Las próximas reservas de la cuenta [correo], según la API, de la más cercana a la más lejana.
-Future<List<ReservaAnulable>> proximasDe(
+Future<List<VoidableBooking>> upcomingOf(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
@@ -818,8 +818,8 @@ Future<List<ReservaAnulable>> proximasDe(
 
 /// El administrador anula [reserva] con [motivo] desde otro teléfono, por la API, y devuelve el
 /// estado de la respuesta.
-Future<int> anularDesdeElAdmin(
-  ReservaAnulable reserva, {
+Future<int> voidFromAdmin(
+  VoidableBooking reserva, {
   String motivo = 'mantenimiento de la cancha',
 }) async {
   final r = await http.post(
@@ -841,9 +841,9 @@ Future<int> anularDesdeElAdmin(
 
 /// Espera a que la API registre el envío del aviso de la reserva de [nombreEspacio], que sale
 /// después de responder la anulación, y devuelve cómo salió.
-Future<String> esperarElEnvioDelAviso(String nombreEspacio) async {
+Future<String> waitForNoticeDelivery(String nombreEspacio) async {
   for (var i = 0; i < 40; i++) {
-    final reserva = await reservaQueVeElAdmin(nombreEspacio);
+    final reserva = await bookingAdminSees(nombreEspacio);
     if (reserva?['notice_delivery'] case final String envio) return envio;
     await Future<void>.delayed(const Duration(milliseconds: 250));
   }

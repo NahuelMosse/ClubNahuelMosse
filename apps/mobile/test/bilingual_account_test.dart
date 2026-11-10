@@ -17,7 +17,7 @@ const _english = [Locale('en', 'US')];
 const _spanish = [Locale('es', 'AR')];
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> mount(
     WidgetTester tester,
@@ -26,7 +26,7 @@ void main() {
   ) async {
     tester.platformDispatcher.localesTestValue = device;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montar(tester, screen, tema: darkTheme);
+    await mountScreen(tester, screen, tema: darkTheme);
   }
 
   Future<void> tap(WidgetTester tester, Finder finder) async {
@@ -37,7 +37,7 @@ void main() {
   }
 
   RegistrationScreen registration() =>
-      RegistrationScreen(registration: RegistrationService(apiFalsa()));
+      RegistrationScreen(registration: RegistrationService(fakeApi()));
 
   testWidgets(
     'login, registration and password recovery show English @ENG-19-S1',
@@ -66,7 +66,7 @@ void main() {
         tester,
         _english,
         ForgotPasswordScreen(
-          recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
+          recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
         ),
       );
       expect(find.text('Recover password'), findsOneWidget);
@@ -88,8 +88,8 @@ void main() {
         tester,
         _english,
         NewPasswordScreen(
-          recovery: PasswordRecovery(apiFalsa(codigo: 204, cuerpo: '')),
-          session: SesionFalsa(null),
+          recovery: PasswordRecovery(fakeApi(codigo: 204, cuerpo: '')),
+          session: FakeSession(null),
           code: 'abc',
         ),
       );
@@ -101,8 +101,8 @@ void main() {
         tester,
         _english,
         NewPasswordScreen(
-          recovery: PasswordRecovery(apiFalsa(codigo: 410, cuerpo: '')),
-          session: SesionFalsa(null),
+          recovery: PasswordRecovery(fakeApi(codigo: 410, cuerpo: '')),
+          session: FakeSession(null),
           code: 'abc',
         ),
       );
@@ -120,7 +120,7 @@ void main() {
         tester,
         _english,
         MyProfileScreen(
-          session: SesionFalsa(perfilUsuario),
+          session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
       );
@@ -166,7 +166,7 @@ void main() {
       await mount(
         tester,
         _english,
-        ChangePasswordScreen(session: SesionFalsa(perfilUsuario)),
+        ChangePasswordScreen(session: FakeSession(userProfile)),
       );
       expect(find.text('Change password'), findsOneWidget);
       expect(find.text('Change your password'), findsOneWidget);
@@ -182,7 +182,7 @@ void main() {
 
   testWidgets('the home shows English @ENG-19-S1', (tester) async {
     final semantics = tester.ensureSemantics();
-    await mount(tester, _english, inicioFalso(SesionFalsa(perfilUsuario)));
+    await mount(tester, _english, fakeHome(FakeSession(userProfile)));
     expect(
       find.textContaining(RegExp(r'^GOOD (MORNING|AFTERNOON|EVENING),$')),
       findsOneWidget,

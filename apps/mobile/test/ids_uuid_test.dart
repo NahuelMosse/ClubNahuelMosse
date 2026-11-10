@@ -61,7 +61,7 @@ Map<String, Object?> _reservaJson() => {
 };
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   group('la app lee los ids como texto UUID y navega con ellos @DAT-01-S3', () {
     test('los modelos conservan el id como texto', () {
@@ -106,11 +106,11 @@ void main() {
       tester,
     ) async {
       final pedidos = <http.Request>[];
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/$_sede',
-        api: apiRutas({
-          'GET /spaces/catalog': (200, catalogoJson),
+        api: apiRoutes({
+          'GET /spaces/catalog': (200, catalogJson),
           'GET /venues': (200, '{"venues": [${_json(_sedeJson())}]}'),
           'GET /spaces': (200, '{"spaces": [${_json(_espacioJson())}]}'),
         }, pedidos: pedidos),

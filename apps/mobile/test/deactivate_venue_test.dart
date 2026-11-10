@@ -18,7 +18,7 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     var dadaDeBaja = false;
-    await montarAdmin(
+    await mountAdmin(
       tester,
       tamano: tamano,
       api: ApiClient(
@@ -32,7 +32,7 @@ void main() {
             }(),
             ('GET', '/venues') => (
               200,
-              '{"venues": [${dadaDeBaja ? sedeHaedoJson : '$sedeHaedoJson, $sedeMoronJson'}]}',
+              '{"venues": [${dadaDeBaja ? venueHaedoJson : '$venueHaedoJson, $venueMoronJson'}]}',
             ),
             _ => (404, '{}'),
           };
@@ -177,7 +177,7 @@ void main() {
       codigo,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
-    await montarAdmin(
+    await mountAdmin(
       tester,
       api: ApiClient(
         'http://api.falsa',
@@ -191,7 +191,7 @@ void main() {
           if (pedido.url.path == '/venues') {
             return json(
               200,
-              '{"venues": [${dadaDeBaja ? sedeHaedoJson : '$sedeHaedoJson, $sedeMoronJson'}]}',
+              '{"venues": [${dadaDeBaja ? venueHaedoJson : '$venueHaedoJson, $venueMoronJson'}]}',
             );
           }
           return json(404, '{}');

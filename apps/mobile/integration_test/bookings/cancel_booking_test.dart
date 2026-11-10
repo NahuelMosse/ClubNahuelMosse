@@ -18,16 +18,16 @@ void main() {
     'Sábado',
     'Domingo',
   ];
-  final manana = hoyEnElClub().add(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
 
   /// Una sede con un Fútbol 5 y una reserva de la cuenta nueva mañana a las 21.
   Future<(String, String, String)> reservaDeManana() async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
-    final cancha = await crearEspacio(sede);
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
-    await ocupar(cancha, manana, 21, correo: correo);
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850');
+    final cancha = await createSpace(sede);
+    final correo = 'socio.${unique()}@correo.com';
+    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, correo: correo);
     return (sede, cancha, correo);
   }
 
@@ -36,21 +36,21 @@ void main() {
     String correo, {
     String? apiUrl,
   }) async {
-    await abrirApp(tester, apiUrl: apiUrl);
-    await escribir(tester, 'Correo', correo);
-    await escribir(tester, 'Contraseña', 'ClubNahuel1');
-    await tocar(tester, 'INICIAR SESIÓN');
-    await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+    await openApp(tester, apiUrl: apiUrl);
+    await typeInto(tester, 'Correo', correo);
+    await typeInto(tester, 'Contraseña', 'ClubNahuel1');
+    await tapText(tester, 'INICIAR SESIÓN');
+    await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
   }
 
   Future<void> abrirMisReservas(WidgetTester tester, String cancha) async {
-    await tocar(tester, 'RESERVAS');
-    await esperarA(tester, find.text(cancha));
+    await tapText(tester, 'RESERVAS');
+    await waitUntil(tester, find.text(cancha));
   }
 
   Future<void> pedirCancelar(WidgetTester tester) async {
-    await tocar(tester, 'CANCELAR');
-    await esperarA(tester, find.text('¿Cancelar la reserva?'));
+    await tapText(tester, 'CANCELAR');
+    await waitUntil(tester, find.text('¿Cancelar la reserva?'));
   }
 
   SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
@@ -66,16 +66,16 @@ void main() {
       expect(find.textContaining(sede), findsWidgets);
       expect(find.textContaining('21:00 – 22:00'), findsWidgets);
 
-      await tocar(tester, 'CANCELAR RESERVA');
+      await tapText(tester, 'CANCELAR RESERVA');
 
       // Verifica: el éxito, la reserva sale de Próximas y está en el historial.
-      await esperarA(tester, find.text('Reserva cancelada con éxito'));
-      await tocar(tester, 'ACEPTAR');
-      await esperarA(tester, find.text('No hay próximas reservas'));
-      await tocar(tester, 'Historial');
-      await esperarA(tester, find.text('CANCELADA'));
+      await waitUntil(tester, find.text('Reserva cancelada con éxito'));
+      await tapText(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('No hay próximas reservas'));
+      await tapText(tester, 'Historial');
+      await waitUntil(tester, find.text('CANCELADA'));
       expect(find.text(cancha), findsOneWidget);
-      expect(await reservasDe(correo), isEmpty);
+      expect(await bookingsOf(correo), isEmpty);
     },
   );
 
@@ -87,22 +87,22 @@ void main() {
       await entrar(tester, correo);
       await abrirMisReservas(tester, cancha);
       await pedirCancelar(tester);
-      await tocar(tester, 'CANCELAR RESERVA');
-      await esperarA(tester, find.text('Reserva cancelada con éxito'));
+      await tapText(tester, 'CANCELAR RESERVA');
+      await waitUntil(tester, find.text('Reserva cancelada con éxito'));
 
       // Otra persona mira los horarios de esa cancha.
-      final otra = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: otra, contrasena: 'ClubNahuel1');
+      final otra = 'socio.${unique()}@correo.com';
+      await createAccount(correo: otra, contrasena: 'ClubNahuel1');
       await entrar(tester, otra);
-      await tocar(tester, 'SEDES');
+      await tapText(tester, 'SEDES');
       final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-      await esperarA(tester, tarjeta);
+      await waitUntil(tester, tarjeta);
       await tester.ensureVisible(tarjeta);
       await tester.pumpAndSettle();
       await tester.tap(tarjeta);
       await tester.pumpAndSettle();
-      await tocar(tester, 'VER HORARIOS / RESERVAR');
-      await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+      await tapText(tester, 'VER HORARIOS / RESERVAR');
+      await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
       final chip = find.bySemanticsLabel(
         '${dias[manana.weekday - 1]} ${manana.day}',
       );
@@ -125,12 +125,12 @@ void main() {
       await abrirMisReservas(tester, cancha);
       await pedirCancelar(tester);
 
-      await tocar(tester, 'NO CANCELAR');
+      await tapText(tester, 'NO CANCELAR');
 
       // Verifica: sigue en Próximas, activa, y la API la tiene.
       expect(find.text('¿Cancelar la reserva?'), findsNothing);
       expect(find.text('ACTIVA'), findsOneWidget);
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
     },
   );
 
@@ -143,14 +143,14 @@ void main() {
       await abrirMisReservas(tester, cancha);
       await pedirCancelar(tester);
 
-      api.estado = EstadoApi.sinRed;
-      await tocar(tester, 'CANCELAR RESERVA');
+      api.estado = ApiState.offline;
+      await tapText(tester, 'CANCELAR RESERVA');
 
       // Verifica: el aviso con reintento y la reserva intacta.
-      await esperarA(tester, find.text('Error de conexión'));
+      await waitUntil(tester, find.text('Error de conexión'));
       expect(find.text('REINTENTAR'), findsOneWidget);
-      await tocar(tester, 'Volver');
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      await tapText(tester, 'Volver');
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
     },
   );
 
@@ -163,14 +163,14 @@ void main() {
       await abrirMisReservas(tester, cancha);
       await pedirCancelar(tester);
 
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'CANCELAR RESERVA');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'CANCELAR RESERVA');
 
       // Verifica: el aviso del servidor y la reserva intacta.
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
       expect(find.text(cancha), findsOneWidget);
-      expect(await reservasDe(correo), [(cancha, '21:00')]);
+      expect(await bookingsOf(correo), [(cancha, '21:00')]);
     },
   );
 
@@ -183,15 +183,15 @@ void main() {
       await pedirCancelar(tester);
 
       // Mientras mira la confirmación, el turno empieza.
-      await empezarReservasDe(cancha);
-      await tocar(tester, 'CANCELAR RESERVA');
+      await startBookingsOf(cancha);
+      await tapText(tester, 'CANCELAR RESERVA');
 
       // Verifica: el aviso de que cambió y, al actualizar, ya no se puede cancelar.
-      await esperarA(tester, find.text('Esto cambió mientras tanto'));
-      await tocar(tester, 'VER LO ACTUALIZADO');
-      await esperarA(tester, find.text(cancha));
+      await waitUntil(tester, find.text('Esto cambió mientras tanto'));
+      await tapText(tester, 'VER LO ACTUALIZADO');
+      await waitUntil(tester, find.text(cancha));
       expect(find.text('CANCELAR'), findsNothing);
-      expect(await reservasDe(correo), hasLength(1));
+      expect(await bookingsOf(correo), hasLength(1));
     },
   );
 }

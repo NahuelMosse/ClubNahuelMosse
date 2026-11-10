@@ -22,16 +22,16 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       final held = HeldApi({
-        ...rutasDeSedes(espacios: '[$espacioF5Json, $f5TechadaJson]'),
+        ...venueRoutes(espacios: '[$spaceF5Json, $f5TechadaJson]'),
         'GET /spaces/available': (
           200,
-          '{"spaces": [$espacioF5Json, $f5TechadaJson]}',
+          '{"spaces": [$spaceF5Json, $f5TechadaJson]}',
         ),
       });
       await mountApp(
         tester,
         api: held.client,
-        session: SesionFalsa(perfilUsuario),
+        session: FakeSession(userProfile),
         route: '/inicio/buscar',
         pumps: 0,
       );

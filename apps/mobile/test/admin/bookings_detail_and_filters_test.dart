@@ -39,9 +39,9 @@ String _reserva({
     ' "space_deactivated": false, "voidable": $anulable$aviso}';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
-  final sesion = SesionFalsa(perfilAdmin);
+  final sesion = FakeSession(adminProfile);
 
   Widget detalle(BookingHistoryEntry reserva, ApiClient api) =>
       BookingDetailScreen(
@@ -65,7 +65,7 @@ void main() {
     testWidgets('muestra lo vigente en el servidor, con la línea de aviso', (
       tester,
     ) async {
-      final api = apiRutas({
+      final api = apiRoutes({
         'GET /bookings/all/00000000-0000-7000-8000-000000000001': (
           200,
           _reserva(
@@ -75,9 +75,9 @@ void main() {
                 ', "notice_delivery": "sent", "notice_at": "2026-11-03T10:00:05-03:00"',
           ),
         ),
-        'GET /spaces/catalog': (200, catalogoJson),
+        'GET /spaces/catalog': (200, catalogJson),
       });
-      await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
+      await mountScreen(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
       expect(find.text('Notificación enviada al usuario'), findsOneWidget);
@@ -88,8 +88,8 @@ void main() {
     testWidgets('nombra el deporte como el catálogo, con tilde', (
       tester,
     ) async {
-      final api = apiRutas({'GET /spaces/catalog': (200, catalogoJson)});
-      await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
+      final api = apiRoutes({'GET /spaces/catalog': (200, catalogJson)});
+      await mountScreen(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
       expect(find.text('Fútbol'), findsOneWidget);
@@ -98,8 +98,8 @@ void main() {
 
     testWidgets('la flecha tiene nombre accesible', (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = apiRutas({'GET /spaces/catalog': (200, catalogoJson)});
-      await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
+      final api = apiRoutes({'GET /spaces/catalog': (200, catalogJson)});
+      await mountScreen(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -115,7 +115,7 @@ void main() {
           if (pedido.method == 'POST') return respuesta.future;
           return http.Response.bytes(
             utf8.encode(
-              pedido.url.path == '/spaces/catalog' ? catalogoJson : '{}',
+              pedido.url.path == '/spaces/catalog' ? catalogJson : '{}',
             ),
             pedido.url.path == '/spaces/catalog' ? 200 : 404,
             headers: {'content-type': 'application/json; charset=utf-8'},
@@ -123,7 +123,7 @@ void main() {
         }),
       );
       bool? resultado;
-      await montar(
+      await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(
@@ -179,7 +179,7 @@ void main() {
 
   group('filtros', () {
     Future<void> abrir(WidgetTester tester) async {
-      await montar(
+      await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(

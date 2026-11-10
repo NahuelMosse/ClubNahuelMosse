@@ -9,19 +9,19 @@ import 'package:http/http.dart' as http;
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
-  late CredencialesFalsas credenciales;
+  late FakeCredentials credenciales;
   late List<http.Request> pedidos;
 
   Future<Session> sesionCon((int, String) cambio) async {
-    credenciales = CredencialesFalsas();
+    credenciales = FakeCredentials();
     pedidos = [];
     final sesion = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: apiRutas({
-          'GET /me': (200, perfilJson()),
+        api: apiRoutes({
+          'GET /me': (200, profileJson()),
           'PUT /me/password': cambio,
         }, pedidos: pedidos),
       ),
@@ -31,7 +31,7 @@ void main() {
   }
 
   Future<void> montarPantalla(WidgetTester tester, Session sesion) =>
-      montar(tester, ChangePasswordScreen(session: sesion), tema: darkTheme);
+      mountScreen(tester, ChangePasswordScreen(session: sesion), tema: darkTheme);
 
   Future<void> completar(
     WidgetTester tester, {

@@ -7,17 +7,17 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = hoyEnElClub().add(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
   const motivo = 'Mantenimiento urgente del césped sintético.';
 
   /// Una sede con un Fútbol 5 y una reserva de una cuenta nueva mañana a las 21.
   Future<(String, String, String)> reservaDeManana() async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
-    final cancha = await crearEspacio(sede);
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
-    await ocupar(cancha, manana, 21, correo: correo);
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850');
+    final cancha = await createSpace(sede);
+    final correo = 'socio.${unique()}@correo.com';
+    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, correo: correo);
     return (sede, cancha, correo);
   }
 
@@ -28,19 +28,19 @@ void main() {
     String cancha, {
     String? apiUrl,
   }) async {
-    await entrarComoAdmin(tester, apiUrl: apiUrl);
-    await escribir(tester, 'Buscar reserva', sede);
-    await esperarA(tester, find.text(cancha));
+    await signInAsAdmin(tester, apiUrl: apiUrl);
+    await typeInto(tester, 'Buscar reserva', sede);
+    await waitUntil(tester, find.text(cancha));
   }
 
   Future<void> pedirAnular(WidgetTester tester) async {
-    await tocar(tester, 'ANULAR RESERVA');
-    await esperarA(tester, find.text('¿Anular esta reserva?'));
+    await tapText(tester, 'ANULAR RESERVA');
+    await waitUntil(tester, find.text('¿Anular esta reserva?'));
   }
 
   Future<void> confirmarConMotivo(WidgetTester tester) async {
-    await escribir(tester, 'Motivo de la anulación', motivo);
-    await tocar(tester, 'CONFIRMAR ANULACIÓN');
+    await typeInto(tester, 'Motivo de la anulación', motivo);
+    await tapText(tester, 'CONFIRMAR ANULACIÓN');
   }
 
   testWidgets(
@@ -56,11 +56,11 @@ void main() {
       await confirmarConMotivo(tester);
 
       // Verifica: el aviso, la tarjeta anulada y el rastro completo en la API.
-      await esperarA(tester, find.text('Reserva anulada correctamente'));
-      await tocar(tester, 'ACEPTAR');
-      await esperarA(tester, find.text('ANULADA'));
+      await waitUntil(tester, find.text('Reserva anulada correctamente'));
+      await tapText(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('ANULADA'));
       expect(find.text('ANULAR RESERVA'), findsNothing);
-      final reserva = await reservaQueVeElAdmin(cancha);
+      final reserva = await bookingAdminSees(cancha);
       expect(reserva?['status'], 'voided');
       expect(reserva?['reason'], motivo);
       expect(reserva?['canceled_at'], isNotNull);
@@ -75,13 +75,13 @@ void main() {
       await abrirPanel(tester, sede, cancha);
       await pedirAnular(tester);
       await confirmarConMotivo(tester);
-      await esperarA(tester, find.text('Reserva anulada correctamente'));
+      await waitUntil(tester, find.text('Reserva anulada correctamente'));
 
       // Verifica: las 21 vuelven a estar libres y otra cuenta las reserva.
-      expect(await iniciosLibres(cancha, manana), contains('21:00'));
-      final otra = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: otra, contrasena: 'ClubNahuel1');
-      expect(await reservarPorLaApi(otra, cancha, manana, 21), greaterThan(0));
+      expect(await freeStarts(cancha, manana), contains('21:00'));
+      final otra = 'socio.${unique()}@correo.com';
+      await createAccount(correo: otra, contrasena: 'ClubNahuel1');
+      expect(await bookThroughApi(otra, cancha, manana, 21), greaterThan(0));
     },
   );
 
@@ -92,26 +92,26 @@ void main() {
       await abrirPanel(tester, sede, cancha);
       await pedirAnular(tester);
       await confirmarConMotivo(tester);
-      await esperarA(tester, find.text('Reserva anulada correctamente'));
+      await waitUntil(tester, find.text('Reserva anulada correctamente'));
 
-      await abrirApp(tester);
-      await escribir(tester, 'Correo', correo);
-      await escribir(tester, 'Contraseña', 'ClubNahuel1');
-      await tocar(tester, 'INICIAR SESIÓN');
-      await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+      await openApp(tester);
+      await typeInto(tester, 'Correo', correo);
+      await typeInto(tester, 'Contraseña', 'ClubNahuel1');
+      await tapText(tester, 'INICIAR SESIÓN');
+      await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
       // La anulación ya generó su aviso (CU-24.2): el panel se abre solo al entrar y tapa la
       // pantalla hasta que se cierra.
-      await esperarA(tester, find.text('El club anuló tu reserva'));
+      await waitUntil(tester, find.text('El club anuló tu reserva'));
       await tester.tap(find.bySemanticsLabel('Cerrar las notificaciones'));
       await tester.pumpAndSettle();
-      await tocar(tester, 'RESERVAS');
-      await tocar(tester, 'Historial');
+      await tapText(tester, 'RESERVAS');
+      await tapText(tester, 'Historial');
 
       // Verifica: figura anulada, con el motivo que escribió el administrador.
-      await esperarA(tester, find.text('ANULADA'));
+      await waitUntil(tester, find.text('ANULADA'));
       expect(find.text(cancha), findsOneWidget);
       expect(find.textContaining(motivo), findsOneWidget);
-      expect(await historialDe(correo), [(cancha, 'voided', motivo)]);
+      expect(await historyOf(correo), [(cancha, 'voided', motivo)]);
     },
   );
 
@@ -122,13 +122,13 @@ void main() {
       await abrirPanel(tester, sede, cancha);
       await pedirAnular(tester);
 
-      await tocar(tester, 'VOLVER');
+      await tapText(tester, 'VOLVER');
 
       // Verifica: vuelve al listado, la reserva no cambió y se puede anular de nuevo.
       expect(find.text('¿Anular esta reserva?'), findsNothing);
       expect(find.text('ACTIVA'), findsOneWidget);
       expect(find.text('ANULAR RESERVA'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
+      expect((await bookingAdminSees(cancha))?['status'], 'active');
     },
   );
 
@@ -139,12 +139,12 @@ void main() {
       await abrirPanel(tester, sede, cancha);
       await pedirAnular(tester);
 
-      await tocar(tester, 'CONFIRMAR ANULACIÓN');
+      await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
       // Verifica: el aviso del campo, la confirmación sigue abierta y la API no vio nada.
-      await esperarA(tester, find.text('El motivo es obligatorio para anular'));
+      await waitUntil(tester, find.text('El motivo es obligatorio para anular'));
       expect(find.text('¿Anular esta reserva?'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
+      expect((await bookingAdminSees(cancha))?['status'], 'active');
     },
   );
 
@@ -155,15 +155,15 @@ void main() {
       await abrirPanel(tester, sede, cancha);
       await pedirAnular(tester);
 
-      await cancelarProximasDe(correo);
+      await cancelUpcomingOf(correo);
       await confirmarConMotivo(tester);
 
       // Verifica: el aviso de que cambió, el listado actualizado y la cancelación intacta.
-      await esperarA(tester, find.text('Esto cambió mientras tanto'));
-      await tocar(tester, 'VER LO ACTUALIZADO');
-      await esperarA(tester, find.text('CANCELADA'));
+      await waitUntil(tester, find.text('Esto cambió mientras tanto'));
+      await tapText(tester, 'VER LO ACTUALIZADO');
+      await waitUntil(tester, find.text('CANCELADA'));
       expect(find.text('ANULAR RESERVA'), findsNothing);
-      final reserva = await reservaQueVeElAdmin(cancha);
+      final reserva = await bookingAdminSees(cancha);
       expect(reserva?['status'], 'canceled');
       expect(reserva?['reason'], isNull);
     },
@@ -176,15 +176,15 @@ void main() {
     await abrirPanel(tester, sede, cancha);
     await pedirAnular(tester);
 
-    await empezarReservasDe(cancha);
+    await startBookingsOf(cancha);
     await confirmarConMotivo(tester);
 
     // Verifica: el aviso, el listado ya no ofrece anular y la reserva sigue activa.
-    await esperarA(tester, find.text('Esto cambió mientras tanto'));
-    await tocar(tester, 'VER LO ACTUALIZADO');
-    await esperarA(tester, find.text('ACTIVA'));
+    await waitUntil(tester, find.text('Esto cambió mientras tanto'));
+    await tapText(tester, 'VER LO ACTUALIZADO');
+    await waitUntil(tester, find.text('ACTIVA'));
     expect(find.text('ANULAR RESERVA'), findsNothing);
-    expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
+    expect((await bookingAdminSees(cancha))?['status'], 'active');
   });
 
   testWidgets(
@@ -195,15 +195,15 @@ void main() {
       await abrirPanel(tester, sede, cancha, apiUrl: api.url);
       await pedirAnular(tester);
 
-      api.estado = EstadoApi.sinRed;
+      api.estado = ApiState.offline;
       await confirmarConMotivo(tester);
 
       // Verifica: el aviso con reintento, y al volver la reserva conserva su estado.
-      await esperarA(tester, find.text('Error de conexión'));
+      await waitUntil(tester, find.text('Error de conexión'));
       expect(find.text('REINTENTAR'), findsOneWidget);
-      await tocar(tester, 'Volver');
+      await tapText(tester, 'Volver');
       expect(find.text('ACTIVA'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
+      expect((await bookingAdminSees(cancha))?['status'], 'active');
     },
   );
 
@@ -215,14 +215,14 @@ void main() {
       await abrirPanel(tester, sede, cancha, apiUrl: api.url);
       await pedirAnular(tester);
 
-      api.estado = EstadoApi.falla;
+      api.estado = ApiState.failing;
       await confirmarConMotivo(tester);
 
       // Verifica: el aviso del servidor y la reserva intacta.
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
       expect(find.text('ACTIVA'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
+      expect((await bookingAdminSees(cancha))?['status'], 'active');
     },
   );
 
@@ -234,17 +234,17 @@ void main() {
       await abrirPanel(tester, sede, cancha, apiUrl: api.url);
       await pedirAnular(tester);
 
-      api.estado = EstadoApi.sinRed;
+      api.estado = ApiState.offline;
       await confirmarConMotivo(tester);
-      await esperarA(tester, find.text('Error de conexión'));
-      api.estado = EstadoApi.normal;
-      await tocar(tester, 'REINTENTAR');
+      await waitUntil(tester, find.text('Error de conexión'));
+      api.estado = ApiState.normal;
+      await tapText(tester, 'REINTENTAR');
 
       // Verifica: el aviso de éxito y el rastro con el motivo escrito.
-      await esperarA(tester, find.text('Reserva anulada correctamente'));
-      await tocar(tester, 'ACEPTAR');
-      await esperarA(tester, find.text('ANULADA'));
-      final reserva = await reservaQueVeElAdmin(cancha);
+      await waitUntil(tester, find.text('Reserva anulada correctamente'));
+      await tapText(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('ANULADA'));
+      final reserva = await bookingAdminSees(cancha);
       expect(reserva?['status'], 'voided');
       expect(reserva?['reason'], motivo);
     },

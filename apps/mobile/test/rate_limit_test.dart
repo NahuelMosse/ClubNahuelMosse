@@ -9,7 +9,7 @@ import 'package:http/testing.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'la app muestra el 429 con el mensaje del servidor en su diálogo de error @REV-01-S6 @assumption:REV-01-ASM-14',
@@ -24,7 +24,7 @@ void main() {
           ),
         ),
       );
-      await montar(
+      await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(

@@ -4,10 +4,10 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notifications_test.dart' show ApiFalsa, ahoraClub, centroDe, notif;
+import 'notifications_test.dart' show FakeApi, noticesNow, centerOf, noticeJson;
 import 'support/mount.dart';
 
-final leida = notif(
+final leida = noticeJson(
   id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 50),
   tipo: 'forced_cancellation',
@@ -17,7 +17,7 @@ final leida = notif(
   leida: true,
 );
 
-final agrupado = notif(
+final agrupado = noticeJson(
   id: '00000000-0000-7000-8000-000000000006',
   club: DateTime.utc(2026, 11, 12, 19, 59),
   tipo: 'forced_cancellation',
@@ -28,23 +28,23 @@ final agrupado = notif(
 );
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'una anulación agrupada con otro id reabre el panel con la app abierta @supuesto:CU-24.2-SUP-02',
     (tester) async {
-      final api = ApiFalsa()
+      final api = FakeApi()
         ..avisos = [leida]
         ..unread = 0;
-      final sesion = SesionFalsa(perfilUsuario);
-      final NotificationCenter centro = centroDe(api, sesion)
+      final sesion = FakeSession(userProfile);
+      final NotificationCenter centro = centerOf(api, sesion)
         ..location = () => '/inicio';
-      await montar(
+      await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
+            NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
         tema: darkTheme,

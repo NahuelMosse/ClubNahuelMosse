@@ -11,16 +11,16 @@ Clock _relojDelClub(int hora, int minuto) => Clock.fixed(
   DateTime.utc(2026, 10, 27, hora, minuto).add(const Duration(hours: 3)),
 );
 
-Future<void> _montarSaludo(WidgetTester tester, {Key? key}) => montar(
+Future<void> _montarSaludo(WidgetTester tester, {Key? key}) => mountScreen(
   tester,
   Scaffold(
-    body: HomeGreeting(key: key, sesion: SesionFalsa(perfilUsuario)),
+    body: HomeGreeting(key: key, sesion: FakeSession(userProfile)),
   ),
   tema: darkTheme,
 );
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets('el saludo sigue la hora del club: días de 06:00 a 11:59,'
       ' tardes de 12:00 a 19:59, noches de 20:00 a 05:59'

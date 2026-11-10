@@ -12,7 +12,7 @@ import '../support/fixed_clock.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   final temas = {'dark': darkTheme, 'light': lightTheme};
@@ -20,9 +20,9 @@ void main() {
   Future<Session> sesionCon((int, String) cambio) async {
     final sesion = Session(
       repository: SessionRepository(
-        credentials: CredencialesFalsas(),
-        api: apiRutas({
-          'GET /me': (200, perfilJson()),
+        credentials: FakeCredentials(),
+        api: apiRoutes({
+          'GET /me': (200, profileJson()),
           'PUT /me/password': cambio,
         }),
       ),
@@ -54,7 +54,7 @@ void main() {
     for (final MapEntry(key: modo, value: tema) in temas.entries) {
       Future<void> montarCon(WidgetTester tester, (int, String) cambio) async {
         final sesion = await sesionCon(cambio);
-        await montar(
+        await mountScreen(
           tester,
           ChangePasswordScreen(session: sesion),
           tema: tema,
@@ -126,7 +126,7 @@ void main() {
         ('session_expired', showSessionExpired),
       ]) {
         testWidgets('overlay $nombre $ancho $modo', (tester) async {
-          await montar(
+          await mountScreen(
             tester,
             Builder(
               builder: (c) => Scaffold(

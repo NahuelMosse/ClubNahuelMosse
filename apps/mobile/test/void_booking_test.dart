@@ -19,7 +19,7 @@ import 'support/mount.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-String reservaJson({bool anulable = true, String estado = 'active'}) =>
+String bookingJson({bool anulable = true, String estado = 'active'}) =>
     '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
     ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
@@ -30,12 +30,12 @@ String reservaJson({bool anulable = true, String estado = 'active'}) =>
     ' "canceled_by_name": null, "space_deactivated": false,'
     ' "voidable": $anulable}';
 
-String listado(String reserva) =>
+String listing(String reserva) =>
     '{"bookings": [$reserva], "total": 1, "page": 1, "per_page": 20,'
     ' "counters": {"all": 1, "active": 1, "completed": 0, "voided": 0}}';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<List<http.Request>> abrirPanel(
     WidgetTester tester, {
@@ -45,14 +45,14 @@ void main() {
     double escala = 1,
   }) async {
     final pedidos = <http.Request>[];
-    final api = apiRutas({
-      'GET /bookings/all': (200, listado(reservaJson(anulable: anulable))),
-      'GET /spaces/catalog': (200, catalogoJson),
+    final api = apiRoutes({
+      'GET /bookings/all': (200, listing(bookingJson(anulable: anulable))),
+      'GET /spaces/catalog': (200, catalogJson),
       'POST /bookings/00000000-0000-7000-8000-000000000001/void':
-          alAnular ?? (200, reservaJson(anulable: false, estado: 'voided')),
+          alAnular ?? (200, bookingJson(anulable: false, estado: 'voided')),
     }, pedidos: pedidos);
-    final sesion = SesionFalsa(perfilAdmin);
-    await montar(
+    final sesion = FakeSession(adminProfile);
+    await mountScreen(
       tester,
       AdminPanelScreen(
         history: BookingHistory(api: api, sesion: sesion),
@@ -207,17 +207,17 @@ void main() {
     'el detalle también ofrece anular y avisa al volver @supuesto:CU-15-SUP-06',
     (tester) async {
       final pedidos = <http.Request>[];
-      final api = apiRutas({
+      final api = apiRoutes({
         'POST /bookings/00000000-0000-7000-8000-000000000001/void': (
           200,
-          reservaJson(anulable: false, estado: 'voided'),
+          bookingJson(anulable: false, estado: 'voided'),
         ),
       }, pedidos: pedidos);
-      final sesion = SesionFalsa(perfilAdmin);
-      final reserva = parseBookingHistoryEntry(jsonDecode(reservaJson()));
+      final sesion = FakeSession(adminProfile);
+      final reserva = parseBookingHistoryEntry(jsonDecode(bookingJson()));
       if (reserva == null) fail('la reserva de prueba no se lee');
       bool? resultado;
-      await montar(
+      await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(

@@ -13,11 +13,11 @@ const _moron = '00000000-0000-7000-8000-000000000001';
 /// screen loaded, dark, 393x852.
 void main() {
   Future<HeldApi> mount(WidgetTester tester, String route) async {
-    final held = HeldApi(rutasDeSedes());
+    final held = HeldApi(venueRoutes());
     await mountApp(
       tester,
       api: held.client,
-      session: SesionFalsa(perfilUsuario),
+      session: FakeSession(userProfile),
       route: route,
     );
     return held;

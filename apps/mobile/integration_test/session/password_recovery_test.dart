@@ -15,17 +15,17 @@ void main() {
       'nueva. El enlace vence en 30 minutos.';
 
   Future<void> pedirEnlace(WidgetTester tester, String correo) async {
-    await tocar(tester, '¿Olvidaste tu contraseña?');
-    await escribir(tester, 'Correo electrónico', correo);
-    await tocar(tester, 'ENVIAR ENLACE');
+    await tapText(tester, '¿Olvidaste tu contraseña?');
+    await typeInto(tester, 'Correo electrónico', correo);
+    await tapText(tester, 'ENVIAR ENLACE');
   }
 
   Future<void> crearNueva(
     WidgetTester tester, {
     String repetida = nueva,
   }) async {
-    await escribir(tester, 'Contraseña nueva', nueva);
-    await escribir(tester, 'Repetir contraseña', repetida);
+    await typeInto(tester, 'Contraseña nueva', nueva);
+    await typeInto(tester, 'Repetir contraseña', repetida);
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
   }
@@ -40,27 +40,27 @@ void main() {
     'pide el enlace, crea una contraseña nueva y entra con ella @CU-04b-H01-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
+      await openApp(tester);
 
       await pedirEnlace(tester, correo);
-      await esperarA(tester, find.text('Revisá tu correo'));
+      await waitUntil(tester, find.text('Revisá tu correo'));
       expect(find.text(aviso), findsOneWidget);
 
       // Verifica: el correo trae un enlace que abre la app en la contraseña nueva.
-      await abrirEnlaceDeRecuperacion(tester, await ultimoCodigo(correo));
-      await esperarA(tester, find.text('Creá una contraseña nueva'));
+      await openRecoveryLink(tester, await lastCode(correo));
+      await waitUntil(tester, find.text('Creá una contraseña nueva'));
       await crearNueva(tester);
-      await tocar(tester, 'GUARDAR CONTRASEÑA');
-      await esperarA(tester, find.text('Contraseña actualizada'));
+      await tapText(tester, 'GUARDAR CONTRASEÑA');
+      await waitUntil(tester, find.text('Contraseña actualizada'));
 
       // Verifica: vuelve al login y la contraseña nueva abre la cuenta.
-      await tocar(tester, 'VOLVER AL INICIO DE SESIÓN');
-      await escribir(tester, 'Correo', correo);
-      await escribir(tester, 'Contraseña', nueva);
-      await tocar(tester, 'INICIAR SESIÓN');
-      await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+      await tapText(tester, 'VOLVER AL INICIO DE SESIÓN');
+      await typeInto(tester, 'Correo', correo);
+      await typeInto(tester, 'Contraseña', nueva);
+      await tapText(tester, 'INICIAR SESIÓN');
+      await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
       semantica.dispose();
     },
   );
@@ -69,20 +69,20 @@ void main() {
     'después de recuperar, la contraseña anterior ya no sirve @CU-04b-H01-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
+      await openApp(tester);
       await pedirEnlace(tester, correo);
-      await esperarA(tester, find.text('Revisá tu correo'));
-      await abrirEnlaceDeRecuperacion(tester, await ultimoCodigo(correo));
-      await esperarA(tester, find.text('Creá una contraseña nueva'));
+      await waitUntil(tester, find.text('Revisá tu correo'));
+      await openRecoveryLink(tester, await lastCode(correo));
+      await waitUntil(tester, find.text('Creá una contraseña nueva'));
       await crearNueva(tester);
-      await tocar(tester, 'GUARDAR CONTRASEÑA');
-      await esperarA(tester, find.text('Contraseña actualizada'));
+      await tapText(tester, 'GUARDAR CONTRASEÑA');
+      await waitUntil(tester, find.text('Contraseña actualizada'));
 
       // Verifica: la contraseña olvidada deja de abrir la cuenta.
-      expect(await puedeEntrar(correo, vieja), isFalse);
-      expect(await puedeEntrar(correo, nueva), isTrue);
+      expect(await canSignIn(correo, vieja), isFalse);
+      expect(await canSignIn(correo, nueva), isTrue);
       semantica.dispose();
     },
   );
@@ -91,15 +91,15 @@ void main() {
     'pide el enlace con un correo sin cuenta y ve el mismo mensaje, sin que se envíe mail @CU-04b-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'nadie.${unico()}@correo.com';
-      await abrirApp(tester);
+      final correo = 'nadie.${unique()}@correo.com';
+      await openApp(tester);
 
       await pedirEnlace(tester, correo);
 
       // Verifica: la respuesta no dice si el correo tiene cuenta, y no sale ningún mail.
-      await esperarA(tester, find.text('Revisá tu correo'));
+      await waitUntil(tester, find.text('Revisá tu correo'));
       expect(find.text(aviso), findsOneWidget);
-      expect(await correosPara(correo), isEmpty);
+      expect(await emailsFor(correo), isEmpty);
       semantica.dispose();
     },
   );
@@ -108,10 +108,10 @@ void main() {
     'escribe un correo con formato inválido y el botón sigue deshabilitado @CU-04b-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrirApp(tester);
-      await tocar(tester, '¿Olvidaste tu contraseña?');
+      await openApp(tester);
+      await tapText(tester, '¿Olvidaste tu contraseña?');
 
-      await escribir(tester, 'Correo electrónico', 'nmosse@unimoron');
+      await typeInto(tester, 'Correo electrónico', 'nmosse@unimoron');
       FocusManager.instance.primaryFocus?.unfocus();
       await tester.pumpAndSettle();
 
@@ -126,18 +126,18 @@ void main() {
     'abre un enlace vencido y ve «El enlace no es válido» @CU-04b-H04-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
+      await openApp(tester);
       await pedirEnlace(tester, correo);
-      await esperarA(tester, find.text('Revisá tu correo'));
-      final codigo = await ultimoCodigo(correo);
-      await vencerEnlace(codigo);
+      await waitUntil(tester, find.text('Revisá tu correo'));
+      final codigo = await lastCode(correo);
+      await expireLink(codigo);
 
-      await abrirEnlaceDeRecuperacion(tester, codigo);
+      await openRecoveryLink(tester, codigo);
 
       // Verifica: el enlace vencido no deja cambiar la contraseña y ofrece pedir otro.
-      await esperarA(tester, find.text('El enlace no es válido'));
+      await waitUntil(tester, find.text('El enlace no es válido'));
       expect(find.text('PEDIR UN ENLACE NUEVO'), findsOneWidget);
       expect(find.text('Creá una contraseña nueva'), findsNothing);
       semantica.dispose();
@@ -148,24 +148,24 @@ void main() {
     'abre un enlace ya usado y ve «El enlace no es válido» @CU-04b-H04-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
+      await openApp(tester);
       await pedirEnlace(tester, correo);
-      await esperarA(tester, find.text('Revisá tu correo'));
-      final codigo = await ultimoCodigo(correo);
-      await abrirEnlaceDeRecuperacion(tester, codigo);
-      await esperarA(tester, find.text('Creá una contraseña nueva'));
+      await waitUntil(tester, find.text('Revisá tu correo'));
+      final codigo = await lastCode(correo);
+      await openRecoveryLink(tester, codigo);
+      await waitUntil(tester, find.text('Creá una contraseña nueva'));
       await crearNueva(tester);
-      await tocar(tester, 'GUARDAR CONTRASEÑA');
-      await esperarA(tester, find.text('Contraseña actualizada'));
-      await tocar(tester, 'VOLVER AL INICIO DE SESIÓN');
+      await tapText(tester, 'GUARDAR CONTRASEÑA');
+      await waitUntil(tester, find.text('Contraseña actualizada'));
+      await tapText(tester, 'VOLVER AL INICIO DE SESIÓN');
 
-      await abrirEnlaceDeRecuperacion(tester, codigo);
+      await openRecoveryLink(tester, codigo);
 
       // Verifica: el enlace sirve una sola vez.
-      await esperarA(tester, find.text('El enlace no es válido'));
-      expect(await puedeEntrar(correo, nueva), isTrue);
+      await waitUntil(tester, find.text('El enlace no es válido'));
+      expect(await canSignIn(correo, nueva), isTrue);
       semantica.dispose();
     },
   );
@@ -174,13 +174,13 @@ void main() {
     'la repetición no coincide y el botón sigue deshabilitado @CU-04b-H05-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
+      await openApp(tester);
       await pedirEnlace(tester, correo);
-      await esperarA(tester, find.text('Revisá tu correo'));
-      await abrirEnlaceDeRecuperacion(tester, await ultimoCodigo(correo));
-      await esperarA(tester, find.text('Creá una contraseña nueva'));
+      await waitUntil(tester, find.text('Revisá tu correo'));
+      await openRecoveryLink(tester, await lastCode(correo));
+      await waitUntil(tester, find.text('Creá una contraseña nueva'));
 
       await crearNueva(tester, repetida: 'ClubNahuel3');
 
@@ -195,22 +195,22 @@ void main() {
     'reenvía el correo y el enlace anterior deja de servir @CU-04b-H06-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
-      await abrirApp(tester);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
+      await openApp(tester);
       await pedirEnlace(tester, correo);
-      await esperarA(tester, find.text('Revisá tu correo'));
-      final primero = await ultimoCodigo(correo);
+      await waitUntil(tester, find.text('Revisá tu correo'));
+      final primero = await lastCode(correo);
 
-      await tocar(tester, 'Reenviar el correo');
-      await esperarA(tester, find.text('Revisá tu correo'));
+      await tapText(tester, 'Reenviar el correo');
+      await waitUntil(tester, find.text('Revisá tu correo'));
 
       // Verifica: llega un segundo correo y el primer enlace ya no vale.
-      final correos = await correosPara(correo);
+      final correos = await emailsFor(correo);
       expect(correos, hasLength(2));
-      expect(await ultimoCodigo(correo), isNot(primero));
-      await abrirEnlaceDeRecuperacion(tester, primero);
-      await esperarA(tester, find.text('El enlace no es válido'));
+      expect(await lastCode(correo), isNot(primero));
+      await openRecoveryLink(tester, primero);
+      await waitUntil(tester, find.text('El enlace no es válido'));
       semantica.dispose();
     },
   );
@@ -219,24 +219,24 @@ void main() {
     'sin conexión o con el servidor caído al pedir el enlace, ve el overlay y no cambia nada @CU-04b-H07-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: vieja);
+      final correo = 'socio.${unique()}@correo.com';
+      await createAccount(correo: correo, contrasena: vieja);
       final api = await ApiIntermedia.abrir();
-      await abrirApp(tester, apiUrl: api.url);
+      await openApp(tester, apiUrl: api.url);
 
-      api.estado = EstadoApi.sinRed;
+      api.estado = ApiState.offline;
       await pedirEnlace(tester, correo);
       // Verifica: sin conexión se ve el aviso de conexión y no sale ningún correo.
-      await esperarA(tester, find.text('Error de conexión'));
-      await tocar(tester, 'Volver');
+      await waitUntil(tester, find.text('Error de conexión'));
+      await tapText(tester, 'Volver');
       expect(find.text('Revisá tu correo'), findsNothing);
 
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'ENVIAR ENLACE');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'ENVIAR ENLACE');
       // Verifica: con el servidor caído se ve su aviso, y la contraseña sigue igual.
-      await esperarA(tester, find.text('Error del servidor'));
-      expect(await correosPara(correo), isEmpty);
-      expect(await puedeEntrar(correo, vieja), isTrue);
+      await waitUntil(tester, find.text('Error del servidor'));
+      expect(await emailsFor(correo), isEmpty);
+      expect(await canSignIn(correo, vieja), isTrue);
       semantica.dispose();
     },
   );

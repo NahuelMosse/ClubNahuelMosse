@@ -11,19 +11,19 @@ import '../support/user.dart';
 Future<void> _abrirHorarios(
   WidgetTester tester,
   String grilla,
-) => montarUsuario(
+) => mountUser(
   tester,
   inicio:
       '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
   tamano: const Size(393, 2400),
-  api: apiRutas(rutasDeSedes(grilla: grilla)),
+  api: apiRoutes(venueRoutes(grilla: grilla)),
 );
 
 void main() {
   testWidgets(
     'con «No hay horarios disponibles» no va la línea del día @RED-03-ASM-08',
     (tester) async {
-      await _abrirHorarios(tester, grillaJson(abre: false));
+      await _abrirHorarios(tester, gridJson(abre: false));
 
       expect(find.text('No hay horarios disponibles'), findsOneWidget);
       expect(find.byType(DayTimeline), findsNothing);
@@ -35,7 +35,7 @@ void main() {
     (tester) async {
       await _abrirHorarios(
         tester,
-        grillaJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
+        gridJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
       );
 
       expect(find.text('No hay horarios disponibles'), findsOneWidget);

@@ -9,8 +9,8 @@ import '../support/network.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final manana = hoyEnElClub().add(const Duration(days: 1));
-  final ayer = hoyEnElClub().subtract(const Duration(days: 1));
+  final manana = todayAtClub().add(const Duration(days: 1));
+  final ayer = todayAtClub().subtract(const Duration(days: 1));
 
   /// «29 / 09 / 2026», como la muestra el campo.
   String fecha(DateTime dia) =>
@@ -29,24 +29,24 @@ void main() {
 
   /// Una sede de 08:00 a 23:00 con dos Fútbol 5 y un Fútbol 7.
   Future<(String, String, String, String)> sedeConCanchas() async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850');
     return (
       sede,
-      await crearEspacio(sede),
-      await crearEspacio(sede),
-      await crearEspacio(sede, tipo: 'F7'),
+      await createSpace(sede),
+      await createSpace(sede),
+      await createSpace(sede, tipo: 'F7'),
     );
   }
 
   Future<void> abrirBusqueda(WidgetTester tester, {String? apiUrl}) async {
-    await entrarComoUsuario(
+    await signInAsUser(
       tester,
-      correo: 'socio.${unico()}@correo.com',
+      correo: 'socio.${unique()}@correo.com',
       apiUrl: apiUrl,
     );
-    await tocar(tester, 'Buscar cancha');
-    await esperarA(tester, find.text('Consultar canchas'));
+    await tapText(tester, 'Buscar cancha');
+    await waitUntil(tester, find.text('Consultar canchas'));
   }
 
   Future<void> completar(
@@ -57,12 +57,12 @@ void main() {
     String desde = '10:00',
     String hasta = '12:00',
   }) async {
-    await elegir(tester, 'Sede', sede);
-    await elegir(tester, 'Deporte', 'Fútbol');
-    await elegir(tester, 'Tipo de cancha', tipo);
-    await escribir(tester, 'Fecha', fecha(dia ?? manana));
-    await elegir(tester, 'Desde', desde);
-    await elegir(tester, 'Hasta', hasta);
+    await choose(tester, 'Sede', sede);
+    await choose(tester, 'Deporte', 'Fútbol');
+    await choose(tester, 'Tipo de cancha', tipo);
+    await typeInto(tester, 'Fecha', fecha(dia ?? manana));
+    await choose(tester, 'Desde', desde);
+    await choose(tester, 'Hasta', hasta);
   }
 
   SemanticsFlags banderas(WidgetTester tester, String etiqueta) =>
@@ -73,14 +73,14 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, f5a, f5b, f7) = await sedeConCanchas();
-      await ocupar(f5b, manana, 11);
+      await occupy(f5b, manana, 11);
       await abrirBusqueda(tester);
       await completar(tester, sede);
 
-      await tocar(tester, 'CONSULTAR');
+      await tapText(tester, 'CONSULTAR');
 
       // Verifica: sólo la Fútbol 5 libre de 10 a 12, con el rango consultado.
-      await esperarA(
+      await waitUntil(
         tester,
         find.text('1 CANCHA DISPONIBLE · FÚTBOL 5 · 10:00 – 12:00'),
       );
@@ -97,15 +97,15 @@ void main() {
       final semantica = tester.ensureSemantics();
       final (sede, f5a, f5b, _) = await sedeConCanchas();
       // La de la Cancha 1 termina cuando empieza el rango; la de la Cancha 2 lo pisa.
-      await ocupar(f5a, manana, 9);
-      await ocupar(f5b, manana, 11, horas: 2);
+      await occupy(f5a, manana, 9);
+      await occupy(f5b, manana, 11, horas: 2);
       await abrirBusqueda(tester);
       await completar(tester, sede);
 
-      await tocar(tester, 'CONSULTAR');
+      await tapText(tester, 'CONSULTAR');
 
       // Verifica: la que termina a las 10 queda libre; la que pisa el rango, no.
-      await esperarA(tester, find.text(f5a));
+      await waitUntil(tester, find.text(f5a));
       expect(find.text(f5b), findsNothing);
       semantica.dispose();
     },
@@ -117,16 +117,16 @@ void main() {
       final semantica = tester.ensureSemantics();
       final (sede, f5a, f5b, _) = await sedeConCanchas();
       // Con la Cancha 2 ocupada, el resultado trae una sola cancha para elegir.
-      await ocupar(f5b, manana, 11);
+      await occupy(f5b, manana, 11);
       await abrirBusqueda(tester);
       await completar(tester, sede);
-      await tocar(tester, 'CONSULTAR');
-      await esperarA(tester, find.text(f5a));
+      await tapText(tester, 'CONSULTAR');
+      await waitUntil(tester, find.text(f5a));
 
-      await tocar(tester, 'VER HORARIOS / RESERVAR');
+      await tapText(tester, 'VER HORARIOS / RESERVAR');
 
       // Verifica: la grilla de esa cancha llega con el día, la duración y el horario.
-      await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+      await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
       expect(banderas(tester, 'Cancha 1, Techada').isSelected, isTrue);
       expect(
         banderas(
@@ -149,18 +149,18 @@ void main() {
       final (sede, f5a, _, _) = await sedeConCanchas();
       await abrirBusqueda(tester);
       await completar(tester, sede);
-      await tocar(tester, 'CONSULTAR');
-      await esperarA(tester, find.text(f5a));
+      await tapText(tester, 'CONSULTAR');
+      await waitUntil(tester, find.text(f5a));
 
       // Verifica: lo elegido sigue en los filtros.
       expect(find.text(sede), findsWidgets);
       expect(find.text(fecha(manana)), findsOneWidget);
 
-      await elegir(tester, 'Hasta', '11:00');
-      await tocar(tester, 'CONSULTAR');
+      await choose(tester, 'Hasta', '11:00');
+      await tapText(tester, 'CONSULTAR');
 
       // Verifica: la nueva consulta usa el rango cambiado.
-      await esperarA(
+      await waitUntil(
         tester,
         find.text('2 CANCHAS DISPONIBLES · FÚTBOL 5 · 10:00 – 11:00'),
       );
@@ -173,15 +173,15 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, f5a, f5b, _) = await sedeConCanchas();
-      await ocupar(f5a, manana, 10, horas: 2);
-      await ocupar(f5b, manana, 10);
+      await occupy(f5a, manana, 10, horas: 2);
+      await occupy(f5b, manana, 10);
       await abrirBusqueda(tester);
       await completar(tester, sede);
 
-      await tocar(tester, 'CONSULTAR');
+      await tapText(tester, 'CONSULTAR');
 
       // Verifica: el aviso, y los filtros siguen cargados.
-      await esperarA(tester, find.text('No hay canchas disponibles'));
+      await waitUntil(tester, find.text('No hay canchas disponibles'));
       expect(find.text(f5a), findsNothing);
       expect(find.text(sede), findsWidgets);
       expect(find.text(fecha(manana)), findsOneWidget);
@@ -199,7 +199,7 @@ void main() {
     await completar(tester, sede, dia: ayer);
 
     // Verifica: el error en la fecha y la consulta bloqueada.
-    await esperarA(tester, find.text('La fecha tiene que ser futura'));
+    await waitUntil(tester, find.text('La fecha tiene que ser futura'));
     expect(banderas(tester, 'CONSULTAR').isEnabled, isFalse);
     expect(find.textContaining('DISPONIBLE'), findsNothing);
     semantica.dispose();
@@ -215,7 +215,7 @@ void main() {
       await completar(tester, sede, desde: '18:00', hasta: '18:00');
 
       // Verifica: el error en el rango y la consulta bloqueada.
-      await esperarA(tester, find.text('La duración mínima es de una hora'));
+      await waitUntil(tester, find.text('La duración mínima es de una hora'));
       expect(banderas(tester, 'CONSULTAR').isEnabled, isFalse);
       semantica.dispose();
     },
@@ -231,7 +231,7 @@ void main() {
       await completar(tester, sede, desde: '22:00', hasta: '00:00');
 
       // Verifica: el error con la hora de cierre y la consulta bloqueada.
-      await esperarA(tester, find.text('La sede cierra a las 23:00'));
+      await waitUntil(tester, find.text('La sede cierra a las 23:00'));
       expect(banderas(tester, 'CONSULTAR').isEnabled, isFalse);
       semantica.dispose();
     },
@@ -246,11 +246,11 @@ void main() {
       await abrirBusqueda(tester, apiUrl: api.url);
       await completar(tester, sede);
 
-      api.estado = EstadoApi.sinRed;
-      await tocar(tester, 'CONSULTAR');
+      api.estado = ApiState.offline;
+      await tapText(tester, 'CONSULTAR');
 
       // Verifica: el error con reintento, y los filtros siguen cargados.
-      await esperarA(
+      await waitUntil(
         tester,
         find.text('No se pudo consultar la disponibilidad'),
       );
@@ -270,14 +270,14 @@ void main() {
       final api = await ApiIntermedia.abrir();
       await abrirBusqueda(tester, apiUrl: api.url);
       await completar(tester, sede);
-      await tocar(tester, 'CONSULTAR');
-      await esperarA(tester, find.text(f5a));
+      await tapText(tester, 'CONSULTAR');
+      await waitUntil(tester, find.text(f5a));
 
-      api.estado = EstadoApi.falla;
-      await tocar(tester, 'CONSULTAR');
+      api.estado = ApiState.failing;
+      await tapText(tester, 'CONSULTAR');
 
       // Verifica: el error, y el resultado anterior ya no está.
-      await esperarA(
+      await waitUntil(
         tester,
         find.text('No se pudo consultar la disponibilidad'),
       );

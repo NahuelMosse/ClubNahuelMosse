@@ -7,17 +7,17 @@ import 'support/user.dart';
 const _english = [Locale('en', 'US')];
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets('venues and their spaces show English @ENG-19-S1', (
     tester,
   ) async {
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montarUsuario(
+    await mountUser(
       tester,
       inicio: '/sedes',
-      api: apiRutas(rutasDeSedes()),
+      api: apiRoutes(venueRoutes()),
     );
     void expectTexts(Iterable<String> texts) {
       for (final text in texts) {

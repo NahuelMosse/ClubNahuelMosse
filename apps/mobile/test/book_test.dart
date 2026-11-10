@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/mount.dart';
 import 'support/user.dart';
 
@@ -14,14 +14,14 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     final (codigo, cuerpo) = respuesta;
-    await montarUsuario(
+    await mountUser(
       tester,
       inicio:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       tamano: tamano,
-      api: apiRutas({
-        ...rutasDeSedes(),
-        'POST /bookings': (codigo, cuerpo.isEmpty ? reservaJson() : cuerpo),
+      api: apiRoutes({
+        ...venueRoutes(),
+        'POST /bookings': (codigo, cuerpo.isEmpty ? bookingJson() : cuerpo),
       }, pedidos: pedidos),
     );
     final franja = find.bySemanticsLabel('18:00 – 19:00');

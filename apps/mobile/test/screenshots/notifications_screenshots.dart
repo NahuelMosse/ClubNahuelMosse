@@ -6,20 +6,20 @@ import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../notifications_spanish_test.dart'
     show
-        ApiFalsa,
-        SistemaFalso,
-        ahoraClub,
-        alerta,
-        centroDe,
-        confirmacion,
-        recordatorio;
+        FakeApi,
+        FakeSystem,
+        noticesNow,
+        alertNotice,
+        centerOf,
+        confirmationNotice,
+        reminderNotice;
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
 import '../support/user.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   const modos = {'dark': true, 'light': false};
@@ -38,20 +38,20 @@ void main() {
         bool permiso = true,
         double escala = 1,
       }) async {
-        final api = ApiFalsa()
+        final api = FakeApi()
           ..avisos = avisos
           ..unread = unread;
-        final sesion = SesionFalsa(perfilUsuario);
-        await montar(
+        final sesion = FakeSession(userProfile);
+        await mountScreen(
           tester,
           NotificationsScreen(
-            center: centroDe(
+            center: centerOf(
               api,
               sesion,
-              sistema: SistemaFalso(concedido: permiso),
+              sistema: FakeSystem(concedido: permiso),
             ),
             session: sesion,
-            now: () => ahoraClub,
+            now: () => noticesNow,
             onOpen: (_, _) {},
           ),
           tema: oscuro ? darkTheme : lightTheme,
@@ -63,7 +63,7 @@ void main() {
       testWidgets('centro $ancho $modo', (tester) async {
         await centro(
           tester,
-          avisos: [recordatorio, confirmacion, alerta],
+          avisos: [reminderNotice, confirmationNotice, alertNotice],
           unread: 1,
         );
         await capturar(tester, 'notifications/center_${ancho}_$modo.png');
@@ -72,7 +72,7 @@ void main() {
       testWidgets('centro con el texto al 200 % $ancho $modo', (tester) async {
         await centro(
           tester,
-          avisos: [recordatorio, confirmacion, alerta],
+          avisos: [reminderNotice, confirmationNotice, alertNotice],
           unread: 1,
           escala: 2,
         );
@@ -93,7 +93,7 @@ void main() {
       });
 
       testWidgets('desactivadas con avisos $ancho $modo', (tester) async {
-        await centro(tester, avisos: [recordatorio], unread: 1, permiso: false);
+        await centro(tester, avisos: [reminderNotice], unread: 1, permiso: false);
         await capturar(
           tester,
           'notifications/disabled_with_notices_${ancho}_$modo.png',
@@ -101,31 +101,31 @@ void main() {
       });
 
       testWidgets('home con la campana $ancho $modo', (tester) async {
-        final api = ApiFalsa()
-          ..avisos = [recordatorio, confirmacion]
+        final api = FakeApi()
+          ..avisos = [reminderNotice, confirmationNotice]
           ..unread = 2;
-        await montarUsuario(
+        await mountUser(
           tester,
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/inicio',
           api: api.cliente,
-          centro: (sesion) => centroDe(api, sesion),
+          centro: (sesion) => centerOf(api, sesion),
         );
         await capturar(tester, 'notifications/home_${ancho}_$modo.png');
       });
 
       testWidgets('panel con la app abierta $ancho $modo', (tester) async {
-        final api = ApiFalsa();
-        final centroDeAvisos = centroDe(api, SesionFalsa(perfilUsuario));
-        await montar(
+        final api = FakeApi();
+        final centroDeAvisos = centerOf(api, FakeSession(userProfile));
+        await mountScreen(
           tester,
           Stack(
             children: [
               const Scaffold(body: SizedBox.expand()),
               NoticePanel(
                 center: centroDeAvisos,
-                now: () => ahoraClub,
+                now: () => noticesNow,
                 onOpen: (_) {},
               ),
             ],
@@ -135,9 +135,9 @@ void main() {
         );
         api
           ..avisos = [
-            recordatorio,
-            confirmacion.replaceFirst('"read": true', '"read": false'),
-            alerta.replaceFirst('"read": true', '"read": false'),
+            reminderNotice,
+            confirmationNotice.replaceFirst('"read": true', '"read": false'),
+            alertNotice.replaceFirst('"read": true', '"read": false'),
           ]
           ..unread = 3;
         await tester.runAsync(centroDeAvisos.load);

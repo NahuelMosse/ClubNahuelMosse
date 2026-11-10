@@ -39,7 +39,7 @@ void main() {
     await mountApp(
       tester,
       api: held.client,
-      session: SesionFalsa(perfilAdmin),
+      session: FakeSession(adminProfile),
       route: route,
     );
     return held;
@@ -63,8 +63,8 @@ void main() {
   }
 
   final spaces = {
-    ...rutasDeEspacios(),
-    'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
+    ...spaceRoutes(),
+    'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
   };
 
   testWidgets('admin spaces loading and loaded', (tester) async {
@@ -78,7 +78,7 @@ void main() {
   testWidgets('admin history loading and loaded', (tester) async {
     await loadingAndLoaded(tester, '/admin', {
       'GET /bookings/all': (200, _history),
-      'GET /spaces/catalog': (200, catalogoJson),
+      'GET /spaces/catalog': (200, catalogJson),
     }, 'admin_history');
   });
 
@@ -86,7 +86,7 @@ void main() {
     await loadingAndLoaded(
       tester,
       '/admin/espacios/nuevo',
-      rutasDeEspacios(),
+      spaceRoutes(),
       'admin_new_space',
     );
   });

@@ -49,10 +49,10 @@ void main() {
           await tester.pumpWidget(
             App(
               key: UniqueKey(),
-              api: apiRutas({}),
-              session: SesionFalsa(switch (sesion) {
-                'usuario' => perfilUsuario,
-                'admin' => perfilAdmin,
+              api: apiRoutes({}),
+              session: FakeSession(switch (sesion) {
+                'usuario' => userProfile,
+                'admin' => adminProfile,
                 _ => null,
               }),
               appearance: Appearance.inMemory(),

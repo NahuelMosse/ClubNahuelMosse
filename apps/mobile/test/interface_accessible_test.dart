@@ -18,14 +18,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/admin.dart';
 import 'support/mount.dart';
 import 'support/user.dart';
 import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
 
 /// El contraste de WCAG entre dos colores opacos.
-double contraste(Color a, Color b) {
+double contrast(Color a, Color b) {
   final (claro, oscuro) = a.computeLuminance() > b.computeLuminance()
       ? (a.computeLuminance(), b.computeLuminance())
       : (b.computeLuminance(), a.computeLuminance());
@@ -33,7 +33,7 @@ double contraste(Color a, Color b) {
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> tocar(WidgetTester tester, Finder f) async {
     await tester.ensureVisible(f);
@@ -56,10 +56,10 @@ void main() {
       'tocar CREAR CUENTA con el formulario vacío muestra cada dato que falta @REV-04-S1',
       (tester) async {
         final pedidos = <http.Request>[];
-        await montar(
+        await mountScreen(
           tester,
           RegistrationScreen(
-            registration: RegistrationService(apiRutas({}, pedidos: pedidos)),
+            registration: RegistrationService(apiRoutes({}, pedidos: pedidos)),
           ),
           tema: darkTheme,
         );
@@ -77,9 +77,9 @@ void main() {
       'salir de un campo vacío no muestra un error antes de intentar crear la cuenta '
       '@REV-04-S1 @assumption:REV-04-ASM-01',
       (tester) async {
-        await montar(
+        await mountScreen(
           tester,
-          RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+          RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
           tema: darkTheme,
         );
 
@@ -96,9 +96,9 @@ void main() {
       'el lector anuncia el formato de la fecha de nacimiento @REV-04-S4',
       (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
-          RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+          RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
           tema: darkTheme,
         );
 
@@ -151,17 +151,17 @@ void main() {
     '@REV-04-S2 @assumption:REV-04-ASM-04',
     (tester) async {
       final pedidos = <http.Request>[];
-      await montarAdmin(
+      await mountAdmin(
         tester,
         api: ApiClient(
           'http://api.falsa',
           cliente: MockClient((pedido) async {
             pedidos.add(pedido);
             final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-              ('GET', '/venues') => (200, '{"venues": [$sedeMoronJson]}'),
+              ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
               ('PUT', '/venues/00000000-0000-7000-8000-000000000001') => (
                 200,
-                sedeMoronJson,
+                venueMoronJson,
               ),
               _ => (404, '{}'),
             };
@@ -199,12 +199,12 @@ void main() {
   );
 
   Future<void> hastaConfirmarReserva(WidgetTester tester) async {
-    await montarUsuario(
+    await mountUser(
       tester,
       inicio:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      api: apiRutas({
-        ...rutasDeSedes(),
+      api: apiRoutes({
+        ...venueRoutes(),
         'POST /bookings': (
           422,
           '{"errors": {"date": "Ese horario ya empezó"}}',
@@ -237,13 +237,13 @@ void main() {
     'el rechazo de un cambio de reserva sigue a la vista hasta que la persona lo cierra '
     '@REV-04-S6 @assumption:REV-04-ASM-02',
     (tester) async {
-      final rutas = rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12}));
-      await montarUsuario(
+      final rutas = venueRoutes(grilla: gridJson(ocupadas: {9, 12}));
+      await mountUser(
         tester,
         inicio: '/reservas',
-        api: apiRutas({
+        api: apiRoutes({
           ...rutas,
-          'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+          'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
           'POST /bookings/00000000-0000-7000-8000-000000000001/modify': (
             422,
             '{"errors": {"date": "Ese horario ya empezó"}}',
@@ -271,15 +271,15 @@ void main() {
     (tester) async {
       final futura = DateTime.now().toUtc().add(const Duration(days: 2));
       final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
-      final proxima = reservaJson(
+      final proxima = bookingJson(
         inicio: inicio.toIso8601String(),
         fin: inicio.add(const Duration(hours: 1)).toIso8601String(),
       );
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/reservas',
-        api: apiRutas({
-          ...rutasDeSedes(),
+        api: apiRoutes({
+          ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [$proxima]}'),
         }),
       );
@@ -298,7 +298,7 @@ void main() {
     WidgetTester tester,
     Future<bool> Function(BuildContext) abrir,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
       Scaffold(
         body: Builder(
@@ -348,7 +348,7 @@ void main() {
     'el lector anuncia el error de un selector junto con el selector @REV-04-S3',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
         Scaffold(
           body: SelectorField(
@@ -381,9 +381,9 @@ void main() {
     'en el registro el error de un campo es parte del campo y no un nodo aparte @REV-04-S3',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
-        RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+        RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
         tema: darkTheme,
       );
 
@@ -406,11 +406,11 @@ void main() {
     '@REV-04-S1 @assumption:REV-04-ASM-01',
     (tester) async {
       final pedidos = <http.Request>[];
-      await montar(
+      await mountScreen(
         tester,
         RegistrationScreen(
           registration: RegistrationService(
-            apiRutas({
+            apiRoutes({
               'POST /register': (
                 201,
                 '{"id": "00000000-0000-7000-8000-000000000001"}',
@@ -454,9 +454,9 @@ void main() {
     (tester) async {
       // 02:30 UTC del 13 de noviembre: en el club todavía es el 12.
       await withClock(Clock.fixed(DateTime.utc(2026, 11, 13, 2, 30)), () async {
-        await montar(
+        await mountScreen(
           tester,
-          RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+          RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
           tema: darkTheme,
         );
         await tester.enterText(
@@ -487,7 +487,7 @@ void main() {
       'a ${ancho.toInt()} de ancho y con el texto al 200 % la barra del socio muestra cada destino '
       'entero @REV-04-S8 @assumption:REV-04-ASM-05',
       (tester) async {
-        await montar(
+        await mountScreen(
           tester,
           const Scaffold(
             bottomNavigationBar: BottomBar(current: Section.bookings),
@@ -521,7 +521,7 @@ void main() {
   testWidgets(
     'con el texto al 200 % la barra del socio muestra RESERVAS entera @REV-04-S8',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         const Scaffold(
           bottomNavigationBar: BottomBar(current: Section.bookings),
@@ -542,7 +542,7 @@ void main() {
   testWidgets(
     'con el texto al 200 % la barra del admin no pega ESPACIOS al borde @REV-04-S8',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         const Scaffold(
           bottomNavigationBar: AdminBar(current: AdminSection.spaces),
@@ -566,7 +566,7 @@ void main() {
   testWidgets(
     'el botón atenuado en modo oscuro se lee con contraste suficiente @REV-04-S9',
     (tester) async {
-      await montar(
+      await mountScreen(
         tester,
         Scaffold(
           body: Center(
@@ -589,7 +589,7 @@ void main() {
       );
       final texto = estilo.foregroundColor!.resolve(<WidgetState>{})!;
 
-      expect(contraste(texto, fondo), greaterThanOrEqualTo(4.5));
+      expect(contrast(texto, fondo), greaterThanOrEqualTo(4.5));
     },
   );
 
@@ -643,11 +643,11 @@ void main() {
   Future<void> altaDeEspacio(WidgetTester tester, {double escala = 1}) async {
     tester.platformDispatcher.textScaleFactorTestValue = escala;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await montarAdmin(
+    await mountAdmin(
       tester,
       inicio: '/admin/espacios/nuevo',
       tamano: const Size(320, 568),
-      api: apiRutas(rutasDeEspacios()),
+      api: apiRoutes(spaceRoutes()),
     );
   }
 
@@ -655,9 +655,9 @@ void main() {
     'el alta de espacio entra entera en una pantalla de 320 × 568 @REV-04-S12',
     (tester) async {
       await altaDeEspacio(tester);
-      await elegir(tester, 'Sede', 'Sede Morón');
-      await elegir(tester, 'Deporte', 'Fútbol');
-      await elegir(tester, 'Tipo', 'Fútbol 5');
+      await choose(tester, 'Sede', 'Sede Morón');
+      await choose(tester, 'Deporte', 'Fútbol');
+      await choose(tester, 'Tipo', 'Fútbol 5');
       await tocar(tester, find.text('GUARDAR ESPACIO'));
 
       expect(tester.takeException(), isNull);
@@ -680,11 +680,11 @@ void main() {
     '@REV-04-S12',
     (tester) async {
       await altaDeEspacio(tester, escala: 1.3);
-      await elegir(tester, 'Sede', 'Sede Morón');
-      await elegir(tester, 'Deporte', 'Fútbol');
-      await elegir(tester, 'Tipo', 'Fútbol 5');
-      await elegir(tester, 'Condición', 'Al aire libre');
-      await elegir(tester, 'Iluminación', 'Iluminada');
+      await choose(tester, 'Sede', 'Sede Morón');
+      await choose(tester, 'Deporte', 'Fútbol');
+      await choose(tester, 'Tipo', 'Fútbol 5');
+      await choose(tester, 'Condición', 'Al aire libre');
+      await choose(tester, 'Iluminación', 'Iluminada');
       await tester.enterText(find.bySemanticsLabel('Precio por hora'), '38000');
       await tester.pumpAndSettle();
 

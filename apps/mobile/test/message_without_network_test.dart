@@ -7,7 +7,7 @@ import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets(
     'sin red dice Revisá tu conexión a internet y no que el servidor no responde @SIM-01-S4',
@@ -16,7 +16,7 @@ void main() {
         'http://api.falsa',
         cliente: MockClient((_) async => throw http.ClientException('sin red')),
       );
-      await montarUsuario(tester, api: api);
+      await mountUser(tester, api: api);
 
       expect(
         find.textContaining('Revisá tu conexión a internet'),

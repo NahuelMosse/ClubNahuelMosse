@@ -25,8 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import '../my_bookings_test.dart' show reservaJson;
-import '../notifications_spanish_test.dart' show ApiFalsa, centroDe;
+import '../my_bookings_test.dart' show bookingJson;
+import '../notifications_spanish_test.dart' show FakeApi, centerOf;
 import '../support/admin.dart';
 import '../support/mount.dart';
 import '../support/user.dart';
@@ -186,9 +186,9 @@ List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
 
 // ---- las apps ----
 
-ApiClient _apiUsuario() => apiRutas({
-  ...rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12})),
-  'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+ApiClient _apiUsuario() => apiRoutes({
+  ...venueRoutes(grilla: gridJson(ocupadas: {9, 12})),
+  'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
 });
 
 const _adminBooking =
@@ -200,8 +200,8 @@ const _adminBooking =
     ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
     ' "canceled_by_name": null, "space_deactivated": false}';
 
-ApiClient _apiAdmin() => apiRutas({
-  ...rutasDeEspacios(),
+ApiClient _apiAdmin() => apiRoutes({
+  ...spaceRoutes(),
   'GET /bookings/all': (
     200,
     '{"bookings": [$_adminBooking], "total": 1, "page": 1, "per_page": 20,'
@@ -213,7 +213,7 @@ ApiClient _apiAdmin() => apiRutas({
 /// Alto para que el inicio construya todos sus bloques, también los de abajo.
 const _tallPhone = Size(393, 1600);
 
-Future<void> _usuarioEn(WidgetTester tester, String inicio) => montarUsuario(
+Future<void> _usuarioEn(WidgetTester tester, String inicio) => mountUser(
   tester,
   api: _apiUsuario(),
   inicio: inicio,
@@ -221,16 +221,16 @@ Future<void> _usuarioEn(WidgetTester tester, String inicio) => montarUsuario(
 );
 
 Future<void> _adminEn(WidgetTester tester, String inicio) =>
-    montarAdmin(tester, api: _apiAdmin(), inicio: inicio);
+    mountAdmin(tester, api: _apiAdmin(), inicio: inicio);
 
 Future<void> _usuarioConCentro(WidgetTester tester, String inicio) {
-  final api = ApiFalsa();
-  return montarUsuario(
+  final api = FakeApi();
+  return mountUser(
     tester,
     api: api.cliente,
     inicio: inicio,
     tamano: _tallPhone,
-    centro: (session) => centroDe(api, session),
+    centro: (session) => centerOf(api, session),
   );
 }
 
@@ -239,7 +239,7 @@ Future<void> _usuarioConCentro(WidgetTester tester, String inicio) {
 class _Hija {
   const _Hija(
     this.nombre,
-    this.montar,
+    this.mountScreen,
     this.abrir,
     this.pantalla, {
     this.conBarra = false,
@@ -248,7 +248,7 @@ class _Hija {
   final String nombre;
 
   /// Deja la app en la pantalla desde donde se llega.
-  final _Paso montar;
+  final _Paso mountScreen;
 
   /// Hace lo que hace la persona para llegar, sin esperar a que termine la transición.
   final _Paso abrir;
@@ -372,10 +372,10 @@ final _hijas = <_Hija>[
 // ---- las raíces (S1) ----
 
 class _Raiz {
-  const _Raiz(this.nombre, this.montar, this.ruta, this.pantalla);
+  const _Raiz(this.nombre, this.mountScreen, this.ruta, this.pantalla);
 
   final String nombre;
-  final _Paso montar;
+  final _Paso mountScreen;
   final String ruta;
   final Type pantalla;
 }
@@ -424,16 +424,16 @@ final _raices = <_Raiz>[
 // ---- los resultados (S4) ----
 
 class _Resultado {
-  const _Resultado(this.nombre, this.montar, this.abrir, this.pantalla);
+  const _Resultado(this.nombre, this.mountScreen, this.abrir, this.pantalla);
 
   final String nombre;
-  final _Paso montar;
+  final _Paso mountScreen;
   final _Paso abrir;
   final Type pantalla;
 }
 
 Booking _reservaConfirmada() {
-  final booking = bookingFromJson(jsonDecode(reservaJson()));
+  final booking = bookingFromJson(jsonDecode(bookingJson()));
   if (booking == null) fail('la reserva de prueba no se lee');
   return booking;
 }
@@ -457,7 +457,7 @@ final _resultados = <_Resultado>[
     (t) => _ir(
       t,
       '/admin/sedes/creada',
-      extra: Venue.fromJson(jsonDecode(sedeMoronJson)),
+      extra: Venue.fromJson(jsonDecode(venueMoronJson)),
     ),
     VenueCreatedScreen,
   ),
@@ -467,7 +467,7 @@ final _resultados = <_Resultado>[
     (t) => _ir(
       t,
       '/admin/espacios/creado',
-      extra: Space.fromJson(jsonDecode(espacioF5Json)),
+      extra: Space.fromJson(jsonDecode(spaceF5Json)),
     ),
     SpaceCreatedScreen,
   ),
@@ -477,7 +477,7 @@ Finder get _panelDeFiltros =>
     find.byWidgetPredicate((w) => w.runtimeType.toString() == '_FiltersPanel');
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets('cada raíz de pestaña aparece en el primer cuadro @RED-04-S1', (
     tester,
@@ -485,7 +485,7 @@ void main() {
     for (final raiz in _raices) {
       for (final empujando in [false, true]) {
         final como = empujando ? 'push' : 'go';
-        await raiz.montar(tester);
+        await raiz.mountScreen(tester);
         if (empujando) {
           await _empujar(tester, raiz.ruta);
         } else {
@@ -502,7 +502,7 @@ void main() {
     'cada pantalla hija entra desde la derecha en 320 ms @RED-04-S2',
     (tester) async {
       for (final hija in _hijas) {
-        await hija.montar(tester);
+        await hija.mountScreen(tester);
         await hija.abrir(tester);
         await _entraDesdeLaDerecha(tester, hija.pantalla, motivo: hija.nombre);
         await _reiniciar(tester);
@@ -514,7 +514,7 @@ void main() {
     'volver con el atrás de la barra o del sistema sale hacia la derecha en 280 ms @RED-04-S3',
     (tester) async {
       for (final hija in _hijas) {
-        await hija.montar(tester);
+        await hija.mountScreen(tester);
         await hija.abrir(tester);
         await tester.pumpAndSettle();
         await tester.binding.handlePopRoute();
@@ -526,7 +526,7 @@ void main() {
         await _reiniciar(tester);
 
         if (!hija.conBarra) continue;
-        await hija.montar(tester);
+        await hija.mountScreen(tester);
         await hija.abrir(tester);
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Volver'));
@@ -544,7 +544,7 @@ void main() {
     'cada pantalla de resultado aparece con un fundido de 250 ms @RED-04-S4',
     (tester) async {
       for (final resultado in _resultados) {
-        await resultado.montar(tester);
+        await resultado.mountScreen(tester);
         await resultado.abrir(tester);
         await _arrancar(tester);
         expect(

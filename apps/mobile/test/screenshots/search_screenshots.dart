@@ -9,12 +9,12 @@ import '../support/user.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   const modos = {'dark': true, 'light': false};
   const disponibles =
-      '{"spaces": [$espacioF5Json, '
+      '{"spaces": [$spaceF5Json, '
       '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
       '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
       '"covered": true, "lit": true, "price_per_hour": 43000}]}';
@@ -30,7 +30,7 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile(archivo));
   }
 
-  Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
+  Future<void> choose(WidgetTester tester, String campo, String opcion) async {
     await tester.ensureVisible(find.bySemanticsLabel(campo));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel(campo));
@@ -42,8 +42,8 @@ void main() {
   }
 
   Future<void> completar(WidgetTester tester, {String hasta = '19:00'}) async {
-    await elegir(tester, 'Sede', 'Sede Morón');
-    await elegir(tester, 'Deporte', 'Fútbol');
+    await choose(tester, 'Sede', 'Sede Morón');
+    await choose(tester, 'Deporte', 'Fútbol');
     final d = clubNow().add(const Duration(days: 1));
     String dos(int n) => n.toString().padLeft(2, '0');
     await tester.enterText(
@@ -54,7 +54,7 @@ void main() {
       '${dos(d.day)} / ${dos(d.month)} / ${d.year}',
     );
     await tester.pumpAndSettle();
-    if (hasta != '19:00') await elegir(tester, 'Hasta', hasta);
+    if (hasta != '19:00') await choose(tester, 'Hasta', hasta);
   }
 
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
@@ -62,25 +62,25 @@ void main() {
       Future<void> abrir(
         WidgetTester tester, {
         (int, String) respuesta = (200, disponibles),
-      }) => montarUsuario(
+      }) => mountUser(
         tester,
         oscuro: oscuro,
         tamano: tamano,
         inicio: '/inicio/buscar',
-        api: apiRutas({
-          ...rutasDeSedes(),
+        api: apiRoutes({
+          ...venueRoutes(),
           'GET /spaces/available': respuesta,
         }),
       );
 
       testWidgets('inicio con accesos $ancho $modo', (tester) async {
-        await montarUsuario(
+        await mountUser(
           tester,
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/inicio',
-          api: apiRutas({
-            ...rutasDeSedes(),
+          api: apiRoutes({
+            ...venueRoutes(),
             'GET /bookings': (200, '{"bookings": []}'),
             'GET /notifications': (
               200,

@@ -11,7 +11,7 @@ import 'support/mount.dart';
 import 'support/user.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   test('la sede lee sus deportes, y sin ellos queda vacía', () {
     final con = Venue.fromJson({
@@ -40,7 +40,7 @@ void main() {
   group('todas las sedes', () {
     testWidgets('cada sede con horario, canchas y deportes', (tester) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(tester, api: apiRutas(rutasDeSedes()));
+      await mountUser(tester, api: apiRoutes(venueRoutes()));
       expect(
         find.text('2 sedes · 2 canchas · cada una con su horario'),
         findsOneWidget,
@@ -64,7 +64,7 @@ void main() {
     });
 
     testWidgets('sin sedes lo dice', (tester) async {
-      await montarUsuario(tester, api: apiRutas(rutasDeSedes(sedes: '[]')));
+      await mountUser(tester, api: apiRoutes(venueRoutes(sedes: '[]')));
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
       expect(find.text('El club todavía no cargó sus sedes.'), findsOneWidget);
     });
@@ -72,9 +72,9 @@ void main() {
     testWidgets('si el servidor falla no queda nada a la vista', (
       tester,
     ) async {
-      await montarUsuario(
+      await mountUser(
         tester,
-        api: apiRutas({...rutasDeSedes(), 'GET /venues': (500, '{}')}),
+        api: apiRoutes({...venueRoutes(), 'GET /venues': (500, '{}')}),
       );
       expect(find.text('Error del servidor'), findsOneWidget);
       await tester.tap(find.text('ACEPTAR'));
@@ -89,10 +89,10 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       final pedidos = <http.Request>[];
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: apiRutas(rutasDeSedes(), pedidos: pedidos),
+        api: apiRoutes(venueRoutes(), pedidos: pedidos),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
       expect(find.text('AV. RIVADAVIA 19850 · 08:00 A 23:00'), findsOneWidget);
@@ -118,10 +118,10 @@ void main() {
     });
 
     testWidgets('sin canchas lo dice con el contador en cero', (tester) async {
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000005',
-        api: apiRutas(rutasDeSedes(espacios: '[]')),
+        api: apiRoutes(venueRoutes(espacios: '[]')),
       );
       expect(find.text('0 CANCHAS'), findsOneWidget);
       expect(find.text('Todavía no hay canchas'), findsOneWidget);
@@ -131,10 +131,10 @@ void main() {
     testWidgets(
       'una sede que ya no está avisa que cambió y vuelve al listado',
       (tester) async {
-        await montarUsuario(
+        await mountUser(
           tester,
           inicio: '/sedes/00000000-0000-7000-8000-000000000099',
-          api: apiRutas(rutasDeSedes()),
+          api: apiRoutes(venueRoutes()),
         );
         expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
         await tester.tap(find.text('VER LO ACTUALIZADO'));
@@ -144,7 +144,7 @@ void main() {
     );
 
     testWidgets('«Todas las sedes» vuelve al listado', (tester) async {
-      await montarUsuario(tester, api: apiRutas(rutasDeSedes(espacios: '[]')));
+      await mountUser(tester, api: apiRoutes(venueRoutes(espacios: '[]')));
       await tester.tap(find.text('SEDE HAEDO'));
       await tester.pumpAndSettle();
       expect(find.text('0 CANCHAS'), findsOneWidget);
@@ -161,11 +161,11 @@ void main() {
         cliente: _Cliente((pedido) async {
           final ruta = pedido.url.path;
           if (ruta == '/spaces' && intentos++ == 0) throw const _Corte();
-          final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
+          final (codigo, cuerpo) = venueRoutes()['GET $ruta'] ?? (404, '{}');
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
       );
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api,
@@ -200,7 +200,7 @@ void main() {
               if (fallaAlFiltrar && q.containsKey('sport')) {
                 return http.Response('{}', 500);
               }
-              final todas = [espacioF5Json, f7, espacioTenisJson];
+              final todas = [spaceF5Json, f7, spaceTennisJson];
               final quedan = [
                 for (final e in todas)
                   if ((q['sport'] == null ||
@@ -214,7 +214,7 @@ void main() {
                 200,
               );
             }
-            final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
+            final (codigo, cuerpo) = venueRoutes()['GET $ruta'] ?? (404, '{}');
             return http.Response.bytes(utf8.encode(cuerpo), codigo);
           }),
         );
@@ -229,7 +229,7 @@ void main() {
     testWidgets('deporte, tipo, «Todos» y quitar el deporte', (tester) async {
       final semantica = tester.ensureSemantics();
       final pedidos = <http.Request>[];
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(pedidos: pedidos),
@@ -262,7 +262,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final datos = [espacioF5Json, espacioTenisJson];
+      final datos = [spaceF5Json, spaceTennisJson];
       final pedidos = <http.Request>[];
       final cliente = ApiClient(
         'http://api.falsa',
@@ -283,11 +283,11 @@ void main() {
               200,
             );
           }
-          final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
+          final (codigo, cuerpo) = venueRoutes()['GET $ruta'] ?? (404, '{}');
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
       );
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: cliente,
@@ -314,7 +314,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(),
@@ -327,7 +327,7 @@ void main() {
 
     testWidgets('si filtrar falla, avisa y queda como estaba', (tester) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(fallaAlFiltrar: true),
@@ -346,10 +346,10 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: apiRutas(rutasDeSedes()),
+        api: apiRoutes(venueRoutes()),
       );
       await tester.ensureVisible(find.text('VER HORARIOS / RESERVAR').first);
       await tester.pumpAndSettle();

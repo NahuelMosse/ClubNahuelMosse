@@ -13,7 +13,7 @@ import 'package:go_router/go_router.dart';
 import '../support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   group('login', () {
     testWidgets('la marca del login lleva el isotipo decorativo @RED-03-S6', (
@@ -22,8 +22,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       final session = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(),
-          api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+          credentials: FakeCredentials(),
+          api: fakeApi(codigo: 200, cuerpo: profileJson()),
         ),
       );
       final rutas = GoRouter(

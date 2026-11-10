@@ -3,7 +3,7 @@ import 'package:clubnahuelmosse/features/bookings/presentation/selectable_frame.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../my_bookings_test.dart' show reservaJson;
+import '../my_bookings_test.dart' show bookingJson;
 import '../support/admin.dart';
 import '../support/held_api.dart';
 import '../support/mount.dart';
@@ -27,13 +27,13 @@ void main() {
     Map<String, (int, String)> extra = const {},
   }) async {
     final held = HeldApi({
-      ...rutasDeSedes(espacios: '[$espacioF5Json, $f5TechadaJson]'),
+      ...venueRoutes(espacios: '[$spaceF5Json, $f5TechadaJson]'),
       ...extra,
     });
     await mountApp(
       tester,
       api: held.client,
-      session: SesionFalsa(perfilUsuario),
+      session: FakeSession(userProfile),
       route: route,
     );
     return held;
@@ -87,7 +87,7 @@ void main() {
       extra: {
         'GET /spaces/available': (
           200,
-          '{"spaces": [$espacioF5Json, $f5TechadaJson]}',
+          '{"spaces": [$spaceF5Json, $f5TechadaJson]}',
         ),
       },
     );
@@ -102,12 +102,12 @@ void main() {
   });
 
   testWidgets('my bookings loading and loaded', (tester) async {
-    final second = reservaJson(id: '00000000-0000-7000-8000-000000000002');
+    final second = bookingJson(id: '00000000-0000-7000-8000-000000000002');
     final held = await mount(
       tester,
       '/reservas',
       extra: {
-        'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
+        'GET /bookings': (200, '{"bookings": [${bookingJson()}, $second]}'),
       },
     );
     await _capture(tester, 'skeletons/bookings_loading.png');

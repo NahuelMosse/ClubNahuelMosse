@@ -16,8 +16,8 @@ void main() {
     test('sin cuenta en el dispositivo no consulta nada', () async {
       final sesion = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(),
-          api: apiFalsa(codigo: 500),
+          credentials: FakeCredentials(),
+          api: fakeApi(codigo: 500),
         ),
       );
       expect(await sesion.resume(), isNull);
@@ -26,8 +26,8 @@ void main() {
     test('con la cuenta vigente entra con su rol', () async {
       final sesion = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(conCuenta: true),
-          api: apiFalsa(codigo: 200, cuerpo: perfilJson(rol: 'admin')),
+          credentials: FakeCredentials(conCuenta: true),
+          api: fakeApi(codigo: 200, cuerpo: profileJson(rol: 'admin')),
         ),
       );
       final perfil = await sesion.resume();
@@ -37,11 +37,11 @@ void main() {
     });
 
     test('si la API ya no la reconoce, la cierra', () async {
-      final credenciales = CredencialesFalsas(conCuenta: true);
+      final credenciales = FakeCredentials(conCuenta: true);
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: apiFalsa(codigo: 401, cuerpo: '{}'),
+          api: fakeApi(codigo: 401, cuerpo: '{}'),
         ),
       );
       expect(await sesion.resume(), isNull);
@@ -49,11 +49,11 @@ void main() {
     });
 
     test('sin red o con la API caída la conserva para la próxima', () async {
-      final credenciales = CredencialesFalsas(conCuenta: true);
+      final credenciales = FakeCredentials(conCuenta: true);
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: apiFalsa(codigo: 503),
+          api: fakeApi(codigo: 503),
         ),
       );
       await expectLater(sesion.resume(), throwsA(isA<ErrorDelServidor>()));
@@ -64,8 +64,8 @@ void main() {
   test('avisa a quien escucha cuando cambia el perfil', () async {
     final sesion = Session(
       repository: SessionRepository(
-        credentials: CredencialesFalsas(),
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        credentials: FakeCredentials(),
+        api: fakeApi(codigo: 200, cuerpo: profileJson()),
       ),
     );
     var avisos = 0;
@@ -76,11 +76,11 @@ void main() {
   });
 
   test('un perfil con un rol desconocido es un error del servidor', () async {
-    final credenciales = CredencialesFalsas();
+    final credenciales = FakeCredentials();
     final sesion = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson(rol: 'dueño')),
+        api: fakeApi(codigo: 200, cuerpo: profileJson(rol: 'dueño')),
       ),
     );
     await expectLater(
@@ -94,7 +94,7 @@ void main() {
     final sesion = Session(
       repository: SessionRepository(
         credentials: _SalirFalla(),
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        api: fakeApi(codigo: 200, cuerpo: profileJson()),
       ),
     );
     await sesion.signIn('a@b.com', 'Clave1234');
@@ -109,13 +109,13 @@ void main() {
       var pedidos = 0;
       final sesion = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(),
+          credentials: FakeCredentials(),
           api: ApiClient(
             'http://api.falsa',
             cliente: MockClient((pedido) async {
               pedidos++;
               if (pedido.method == 'PUT') return respuesta.future;
-              return http.Response(perfilJson(), 200);
+              return http.Response(profileJson(), 200);
             }),
           ),
         ),
@@ -128,7 +128,7 @@ void main() {
         birthDate: '2000-03-14',
       );
       await sesion.close();
-      respuesta.complete(http.Response(perfilJson(), 200));
+      respuesta.complete(http.Response(profileJson(), 200));
 
       await expectLater(edicion, throwsA(isA<SessionExpired>()));
       expect(sesion.profile, isNull);
@@ -139,9 +139,9 @@ void main() {
   test('un 409 de la edición se marca como dato repetido', () async {
     final sesion = Session(
       repository: SessionRepository(
-        credentials: CredencialesFalsas(),
-        api: apiRutas({
-          'GET /me': (200, perfilJson()),
+        credentials: FakeCredentials(),
+        api: apiRoutes({
+          'GET /me': (200, profileJson()),
           'PUT /me': (
             409,
             '{"errors": {"dni": "Este DNI ya está registrado"}}',
@@ -164,11 +164,11 @@ void main() {
   });
 
   test('cerrar la sesión olvida el perfil', () async {
-    final credenciales = CredencialesFalsas();
+    final credenciales = FakeCredentials();
     final sesion = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        api: fakeApi(codigo: 200, cuerpo: profileJson()),
       ),
     );
     await sesion.signIn('a@b.com', 'Clave1234');
@@ -178,7 +178,7 @@ void main() {
   });
 }
 
-class _SalirFalla extends CredencialesFalsas {
+class _SalirFalla extends FakeCredentials {
   @override
   Future<void> signOut() async => throw StateError('signOut falló');
 }

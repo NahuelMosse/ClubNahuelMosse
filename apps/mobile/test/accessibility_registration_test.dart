@@ -16,9 +16,9 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
-        RegistrationScreen(registration: RegistrationService(apiFalsa())),
+        RegistrationScreen(registration: RegistrationService(fakeApi())),
         tema: tema,
       );
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -31,7 +31,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(tester, const RegistrationDoneScreen(), tema: tema);
+      await mountScreen(tester, const RegistrationDoneScreen(), tema: tema);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -43,9 +43,9 @@ void main() {
     'cada campo anuncia su nombre y el formulario avisa que todo es obligatorio',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
-        RegistrationScreen(registration: RegistrationService(apiFalsa())),
+        RegistrationScreen(registration: RegistrationService(fakeApi())),
         tema: darkTheme,
       );
       for (final campo in [
@@ -64,14 +64,14 @@ void main() {
   );
 
   testWidgets('con el texto al 200 % nada se desborda', (tester) async {
-    await montar(
+    await mountScreen(
       tester,
-      RegistrationScreen(registration: RegistrationService(apiFalsa())),
+      RegistrationScreen(registration: RegistrationService(fakeApi())),
       tema: darkTheme,
       escalaTexto: 2,
     );
     expect(tester.takeException(), isNull);
-    await montar(
+    await mountScreen(
       tester,
       const RegistrationDoneScreen(),
       tema: darkTheme,

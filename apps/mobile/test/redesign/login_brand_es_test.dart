@@ -20,8 +20,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       final session = Session(
         repository: SessionRepository(
-          credentials: CredencialesFalsas(),
-          api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+          credentials: FakeCredentials(),
+          api: fakeApi(codigo: 200, cuerpo: profileJson()),
         ),
       );
       final rutas = GoRouter(

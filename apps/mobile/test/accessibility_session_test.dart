@@ -23,18 +23,18 @@ import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.da
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Widget login({bool rechaza = false}) => LoginScreen(
     pending: PendingBooking(),
     session: Session(
       repository: SessionRepository(
-        credentials: CredencialesFalsas(
+        credentials: FakeCredentials(
           alIngresar: rechaza
               ? (_, _) async => throw const InvalidCredentials()
               : null,
         ),
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        api: fakeApi(codigo: 200, cuerpo: profileJson()),
       ),
     ),
   );
@@ -48,10 +48,10 @@ void main() {
   final temas = {'oscuro': darkTheme, 'claro': lightTheme};
   final pantallas = <String, Widget Function()>{
     'el login': login,
-    'el Home': () => inicioFalso(SesionFalsa(perfilUsuario)),
+    'el Home': () => fakeHome(FakeSession(userProfile)),
     'el panel de administración': () {
-      final sesion = SesionFalsa(perfilAdmin);
-      final api = apiRutas({
+      final sesion = FakeSession(adminProfile);
+      final api = apiRoutes({
         'GET /bookings/all': (
           200,
           '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
@@ -72,24 +72,24 @@ void main() {
       );
     },
     'recuperar contraseña': () => ForgotPasswordScreen(
-      recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
+      recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
     ),
     'Mi perfil': () => MyProfileScreen(
-      session: SesionFalsa(perfilUsuario),
+      session: FakeSession(userProfile),
       appearance: Appearance.inMemory(),
     ),
     'la contraseña nueva': () => NewPasswordScreen(
-      recovery: PasswordRecovery(apiFalsa(codigo: 204, cuerpo: '')),
-      session: SesionFalsa(null),
+      recovery: PasswordRecovery(fakeApi(codigo: 204, cuerpo: '')),
+      session: FakeSession(null),
       code: 'abc',
     ),
     'el enlace inválido': () => NewPasswordScreen(
-      recovery: PasswordRecovery(apiFalsa(codigo: 410, cuerpo: '')),
-      session: SesionFalsa(null),
+      recovery: PasswordRecovery(fakeApi(codigo: 410, cuerpo: '')),
+      session: FakeSession(null),
       code: 'abc',
     ),
     'cambiar contraseña': () =>
-        ChangePasswordScreen(session: SesionFalsa(perfilUsuario)),
+        ChangePasswordScreen(session: FakeSession(userProfile)),
   };
 
   for (final MapEntry(key: modo, value: tema) in temas.entries) {
@@ -98,7 +98,7 @@ void main() {
         tester,
       ) async {
         final semantica = tester.ensureSemantics();
-        await montar(tester, pantalla(), tema: tema);
+        await mountScreen(tester, pantalla(), tema: tema);
         await cumpleLasGuias(tester);
         semantica.dispose();
       });
@@ -108,7 +108,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(tester, login(rechaza: true), tema: tema);
+      await mountScreen(tester, login(rechaza: true), tema: tema);
       await tester.tap(find.text('INICIAR SESIÓN'));
       await tester.pumpAndSettle();
       await cumpleLasGuias(tester);
@@ -127,10 +127,10 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
         MyProfileScreen(
-          session: SesionFalsa(perfilUsuario),
+          session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
         tema: tema,
@@ -147,10 +147,10 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
         MyProfileScreen(
-          session: SesionFalsa(perfilUsuario),
+          session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
         tema: tema,
@@ -166,7 +166,7 @@ void main() {
 
   testWidgets('los campos del login anuncian su nombre', (tester) async {
     final semantica = tester.ensureSemantics();
-    await montar(tester, login(), tema: darkTheme);
+    await mountScreen(tester, login(), tema: darkTheme);
     expect(find.bySemanticsLabel('Correo'), findsOneWidget);
     expect(find.bySemanticsLabel('Contraseña'), findsOneWidget);
     expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
@@ -175,7 +175,7 @@ void main() {
 
   testWidgets('con el texto al 200 % nada se desborda', (tester) async {
     for (final pantalla in pantallas.values) {
-      await montar(
+      await mountScreen(
         tester,
         pantalla(),
         tema: darkTheme,

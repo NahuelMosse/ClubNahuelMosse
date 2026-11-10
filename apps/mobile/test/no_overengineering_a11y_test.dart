@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'kit/kit_a11y.dart';
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/admin.dart';
 import 'support/mount.dart';
 import 'support/user.dart';
@@ -20,13 +20,13 @@ import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   testWidgets('Mis reservas cumple las guías de accesibilidad @SIM-01-S1', (
     tester,
   ) async {
-    final rutas = rutasDeSedes();
-    await montarUsuario(
+    final rutas = venueRoutes();
+    await mountUser(
       tester,
       inicio: '/reservas',
       api: ApiClient(
@@ -35,7 +35,7 @@ void main() {
           final (c, cuerpo) = pedido.url.path == '/bookings'
               ? (
                   200,
-                  '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? '[${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'canceled', motivo: 'Lluvia')}]' : '[${reservaJson()}]'}}',
+                  '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'canceled', motivo: 'Lluvia')}]' : '[${bookingJson()}]'}}',
                 )
               : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
           return http.Response.bytes(
@@ -53,9 +53,9 @@ void main() {
   testWidgets('Inicio cumple las guías de accesibilidad @SIM-01-S1', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
-      inicioFalso(SesionFalsa(perfilUsuario)),
+      fakeHome(FakeSession(userProfile)),
       tema: darkTheme,
     );
 
@@ -73,17 +73,17 @@ void main() {
           ' "status": "active", "reason": null, "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
           ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
           ' "canceled_by_name": null, "space_deactivated": false}';
-      final api = apiRutas({
+      final api = apiRoutes({
         'GET /bookings/all': (
           200,
           '{"bookings": [$reserva], "total": 1, "page": 1,'
               ' "per_page": 20, "counters": {"all": 1, "active": 1,'
               ' "completed": 0, "voided": 0}}',
         ),
-        'GET /spaces/catalog': (200, catalogoJson),
+        'GET /spaces/catalog': (200, catalogJson),
       });
-      final sesion = SesionFalsa(perfilAdmin);
-      await montar(
+      final sesion = FakeSession(adminProfile);
+      await mountScreen(
         tester,
         AdminPanelScreen(
           history: BookingHistory(api: api, sesion: sesion),

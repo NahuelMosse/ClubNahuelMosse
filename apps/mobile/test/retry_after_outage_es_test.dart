@@ -43,7 +43,7 @@ MockClient _conCorte(
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   group('registro', () {
     const yaRegistrado =

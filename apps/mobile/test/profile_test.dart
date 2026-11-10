@@ -17,9 +17,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
-  late CredencialesFalsas credenciales;
+  late FakeCredentials credenciales;
   final ediciones = <String>[];
   var bajas = 0;
 
@@ -32,7 +32,7 @@ void main() {
     (int, String) baja = (204, ''),
     Appearance? apariencia,
   }) async {
-    credenciales = CredencialesFalsas();
+    credenciales = FakeCredentials();
     ediciones.clear();
     bajas = 0;
     var consultas = 0;
@@ -51,7 +51,7 @@ void main() {
         }
         consultas++;
         final (codigo, cuerpo) = consultas == 1 || yo.$1 == 200
-            ? (200, perfilJson())
+            ? (200, profileJson())
             : yo;
         return http.Response.bytes(utf8.encode(cuerpo), codigo);
       }),
@@ -169,8 +169,8 @@ void main() {
   test('un perfil sin DNI o fecha es un error del servidor', () async {
     final sesion = Session(
       repository: SessionRepository(
-        credentials: CredencialesFalsas(),
-        api: apiRutas({
+        credentials: FakeCredentials(),
+        api: apiRoutes({
           'GET /me': (
             200,
             '{"first_name": "N", "last_name": "M", "email": "a@b.com", "role": "user"}',
@@ -315,9 +315,9 @@ void main() {
     final semantica = tester.ensureSemantics();
     final sesion = Session(
       repository: SessionRepository(
-        credentials: CredencialesFalsas(),
-        api: apiRutas({
-          'GET /me': (200, perfilJson()),
+        credentials: FakeCredentials(),
+        api: apiRoutes({
+          'GET /me': (200, profileJson()),
           'PUT /me': (
             200,
             '{"first_name": "Agustín", "last_name": "Paz", "email": "nahuel@correo.com", '
@@ -332,7 +332,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
-        api: apiInicio(),
+        api: homeApi(),
         session: sesion,
         appearance: Appearance.inMemory(),
         initialLocation: '/inicio',
@@ -411,7 +411,7 @@ void main() {
     'una baja que vuelve después de entrar con otra cuenta no la cierra',
     () async {
       final respuesta = Completer<http.Response>();
-      final credenciales = CredencialesFalsas();
+      final credenciales = FakeCredentials();
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
@@ -419,7 +419,7 @@ void main() {
             'http://api.falsa',
             cliente: MockClient((pedido) async {
               if (pedido.method == 'DELETE') return respuesta.future;
-              return http.Response(perfilJson(), 200);
+              return http.Response(profileJson(), 200);
             }),
           ),
         ),
@@ -441,7 +441,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       var intentos = 0;
-      credenciales = CredencialesFalsas();
+      credenciales = FakeCredentials();
       final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
@@ -450,7 +450,7 @@ void main() {
             if (intentos == 1) throw const SocketException('se cortó');
             return http.Response('{}', 401);
           }
-          return http.Response.bytes(utf8.encode(perfilJson()), 200);
+          return http.Response.bytes(utf8.encode(profileJson()), 200);
         }),
       );
       final sesion = Session(

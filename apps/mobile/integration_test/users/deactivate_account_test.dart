@@ -11,9 +11,9 @@ void main() {
   const contrasena = 'ClubNahuel1';
 
   Future<void> pedirBaja(WidgetTester tester) async {
-    await tocar(tester, 'PERFIL');
-    await esperarA(tester, find.text('DATOS PERSONALES'));
-    await tocar(tester, 'ELIMINAR CUENTA');
+    await tapText(tester, 'PERFIL');
+    await waitUntil(tester, find.text('DATOS PERSONALES'));
+    await tapText(tester, 'ELIMINAR CUENTA');
     expect(find.text('¿Eliminar tu cuenta?'), findsOneWidget);
   }
 
@@ -27,21 +27,21 @@ void main() {
     'elimina su cuenta, vuelve al login y ya no puede iniciar sesión con ella @CU-07-H01-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await entrarComoUsuario(tester, correo: correo);
+      final correo = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, correo: correo);
       await pedirBaja(tester);
 
       await tester.tap(confirmar());
       await tester.pumpAndSettle();
 
       // Verifica: la sesión termina y la app vuelve al login.
-      await esperarA(tester, find.text('INICIAR SESIÓN'));
+      await waitUntil(tester, find.text('INICIAR SESIÓN'));
 
       // Verifica: con esa cuenta ya no se entra.
-      await escribir(tester, 'Correo', correo);
-      await escribir(tester, 'Contraseña', contrasena);
-      await tocar(tester, 'INICIAR SESIÓN');
-      await esperarA(
+      await typeInto(tester, 'Correo', correo);
+      await typeInto(tester, 'Contraseña', contrasena);
+      await tapText(tester, 'INICIAR SESIÓN');
+      await waitUntil(
         tester,
         find.text(
           'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.',
@@ -57,14 +57,14 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final api = await ApiIntermedia.abrir();
-      await entrarComoUsuario(
+      await signInAsUser(
         tester,
-        correo: 'socio.${unico()}@correo.com',
+        correo: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
       await pedirBaja(tester);
 
-      api.estado = EstadoApi.lenta;
+      api.estado = ApiState.slow;
       await tester.tap(confirmar());
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -75,7 +75,7 @@ void main() {
       );
       expect(boton.onPressed, isNull);
 
-      await esperarA(tester, find.text('INICIAR SESIÓN'));
+      await waitUntil(tester, find.text('INICIAR SESIÓN'));
       semantica.dispose();
     },
   );
@@ -84,16 +84,16 @@ void main() {
     'cancela en la confirmación y la cuenta sigue intacta @CU-07-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
-      await entrarComoUsuario(tester, correo: correo);
+      final correo = 'socio.${unique()}@correo.com';
+      await signInAsUser(tester, correo: correo);
       await pedirBaja(tester);
 
-      await tocar(tester, 'CANCELAR');
+      await tapText(tester, 'CANCELAR');
 
       // Verifica: vuelve al perfil con la sesión abierta y la cuenta sigue sirviendo.
       expect(find.text('¿Eliminar tu cuenta?'), findsNothing);
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
-      expect(await puedeEntrar(correo, contrasena), isTrue);
+      expect(await canSignIn(correo, contrasena), isTrue);
       semantica.dispose();
     },
   );
@@ -102,20 +102,20 @@ void main() {
     'sin conexión al confirmar, ve la alerta y la cuenta no se elimina @CU-07-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
+      final correo = 'socio.${unique()}@correo.com';
       final api = await ApiIntermedia.abrir();
-      await entrarComoUsuario(tester, correo: correo, apiUrl: api.url);
+      await signInAsUser(tester, correo: correo, apiUrl: api.url);
       await pedirBaja(tester);
 
-      api.estado = EstadoApi.sinRed;
+      api.estado = ApiState.offline;
       await tester.tap(confirmar());
       await tester.pumpAndSettle();
 
       // Verifica: avisa que no hay conexión y la cuenta queda como estaba.
-      await esperarA(tester, find.text('Error de conexión'));
-      await tocar(tester, 'Volver');
+      await waitUntil(tester, find.text('Error de conexión'));
+      await tapText(tester, 'Volver');
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
-      expect(await puedeEntrar(correo, contrasena), isTrue);
+      expect(await canSignIn(correo, contrasena), isTrue);
       semantica.dispose();
     },
   );
@@ -124,21 +124,21 @@ void main() {
     'el servidor falla al confirmar y la cuenta no se elimina @CU-07-H04-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final correo = 'socio.${unico()}@correo.com';
+      final correo = 'socio.${unique()}@correo.com';
       final api = await ApiIntermedia.abrir();
-      await entrarComoUsuario(tester, correo: correo, apiUrl: api.url);
+      await signInAsUser(tester, correo: correo, apiUrl: api.url);
       await pedirBaja(tester);
 
-      api.estado = EstadoApi.falla;
+      api.estado = ApiState.failing;
       await tester.tap(confirmar());
       await tester.pumpAndSettle();
 
       // Verifica: avisa del servidor y la cuenta sigue sirviendo.
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
-      api.estado = EstadoApi.normal;
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
+      api.estado = ApiState.normal;
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
-      expect(await puedeEntrar(correo, contrasena), isTrue);
+      expect(await canSignIn(correo, contrasena), isTrue);
       semantica.dispose();
     },
   );

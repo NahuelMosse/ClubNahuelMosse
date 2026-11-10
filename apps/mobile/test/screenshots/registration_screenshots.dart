@@ -10,7 +10,7 @@ import '../support/fixed_clock.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   final temas = {'dark': darkTheme, 'light': lightTheme};
@@ -18,9 +18,9 @@ void main() {
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: tema) in temas.entries) {
       testWidgets('registro vacío $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
-          RegistrationScreen(registration: RegistrationService(apiFalsa())),
+          RegistrationScreen(registration: RegistrationService(fakeApi())),
           tema: tema,
           tamano: tamano,
         );
@@ -32,9 +32,9 @@ void main() {
 
       testWidgets('registro con errores $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(
+        await mountScreen(
           tester,
-          RegistrationScreen(registration: RegistrationService(apiFalsa())),
+          RegistrationScreen(registration: RegistrationService(fakeApi())),
           tema: tema,
           tamano: tamano,
         );
@@ -57,7 +57,7 @@ void main() {
       });
 
       testWidgets('registro exitoso $ancho $modo', (tester) async {
-        await montar(
+        await mountScreen(
           tester,
           const RegistrationDoneScreen(),
           tema: tema,

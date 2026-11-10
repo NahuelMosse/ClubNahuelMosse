@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
-import '../my_bookings_test.dart' show reservaJson;
+import '../my_bookings_test.dart' show bookingJson;
 import '../support/admin.dart';
 import '../support/mount.dart';
 import '../support/fixed_clock.dart';
@@ -9,7 +9,7 @@ import '../support/user.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   const modos = {'dark': true, 'light': false};
@@ -21,11 +21,11 @@ void main() {
   const idMoron = '00000000-0000-7000-8000-000000000001';
   const idHaedo = '00000000-0000-7000-8000-000000000005';
   final sedes =
-      '[${sedeMoronConDeportes.replaceAll(idMoron, sedeMoron)}, '
+      '[${venueMoronWithSports.replaceAll(idMoron, sedeMoron)}, '
       '{"id": "$sedeRamos", "name": "Sede Ramos Mejía", "address": "Calle Belgrano 1240", '
       '"opens_at": "09:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6], '
       '"space_count": 2, "sports": ["Hockey", "Voley"]}, '
-      '${sedeHaedoSinCanchas.replaceAll(idHaedo, sedeHaedo)}]';
+      '${venueHaedoWithoutCourts.replaceAll(idHaedo, sedeHaedo)}]';
   const catalogoCompleto =
       '{"sports": ['
       '{"key": "Futbol", "name": "Fútbol", "kinds": ['
@@ -54,17 +54,17 @@ void main() {
         WidgetTester tester,
         String inicio, {
         String? espacios,
-      }) => montarUsuario(
+      }) => mountUser(
         tester,
         oscuro: oscuro,
         tamano: tamano,
         inicio: inicio,
-        api: apiRutas({
-          ...rutasDeSedes(
+        api: apiRoutes({
+          ...venueRoutes(
             sedes: sedes,
             espacios:
                 espacios ??
-                '[$espacioF5Json, $espacioTenisJson]'.replaceAll(
+                '[$spaceF5Json, $spaceTennisJson]'.replaceAll(
                   idMoron,
                   sedeMoron,
                 ),
@@ -72,7 +72,7 @@ void main() {
           'GET /spaces/catalog': (200, catalogoCompleto),
           'POST /bookings': (
             201,
-            reservaJson(
+            bookingJson(
               inicio: '2026-11-12T21:00:00+00:00',
               fin: '2026-11-12T22:00:00+00:00',
             ),
@@ -134,14 +134,14 @@ void main() {
       });
 
       testWidgets('horarios sin turnos $ancho $modo', (tester) async {
-        await montarUsuario(
+        await mountUser(
           tester,
           oscuro: oscuro,
           tamano: tamano,
           inicio:
               '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
-          api: apiRutas({
-            ...rutasDeSedes(sedes: sedes, grilla: grillaJson(abre: false)),
+          api: apiRoutes({
+            ...venueRoutes(sedes: sedes, grilla: gridJson(abre: false)),
             'GET /spaces/catalog': (200, catalogoCompleto),
           }),
         );

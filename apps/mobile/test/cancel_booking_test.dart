@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/mount.dart';
 import 'support/user.dart';
 
@@ -13,7 +13,7 @@ void main() {
   // Siempre en el futuro, así la tarjeta ofrece CANCELAR.
   final futura = DateTime.now().toUtc().add(const Duration(days: 2));
   final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
-  final proxima = reservaJson(
+  final proxima = bookingJson(
     inicio: inicio.toIso8601String(),
     fin: inicio.add(const Duration(hours: 1)).toIso8601String(),
   );
@@ -25,8 +25,8 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     var cancelada = false;
-    final rutas = rutasDeSedes();
-    await montarUsuario(
+    final rutas = venueRoutes();
+    await mountUser(
       tester,
       inicio: '/reservas',
       api: ApiClient(
@@ -40,7 +40,7 @@ void main() {
             ) =>
               () {
                 final respuesta =
-                    alCancelar ?? (200, reservaJson(estado: 'canceled'));
+                    alCancelar ?? (200, bookingJson(estado: 'canceled'));
                 // Un 409 también deja la lista sin esa reserva: ya no estaba activa.
                 cancelada = respuesta.$1 == 200 || respuesta.$1 == 409;
                 return respuesta;
@@ -136,16 +136,16 @@ void main() {
     'una reserva que el servidor no da por cancelable no ofrece CANCELAR',
     (tester) async {
       final ahora = DateTime.now().toUtc();
-      final empezada = reservaJson(
+      final empezada = bookingJson(
         inicio: ahora.subtract(const Duration(minutes: 10)).toIso8601String(),
         fin: ahora.add(const Duration(minutes: 50)).toIso8601String(),
         cancelable: false,
       );
-      await montarUsuario(
+      await mountUser(
         tester,
         inicio: '/reservas',
-        api: apiRutas({
-          ...rutasDeSedes(),
+        api: apiRoutes({
+          ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [$empezada]}'),
         }),
       );

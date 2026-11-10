@@ -7,7 +7,7 @@ import '../support/fixed_clock.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   const telefonos = {
     '320': Size(320, 568),
@@ -26,11 +26,11 @@ void main() {
   }
 
   Future<void> completar(WidgetTester tester) async {
-    await elegir(tester, 'Sede', 'Sede Morón');
-    await elegir(tester, 'Deporte', 'Fútbol');
-    await elegir(tester, 'Tipo', 'Fútbol 5');
-    await elegir(tester, 'Condición', 'Al aire libre');
-    await elegir(tester, 'Iluminación', 'Iluminada');
+    await choose(tester, 'Sede', 'Sede Morón');
+    await choose(tester, 'Deporte', 'Fútbol');
+    await choose(tester, 'Tipo', 'Fútbol 5');
+    await choose(tester, 'Condición', 'Al aire libre');
+    await choose(tester, 'Iluminación', 'Iluminada');
     await tester.enterText(find.bySemanticsLabel('Precio por hora'), '38000');
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
@@ -48,22 +48,22 @@ void main() {
         WidgetTester tester,
         String inicio, [
         Map<String, (int, String)>? rutas,
-      ]) => montarAdmin(
+      ]) => mountAdmin(
         tester,
         oscuro: oscuro,
         tamano: tamano,
         inicio: inicio,
-        api: apiRutas(rutas ?? rutasDeEspacios()),
+        api: apiRoutes(rutas ?? spaceRoutes()),
       );
 
       if (ancho != '320') {
         testWidgets('panel de espacios $ancho $modo', (tester) async {
           await abrir(tester, '/admin/espacios', {
-            ...rutasDeEspacios(),
+            ...spaceRoutes(),
             'GET /spaces': (
               200,
-              '{"spaces": [$espacioCastelarJson, $espacioF5Json, '
-                  '$espacioTenisJson]}',
+              '{"spaces": [$spaceCastelarJson, $spaceF5Json, '
+                  '$spaceTennisJson]}',
             ),
           });
           await capturar(tester, 'admin/spaces_${ancho}_$modo.png');
@@ -89,8 +89,8 @@ void main() {
       testWidgets('alta de espacio con faltantes $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
         await abrir(tester, '/admin/espacios/nuevo');
-        await elegir(tester, 'Sede', 'Sede Morón');
-        await elegir(tester, 'Deporte', 'Fútbol');
+        await choose(tester, 'Sede', 'Sede Morón');
+        await choose(tester, 'Deporte', 'Fútbol');
         await guardar(tester);
         await tester.drag(
           find.byType(SingleChildScrollView),
@@ -108,7 +108,7 @@ void main() {
         await abrir(
           tester,
           '/admin/espacios/nuevo',
-          rutasDeEspacios(alta: (409, duplicado)),
+          spaceRoutes(alta: (409, duplicado)),
         );
         await completar(tester);
         await guardar(tester);

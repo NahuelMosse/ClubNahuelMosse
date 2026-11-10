@@ -33,7 +33,7 @@ String _reserva({
     ' "space_deactivated": false, "voidable": $anulable}';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> abrirDetalle(
     WidgetTester tester,
@@ -47,16 +47,16 @@ void main() {
       anuladaEn: '2026-11-12T18:30:00-03:00',
       anuladaPor: 'Ana Díaz',
     );
-    final api = apiRutas({
+    final api = apiRoutes({
       'POST /bookings/00000000-0000-7000-8000-000000000001/void': (
         200,
         anulada,
       ),
     }, pedidos: pedidos);
-    final sesion = SesionFalsa(perfilAdmin);
+    final sesion = FakeSession(adminProfile);
     final leida = parseBookingHistoryEntry(jsonDecode(reserva));
     expect(leida, isNotNull);
-    await montar(
+    await mountScreen(
       tester,
       BookingDetailScreen(
         booking: leida!,

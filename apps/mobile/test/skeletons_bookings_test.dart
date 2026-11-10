@@ -18,7 +18,7 @@ import 'package:clubnahuelmosse/features/venues/presentation/space_card_skeleton
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/admin.dart';
 import 'support/held_api.dart';
 import 'support/mount.dart';
@@ -41,15 +41,15 @@ Future<HeldApi> _mount(
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  await cargarFuentes();
+  await loadFonts();
   final held = HeldApi({
-    ...rutasDeSedes(espacios: '[$espacioF5Json, $_f5Techada]'),
+    ...venueRoutes(espacios: '[$spaceF5Json, $_f5Techada]'),
     ...extra,
   });
   await tester.pumpWidget(
     App(
       api: held.client,
-      session: SesionFalsa(perfilUsuario),
+      session: FakeSession(userProfile),
       appearance: Appearance.inMemory(dark: true),
       initialLocation: route,
     ),
@@ -238,7 +238,7 @@ void main() {
         extra: {
           'GET /spaces/available': (
             200,
-            '{"spaces": [$espacioF5Json, $_f5Techada]}',
+            '{"spaces": [$spaceF5Json, $_f5Techada]}',
           ),
         },
       );
@@ -276,12 +276,12 @@ void main() {
   testWidgets(
     'Mis reservas carga con la forma de la tarjeta de reserva @VIS-03-S1',
     (tester) async {
-      final second = reservaJson(id: '00000000-0000-7000-8000-000000000002');
+      final second = bookingJson(id: '00000000-0000-7000-8000-000000000002');
       final held = await _mount(
         tester,
         '/reservas',
         extra: {
-          'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
+          'GET /bookings': (200, '{"bookings": [${bookingJson()}, $second]}'),
         },
       );
       expect(find.byType(BookingCardSkeleton), findsAtLeastNWidgets(2));

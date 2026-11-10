@@ -40,12 +40,12 @@ void main() {
 
   group('Sedes', () {
     Venues sedes(ApiClient api) => Venues(
-      repository: VenuesRepository(api: api, session: SesionFalsa(perfilAdmin)),
+      repository: VenuesRepository(api: api, session: FakeSession(adminProfile)),
     );
 
     test('lee las sedes activas', () async {
-      final api = apiRutas({
-        'GET /venues': (200, '{"venues": [$sedeMoronJson, $sedeHaedoJson]}'),
+      final api = apiRoutes({
+        'GET /venues': (200, '{"venues": [$venueMoronJson, $venueHaedoJson]}'),
       });
       final leidas = await sedes(api).repository.active();
       expect([for (final s in leidas) s.name], ['Sede Morón', 'Sede Haedo']);
@@ -60,7 +60,7 @@ void main() {
     });
 
     test('una respuesta que no se entiende es un error del servidor', () {
-      final api = apiRutas({
+      final api = apiRoutes({
         'GET /venues': (
           200,
           '{"venues": [{"id": "00000000-0000-7000-8000-000000000001"}]}',
@@ -71,8 +71,8 @@ void main() {
 
     test('el alta manda los datos y devuelve la sede guardada', () async {
       final pedidos = <http.Request>[];
-      final api = apiRutas({
-        'POST /venues': (201, sedeHaedoJson),
+      final api = apiRoutes({
+        'POST /venues': (201, venueHaedoJson),
       }, pedidos: pedidos);
       final sede = await sedes(api).create(
         name: 'Sede Haedo',
@@ -101,7 +101,7 @@ void main() {
     );
 
     test('un nombre repetido vuelve con el mensaje del campo', () {
-      final api = apiRutas({
+      final api = apiRoutes({
         'POST /venues': (
           409,
           '{"errors": {"name": "Ya existe una sede con ese nombre"}}',
@@ -118,21 +118,21 @@ void main() {
     });
 
     test('sin sesión válida avisa que venció', () {
-      final api = apiRutas({'POST /venues': (401, '{}')});
+      final api = apiRoutes({'POST /venues': (401, '{}')});
       expect(alta(api), throwsA(isA<SessionExpired>()));
     });
 
     test('un 403 no es un alta: es un error', () {
-      final api = apiRutas({'POST /venues': (403, '')});
+      final api = apiRoutes({'POST /venues': (403, '')});
       expect(alta(api), throwsA(isA<ErrorDelServidor>()));
     });
   });
 
   group('panel de sedes', () {
     testWidgets('sin sedes lo dice y deja agregar la primera', (tester) async {
-      await montarAdmin(
+      await mountAdmin(
         tester,
-        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
@@ -141,10 +141,10 @@ void main() {
 
     testWidgets('cada sede con sus canchas, días y horario', (tester) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
-        api: apiRutas({
-          'GET /venues': (200, '{"venues": [$sedeMoronJson, $sedeHaedoJson]}'),
+        api: apiRoutes({
+          'GET /venues': (200, '{"venues": [$venueMoronJson, $venueHaedoJson]}'),
         }),
       );
       expect(find.text('2 SEDES ACTIVAS'), findsOneWidget);
@@ -169,7 +169,7 @@ void main() {
           return http.Response('{"venues": []}', 200);
         }),
       );
-      await montarAdmin(tester, api: api);
+      await mountAdmin(tester, api: api);
       expect(find.text('Error de conexión'), findsOneWidget);
       await tester.tap(
         find.descendant(
@@ -185,15 +185,15 @@ void main() {
   group('alta de sede', () {
     Future<List<http.Request>> abrirAlta(
       WidgetTester tester, {
-      (int, String) respuesta = (201, sedeHaedoJson),
+      (int, String) respuesta = (201, venueHaedoJson),
     }) async {
       final pedidos = <http.Request>[];
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({
+        api: apiRoutes({
           'POST /venues': respuesta,
-          'GET /venues': (200, '{"venues": [$sedeHaedoJson]}'),
+          'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),
         }, pedidos: pedidos),
       );
       return pedidos;
@@ -208,8 +208,8 @@ void main() {
         find.bySemanticsLabel('Dirección'),
         'Av. Vergara 1850',
       );
-      await elegir(tester, 'Horario de apertura', '08:00');
-      await elegir(tester, 'Horario de cierre', '23:00');
+      await choose(tester, 'Horario de apertura', '08:00');
+      await choose(tester, 'Horario de cierre', '23:00');
     }
 
     testWidgets('guardar sin nada marca todo lo que falta y no envía', (
@@ -275,13 +275,13 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       await abrirAlta(tester);
-      await elegir(tester, 'Horario de apertura', '18:00');
-      await elegir(tester, 'Horario de cierre', '10:00');
+      await choose(tester, 'Horario de apertura', '18:00');
+      await choose(tester, 'Horario de cierre', '10:00');
       expect(
         find.text('El cierre tiene que ser después de la apertura'),
         findsOneWidget,
       );
-      await elegir(tester, 'Horario de cierre', '00:00');
+      await choose(tester, 'Horario de cierre', '00:00');
       expect(
         find.text('El cierre tiene que ser después de la apertura'),
         findsNothing,
@@ -295,7 +295,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final pedidos = await abrirAlta(tester);
       await completar(tester);
-      await elegir(tester, 'Días que abre', 'Lunes a viernes');
+      await choose(tester, 'Días que abre', 'Lunes a viernes');
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
       final alta = pedidos.singleWhere((p) => p.method == 'POST');
@@ -338,10 +338,10 @@ void main() {
     testWidgets('el éxito sin la sede guardada lleva al listado', (
       tester,
     ) async {
-      await montarAdmin(
+      await mountAdmin(
         tester,
         inicio: '/admin/sedes/creada',
-        api: apiRutas({'GET /venues': (200, '{"venues": [$sedeHaedoJson]}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": [$venueHaedoJson]}')}),
       );
       expect(find.text('¡Sede creada!'), findsNothing);
       expect(find.text('1 SEDE ACTIVA'), findsOneWidget);
@@ -360,8 +360,8 @@ void main() {
         find.bySemanticsLabel('Dirección'),
         'Av. Vergara 1850',
       );
-      await elegir(tester, 'Horario de apertura', '08:00');
-      await elegir(tester, 'Horario de cierre', '23:00');
+      await choose(tester, 'Horario de apertura', '08:00');
+      await choose(tester, 'Horario de cierre', '23:00');
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
     }
@@ -376,15 +376,15 @@ void main() {
         cliente: _Cliente((pedido) async {
           if (pedido.method == 'POST') {
             guardada = true;
-            return http.Response(sedeHaedoJson, 201);
+            return http.Response(venueHaedoJson, 201);
           }
           return http.Response(
-            guardada ? '{"venues": [$sedeHaedoJson]}' : '{"venues": []}',
+            guardada ? '{"venues": [$venueHaedoJson]}' : '{"venues": []}',
             200,
           );
         }),
       );
-      await montarAdmin(tester, api: api);
+      await mountAdmin(tester, api: api);
       expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
       await cargarYGuardar(tester);
       expect(find.text('¡Sede creada!'), findsOneWidget);
@@ -403,13 +403,13 @@ void main() {
       final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
-          if (pedido.method == 'POST') return http.Response(sedeHaedoJson, 201);
+          if (pedido.method == 'POST') return http.Response(venueHaedoJson, 201);
           lecturas++;
           if (lecturas > 1) throw const _Corte();
           return http.Response('{"venues": []}', 200);
         }),
       );
-      await montarAdmin(tester, api: api);
+      await mountAdmin(tester, api: api);
       await cargarYGuardar(tester);
       expect(find.text('¡Sede creada!'), findsOneWidget);
       expect(find.text('Error de conexión'), findsNothing);
@@ -433,12 +433,12 @@ void main() {
               );
             }
             return http.Response(
-              altas == 0 ? '{"venues": []}' : '{"venues": [$sedeHaedoJson]}',
+              altas == 0 ? '{"venues": []}' : '{"venues": [$venueHaedoJson]}',
               200,
             );
           }),
         );
-        await montarAdmin(tester, api: api);
+        await mountAdmin(tester, api: api);
         await cargarYGuardar(tester);
         expect(find.text('Error de conexión'), findsOneWidget);
         await tester.tap(
@@ -461,8 +461,8 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
-        api: apiRutas({}),
-        session: SesionFalsa(perfilUsuario),
+        api: apiRoutes({}),
+        session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
         initialLocation: '/admin/sedes/nueva',
       ),

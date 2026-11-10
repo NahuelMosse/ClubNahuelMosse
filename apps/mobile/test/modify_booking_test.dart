@@ -6,12 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'my_bookings_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show bookingJson;
 import 'support/user.dart';
 
 void main() {
   // La reserva es del jueves 12 a las 21 en el club; la grilla ya la da por libre.
-  final grilla = grillaJson(ocupadas: {9, 12});
+  final grilla = gridJson(ocupadas: {9, 12});
 
   Future<List<http.Request>> abrir(
     WidgetTester tester, {
@@ -20,8 +20,8 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     var modificada = false;
-    final rutas = rutasDeSedes(grilla: grilla);
-    await montarUsuario(
+    final rutas = venueRoutes(grilla: grilla);
+    await mountUser(
       tester,
       inicio: '/reservas',
       tamano: tamano,
@@ -39,7 +39,7 @@ void main() {
                     alModificar ??
                     (
                       200,
-                      reservaJson(
+                      bookingJson(
                         inicio: '2026-11-12T22:00:00+00:00',
                         fin: '2026-11-12T23:00:00+00:00',
                       ),
@@ -49,7 +49,7 @@ void main() {
               }(),
             ('GET', '/bookings') => (
               200,
-              '{"bookings": [${modificada ? reservaJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : reservaJson()}]}',
+              '{"bookings": [${modificada ? bookingJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : bookingJson()}]}',
             ),
             _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
           };

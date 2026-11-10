@@ -12,10 +12,10 @@ void main() {
   testWidgets(
     'la cantidad de canchas de la tarjeta de sede es el dorsal con el rótulo CANCHAS, sin el bloque violeta @RED-03-ASM-14',
     (tester) async {
-      await montarUsuario(
+      await mountUser(
         tester,
         tamano: const Size(393, 1400),
-        api: apiRutas(rutasDeSedes(sedes: '[$sedeMoronConDeportes]')),
+        api: apiRoutes(venueRoutes(sedes: '[$venueMoronWithSports]')),
       );
 
       final tarjeta = find.byType(VenueCard);

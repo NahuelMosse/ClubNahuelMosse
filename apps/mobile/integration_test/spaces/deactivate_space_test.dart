@@ -9,7 +9,7 @@ void main() {
 
   Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
     final control = find.bySemanticsLabel(etiqueta);
-    await esperarA(tester, control);
+    await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
     await tester.tap(control);
@@ -18,17 +18,17 @@ void main() {
 
   /// Una sede con dos Fútbol 5: devuelve la sede y las dos canchas.
   Future<(String, String, String)> sedeConDos() async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
-    return (sede, await crearEspacio(sede), await crearEspacio(sede));
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850');
+    return (sede, await createSpace(sede), await createSpace(sede));
   }
 
   /// Del panel a la confirmación de la baja de [nombre].
   Future<void> pedirLaBaja(WidgetTester tester, String nombre) async {
-    await tocar(tester, 'ESPACIOS');
-    await esperarA(tester, find.text('ALTA ESPACIO'));
+    await tapText(tester, 'ESPACIOS');
+    await waitUntil(tester, find.text('ALTA ESPACIO'));
     await tocarEtiqueta(tester, 'Baja $nombre');
-    await esperarA(tester, find.text('¿Dar de baja el espacio?'));
+    await waitUntil(tester, find.text('¿Dar de baja el espacio?'));
   }
 
   testWidgets(
@@ -36,20 +36,20 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (_, cancha, _) = await sedeConDos();
-      await entrarComoAdmin(tester);
+      await signInAsAdmin(tester);
       await pedirLaBaja(tester, cancha);
       expect(find.text('$cancha. La acción es permanente.'), findsOneWidget);
 
-      await tocar(tester, 'CONFIRMAR BAJA');
+      await tapText(tester, 'CONFIRMAR BAJA');
 
       // Verifica: el aviso, el panel sin el espacio y los usuarios ya no lo ven.
-      await esperarA(
+      await waitUntil(
         tester,
         find.text('El espacio fue dado de baja correctamente'),
       );
       expect(find.text('ALTA ESPACIO'), findsOneWidget);
       expect(find.text(cancha), findsNothing);
-      expect(await espacioQueVeUnUsuario(cancha), isNull);
+      expect(await spaceAUserSees(cancha), isNull);
       semantica.dispose();
     },
   );
@@ -59,18 +59,18 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha, _) = await sedeConDos();
-      expect((await sedeQueVeUnUsuario(sede))?['space_count'], 2);
-      await entrarComoAdmin(tester);
+      expect((await venueAUserSees(sede))?['space_count'], 2);
+      await signInAsAdmin(tester);
       await pedirLaBaja(tester, cancha);
 
-      await tocar(tester, 'CONFIRMAR BAJA');
-      await esperarA(
+      await tapText(tester, 'CONFIRMAR BAJA');
+      await waitUntil(
         tester,
         find.text('El espacio fue dado de baja correctamente'),
       );
 
       // Verifica: la sede queda con una cancha.
-      expect((await sedeQueVeUnUsuario(sede))?['space_count'], 1);
+      expect((await venueAUserSees(sede))?['space_count'], 1);
       semantica.dispose();
     },
   );
@@ -80,17 +80,17 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (_, cancha, otra) = await sedeConDos();
-      await entrarComoAdmin(tester);
+      await signInAsAdmin(tester);
       await pedirLaBaja(tester, cancha);
 
-      await tocar(tester, 'CONFIRMAR BAJA');
-      await esperarA(
+      await tapText(tester, 'CONFIRMAR BAJA');
+      await waitUntil(
         tester,
         find.text('El espacio fue dado de baja correctamente'),
       );
 
       // Verifica: no se ofrece para reservar; la otra cancha de la sede sí.
-      final espacios = await espaciosQueVeUnUsuario();
+      final espacios = await spacesAUserSees();
       expect(espacios, isNot(contains(cancha)));
       expect(espacios, contains(otra));
       semantica.dispose();
@@ -102,15 +102,15 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (_, cancha, _) = await sedeConDos();
-      await entrarComoAdmin(tester);
+      await signInAsAdmin(tester);
       await pedirLaBaja(tester, cancha);
 
-      await tocar(tester, 'CANCELAR');
+      await tapText(tester, 'CANCELAR');
 
       // Verifica: sigue en el panel y el espacio sigue activo.
       expect(find.text('¿Dar de baja el espacio?'), findsNothing);
       expect(find.text(cancha), findsOneWidget);
-      expect(await espacioQueVeUnUsuario(cancha), isNotNull);
+      expect(await spaceAUserSees(cancha), isNotNull);
       semantica.dispose();
     },
   );
@@ -121,27 +121,27 @@ void main() {
       final semantica = tester.ensureSemantics();
       final (_, cancha, _) = await sedeConDos();
       final api = await ApiIntermedia.abrir();
-      await entrarComoAdmin(tester, apiUrl: api.url);
+      await signInAsAdmin(tester, apiUrl: api.url);
       await pedirLaBaja(tester, cancha);
 
-      api.estado = EstadoApi.sinRed;
-      await tocar(tester, 'CONFIRMAR BAJA');
+      api.estado = ApiState.offline;
+      await tapText(tester, 'CONFIRMAR BAJA');
 
       // Verifica: sin conexión, el aviso y el espacio sigue.
-      await esperarA(tester, find.text('Error de conexión'));
-      await tocar(tester, 'Volver');
+      await waitUntil(tester, find.text('Error de conexión'));
+      await tapText(tester, 'Volver');
       expect(find.text(cancha), findsOneWidget);
-      expect(await espacioQueVeUnUsuario(cancha), isNotNull);
+      expect(await spaceAUserSees(cancha), isNotNull);
 
-      api.estado = EstadoApi.falla;
+      api.estado = ApiState.failing;
       await pedirLaBaja(tester, cancha);
-      await tocar(tester, 'CONFIRMAR BAJA');
+      await tapText(tester, 'CONFIRMAR BAJA');
 
       // Verifica: con el servidor caído, lo mismo.
-      await esperarA(tester, find.text('Error del servidor'));
-      await tocar(tester, 'ACEPTAR');
+      await waitUntil(tester, find.text('Error del servidor'));
+      await tapText(tester, 'ACEPTAR');
       expect(find.text(cancha), findsOneWidget);
-      expect(await espacioQueVeUnUsuario(cancha), isNotNull);
+      expect(await spaceAUserSees(cancha), isNotNull);
       semantica.dispose();
     },
   );

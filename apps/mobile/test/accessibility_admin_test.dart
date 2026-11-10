@@ -4,7 +4,7 @@ import 'support/admin.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> cumpleLasGuias(WidgetTester tester) async {
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -19,15 +19,15 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         oscuro: oscuro,
         inicio: '/admin/espacios',
-        api: apiRutas({
-          ...rutasDeEspacios(),
+        api: apiRoutes({
+          ...spaceRoutes(),
           'GET /spaces': (
             200,
-            '{"spaces": [$espacioF5Json, $espacioTenisJson, $espacioCastelarJson]}',
+            '{"spaces": [$spaceF5Json, $spaceTennisJson, $spaceCastelarJson]}',
           ),
         }),
       );
@@ -39,11 +39,11 @@ void main() {
       'el alta de espacio con faltantes cumple las guías en modo $modo',
       (tester) async {
         final semantica = tester.ensureSemantics();
-        await montarAdmin(
+        await mountAdmin(
           tester,
           oscuro: oscuro,
           inicio: '/admin/espacios/nuevo',
-          api: apiRutas(rutasDeEspacios()),
+          api: apiRoutes(spaceRoutes()),
         );
         await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
         await tester.tap(find.text('GUARDAR ESPACIO'));
@@ -57,17 +57,17 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         oscuro: oscuro,
         inicio: '/admin/espacios/nuevo',
-        api: apiRutas(rutasDeEspacios()),
+        api: apiRoutes(spaceRoutes()),
       );
-      await elegir(tester, 'Sede', 'Sede Morón');
-      await elegir(tester, 'Deporte', 'Fútbol');
-      await elegir(tester, 'Tipo', 'Fútbol 5');
-      await elegir(tester, 'Condición', 'Al aire libre');
-      await elegir(tester, 'Iluminación', 'Iluminada');
+      await choose(tester, 'Sede', 'Sede Morón');
+      await choose(tester, 'Deporte', 'Fútbol');
+      await choose(tester, 'Tipo', 'Fútbol 5');
+      await choose(tester, 'Condición', 'Al aire libre');
+      await choose(tester, 'Iluminación', 'Iluminada');
       await tester.enterText(find.bySemanticsLabel('Precio por hora'), '38000');
       await tester.pumpAndSettle();
       await cumpleLasGuias(tester);
@@ -78,11 +78,11 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         oscuro: oscuro,
-        api: apiRutas({
-          'GET /venues': (200, '{"venues": [$sedeMoronJson, $sedeHaedoJson]}'),
+        api: apiRoutes({
+          'GET /venues': (200, '{"venues": [$venueMoronJson, $venueHaedoJson]}'),
         }),
       );
       await cumpleLasGuias(tester);
@@ -93,11 +93,11 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         oscuro: oscuro,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
@@ -109,11 +109,11 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         oscuro: oscuro,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.bySemanticsLabel('Horario de apertura'));
       await tester.pumpAndSettle();
@@ -125,13 +125,13 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarAdmin(
+      await mountAdmin(
         tester,
         oscuro: oscuro,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({
-          'POST /venues': (201, sedeHaedoJson),
-          'GET /venues': (200, '{"venues": [$sedeHaedoJson]}'),
+        api: apiRoutes({
+          'POST /venues': (201, venueHaedoJson),
+          'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),
         }),
       );
       await tester.enterText(
@@ -142,8 +142,8 @@ void main() {
         find.bySemanticsLabel('Dirección'),
         'Av. Vergara 1850',
       );
-      await elegir(tester, 'Horario de apertura', '08:00');
-      await elegir(tester, 'Horario de cierre', '23:00');
+      await choose(tester, 'Horario de apertura', '08:00');
+      await choose(tester, 'Horario de cierre', '23:00');
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
       expect(find.text('¡Sede creada!'), findsOneWidget);

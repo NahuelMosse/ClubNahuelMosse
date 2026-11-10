@@ -6,11 +6,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'notifications_spanish_test.dart' show ApiFalsa, SistemaFalso, centroDe;
+import 'notifications_spanish_test.dart' show FakeApi, FakeSystem, centerOf;
 import 'support/mount.dart';
 
 /// Un sistema que no contestó la pregunta del permiso hasta que el test lo decide.
-class SistemaQueDemora extends SistemaFalso {
+class SistemaQueDemora extends FakeSystem {
   SistemaQueDemora() : super(concedido: false);
 
   final respuesta = Completer<bool>();
@@ -91,11 +91,11 @@ void main() {
   testWidgets(
     'si la app se cierra mientras el sistema pregunta el permiso, no registra el teléfono @NOT-01-S1',
     (tester) async {
-      final api = ApiFalsa();
+      final api = FakeApi();
       final sistema = SistemaQueDemora();
-      final centro = centroDe(
+      final centro = centerOf(
         api,
-        SesionFalsa(perfilUsuario),
+        FakeSession(userProfile),
         sistema: sistema,
       );
       await tester.pump();

@@ -9,17 +9,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'admin.dart';
 import 'mount.dart';
 
-const sedeMoronConDeportes =
+const venueMoronWithSports =
     '{"id": "00000000-0000-7000-8000-000000000001", "name": "Sede Morón", "address": "Av. Rivadavia 19850", '
     '"opens_at": "08:00", "closes_at": "23:00", "open_days": [1,2,3,4,5,6,7], '
     '"space_count": 2, "sports": ["Futbol", "Tenis"]}';
-const sedeHaedoSinCanchas =
+const venueHaedoWithoutCourts =
     '{"id": "00000000-0000-7000-8000-000000000005", "name": "Sede Haedo", "address": "Av. Vergara 1850", '
     '"opens_at": "08:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6,7], '
     '"space_count": 0, "sports": []}';
 
 /// La grilla del prototipo: jueves 12 de noviembre, 1 hora, seis horarios ocupados.
-String grillaJson({
+String gridJson({
   String fecha = '2026-11-12',
   Set<int> ocupadas = const {9, 12, 16, 17, 21, 22},
   bool abre = true,
@@ -37,22 +37,22 @@ String grillaJson({
 }
 
 /// Las respuestas de la API para recorrer las sedes como usuario.
-Map<String, (int, String)> rutasDeSedes({
-  String sedes = '[$sedeMoronConDeportes, $sedeHaedoSinCanchas]',
-  String espacios = '[$espacioF5Json, $espacioTenisJson]',
+Map<String, (int, String)> venueRoutes({
+  String sedes = '[$venueMoronWithSports, $venueHaedoWithoutCourts]',
+  String espacios = '[$spaceF5Json, $spaceTennisJson]',
   String? grilla,
 }) => {
-  'GET /spaces/catalog': (200, catalogoJson),
+  'GET /spaces/catalog': (200, catalogJson),
   'GET /venues': (200, '{"venues": $sedes}'),
   'GET /spaces': (200, '{"spaces": $espacios}'),
   'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
     200,
-    grilla ?? grillaJson(),
+    grilla ?? gridJson(),
   ),
 };
 
 /// La app entera con la sesión de un usuario, abierta en [inicio].
-Future<void> montarUsuario(
+Future<void> mountUser(
   WidgetTester tester, {
   required ApiClient api,
   String inicio = '/sedes',
@@ -63,7 +63,7 @@ Future<void> montarUsuario(
   tester.view.physicalSize = tamano * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  final sesion = SesionFalsa(perfilUsuario);
+  final sesion = FakeSession(userProfile);
   await tester.pumpWidget(
     App(
       api: api,

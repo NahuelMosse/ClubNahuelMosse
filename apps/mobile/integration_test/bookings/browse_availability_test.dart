@@ -28,16 +28,16 @@ void main() {
     return '${dos(hora)} – ${dos(hora + horas)}';
   }
 
-  final manana = hoyEnElClub().add(const Duration(days: 1));
-  final pasado = hoyEnElClub().add(const Duration(days: 2));
+  final manana = todayAtClub().add(const Duration(days: 1));
+  final pasado = todayAtClub().add(const Duration(days: 2));
 
   /// Una sede de 08:00 a 23:00 con dos Fútbol 5 techados de $ 43.000 la hora.
   Future<(String, String, String)> sedeConDosCanchas({
     List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
   }) async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850', dias: dias);
-    return (sede, await crearEspacio(sede), await crearEspacio(sede));
+    final sede = 'Sede Haedo ${unique()}';
+    await createVenue(sede, 'Av. Vergara 1850', dias: dias);
+    return (sede, await createSpace(sede), await createSpace(sede));
   }
 
   /// Entra como usuario a los horarios de la Cancha 1 de [sede].
@@ -47,20 +47,20 @@ void main() {
     String? apiUrl,
     void Function()? antesDeEntrar,
   }) async {
-    await entrarComoUsuario(
+    await signInAsUser(
       tester,
-      correo: 'socio.${unico()}@correo.com',
+      correo: 'socio.${unique()}@correo.com',
       apiUrl: apiUrl,
     );
-    await tocar(tester, 'SEDES');
+    await tapText(tester, 'SEDES');
     final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
-    await esperarA(tester, tarjeta);
+    await waitUntil(tester, tarjeta);
     await tester.ensureVisible(tarjeta);
     await tester.pumpAndSettle();
     await tester.tap(tarjeta);
     await tester.pumpAndSettle();
     final reservar = find.text('VER HORARIOS / RESERVAR');
-    await esperarA(tester, reservar);
+    await waitUntil(tester, reservar);
     antesDeEntrar?.call();
     await tester.ensureVisible(reservar.first);
     await tester.pumpAndSettle();
@@ -70,7 +70,7 @@ void main() {
 
   Future<void> tocarEtiqueta(WidgetTester tester, String etiqueta) async {
     final control = find.bySemanticsLabel(etiqueta);
-    await esperarA(tester, control);
+    await waitUntil(tester, control);
     await tester.ensureVisible(control);
     await tester.pumpAndSettle();
     await tester.tap(control);
@@ -88,7 +88,7 @@ void main() {
 
   Future<void> verDia(WidgetTester tester, DateTime dia) async {
     await tocarEtiqueta(tester, chip(dia));
-    await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+    await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
   }
 
   testWidgets(
@@ -99,13 +99,13 @@ void main() {
       await abrirHorarios(tester, sede);
 
       // Verifica: la Cancha 1, hoy y 1 hora vienen elegidas.
-      await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+      await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
       expect(elegida(tester, 'Cancha 1, Techada'), isTrue);
-      expect(elegida(tester, chip(hoyEnElClub())), isTrue);
+      expect(elegida(tester, chip(todayAtClub())), isTrue);
       expect(find.text('1 hora'), findsOneWidget);
 
       // Verifica: las horas que ya empezaron no se ofrecen y la próxima sí.
-      final ahora = horaEnElClub();
+      final ahora = hourAtClub();
       for (var h = 8; h <= ahora && h <= 22; h++) {
         expect(find.bySemanticsLabel(franja(h)), findsNothing);
       }
@@ -124,7 +124,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await ocupar(cancha1, manana, 10);
+      await occupy(cancha1, manana, 10);
       await abrirHorarios(tester, sede);
 
       await verDia(tester, manana);
@@ -152,10 +152,10 @@ void main() {
       expect(find.textContaining('43.000 × 1'), findsOneWidget);
       expect(find.textContaining(_mes(manana)), findsOneWidget);
 
-      await tocar(tester, 'CONTINUAR');
+      await tapText(tester, 'CONTINUAR');
 
       // Verifica: la confirmación recibe la sede, la cancha, la fecha y el horario.
-      await esperarA(tester, find.text('Confirmá tu reserva'));
+      await waitUntil(tester, find.text('Confirmá tu reserva'));
       expect(find.text(sede.toUpperCase()), findsOneWidget);
       expect(find.text('Cancha 1 · Techada'), findsOneWidget);
       expect(find.text('${franja(18)} · 1 hora'), findsOneWidget);
@@ -188,14 +188,14 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await ocupar(cancha1, manana, 9);
-      await ocupar(cancha1, manana, 12);
+      await occupy(cancha1, manana, 9);
+      await occupy(cancha1, manana, 12);
       await abrirHorarios(tester, sede);
 
       await verDia(tester, manana);
 
       // Verifica: dos ocupadas, dos no disponibles.
-      await esperarA(
+      await waitUntil(
         tester,
         find.text('Algunos horarios ya están ocupados · 2 no disponibles'),
       );
@@ -208,7 +208,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await ocupar(cancha1, manana, 10);
+      await occupy(cancha1, manana, 10);
       await abrirHorarios(tester, sede);
       await verDia(tester, manana);
       expect(habilitada(tester, franja(10)), isFalse);
@@ -227,7 +227,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, _, cancha2) = await sedeConDosCanchas();
-      await ocupar(cancha2, manana, 10);
+      await occupy(cancha2, manana, 10);
       await abrirHorarios(tester, sede);
       await verDia(tester, manana);
       expect(habilitada(tester, franja(10)), isTrue);
@@ -235,7 +235,7 @@ void main() {
       await tocarEtiqueta(tester, 'Cancha 2, Techada');
 
       // Verifica: en la Cancha 2 la de las 10 está ocupada.
-      await esperarA(tester, find.text('HORARIO DISPONIBLE'));
+      await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
       expect(elegida(tester, 'Cancha 2, Techada'), isTrue);
       expect(habilitada(tester, franja(10)), isFalse);
       semantica.dispose();
@@ -247,14 +247,14 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await ocupar(cancha1, manana, 11);
+      await occupy(cancha1, manana, 11);
       await abrirHorarios(tester, sede);
       await verDia(tester, manana);
 
       await tocarEtiqueta(tester, 'Una hora más');
 
       // Verifica: las que pisan las 11 no se pueden elegir, las demás sí.
-      await esperarA(tester, find.text('2 horas'));
+      await waitUntil(tester, find.text('2 horas'));
       expect(habilitada(tester, franja(9, 2)), isTrue);
       expect(habilitada(tester, franja(10, 2)), isFalse);
       expect(habilitada(tester, franja(11, 2)), isFalse);
@@ -276,12 +276,12 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await ocupar(cancha1, manana, 15);
+      await occupy(cancha1, manana, 15);
       await abrirHorarios(tester, sede);
       await verDia(tester, manana);
       await tocarEtiqueta(tester, 'Una hora más');
       await tocarEtiqueta(tester, 'Una hora más');
-      await esperarA(tester, find.text('3 horas'));
+      await waitUntil(tester, find.text('3 horas'));
 
       await tocarEtiqueta(tester, franja(18, 3));
 
@@ -315,7 +315,7 @@ void main() {
       }
 
       // Verifica: en 4 horas no sube más.
-      await esperarA(tester, find.text('4 horas'));
+      await waitUntil(tester, find.text('4 horas'));
       expect(habilitada(tester, 'Una hora más'), isFalse);
       expect(habilitada(tester, 'Una hora menos'), isTrue);
       semantica.dispose();
@@ -327,16 +327,16 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await ocupar(cancha1, manana, 8, horas: 4);
-      await ocupar(cancha1, manana, 12, horas: 4);
-      await ocupar(cancha1, manana, 16, horas: 4);
-      await ocupar(cancha1, manana, 20, horas: 3);
+      await occupy(cancha1, manana, 8, horas: 4);
+      await occupy(cancha1, manana, 12, horas: 4);
+      await occupy(cancha1, manana, 16, horas: 4);
+      await occupy(cancha1, manana, 20, horas: 3);
       await abrirHorarios(tester, sede);
 
       await verDia(tester, manana);
 
       // Verifica: el estado vacío reemplaza la grilla y sugiere otra fecha.
-      await esperarA(tester, find.text('No hay horarios disponibles'));
+      await waitUntil(tester, find.text('No hay horarios disponibles'));
       expect(
         find.text(
           'Ya no quedan turnos libres ese día. Probá con otra fecha u otra cancha.',
@@ -364,7 +364,7 @@ void main() {
       await verDia(tester, manana);
 
       // Verifica: la sede no abre ese día y no hay franjas.
-      await esperarA(tester, find.text('No hay horarios disponibles'));
+      await waitUntil(tester, find.text('No hay horarios disponibles'));
       expect(
         find.text('La sede no abre ese día. Probá con otra fecha.'),
         findsOneWidget,
@@ -385,12 +385,12 @@ void main() {
       tester,
       sede,
       apiUrl: api.url,
-      antesDeEntrar: () => api.estado = EstadoApi.sinRed,
+      antesDeEntrar: () => api.estado = ApiState.offline,
     );
 
     // Verifica: la alerta de conexión y, al cerrarla, ningún horario.
-    await esperarA(tester, find.text('Error de conexión'));
-    await tocar(tester, 'Volver');
+    await waitUntil(tester, find.text('Error de conexión'));
+    await tapText(tester, 'Volver');
     expect(find.text('HORARIO DISPONIBLE'), findsNothing);
     expect(find.bySemanticsLabel(RegExp(r'^\d\d:00 – ')), findsNothing);
     expect(find.text('REINTENTAR'), findsOneWidget);
@@ -408,12 +408,12 @@ void main() {
       tester,
       sede,
       apiUrl: api.url,
-      antesDeEntrar: () => api.estado = EstadoApi.falla,
+      antesDeEntrar: () => api.estado = ApiState.failing,
     );
 
     // Verifica: el error del servidor y, al cerrarlo, ningún horario.
-    await esperarA(tester, find.text('Error del servidor'));
-    await tocar(tester, 'ACEPTAR');
+    await waitUntil(tester, find.text('Error del servidor'));
+    await tapText(tester, 'ACEPTAR');
     expect(find.text('HORARIO DISPONIBLE'), findsNothing);
     expect(find.bySemanticsLabel(RegExp(r'^\d\d:00 – ')), findsNothing);
     expect(find.text('REINTENTAR'), findsOneWidget);

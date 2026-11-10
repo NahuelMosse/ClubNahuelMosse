@@ -22,8 +22,8 @@ ApiClient _api403() => ApiClient(
 );
 
 /// Una sesión que abrió como administrador y, al volver a leer el perfil, ya es usuario.
-class _SesionDegradada extends SesionFalsa {
-  _SesionDegradada() : super(perfilAdmin);
+class _SesionDegradada extends FakeSession {
+  _SesionDegradada() : super(adminProfile);
 
   int lecturas = 0;
   Profile? _rebajado;
@@ -34,14 +34,14 @@ class _SesionDegradada extends SesionFalsa {
   @override
   Future<Profile> refresh() async {
     lecturas++;
-    _rebajado = perfilUsuario;
+    _rebajado = userProfile;
     notifyListeners();
-    return perfilUsuario;
+    return userProfile;
   }
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   final avisos = <String, (String, Future<void> Function(BuildContext))>{
     'error de conexión': (
@@ -61,7 +61,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(
+      await mountScreen(
         tester,
         Builder(
           builder: (context) => Scaffold(
@@ -91,9 +91,9 @@ void main() {
   testWidgets('«Acceso denegado» entra en 360 con el texto al 200 %', (
     tester,
   ) async {
-    await montar(
+    await mountScreen(
       tester,
-      AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
+      AccessDeniedScreen(session: FakeSession(userProfile)),
       tema: darkTheme,
       tamano: const Size(360, 800),
       escalaTexto: 2,
@@ -111,8 +111,8 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         App(
-          api: apiRutas({'GET /bookings': (200, '{"bookings": []}')}),
-          session: SesionFalsa(perfilUsuario),
+          api: apiRoutes({'GET /bookings': (200, '{"bookings": []}')}),
+          session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
           initialLocation: '/admin',
         ),
@@ -142,7 +142,7 @@ void main() {
             cliente: MockClient(
               (pedido) async => switch (pedido.url.path) {
                 '/bookings' => http.Response('{"bookings": []}', 200),
-                '/spaces/catalog' => http.Response(catalogoJson, 200),
+                '/spaces/catalog' => http.Response(catalogJson, 200),
                 _ => http.Response('{}', 403),
               },
             ),
@@ -169,10 +169,10 @@ void main() {
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
-    final sesion = SesionFalsa(perfilUsuario);
+    final sesion = FakeSession(userProfile);
     await tester.pumpWidget(
       App(
-        api: apiRutas({}),
+        api: apiRoutes({}),
         session: sesion,
         appearance: Appearance.inMemory(),
         initialLocation: '/admin',
@@ -190,7 +190,7 @@ void main() {
   testWidgets(
     'un 403 al cargar el alta de espacio no navega sobre «Acceso denegado»',
     (tester) async {
-      await montarAdmin(
+      await mountAdmin(
         tester,
         api: _api403(),
         inicio: '/admin/espacios/nuevo',
@@ -211,7 +211,7 @@ void main() {
     await tester.pumpWidget(
       App(
         api: _api403(),
-        session: SesionFalsa(perfilUsuario),
+        session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
         initialLocation: '/sedes/00000000-0000-7000-8000-000000000001',
       ),

@@ -25,23 +25,23 @@ Map<String, Object?> _catalog(String name) =>
         as Map<String, Object?>;
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> mountLogin(
     WidgetTester tester,
     List<Locale> device, {
-    CredencialesFalsas? credentials,
+    FakeCredentials? credentials,
     ApiClient? api,
   }) async {
     tester.platformDispatcher.localesTestValue = device;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
     final session = Session(
       repository: SessionRepository(
-        credentials: credentials ?? CredencialesFalsas(),
-        api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        credentials: credentials ?? FakeCredentials(),
+        api: api ?? fakeApi(codigo: 200, cuerpo: profileJson()),
       ),
     );
-    await montar(
+    await mountScreen(
       tester,
       LoginScreen(session: session, pending: PendingBooking()),
       tema: darkTheme,
@@ -120,7 +120,7 @@ void main() {
           await mountLogin(
             tester,
             device,
-            api: apiFalsa(codigo: 429, cuerpo: '{"mensaje": "$message"}'),
+            api: fakeApi(codigo: 429, cuerpo: '{"mensaje": "$message"}'),
           );
           await tester.enterText(find.bySemanticsLabel(email), 'a@b.com');
           await tester.enterText(find.bySemanticsLabel(password), 'Clave1234');
@@ -140,7 +140,7 @@ void main() {
         await mountLogin(
           tester,
           _english,
-          credentials: CredencialesFalsas(
+          credentials: FakeCredentials(
             alIngresar: (_, _) async => throw const InvalidCredentials(),
           ),
         );

@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> tocar(WidgetTester tester, Finder f) async {
     await tester.ensureVisible(f);
@@ -21,12 +21,12 @@ void main() {
     '@REV-04-S1 @assumption:REV-04-ASM-01',
     (tester) async {
       final pedidos = <http.Request>[];
-      await montar(
+      await mountScreen(
         tester,
         RegistrationScreen(
           // Un 422 evita la navegación de un alta exitosa, que pide un GoRouter.
           registration: RegistrationService(
-            apiRutas({
+            apiRoutes({
               'POST /register': (422, '{"errors": {"dni": "DNI repetido"}}'),
             }, pedidos: pedidos),
           ),

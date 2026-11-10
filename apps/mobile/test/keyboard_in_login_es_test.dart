@@ -17,11 +17,11 @@ const _alturaTeclado = 300.0;
 const _arribaDelTeclado = 852.0 - _alturaTeclado;
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> montarLogin(
     WidgetTester tester, {
-    CredencialesFalsas? credenciales,
+    FakeCredentials? credenciales,
   }) async {
     tester.view.physicalSize = _screenSize * 3;
     tester.view.devicePixelRatio = 3;
@@ -36,8 +36,8 @@ void main() {
         home: LoginScreen(
           session: Session(
             repository: SessionRepository(
-              credentials: credenciales ?? CredencialesFalsas(),
-              api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+              credentials: credenciales ?? FakeCredentials(),
+              api: fakeApi(codigo: 200, cuerpo: profileJson()),
             ),
           ),
           pending: PendingBooking(),
@@ -85,7 +85,7 @@ void main() {
     (tester) async {
       await montarLogin(
         tester,
-        credenciales: CredencialesFalsas(
+        credenciales: FakeCredentials(
           alIngresar: (_, _) async => throw const InvalidCredentials(),
         ),
       );

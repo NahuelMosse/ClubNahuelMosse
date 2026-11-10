@@ -10,10 +10,10 @@ import 'package:go_router/go_router.dart';
 import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   /// Lo que necesita el panel admin (CU-14) para no fallar con un pedido real.
-  final apiConPanelAdmin = apiRutas({
+  final apiConPanelAdmin = apiRoutes({
     'GET /bookings/all': (
       200,
       '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
@@ -25,7 +25,7 @@ void main() {
   /// La app real con una sesión ya iniciada, arrancando en [inicio].
   Future<GoRouter> montarApp(
     WidgetTester tester,
-    SesionFalsa sesion, {
+    FakeSession sesion, {
     String inicio = '/inicio',
   }) async {
     tester.view.physicalSize = const Size(393, 852) * 3;
@@ -33,7 +33,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
-        api: inicio.startsWith('/admin') ? apiConPanelAdmin : apiInicio(),
+        api: inicio.startsWith('/admin') ? apiConPanelAdmin : homeApi(),
         session: sesion,
         appearance: Appearance.inMemory(),
         initialLocation: inicio,
@@ -52,7 +52,7 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montarApp(tester, SesionFalsa(perfilUsuario));
+    await montarApp(tester, FakeSession(userProfile));
     await abrirTarjeta(tester);
 
     expect(find.text('Nahuel Mosse'), findsOneWidget);
@@ -68,7 +68,7 @@ void main() {
     '«Perfil completo» y «Mis reservas» cierran la tarjeta y llevan a su pantalla',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final rutas = await montarApp(tester, SesionFalsa(perfilUsuario));
+      final rutas = await montarApp(tester, FakeSession(userProfile));
 
       await abrirTarjeta(tester);
       await tester.tap(find.text('Perfil completo'));
@@ -89,7 +89,7 @@ void main() {
 
   testWidgets('cerrar sesión desde la tarjeta vuelve al login', (tester) async {
     final semantica = tester.ensureSemantics();
-    final sesion = SesionFalsa(perfilUsuario);
+    final sesion = FakeSession(userProfile);
     await montarApp(tester, sesion);
 
     await abrirTarjeta(tester);
@@ -106,7 +106,7 @@ void main() {
   ) async {
     // Verifica CU-02-SUP-02.
     final semantica = tester.ensureSemantics();
-    await montarApp(tester, SesionFalsa(perfilAdmin), inicio: '/admin');
+    await montarApp(tester, FakeSession(adminProfile), inicio: '/admin');
     await abrirTarjeta(tester);
 
     expect(find.text('Ana Díaz'), findsOneWidget);
@@ -121,7 +121,7 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    final sesion = SesionFalsa(perfilUsuario);
+    final sesion = FakeSession(userProfile);
     await montarApp(tester, sesion);
     await abrirTarjeta(tester);
 
@@ -135,8 +135,8 @@ void main() {
 
   testWidgets('«CERRAR SESIÓN» de Mi perfil cierra la sesión', (tester) async {
     final semantica = tester.ensureSemantics();
-    final sesion = SesionFalsa(perfilUsuario);
-    await montar(
+    final sesion = FakeSession(userProfile);
+    await mountScreen(
       tester,
       MyProfileScreen(session: sesion, appearance: Appearance.inMemory()),
       tema: darkTheme,
@@ -161,7 +161,7 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montarApp(tester, SesionFalsa(perfilUsuario));
+    await montarApp(tester, FakeSession(userProfile));
     expect(
       tester.getSemantics(find.bySemanticsLabel('Tu cuenta')),
       matchesSemantics(label: 'Tu cuenta', isButton: true, hasTapAction: true),
@@ -171,7 +171,7 @@ void main() {
 
   testWidgets('desde Perfil completo, atrás vuelve al inicio', (tester) async {
     final semantica = tester.ensureSemantics();
-    await montarApp(tester, SesionFalsa(perfilUsuario));
+    await montarApp(tester, FakeSession(userProfile));
     await abrirTarjeta(tester);
     await tester.tap(find.text('Perfil completo'));
     await tester.pumpAndSettle();
@@ -186,7 +186,7 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montarApp(tester, SesionFalsa(perfilUsuario));
+    await montarApp(tester, FakeSession(userProfile));
     await abrirTarjeta(tester);
     await tester.tap(find.text('Perfil completo'));
     await tester.pumpAndSettle();
@@ -200,7 +200,7 @@ void main() {
   });
 
   testWidgets('cada rol entra sólo a sus pantallas', (tester) async {
-    final usuario = await montarApp(tester, SesionFalsa(perfilUsuario));
+    final usuario = await montarApp(tester, FakeSession(userProfile));
     usuario.go('/admin');
     await tester.pumpAndSettle();
     // Por enlace profundo, sin rol de administrador ve «Acceso denegado» (CU-14 FA4).
@@ -211,7 +211,7 @@ void main() {
 
     final admin = await montarApp(
       tester,
-      SesionFalsa(perfilAdmin),
+      FakeSession(adminProfile),
       inicio: '/admin',
     );
     admin.go('/perfil');

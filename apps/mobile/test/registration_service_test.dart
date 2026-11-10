@@ -26,7 +26,7 @@ void main() {
     () async {
       final pedidos = <http.Request>[];
       final servicio = RegistrationService(
-        apiRutas({'POST /register': (201, '{}')}, pedidos: pedidos),
+        apiRoutes({'POST /register': (201, '{}')}, pedidos: pedidos),
       );
       final r = await servicio.register(
         RegistrationData(
