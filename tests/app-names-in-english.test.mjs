@@ -64,6 +64,15 @@ test('every file and name declared in apps/mobile/lib is English @ENG-23-S3', ()
   assert.deepEqual(offenders, [], report(offenders));
 });
 
+test('the keys and values the app stores on the device are English and no Spanish key is read @assumption:ENG-23-ASM-07', () => {
+  const sources = [...libFiles(), ...walk('apps/mobile/integration_test', (path) => path.endsWith('.dart')), ...walk('apps/mobile/test', (path) => path.endsWith('.dart'))];
+  const spanish = sources.flatMap((path) => ['modo_oscuro', 'permiso_notificaciones_simulado', 'token_notificaciones_simulado', "'concedido'", "'denegado'", "'simulado'"].filter((key) => read(path).includes(key)).map((key) => `${path}: ${key}`));
+  assert.deepEqual(spanish, []);
+  assert.ok(read('apps/mobile/lib/common/appearance.dart').includes("'dark_mode'"));
+  const notifications = read('apps/mobile/lib/features/notifications/data/simulated_notification_system.dart');
+  for (const english of ["'simulated_notification_permission'", "'simulated_notification_token'", "'granted'"]) assert.ok(notifications.includes(english), english);
+});
+
 // The text the person sees stays Spanish or English in the .arb; a comment or a message to the developer is English.
 const commentsOf = (text) => [...text.matchAll(/(?:^|[^:'"\w])\/\/+[ \t]*([^\n]*)/g)].map((m) => m[1]).concat([...text.matchAll(/\/\*([\s\S]*?)\*\//g)].map((m) => m[1].replace(/\s+/g, ' ')));
 const developerMessagesOf = (text) =>
