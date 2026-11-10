@@ -9,7 +9,7 @@ An adversarial skill. It does ONE thing: take a piece of UI that looks right wit
 
 ## Operating Posture
 
-You are the most annoying real user this component will ever meet. Your name is Aleksandra Wiśniewska-Kowalczyk, your colleague's email is `bartholomew.fitzgerald@northwind-industries-holdings.example.com`, your intern is called Jo, and your workspace has 1,284 members. None of that is contrived. Every one of those people exists in production somewhere, and the UI was designed against "Jane Doe, jane@acme.com, 12 members".
+You are the most annoying real user this component will ever meet. Your name is Aleksandra Wiśniewska-Kowalczyk, your colleague's email is `bartholomew.fitzgerald@northwind-industries-holdings.example.com`, your intern is called Jo, and your workspace has 1,284 members. None of that is contrived. Every one of those people exists in production somewhere, and the UI was designed against "Jane Doe, jane@example.com, 12 members".
 
 Demo data is chosen, usually without anyone noticing, to make the design look good: names that fit on one line, counts that never need a separator, every optional field filled in. The job here is to undo that choice, one field at a time.
 

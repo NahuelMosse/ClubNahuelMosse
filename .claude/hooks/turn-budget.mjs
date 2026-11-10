@@ -10,10 +10,11 @@
 // covered and a `Not covered (turn budget)` section, so the main thread launches another agent for only that.
 // Without a readable transcript or frontmatter the hook says nothing: it is a saving, the guards that protect the
 // card are others.
+// A SendMessage from the main thread to a subagent already past 85 % is refused: launch a fresh one instead.
 // Contract: exit 0 lets it through (stdout JSON carries the warning); exit 2 blocks and Claude reads stderr.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { countTurns, onlyCommit, transcriptOf } from '../tools/transcript.mjs';
 
 const WARN_AT = 0.7;
@@ -32,11 +33,36 @@ const maxTurnsOf = (type, dirs) => {
   return null;
 };
 
+// A SendMessage to a subagent resumes it with the turns it already used: one past STOP_AT comes back in seconds with
+// nothing done (measured: 12 s, 0 tools). The target is `to`, an agent id or a name in `<session>/subagents/*.meta.json`.
+const resumesSpent = (input) => {
+  const to = String(input.tool_input?.to ?? '').trim();
+  const main = input.transcript_path;
+  if (!to || !main || /[\\/]subagents[\\/]/.test(main)) return;
+  const dir = join(dirname(main), basename(main, '.jsonl'), 'subagents');
+  if (!existsSync(dir)) return;
+  const metaOf = (id) => { try { return JSON.parse(readFileSync(join(dir, `agent-${id}.meta.json`), 'utf8')); } catch { return null; } };
+  const ids = readdirSync(dir).filter((f) => /^agent-[\w.-]+\.jsonl$/.test(f)).map((f) => f.slice(6, -6));
+  const id = ids.includes(to) ? to : ids.filter((i) => metaOf(i)?.name === to).at(-1);
+  const type = id && metaOf(id)?.agentType;
+  if (!type) return;
+  const max = maxTurnsOf(String(type), [input.cwd ?? process.cwd(), process.env.KIT_HOME ?? homedir()]);
+  if (!max) return;
+  const used = countTurns(join(dir, `agent-${id}.jsonl`));
+  if (used < max * STOP_AT) return;
+  process.stderr.write(
+    `${to} is a ${type} that already used ${used} of its ${max} turns: resumed, it stops before doing anything. ` +
+    `Launch a fresh ${type} with the Agent tool, giving it the handoff.md (or the report) the last one wrote and only what it left uncovered.\n`
+  );
+  process.exit(2);
+};
+
 let input;
 let raw;
 try { raw = readFileSync(0, 'utf8'); input = JSON.parse(raw); } catch { process.exit(0); }
 try {
   await (await import('../tools/card.mjs')).delegateToRepo(import.meta.url, raw, input);
+  if (input.tool_name === 'SendMessage') resumesSpent(input);
   if (!input.agent_id || !input.agent_type) process.exit(0);
   const max = maxTurnsOf(String(input.agent_type), [input.cwd ?? process.cwd(), process.env.KIT_HOME ?? homedir()]);
   if (!max) process.exit(0);

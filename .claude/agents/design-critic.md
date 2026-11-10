@@ -84,6 +84,15 @@ one photographic genre across the page, and cutouts with halos. A pasted-on imag
 
 Concrete values, not adjectives: «`gap` 12px → 24px», not «more air». A line with no capture or no fix does not count.
 
+**Evidence.** Each rubric line rests on a capture or a `round.json` row and cites it. A line you have no evidence for (a state
+the captures never reached, motion numbers voided by a software renderer, a reference that did not load) is written
+`not inspected · <what is missing>`, with no score: never the score it probably deserves. The total is the weighted mean of the
+lines inspected; the close lists the ones that were not. A capture proves what is seen, not how it is built; the code proves how
+it is built, not how it looks at 390 or in dark. On a product screen, before calling a pattern wrong, capture one sibling screen
+of the same app under the same shell when there is one: a pattern the app repeats on purpose is not a defect for being unusual,
+unless it breaks a rule of this file; a screen that departs from its siblings in shell, header, toolbar or density is a polish
+defect with both captures.
+
 **Re-check.** A prompt starting `RECHECK` is the second and last call. Do not re-run the rubric or look for new defects: run `design-round.mjs` with `--out specs/<card>/critique-recheck`, look at the blocker's capture next to the real photo it cites, and update `critique.md` with one `Write` that keeps the rest of the file as it is: the line becomes `**Blocker:** <text> · closed · <what you saw>`, or stays open with the new reason and capture. The total is recomputed by the cap only: a closed blocker lifts the cap of 6, an open one keeps it; the other scores stay.
 
 **Report: 8 lines or fewer, 200 characters at least** (`no-pending-close`). The path of `critique.md`, the two scores, the defects and differences counted. Your last message is

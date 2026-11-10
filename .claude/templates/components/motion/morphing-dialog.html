@@ -45,11 +45,11 @@ import { hueOf, escapeHtml } from '../core.js';
 import './mp-demo.js';
 
 const CLIENTS = [
-  { name: 'Sánchez Hermanos S.A.', cuit: '30-71234567-8', iva: 'Responsable Inscripto', mail: 'administracion@sanchezhnos.com.ar', tel: '+54 11 4821-3390', saldo: '$ 1.284.300,00',
+  { name: 'Sánchez Hermanos S.A.', cuit: '30-71234567-8', iva: 'Responsable Inscripto', mail: 'administracion@sanchezhnos.example', tel: '+54 11 4821-3390', saldo: '$ 1.284.300,00',
     facturas: [['FC A 0001-00002347', '12/09/2026', 'Pagada', '$ 482.000,00'], ['FC A 0001-00002291', '28/08/2026', 'Vencida', '$ 1.284.300,00'], ['FC A 0001-00002210', '14/08/2026', 'Pagada', '$ 96.450,00']] },
-  { name: 'Distribuidora Del Sur S.R.L.', cuit: '30-70998123-4', iva: 'Responsable Inscripto', mail: 'compras@delsur.com.ar', tel: '+54 351 428-1175', saldo: '$ 0,00',
+  { name: 'Distribuidora Del Sur S.R.L.', cuit: '30-70998123-4', iva: 'Responsable Inscripto', mail: 'compras@delsur.example', tel: '+54 351 428-1175', saldo: '$ 0,00',
     facturas: [['FC A 0001-00002340', '10/09/2026', 'Pagada', '$ 215.800,00'], ['FC A 0001-00002302', '30/08/2026', 'Pagada', '$ 78.120,00']] },
-  { name: 'Estudio Herrera & Asoc.', cuit: '20-28456731-5', iva: 'Monotributo', mail: 'estudio@herreraasoc.com', tel: '+54 341 449-0027', saldo: '$ 152.900,00',
+  { name: 'Estudio Herrera & Asoc.', cuit: '20-28456731-5', iva: 'Monotributo', mail: 'estudio@herreraasoc.example', tel: '+54 341 449-0027', saldo: '$ 152.900,00',
     facturas: [['FC C 0002-00000418', '05/09/2026', 'Pendiente', '$ 152.900,00'], ['FC C 0002-00000397', '21/08/2026', 'Pagada', '$ 64.000,00'], ['FC C 0002-00000371', '02/08/2026', 'Pagada', '$ 64.000,00']] },
 ];
 const initials = (name) => name.split(/\s+/).filter((w) => /^\p{L}/u.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase();

@@ -52,9 +52,10 @@ try {
   if (/[\\/]design[\\/]references[\\/]/i.test(path) && height <= MAX_REFERENCE_HEIGHT && width * height <= MAX_PIXELS) process.exit(0);
   const tokens = Math.round((Math.min(width, 1568) * Math.min(height, 1568 * (height / width))) / 750 / 1000);
   process.stderr.write(
-    `This capture is ${width} × ${height}: about ${Math.max(tokens, 5)} thousand tokens, re-read on every request that follows. ` +
-    'Look at a capture of the viewport (`fullPage: false`, deviceScaleFactor 1) of the state the card changed, ' +
-    'or have a subagent look at the full strip against the visual brief and report what it found.\n'
+    `This image is ${width} × ${height}: about ${Math.max(tokens, 5)} thousand tokens, re-read on every request that follows. ` +
+    `Read a copy instead: \`python .claude/tools/image-view.py "${path}"\` writes it with its long side at 1568 px (composition), ` +
+    'and `--crop X,Y,W,H` writes one region at full resolution (a face, a hand, a contact). ' +
+    'A capture of the page: take the viewport (`fullPage: false`, deviceScaleFactor 1) of the state the card changed.\n'
   );
   process.exit(2);
 } catch {

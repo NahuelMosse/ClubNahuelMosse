@@ -182,7 +182,7 @@ The columns are default, hover, focus, active and disabled. Add `loading` with S
   states={["default", "hover", "focus", "disabled", "invalid"]}
   render={(_, state) => (
     <Input
-      placeholder="you@company.com"
+      placeholder="you@company.example"
       aria-invalid={state === "invalid" || undefined}
       {...previewState(state)}
     />

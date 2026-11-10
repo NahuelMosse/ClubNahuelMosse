@@ -22,7 +22,7 @@ const initials = (name) => name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('
 export const mount = (el, opts = {}) => {
   if (mounted.has(el)) return mounted.get(el);
   const original = el.innerHTML;
-  const data = { name: 'Camila Ríos', email: 'camila@ledger.app', company: 'Kovix SRL', plan: 'PRO', ...opts.data };
+  const data = { name: 'Camila Ríos', email: 'camila@ledger.example', company: 'Kovix SRL', plan: 'PRO', ...opts.data };
   const items = opts.items ?? [
     { id: 'profile', label: 'Mi perfil', icon: 'user', href: '#' },
     { id: 'company', label: 'Empresa', value: data.company, tone: 'info', icon: 'building', href: '#' },

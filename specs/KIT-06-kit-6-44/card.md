@@ -45,3 +45,5 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.42.0 a
 - L6 · 2026-11-10 · replaces: tests/kit.test.mjs "the installed kit is 6.44.0 @KIT-06-S1" · el objetivo pasa a 6.44.1 (L5) · by: tests/kit.test.mjs "the installed kit is 6.44.1 @KIT-06-S1 @KIT-06-S3"
 - L7 · 2026-11-10 · replaces: tests/kit.test.mjs "the kit was installed from the kit-v6.44.0 release @KIT-06-S2" · el título nombraba 6.44.0; la aserción no cambia · by: tests/kit.test.mjs "the kit records the source the installer updated it from @KIT-06-S2"
 - L8 · 2026-11-10 · replaces: tests/kit.test.mjs "the install source is the kit-v6.44.0 tag commit @KIT-06-ASM-01" · la fuente pasa al tag kit-v6.44.1 · by: tests/kit.test.mjs "the install source is the kit-v6.44.1 tag commit @KIT-06-ASM-01"
+- L9 · 2026-11-10 · kit updated a1b87003068b2cd329d26c589605466ea362bec5 → a1b87003068b2cd329d26c589605466ea362bec5 · la card KIT-06 es la actualización del kit
+- L10 · 2026-11-10 · kit updated a1b87003068b2cd329d26c589605466ea362bec5 → e5da1ab1db40bebc8d1852d6c104c4d79a1b87b3 · la card KIT-06 es la actualización del kit

@@ -71,6 +71,33 @@ const killTree = (pid) => {
   else { try { process.kill(-pid, 'SIGKILL'); } catch { try { process.kill(pid, 'SIGKILL'); } catch {} } }
 };
 
+// On Windows a Git-sh `exec` does not replace the shell: it starts the program and the chain loses its parent, so
+// `taskkill /T` on the cmd.exe never reaches it. Measured: about 20 uvicorn trees left after the verify runs of one card.
+// What still listens on the app's port after its tree is killed is followed up its parents, while each was started
+// after the app and is a shell or a runtime, and that top one's tree is killed: by PID, never by name.
+const STRAY_SCRIPT = `
+$names = 'sh.exe','bash.exe','dash.exe','cmd.exe','python.exe','pythonw.exe','py.exe','node.exe','uv.exe','uvicorn.exe','java.exe','dotnet.exe','go.exe'
+$since = [datetime]::Parse($env:SDD_APP_SINCE).ToLocalTime().AddSeconds(-2)
+$owner = Get-NetTCPConnection -LocalPort ([int]$env:SDD_APP_PORT) -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess
+if (-not $owner) { exit 0 }
+$top = Get-CimInstance Win32_Process -Filter "ProcessId=$owner"
+if (-not $top -or $top.CreationDate -lt $since) { exit 0 }
+while ($true) {
+  $up = Get-CimInstance Win32_Process -Filter "ProcessId=$($top.ParentProcessId)"
+  if (-not $up -or $names -notcontains $up.Name.ToLower() -or $up.CreationDate -lt $since) { break }
+  $top = $up
+}
+$top.ProcessId`;
+const killStray = (state) => {
+  if (process.platform !== 'win32' || !state?.port || !state.startedAt) return;
+  const r = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', STRAY_SCRIPT], {
+    encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'], timeout: 30_000,
+    env: { ...process.env, SDD_APP_PORT: String(state.port), SDD_APP_SINCE: state.startedAt },
+  });
+  const pid = Number(r.stdout?.trim());
+  if (pid > 0 && pid !== process.pid) spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+};
+
 // The `app:` and `seed:` lines of the `## Gate` block of card.md (or the `## Verification` of a plan.md a repo still has).
 const environmentOf = () => {
   const cardDir = currentCard(root);
@@ -91,7 +118,7 @@ const needAppLine = (env) => {
 
 const stop = () => {
   const s = readState();
-  if (s) killTree(s.pid);
+  if (s) { killTree(s.pid); killStray(s); }
   rmSync(stateFile, { force: true });
   return s;
 };
@@ -140,6 +167,7 @@ const startApp = async ({ app, seed }, key, cwd = root) => {
   writeState({ url, port, pid: child.pid, dataDir, key, startedAt: new Date(stamp).toISOString(), starting: true });
   const failed = (why) => {
     killTree(child.pid);
+    killStray({ port, startedAt: new Date(stamp).toISOString() });
     rmSync(stateFile, { force: true });
     const tail = existsSync(logPath) ? readFileSync(logPath, 'utf8').trim().split('\n').slice(-8).join('\n') : '';
     return { ok: false, why, tail, logPath };

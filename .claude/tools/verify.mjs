@@ -68,7 +68,7 @@ import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
 import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
 import { CARD_FILE, cardIdOf, fencedBlocks, readCard, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
-import { cardChecks, noVisualCheck, probeRecords, removeOnlyOf, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
+import { cardChecks, noLookOf, noVisualCheck, probeRecords, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
 import { affected } from './affected.mjs';
 import { catalogFindings, classesAt, classesDefined, classesIn, setFindings, setSheets, usesCatalog } from './component-set.mjs';
@@ -278,7 +278,7 @@ const killTree = (p) => {
 };
 
 // `app:` and `seed:` tell app.mjs how to start the app the judges share; `no-visual:` is a declaration risk.mjs reads: none is a check.
-const ENVIRONMENT_LINE = /^(app|seed|no-visual|no-docs|refactor-tests):/;
+const ENVIRONMENT_LINE = /^(app|seed|no-visual|no-docs|refactor-tests|public-allow|public-skip):/;
 // `heading` is `Verification` in plan.md and `Gate` in card.md: the same block, the same lines.
 const HOST_WORDS = /\bHost\b|\b[Vv]irtual[ -][Hh]osts?\b/;
 export const wantsStrictHost = (doc) => {
@@ -722,8 +722,9 @@ export const design = (root, cardDir, off = new Set()) => {
   diffs.clear();
   // A card that declared `no-visual:` changes no markup (its gate check verifies the diff): it owes no design line.
   if (riskOf(cardDir)?.declared?.some((d) => d.lens === 'visual')) return [];
-  // A remove-only card adds no look: no design line is owed for it (its `remove-only` check fails if it adds any).
-  if (removeOnlyOf(readCard(cardDir))) return [];
+  // A remove-only card adds no look (its `remove-only` check fails if it adds any), and a plain one takes the repo's styles:
+  // no design line is owed for either.
+  if (noLookOf(readCard(cardDir))) return [];
   const base = cardStart(root, cardDir);
   const written = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
@@ -1155,9 +1156,10 @@ const ROUND_CHECKS = new Set(['dead-clicks', 'brand']);
 export const designerVerdict = (c, waitsDesigner) => (waitsDesigner
   && ((c.state === 'failed' && DESIGNER_CHECKS.has(c.name)) || (c.state === 'could not run' && ROUND_CHECKS.has(c.name) && /^no rondas\//.test(c.detail ?? '')))
   ? { ...c, state: PENDING_DESIGNER } : c);
-// A card with the `visual` lens whose designer has left no round yet (rondas.md without a `## Round`).
+// A card with the `visual` lens whose designer has left no round yet (rondas.md without a `## Round`). A remove-only or a plain
+// card has no designer.
 export const designerPending = (cardDir) => {
-  if (!riskOf(cardDir)?.lenses?.includes('visual')) return false;
+  if (!riskOf(cardDir)?.lenses?.includes('visual') || noLookOf(readCard(cardDir))) return false;
   const notes = join(cardDir, 'rondas.md');
   return !(existsSync(notes) && /^## Round\b/m.test(readFileSync(notes, 'utf8')));
 };
