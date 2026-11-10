@@ -757,6 +757,22 @@ const setE2e = (root, given) => {
   console.log(`The scenario tests folder is ${path}.`);
 };
 
+// `kit.mjs rule-paths <rule> <glob>[,<glob>…]`: the `paths:` a rule loads for, kept in kit.json and rendered into
+// `.claude/rules/<rule>.md`, whose recorded hash follows so the next update does not take it for a team edit.
+const setRulePaths = (root, rule, given) => {
+  const globs = String(given ?? '').split(',').map((g) => g.trim().replaceAll('\\', '/')).filter(Boolean);
+  if (!/^[\w-]+$/.test(String(rule ?? '')) || !globs.length) fail('`kit.mjs rule-paths <rule> <glob>[,<glob>…]`: the rule\'s file name without .md and the paths it loads for, relative to the repo root.');
+  const rel = `.claude/rules/${rule}.md`;
+  const file = join(root, rel);
+  if (!existsSync(file) || !RULE_PATHS.test(readFileSync(file, 'utf8'))) fail(`${rel} does not exist or has no \`paths: […]\` line to change.`);
+  const state = requireManifest(root);
+  writeFileSync(file, render(rel, readFileSync(file, 'utf8'), { rulePaths: { [rule]: globs } }));
+  const recorded = state.manifest.files?.[rel];
+  writeManifest(root, { ...state.manifest, rulePaths: { ...(state.manifest.rulePaths ?? {}), [rule]: globs },
+    ...(recorded ? { files: { ...state.manifest.files, [rel]: { ...recorded, sha256: sha256(file) } } } : {}) });
+  console.log(`${rel} loads for ${globs.join(', ')}.`);
+};
+
 const repair = (root) => {
   const state = requireManifest(root);
   const source = sourceOf(root, state.manifest);
@@ -795,9 +811,10 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     else if (command === 'profile') turnProfile(root, name, rest[0], flag(rest, '--reason'), flag(rest, '--card-open'));
     else if (command === 'repair') repair(root);
     else if (command === 'e2e') setE2e(root, name);
+    else if (command === 'rule-paths') setRulePaths(root, name, rest[0]);
     // What the kit learned while used, grouped into candidates (tools/kit-notes.mjs report): proposals, never applied.
     else if (command === 'notes') await import('./kit-notes.mjs').then((n) => console.log(n.reportOf(n.aggregate(n.readNotes(), n.readResolutions()))));
-    else fail('kit.mjs status | on <module> | off <module> --reason "…" | confirm-off <module> --reason "…" | grade <poc|mvp|production> --reason "…" | profile <on|off> <web|backend|flutter> --reason "…" | repair | e2e <path> | notes');
+    else fail('kit.mjs status | on <module> | off <module> --reason "…" | confirm-off <module> --reason "…" | grade <poc|mvp|production> --reason "…" | profile <on|off> <web|backend|flutter> --reason "…" | repair | e2e <path> | rule-paths <rule> <glob>[,<glob>…] | notes');
   } catch (e) {
     fail(`kit.mjs failed: ${e.message}`);
   }

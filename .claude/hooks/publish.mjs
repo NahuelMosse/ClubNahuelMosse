@@ -103,6 +103,9 @@ try {
     'specs/<card>/closing.md with its three sections (## Passed, ## Failed, ## Could not run). Run /close, then publish.';
 
   const root = () => openCard()?.root ?? cwd;
+  // Set for each gh call: the folder it runs in, and whether that is another repository than the card's.
+  let ghDir = cwd;
+  let away = false;
   const git = (...args) => spawnSync('git', args, { cwd: root(), encoding: 'utf8' });
   const currentBranch = () => git('rev-parse', '--abbrev-ref', 'HEAD').stdout.trim();
   const defaultBranches = () => {
@@ -200,8 +203,9 @@ try {
       block(`You can create, comment, edit, merge, check out, mark ready and read PRs (view, checks, list, status, diff); \`gh pr ${verb ?? ''}\` is the one refused.`);
     }
     if (verb === 'create' && !hasRemote()) block(NO_REMOTE);
-    // Outside a card the agent opens and edits its PRs as it sees fit; a card's PR comes from its close.
-    if (!openCard()) return;
+    // Outside a card the agent opens and edits its PRs as it sees fit; a card's PR comes from its close. A call that runs
+    // in another repository (`cd <other> && gh pr create`) is not this card's PR.
+    if (!openCard() || away) return;
     if (!closingReady()) block(NEEDS_CLOSING);
     if (verb === 'create') {
       if (args.some((a) => a === '--draft' || a === '-d')) block('You can open this card\'s PR; it goes ready for review, not as a draft. Drop --draft.');
@@ -229,8 +233,9 @@ try {
     if (repo !== null) pr.push('--repo', repo);
     // KIT_GH_CHECKS: a node script that stands in for `gh pr checks` in the kit's tests.
     const fake = process.env.KIT_GH_CHECKS;
-    const checks = fake ? spawnSync(process.execPath, [fake, ...pr], { cwd: root(), encoding: 'utf8' })
-      : spawnSync('gh', ['pr', 'checks', ...pr], { cwd: root(), encoding: 'utf8' });
+    const checksDir = away ? ghDir : root();
+    const checks = fake ? spawnSync(process.execPath, [fake, ...pr], { cwd: checksDir, encoding: 'utf8' })
+      : spawnSync('gh', ['pr', 'checks', ...pr], { cwd: checksDir, encoding: 'utf8' });
     const out = `${checks.stdout ?? ''}${checks.stderr ?? ''}`;
     if (checks.status !== 0 && !/no checks reported/i.test(out)) {
       // The checks are asked in the session's repository: a PR of another one is not found there, whatever the `cd`.
@@ -241,7 +246,7 @@ try {
       block(`You can merge this PR once its checks pass; they do not yet (\`gh pr checks\`: ${out.trim().split('\n').slice(0, 3).join(' · ') || `exit ${checks.status}`}). ` +
             'Wait for them (`gh pr checks --watch`) or fix what fails and push, then merge.');
     }
-    if (!openCard()) return;
+    if (!openCard() || away) return;
     if (!closingReady()) block(NEEDS_CLOSING);
     const closing = read(join(card().dir, 'closing.md'));
     const failed = (section(closing, 'Failed') ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l));
@@ -381,6 +386,9 @@ try {
           }
         } else if (/^gh(\.exe)?$/i.test(program)) {
           asked = rest.filter((a) => !a.startsWith('-'))[1] === 'merge' ? 'merge' : 'gh';
+          // Moved into another repository: the card in progress and its closing.md belong to this one, not that one.
+          ghDir = where;
+          away = !unknownDir && where !== cwd && toplevel(where) !== '' && toplevel(where) !== toplevel(root());
           await checkGh(rest);
         }
       } catch (e) {

@@ -224,7 +224,7 @@ if (args.length || !agents.length) {
   // Only an agent's output file is known to stay at 0 bytes whatever happens; a suite or a build may write its log at the end.
   const agentOutput = withAgentOutput || /(^|[\\/])tasks[\\/][^\\/]+\.output$/.test(log);
   const compile = (text, name) => {
-    try { return new RegExp(text, `m${ignoreCase ? 'i' : ''}`); } catch (e) { return usage(`${name} is not a regular expression (${e.message})`); }
+    try { return new RegExp(text, `m${ignoreCase ? 'i' : ''}`); } catch (e) { return usage(`${name} is not a regular expression (${e.message}). On Windows cmd cuts a \`|\` even inside quotes and leaves half of it: repeat the flag for each alternative, \`${name} PASS ${name} FAIL\``); }
   };
   const until = untilText === null ? null : compile(untilText, '--until');
   const fail = failText === null ? null : compile(failText, '--fail');

@@ -18,7 +18,7 @@
 
    Write the folder name to `specs/.current`, switch to branch `<ID>-<slug>`.
 2. **`node .claude/tools/risk.mjs specs/<card>`** checks the plan, classifies with code, freezes `risk.json`: `size` (small|large), `review`
-   (low|medium|high), `lenses` (visual, contract, integrity, interpretation, security). A gap is listed with its closing line and nothing is written: complete the card, rerun. Never reclassify.
+   (low|medium|high), `lenses` (visual, contract, integrity, interpretation, security). A gap is listed with its closing line: complete the card, rerun. Never reclassify.
    Walk those lenses' questions in `.claude/reference/lenses.md` before `## Specs` closes: what the card leaves unanswered is an AMB or ASM with its test; rerun `risk.mjs`.
    **Plan judge** (`high` only, never at `poc`): a `judge` with a prompt starting `PLAN` reads only `card.md`, writes `judge.md` with its ACT marked `plan`.
    Close each in the card before RED (a new `ASM-NN` with its planned test, a Gate line or `declared · <why>`); its `judge.md` line says `closed · <ASM-NN, T<n> or Gate line>`; rerun `risk.mjs`.
@@ -41,7 +41,7 @@
 
 - **The requirement is frozen and verbatim,** also as text. Never code from a summary.
 - **Never resolve an ambiguity on your own:** AMB asked once, else ASM with a test. *Silently filling a gap is the worst failure.*
-- **Tagged tests are frozen once committed (from mvp).** A wrong one is replaced, never edited: the fix goes in a new file with the same tag; the Log gets `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.
+- **Tagged tests are frozen once committed (from mvp).** A wrong one is replaced, never edited: the fix goes in a new file with the same tag; the Log gets `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate says `passed with replaced` and the close sends it to «Needs a person» (under `refactor-tests:`, same tags is a rename: one decision line). A new behavior is a new test.
 - **Three states: passed · failed · could not run.** What did not run is never "passed"; a check that stops you is not turned off; an uncorrected finding stops the close.
 - **Nothing waits for a person.** Their call goes in `## Needs a person`, not yours (`.claude/AUTONOMY.md`).
 - **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). `poc` is a facade: cap, Specs and Look only, presentation with mock data (logic is blocked), one capture round, close ends at the push. **Modules** add lenses and gate lines, not steps; a **profile** (`web`, `backend`, `flutter`) brings screen or API instruments.
@@ -53,7 +53,7 @@
   (ends on `<tool>: exit <N>`); end the turn; unattended or in a subagent, `wait.mjs`.
 - **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. To see the card again, `node .claude/tools/card-view.mjs specs/<card> [S<n> T<n>…]`; `Read` it only to edit. `bar.mjs <IDs>` prints the criteria rows. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
-- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those; CI runs whole suites. `node --test` always carries `--test-force-exit`; a test server calls `closeAllConnections()` before `close()`.
+- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. `node --test` always carries `--test-force-exit`.
 
 ## Who does what
 
@@ -73,11 +73,11 @@
 
 Hooks block, even when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, migrations already in main, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (plan judge at high), `require-bar` (cap, Specs, Tasks, Gate before code),
 `time-cap` (warns at 70 % of `cap:`, stops at 100 %, from card.md's first commit), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`; `close.mjs` checks the gate. If one stops you, read its message; do not go around it.
-What you open, you close. The main thread compacts at 200k.
+The main thread compacts at 200k.
 
 ## Where the scenario tests live
 
-`kit.mjs e2e <path>` changes `$E2E`.
+`kit.mjs e2e <path>` sets `$E2E`; `kit.mjs rule-paths <rule> <globs>`, a rule's `paths:`.
 ```
 E2E=apps/e2e        # adjust to this repo's real path
 ```

@@ -42,3 +42,4 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.44.1 a
 - L4 · 2026-11-10 · replaces: tests/kit.test.mjs "the install source is the kit-v6.44.1 tag commit @KIT-06-ASM-01" · la fuente pasa al tag kit-v6.45.1 · by: tests/kit.test.mjs "the install source is the kit-v6.45.1 tag commit @KIT-07-ASM-01"
 - L5 · 2026-11-10 · declared · fault-db · la card no toca la base
 - L6 · 2026-11-10 · declared · attacks · la card no toca la API
+- L7 · 2026-11-10 · kit updated e5da1ab1db40bebc8d1852d6c104c4d79a1b87b3 → b2ab219bf5afa9bda90c3c24f3a3c043372fc1b0 · KIT-07 es la actualización del kit a 6.45.1

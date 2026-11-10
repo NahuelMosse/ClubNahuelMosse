@@ -5,7 +5,7 @@
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "ead7bfcaa30d13f5de1d5ee13e5de60ee41e3256766cf1ab552b4316ac3d71fe"
+    "sha256": "5d5cf51b12f717d27e84b9014ba9abae136eaab52cf627fa33d8da714fef0596"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -81,7 +81,7 @@
   },
   ".claude/hooks/publish.mjs": {
     "module": "core",
-    "sha256": "68a91c4663a6f631f9440d585886948a1ae91339b6c76431b4d5616353fed5cf"
+    "sha256": "9436e6b449405bf334e4d4c4d7b7759b38a852112aa4da8657342c98f9718db6"
   },
   ".claude/hooks/require-at-close.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "4909bd1fe93aea680cc39c6df1338af24370adc75982cfc777dfbd5fd6a28d43"
+    "sha256": "ee60746270de2da2bbc7ae35e86e632dd6fd5f1dd4f8b19f5c7017815954c221"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1133,7 +1133,7 @@
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "c8835cd4811e96ec5a95d85bb888df6aec08b8ff940377f670f43e3403ac1358"
+    "sha256": "037a1a664ac21f6eb3719d6bfd09c446eeefc220b10182f9357e4a5e4d99c7c3"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
@@ -1161,7 +1161,7 @@
   },
   ".claude/tools/install.mjs": {
     "module": "core",
-    "sha256": "ec7f6e698b9cb629a087988b5cbce5e2b745143a63f93d3000360dd8de19158e"
+    "sha256": "330eac7dd6d95b6b7aeccd108da69407742d390803a000984421a2043a162643"
   },
   ".claude/tools/judge-context.mjs": {
     "module": "core",
@@ -1169,7 +1169,7 @@
   },
   ".claude/tools/kit.mjs": {
     "module": "core",
-    "sha256": "8b84151a79484eac96a2344fc12f843a590177966a515ac6d8ac2aae1df13509"
+    "sha256": "e5d3e5977b7e927aede4773d5b0915e80fd635cf14c850cbbdbc725d93a8636b"
   },
   ".claude/tools/migrations.mjs": {
     "module": "core",
@@ -1205,7 +1205,7 @@
   },
   ".claude/tools/required.mjs": {
     "module": "core",
-    "sha256": "9bb98a61bf5d7629190cb8d4931d1e2d7c1231aa82b68a8231a05be4013a0abf"
+    "sha256": "e5b84c43f7c579f25e2f04cc5ed9cbb3566616ea0dbcaf82c4e1dba4ca4df722"
   },
   ".claude/tools/review-range.mjs": {
     "module": "core",
@@ -1237,7 +1237,7 @@
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
-    "sha256": "5cf70ec16ab67cf47e3b841f5659ae447861a8c91d3108786498c0ec965cf897"
+    "sha256": "4a4b6cf397409f683974f2dff568a639a76c81af3649b7780c2de4a01d9ebf21"
   },
   ".claude/agents/builder.md": {
     "module": "core",
@@ -1245,7 +1245,7 @@
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "54d1fd82d438c044cbac96e36344279a315384d50fd269577be859c4074d643c"
+    "sha256": "a510a8245193a13cdbe500725699fae028f67cd33e59416dea60759f98185227"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1277,11 +1277,11 @@
   },
   ".claude/tools/card-doc.mjs": {
     "module": "core",
-    "sha256": "c99812e7794717eb9e50fdbd7b15128d1a2e7caf3b617dc8bf6f2ca97cb1125d"
+    "sha256": "946991310048330861edab3d6ba55ca4134e17c0c4599d9b356492098fcdfa41"
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "a83875dbafe7848af09591c67e653ed23244b6a1e029266b7350301580d0210a"
+    "sha256": "dc6ee9ee190ac72e820db89304f4a35c1a0863b8cf7bec9da6c7fc8073a08191"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1385,7 +1385,7 @@
   },
   ".claude/reference/brand.md": {
     "module": "profile:web",
-    "sha256": "bde18f27e93fb85a94539d3f24bdddf4541d068aa306f30ad044577c2857ba00"
+    "sha256": "19d87b9276b70f4d23f980f0361f44ac9142834a2bd082047d6bb0c86d4cdc7c"
   },
   ".claude/reference/color.md": {
     "module": "profile:web",
@@ -2985,7 +2985,7 @@
   },
   ".claude/tools/guard-paths.mjs": {
     "module": "core",
-    "sha256": "20e2dafe36eb391a400fa6788f5ae4ff354ae71e2b3c068320ee296a9a934dc6"
+    "sha256": "39fec2db153384de499d4d537e2bed8343a21a2adcf649010d3fdf304f98b1e6"
   },
   ".claude/tools/ia-check.mjs": {
     "module": "profile:web",
