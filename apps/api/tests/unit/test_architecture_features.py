@@ -285,7 +285,7 @@ def _with_uuid_ids(document: object) -> object:
 def _with_booking_schemas(
     contract: dict[str, dict[str, object]],
 ) -> dict[str, dict[str, object]]:
-    """The /reservas routes use the English schemas; Errors is a copy of Errores."""
+    """The «/reservas» routes use the English schemas; Errors is a copy of «Errores»."""
 
     def rename(text: str) -> str:
         for old, new in BOOKING_RENAMES.items():

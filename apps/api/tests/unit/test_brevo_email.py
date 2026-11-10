@@ -32,7 +32,7 @@ def _in_brevo_mode(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_in_brevo_mode_the_email_goes_out_through_the_api_with_key_sender_and_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """with CORREO_MODO=brevo the email goes out through the Brevo API with its key, sender,
+    """with «CORREO_MODO=brevo» the email goes out through the Brevo API with its key, sender,
     recipient, subject and body @MAIL-01-S1 @assumption:MAIL-01-ASM-02"""
     _in_brevo_mode(monkeypatch)
     requests: list[Any] = []

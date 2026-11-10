@@ -1,16 +1,16 @@
-"""El glosario del código traduce cada concepto de hoy al inglés, una sola vez."""
+"""The code glossary translates every current concept into English, once."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tag and are not split)
 import json
 import re
 from collections import defaultdict
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[4]
-GLOSSARY = RAIZ / "docs" / "technical" / "glossary.md"
-MODULOS = RAIZ / "apps" / "api" / "app" / "modules"
-CONTRATO = RAIZ / "apps" / "api" / "openapi.json"
-TABLAS = (
+ROOT = Path(__file__).resolve().parents[4]
+GLOSSARY = ROOT / "docs" / "technical" / "glossary.md"
+MODULES = ROOT / "apps" / "api" / "app" / "modules"
+CONTRACT = ROOT / "apps" / "api" / "openapi.json"
+TABLES = (
     "usuario",
     "sede",
     "espacio",
@@ -23,73 +23,73 @@ TABLAS = (
 )
 
 
-def _translations(texto: str) -> dict[str, set[str]]:
-    """Cada `castellano`→`inglés` del glosario, agrupado por el término castellano."""
-    pares: dict[str, set[str]] = defaultdict(set)
-    for origen, destino in re.findall(r"`([^`]+)`→`([^`]+)`", texto):
-        pares[origen].add(destino)
-    return pares
+def _translations(text: str) -> dict[str, set[str]]:
+    """Each `spanish`→`english` pair of the glossary, grouped by the Spanish term."""
+    pairs: dict[str, set[str]] = defaultdict(set)
+    for source, target in re.findall(r"`([^`]+)`→`([^`]+)`", text):
+        pairs[source].add(target)
+    return pairs
 
 
-def _por_seccion(texto: str) -> dict[str, dict[str, set[str]]]:
-    """Las traducciones de cada sección: un término puede cambiar según sea tabla, columna, rol o campo."""
-    partes = re.split(r"^## (.+)$", texto, flags=re.M)
-    return {partes[i]: _translations(partes[i + 1]) for i in range(1, len(partes) - 1, 2)}
+def _by_section(text: str) -> dict[str, dict[str, set[str]]]:
+    """The translations of each section: a term can change depending on whether it is a table, column, role or field."""
+    parts = re.split(r"^## (.+)$", text, flags=re.M)
+    return {parts[i]: _translations(parts[i + 1]) for i in range(1, len(parts) - 1, 2)}
 
 
-def _por_renglon(texto: str) -> dict[tuple[str, str], dict[str, set[str]]]:
-    """Las traducciones de cada sección y cada renglón `- <tabla>:`: una columna se traduce según su tabla."""
-    grupos: dict[tuple[str, str], dict[str, set[str]]] = {}
-    for seccion, cuerpo in _secciones(texto).items():
-        for renglon in re.split(r"^- ", cuerpo, flags=re.M):
-            etiqueta = renglon.split(":", 1)[0].strip() if renglon.strip() else ""
-            grupos[(seccion, etiqueta)] = _translations(renglon)
-    return grupos
+def _by_line(text: str) -> dict[tuple[str, str], dict[str, set[str]]]:
+    """The translations of each section and each `- <table>:` line: a column is translated according to its table."""
+    groups: dict[tuple[str, str], dict[str, set[str]]] = {}
+    for section, body in _sections(text).items():
+        for line in re.split(r"^- ", body, flags=re.M):
+            label = line.split(":", 1)[0].strip() if line.strip() else ""
+            groups[(section, label)] = _translations(line)
+    return groups
 
 
-def _secciones(texto: str) -> dict[str, str]:
-    partes = re.split(r"^## (.+)$", texto, flags=re.M)
-    return {partes[i]: partes[i + 1] for i in range(1, len(partes) - 1, 2)}
+def _sections(text: str) -> dict[str, str]:
+    parts = re.split(r"^## (.+)$", text, flags=re.M)
+    return {parts[i]: parts[i + 1] for i in range(1, len(parts) - 1, 2)}
 
 
-def test_el_glosario_traduce_cada_modulo_tabla_y_ruta_una_sola_vez() -> None:
-    """el glosario traduce cada módulo, tabla y ruta de la API de hoy, una sola vez @ENG-00-S1"""
-    texto = GLOSSARY.read_text(encoding="utf-8")
-    pares = _translations(texto)
+def test_the_glossary_translates_every_module_table_and_route_once() -> None:
+    """the glossary translates every module, table and route of today's API, once @ENG-00-S1"""
+    text = GLOSSARY.read_text(encoding="utf-8")
+    pairs = _translations(text)
 
-    modulos = sorted(p.name for p in MODULOS.iterdir() if p.is_dir() and not p.name.startswith("_"))
-    for modulo in modulos:
-        assert modulo in texto, modulo
-    for tabla in TABLAS:
-        assert tabla in pares, tabla
-    rutas = json.loads(CONTRATO.read_text(encoding="utf-8"))["paths"]
-    for ruta in rutas:
-        primer_tramo = ruta.strip("/").split("/")[0]
-        assert primer_tramo in texto, ruta
-    repetidos = {
-        (grupo, origen): destinos
-        for grupo, traducciones in _por_renglon(texto).items()
-        for origen, destinos in traducciones.items()
-        if len(destinos) > 1
+    modules = sorted(p.name for p in MODULES.iterdir() if p.is_dir() and not p.name.startswith("_"))
+    for module in modules:
+        assert module in text, module
+    for table in TABLES:
+        assert table in pairs, table
+    routes = json.loads(CONTRACT.read_text(encoding="utf-8"))["paths"]
+    for route in routes:
+        first_segment = route.strip("/").split("/")[0]
+        assert first_segment in text, route
+    repeated = {
+        (group, source): targets
+        for group, translations in _by_line(text).items()
+        for source, targets in translations.items()
+        if len(targets) > 1
     }
-    assert repetidos == {}
+    assert repeated == {}
 
 
-def test_el_glosario_fija_los_nombres_del_dominio_y_lo_que_queda_en_castellano() -> None:
-    """el glosario fija booking, venue, space, kind y app_user, deja en castellano los títulos de test y lo que ve el usuario @assumption:ENG-00-ASM-01 @assumption:ENG-00-ASM-02 @assumption:ENG-00-ASM-03"""
-    texto = GLOSSARY.read_text(encoding="utf-8")
-    tablas = _por_seccion(texto)["Tables, view, functions, triggers"]
+def test_the_glossary_fixes_the_domain_names_and_what_stays_in_spanish() -> None:
+    """the glossary fixes booking, venue, space, kind and app_user, leaves in Spanish the test titles and what the user sees @assumption:ENG-00-ASM-01 @assumption:ENG-00-ASM-02 @assumption:ENG-00-ASM-03"""
+    text = GLOSSARY.read_text(encoding="utf-8")
+    tables = _by_section(text)["Tables, view, functions, triggers"]
 
-    assert tablas["reserva"] == {"booking"}
-    assert tablas["sede"] == {"venue"}
-    assert tablas["espacio"] == {"space"}
-    assert tablas["usuario"] == {"app_user"}
-    assert "`tipo`→`kind`" in texto
-    queda = texto.split("## What stays in Spanish", 1)[1]
-    for tema in (
+    assert tables["reserva"] == {"booking"}
+    assert tables["sede"] == {"venue"}
+    assert tables["espacio"] == {"space"}
+    assert tables["usuario"] == {"app_user"}
+    assert "`tipo`→`kind`" in text
+    stays = text.split("## What stays in Spanish", 1)[1]
+    for topic in (
         "app texts",
         "test titles and files",
         "dni",
         "migrations 0001–0010",
     ):
-        assert tema in queda, tema
+        assert topic in stays, topic

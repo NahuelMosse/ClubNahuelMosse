@@ -147,7 +147,7 @@ def test_the_configuration_reads_each_variable_in_english_and_in_spanish_also_th
         assert Settings(_env_file=None).email_mode == expected, mode
 
 
-def test_the_admin_password_is_read_from_admin_password_and_from_admin_contrasena(
+def test_the_admin_password_is_read_from_admin_password_and_from_its_legacy_spanish_name(
     clean_env: pytest.MonkeyPatch,
 ) -> None:
     """the admin password is read from ADMIN_PASSWORD and from ADMIN_CONTRASENA, the English one wins @ENG-13-S3"""

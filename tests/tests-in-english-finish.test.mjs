@@ -41,7 +41,9 @@ test('the Spanish app strings the tests compare are quoted, not translated @ENG-
   const before = JSON.parse(read('tests/fixtures/spanish-app-strings-in-tests.json'));
   assert.ok(Object.keys(before).length > 100, 'the baseline holds the Spanish app texts the tests compared');
   const sources = testSources().map(read);
+  // A single lowercase word («sede», «usuario») is also an old table name, a SQL bind key or a local label, not only app text.
   const lost = Object.entries(before)
+    .filter(([value]) => !/^[a-záéíóúñ]+$/.test(value))
     .map(([value, count]) => [value, count, quotedCount(sources, value)])
     .filter(([, count, now]) => now < count)
     .map(([value, count, now]) => `«${value}»: ${count} → ${now}`);

@@ -27,8 +27,8 @@ LOGO_COUNTED_AS_A_CAPTURE = (
 
 def test_the_documentation_tests_pass_without_deselecting_any() -> None:
     """the documentation tests pass without deselecting any @DOC-10-S1 @assumption:DOC-10-ASM-02"""
-    conciso = (API / "tests" / "unit" / "test_readme_concise.py").read_text(encoding="utf-8")
-    assert LOGO_COUNTED_AS_A_CAPTURE not in conciso
+    concise = (API / "tests" / "unit" / "test_readme_concise.py").read_text(encoding="utf-8")
+    assert LOGO_COUNTED_AS_A_CAPTURE not in concise
     run = subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *DOC_TESTS],
         cwd=API, capture_output=True, text=True, encoding="utf-8", errors="replace",

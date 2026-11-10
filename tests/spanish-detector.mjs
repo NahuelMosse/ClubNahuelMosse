@@ -86,7 +86,8 @@ export const spanishWordsIn = (words) => words.filter((word) => ACCENT.test(word
 // The names a file declares: classes, functions, methods, fixtures, constants and variables. A Python assignment has spaces around
 // its `=` (ruff formats it so), a keyword argument does not: `nombre=` in a call is the callee's name, not the test's.
 const DECLARATIONS = [
-  /\b(?:class|def|function|const|let|var|final|enum|mixin|extension|typedef)\s+([A-Za-z_À-ÿ][\wÀ-ÿ]*)/g,
+  // A `def name(` inside a string literal is a test checking that name is absent, not a declaration.
+  /(?<!["'])\b(?:class|def|function|const|let|var|final|enum|mixin|extension|typedef)\s+([A-Za-z_À-ÿ][\wÀ-ÿ]*)/g,
   /^[ \t]*([A-Za-z_][\w]*)(?:[ \t]*:[ \t]*[^=\n]+)?[ \t]+=[ \t]/gm,
   /^[ \t]*(?:late\s+)?(?:static\s+)?[A-Z]\w*(?:<[^>\n]*>)?\??\s+([a-z_]\w*)\s*(?:[=;]|\()/gm,
   /^[ \t]*(?:static\s+)?(?:void|bool|int|double|num|dynamic)\s+([a-z_]\w*)\s*[(=;]/gm,
@@ -120,14 +121,16 @@ const prose = (text) =>
     .replace(/\$\{[^}]*\}|\$\w+/g, ' ');
 
 export const spanishProse = (text) => {
-  const words = prose(text).toLowerCase().match(/[a-záéíóúñü]+/g) ?? [];
+  // A letter run inside a commit hash (`1ee70de`) is not a word.
+  const words = prose(text).toLowerCase().match(/(?<![0-9])[a-záéíóúñü]+(?![0-9])/g) ?? [];
   const hits = words.filter((word) => SPANISH_FREQUENT.includes(word) || ACCENT.test(word) || SPANISH_WORDS.has(word)).length;
   return hits >= 2 || (hits === 1 && words.length <= 8);
 };
 
 export const spanishName = (name) => {
   if (productionNames().has(name)) return false;
-  return spanishWordsIn(wordsOf(name)).length > 0 || ACCENT.test(name);
+  // A commit hash in a name (`main_at_1ee70de`) is not words.
+  return spanishWordsIn(wordsOf(name.replace(/_[0-9a-f]*\d[0-9a-f]*(?=_|$)/g, ''))).length > 0 || ACCENT.test(name);
 };
 
 // The prose of a test file: comments, docstrings and test titles.
@@ -141,7 +144,8 @@ export const proseOf = (path, text) => {
   }
   if (path.endsWith('.py')) {
     for (const m of text.matchAll(/(^|:[ \t]*\n)[ \t]*[rRuU]?("""|''')([\s\S]*?)\2/g)) out.push(m[3].replace(/\s+/g, ' '));
-    for (const m of text.matchAll(/\b(?:assert\b[^\n]*?,|pytest\.(?:fail|exit|skip)\()\s*f?(["'])([^"'\n]*)\1/g)) out.push(m[2]);
+    // The message closes the line: a string followed by more code is a compared value (`== ["Futbol", "Tenis"]`).
+    for (const m of text.matchAll(/\b(?:assert\b[^\n]*?,|pytest\.(?:fail|exit|skip)\()\s*f?(["'])([^"'\n]*)\1\)?[ \t]*$/gm)) out.push(m[2]);
   } else {
     for (const m of text.matchAll(/\b(?:test|testWidgets|group)\(\s*r?(['"])((?:\\.|(?!\1)[^\\\n])*)\1/g)) out.push(m[2]);
     for (const m of text.matchAll(/\/\*([\s\S]*?)\*\//g)) out.push(m[1].replace(/\s+/g, ' '));
@@ -152,7 +156,8 @@ export const proseOf = (path, text) => {
 export const offendersInFiles = (paths) =>
   paths.flatMap((path) => {
     const text = read(path);
-    const names = declaredNames(text).filter(spanishName).map((name) => `${path}: name ${name}`);
+    // A field named after the JSON key the test sends and compares (`cantidad: Identifier` for `{"cantidad": "1"}`) is data.
+    const names = declaredNames(text).filter((name) => spanishName(name) && !text.includes(`"${name}"`) && !text.includes(`'${name}'`)).map((name) => `${path}: name ${name}`);
     const texts = proseOf(path, text).filter(spanishProse).map((chunk) => `${path}: «${chunk.trim().slice(0, 90)}»`);
     return [...names, ...texts];
   });

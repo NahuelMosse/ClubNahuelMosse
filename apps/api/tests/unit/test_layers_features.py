@@ -7,10 +7,10 @@ API = Path(__file__).resolve().parents[2]
 APP = API / "app"
 MODULES = APP / "modules"
 SHARED = APP / "shared"
-RAIZ = API.parents[1]
+ROOT = API.parents[1]
 
-# Cada archivo de acceso a datos escribe sólo las tablas que son suyas.
-TABLAS_PROPIAS = {
+# Each data-access file writes only the tables that are its own.
+OWN_TABLES = {
     "users/repository.py": {"app_user"},
     "bookings/repository.py": {"booking"},
     "venues/repository.py": {"venue"},
@@ -19,118 +19,116 @@ TABLAS_PROPIAS = {
     "password_recovery/repository.py": {"recovery_link"},
     "shared/email.py": {"outgoing_email"},
 }
-ESCRITURA = re.compile(
+WRITE = re.compile(
     r"(?:INSERT\s+INTO|(?<!FOR\s)(?<!DO\s)UPDATE|DELETE\s+FROM)\s+(\w+)", re.IGNORECASE
 )
-ZONA_LITERAL = "America/Argentina/Buenos_Aires"
+ZONE_LITERAL = "America/Argentina/Buenos_Aires"
 
 
-def _modulos(archivo: Path) -> set[str]:
-    arbol = ast.parse(archivo.read_text(encoding="utf-8"))
-    nombres: set[str] = set()
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.Import):
-            nombres.update(a.name for a in nodo.names)
-        elif isinstance(nodo, ast.ImportFrom) and nodo.module and nodo.level == 0:
-            nombres.add(nodo.module)
-    return nombres
+def _modules(file: Path) -> set[str]:
+    tree = ast.parse(file.read_text(encoding="utf-8"))
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(a.name for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names.add(node.module)
+    return names
 
 
-def _texts(archivo: Path) -> list[str]:
-    arbol = ast.parse(archivo.read_text(encoding="utf-8"))
+def _texts(file: Path) -> list[str]:
+    tree = ast.parse(file.read_text(encoding="utf-8"))
     return [
-        n.value for n in ast.walk(arbol) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+        n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)
     ]
 
 
-def _fuentes(carpeta: Path) -> list[Path]:
-    return [a for a in carpeta.rglob("*.py") if "__pycache__" not in a.parts]
+def _sources(folder: Path) -> list[Path]:
+    return [a for a in folder.rglob("*.py") if "__pycache__" not in a.parts]
 
 
-def _nombre(archivo: Path) -> str:
-    return archivo.relative_to(APP).as_posix().removeprefix("modules/")
+def _name(file: Path) -> str:
+    return file.relative_to(APP).as_posix().removeprefix("modules/")
 
 
-def test_ninguna_funcionalidad_importa_el_repositorio_de_otra() -> None:
-    """el repositorio de una funcionalidad sólo lo importa ella misma: las demás lo piden por su índice
+def test_no_feature_imports_the_repository_of_another() -> None:
+    """a feature's repository is imported only by itself: the others ask for it through its index
     @REV-06-S1 @assumption:REV-06-ASM-01"""
-    archivos = _fuentes(MODULES)
-    assert archivos
-    for archivo in archivos:
-        propia = archivo.relative_to(MODULES).parts[0]
-        for nombre in _modulos(archivo):
-            partes = nombre.split(".")
+    files = _sources(MODULES)
+    assert files
+    for file in files:
+        own = file.relative_to(MODULES).parts[0]
+        for name in _modules(file):
+            parts = name.split(".")
             if (
-                partes[:2] == ["app", "modules"]
-                and len(partes) > 3
-                and partes[3] in {"repositorio", "repository"}
+                parts[:2] == ["app", "modules"]
+                and len(parts) > 3
+                and parts[3] in {"repositorio", "repository"}
             ):
-                assert partes[2] == propia, f"{_nombre(archivo)} importa {nombre}"
+                assert parts[2] == own, f"{_name(file)} imports {name}"
 
 
-def test_shared_no_importa_funcionalidades_ni_rutas() -> None:
-    """lo compartido no importa funcionalidades @REV-06-S1 @assumption:REV-06-ASM-01"""
-    archivos = _fuentes(SHARED)
-    assert archivos
-    for archivo in archivos:
-        for nombre in _modulos(archivo):
-            assert not nombre.startswith(("app.modules", "app.main")), (
-                f"{archivo.name} importa {nombre}"
-            )
+def test_shared_does_not_import_features_or_routes() -> None:
+    """shared code does not import features @REV-06-S1 @assumption:REV-06-ASM-01"""
+    files = _sources(SHARED)
+    assert files
+    for file in files:
+        for name in _modules(file):
+            assert not name.startswith(("app.modules", "app.main")), f"{file.name} imports {name}"
 
 
-def test_cada_repositorio_escribe_solo_su_tabla() -> None:
-    """cada repositorio escribe sólo su tabla @REV-06-S6 @assumption:REV-06-ASM-05"""
-    archivos = [*_fuentes(SHARED), *_fuentes(MODULES)]
-    assert archivos
-    for archivo in archivos:
-        propias = TABLAS_PROPIAS.get(_nombre(archivo), set())
-        for texto in _texts(archivo):
-            for tabla in ESCRITURA.findall(texto):
-                assert tabla.lower() in propias, f"{_nombre(archivo)} escribe la tabla {tabla}"
+def test_each_repository_writes_only_its_table() -> None:
+    """each repository writes only its table @REV-06-S6 @assumption:REV-06-ASM-05"""
+    files = [*_sources(SHARED), *_sources(MODULES)]
+    assert files
+    for file in files:
+        own = OWN_TABLES.get(_name(file), set())
+        for text in _texts(file):
+            for table in WRITE.findall(text):
+                assert table.lower() in own, f"{_name(file)} writes the table {table}"
 
 
-def test_no_queda_una_supresion_de_tipos() -> None:
-    """no queda una supresión de tipos en la API ni en sus tests @REV-06-S7 @assumption:REV-06-ASM-06"""
-    aguja = "type" + ": ignore"
-    for carpeta in (APP, API / "tests"):
-        for archivo in _fuentes(carpeta):
-            assert aguja not in archivo.read_text(encoding="utf-8"), f"{archivo.name} la tiene"
+def test_no_type_suppression_is_left() -> None:
+    """no type suppression is left in the API or in its tests @REV-06-S7 @assumption:REV-06-ASM-06"""
+    needle = "type" + ": ignore"
+    for folder in (APP, API / "tests"):
+        for file in _sources(folder):
+            assert needle not in file.read_text(encoding="utf-8"), f"{file.name} has it"
 
 
-def test_mypy_estricto_cubre_app_y_tests() -> None:
-    """mypy estricto cubre app y tests @REV-06-S8"""
+def test_strict_mypy_covers_app_and_tests() -> None:
+    """strict mypy covers app and tests @REV-06-S8"""
     mypy = tomllib.loads((API / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["mypy"]
     assert mypy["strict"] is True
     assert set(mypy["files"]) >= {"app", "tests"}
 
 
-def test_la_zona_del_club_se_define_una_sola_vez_en_la_api() -> None:
-    """la zona del club se define una sola vez en la API @REV-06-S10 @assumption:REV-06-ASM-07"""
-    con_zona = sorted(
+def test_the_club_timezone_is_defined_once_in_the_api() -> None:
+    """the club timezone is defined once in the API @REV-06-S10 @assumption:REV-06-ASM-07"""
+    with_zone = sorted(
         a.relative_to(APP).as_posix()
-        for a in _fuentes(APP)
-        if any(ZONA_LITERAL in t for t in _texts(a))
+        for a in _sources(APP)
+        if any(ZONE_LITERAL in t for t in _texts(a))
     )
-    assert con_zona == ["shared/club_timezone.py"]
+    assert with_zone == ["shared/club_timezone.py"]
 
 
-def test_las_rutas_de_mis_reservas_y_de_cancelar_entran_por_los_casos_de_uso() -> None:
-    """las rutas de mis reservas y de cancelar entran por los casos de uso @REV-06-S11 @assumption:REV-06-ASM-09"""
-    arbol = ast.parse((MODULES / "bookings" / "routes.py").read_text(encoding="utf-8"))
-    traidos = {
+def test_the_my_bookings_and_cancel_routes_go_through_the_use_cases() -> None:
+    """the my-bookings and cancel routes go through the use cases @REV-06-S11 @assumption:REV-06-ASM-09"""
+    tree = ast.parse((MODULES / "bookings" / "routes.py").read_text(encoding="utf-8"))
+    imported = {
         a.name
-        for n in ast.walk(arbol)
+        for n in ast.walk(tree)
         if isinstance(n, ast.ImportFrom) and n.module == "app.modules.bookings.use_cases"
         for a in n.names
     }
-    assert {"my_bookings", "cancel_booking"} <= traidos
+    assert {"my_bookings", "cancel_booking"} <= imported
 
 
-def test_cada_card_tiene_su_seccion_de_cambios_a_lo_existente() -> None:
-    """cada card.md tiene su sección de cambios a lo existente @REV-06-S12 @assumption:REV-06-ASM-10"""
-    cards = sorted((RAIZ / "specs").glob("*/card.md"))
+def test_each_card_has_its_section_of_changes_to_existing_behavior() -> None:
+    """each card.md has its section of changes to existing behavior @REV-06-S12 @assumption:REV-06-ASM-10"""
+    cards = sorted((ROOT / "specs").glob("*/card.md"))
     assert cards
     for card in cards:
-        lineas = card.read_text(encoding="utf-8").splitlines()
-        assert "## Changes to existing behavior" in lineas, f"{card.parent.name} no la tiene"
+        lines = card.read_text(encoding="utf-8").splitlines()
+        assert "## Changes to existing behavior" in lines, f"{card.parent.name} lacks it"

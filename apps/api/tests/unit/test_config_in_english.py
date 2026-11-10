@@ -52,7 +52,7 @@ def test_the_configuration_reads_each_variable_by_its_english_name_and_by_today_
         monkeypatch.delenv(spanish)
 
 
-def test_with_e2e_testing_0_and_pruebas_1_the_test_routes_are_not_mounted(
+def test_with_e2e_testing_0_and_the_legacy_variable_at_1_the_test_routes_are_not_mounted(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """with E2E_TESTING=0 and PRUEBAS=1 the test routes are not mounted @ENG-01-S4"""
@@ -75,10 +75,10 @@ def test_with_e2e_testing_0_and_pruebas_1_the_test_routes_are_not_mounted(
 @pytest.mark.parametrize(
     ("variable", "value"), [("EMAIL_MODE", "outbox"), ("CORREO_MODO", "buzon")]
 )
-def test_with_email_mode_outbox_or_correo_modo_buzon_the_recovery_email_goes_to_the_outbox_and_not_to_smtp(
+def test_with_email_mode_outbox_or_its_legacy_spanish_value_the_recovery_email_goes_to_the_outbox_and_not_to_smtp(
     monkeypatch: pytest.MonkeyPatch, variable: str, value: str
 ) -> None:
-    """with EMAIL_MODE=outbox or CORREO_MODO=buzon the recovery email goes to the outbox and not to SMTP @assumption:ENG-01-ASM-01"""
+    """with EMAIL_MODE=outbox or «CORREO_MODO=buzon» the recovery email goes to the outbox and not to SMTP @assumption:ENG-01-ASM-01"""
     from app.shared import email as email_module
 
     monkeypatch.setenv(variable, value)
