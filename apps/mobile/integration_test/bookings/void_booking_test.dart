@@ -16,8 +16,8 @@ void main() {
     await createVenue(sede, 'Av. Vergara 1850');
     final cancha = await createSpace(sede);
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-    await occupy(cancha, manana, 21, correo: correo);
+    await createAccount(email: correo, password: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, email: correo);
     return (sede, cancha, correo);
   }
 
@@ -80,7 +80,7 @@ void main() {
       // Verifica: las 21 vuelven a estar libres y otra cuenta las reserva.
       expect(await freeStarts(cancha, manana), contains('21:00'));
       final otra = 'socio.${unique()}@correo.com';
-      await createAccount(correo: otra, contrasena: 'ClubNahuel1');
+      await createAccount(email: otra, password: 'ClubNahuel1');
       expect(await bookThroughApi(otra, cancha, manana, 21), greaterThan(0));
     },
   );
@@ -142,7 +142,10 @@ void main() {
       await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
       // Verifica: el aviso del campo, la confirmación sigue abierta y la API no vio nada.
-      await waitUntil(tester, find.text('El motivo es obligatorio para anular'));
+      await waitUntil(
+        tester,
+        find.text('El motivo es obligatorio para anular'),
+      );
       expect(find.text('¿Anular esta reserva?'), findsOneWidget);
       expect((await bookingAdminSees(cancha))?['status'], 'active');
     },
@@ -191,11 +194,11 @@ void main() {
     'sin conexión al confirmar, ve el error con reintento y la reserva sigue activa @CU-15-H05-01',
     (tester) async {
       final (sede, cancha, _) = await reservaDeManana();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await abrirPanel(tester, sede, cancha, apiUrl: api.url);
       await pedirAnular(tester);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await confirmarConMotivo(tester);
 
       // Verifica: el aviso con reintento, y al volver la reserva conserva su estado.
@@ -211,11 +214,11 @@ void main() {
     'el servidor falla al anular y la reserva sigue activa @CU-15-H05-01',
     (tester) async {
       final (sede, cancha, _) = await reservaDeManana();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await abrirPanel(tester, sede, cancha, apiUrl: api.url);
       await pedirAnular(tester);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await confirmarConMotivo(tester);
 
       // Verifica: el aviso del servidor y la reserva intacta.
@@ -230,14 +233,14 @@ void main() {
     'reintenta después del corte y la reserva queda anulada una sola vez @CU-15-H05-01',
     (tester) async {
       final (sede, cancha, _) = await reservaDeManana();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await abrirPanel(tester, sede, cancha, apiUrl: api.url);
       await pedirAnular(tester);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await confirmarConMotivo(tester);
       await waitUntil(tester, find.text('Error de conexión'));
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'REINTENTAR');
 
       // Verifica: el aviso de éxito y el rastro con el motivo escrito.

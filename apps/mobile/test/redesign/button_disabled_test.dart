@@ -12,7 +12,7 @@ Future<void> _montar(WidgetTester tester, ThemeData tema, Widget boton) =>
       Scaffold(
         body: Padding(padding: const EdgeInsets.all(24), child: boton),
       ),
-      tema: tema,
+      theme: tema,
     );
 
 /// El color que el botón pinta en [estados], tal como lo resuelve su estilo.

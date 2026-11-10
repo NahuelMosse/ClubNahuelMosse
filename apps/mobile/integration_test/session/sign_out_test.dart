@@ -17,7 +17,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
 
       await abrirTarjeta(tester);
       // Verifica: la tarjeta muestra quién tiene la sesión abierta y sus opciones.
@@ -39,7 +39,7 @@ void main() {
     'después de cerrar la sesión, volver atrás no reabre una pantalla con sesión @CU-02-H01-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await abrirTarjeta(tester);
       await tapText(tester, 'Cerrar sesión');
 
@@ -63,7 +63,7 @@ void main() {
     'cierra la sesión desde Mi perfil y vuelve al login @CU-02-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await abrirTarjeta(tester);
       await tapText(tester, 'Perfil completo');
       expect(find.text('MIEMBRO ACTIVO'), findsOneWidget);
@@ -81,7 +81,7 @@ void main() {
     'abre la tarjeta del avatar, toca afuera y la tarjeta se cierra sin cerrar la sesión @CU-02-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await abrirTarjeta(tester);
       expect(find.text('Cerrar sesión'), findsOneWidget);
 

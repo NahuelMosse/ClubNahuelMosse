@@ -25,7 +25,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: contrasena);
+      await createAccount(email: correo, password: contrasena);
       await openApp(tester);
 
       // Verifica CU-01-SUP-03: el correo con mayúsculas y espacios alrededor entra igual.
@@ -61,7 +61,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       // Sin red: si la app mandara las credenciales, al asentarse la pantalla ya estaría el
       // error de conexión.
-      await openApp(tester, apiUrl: offlineApi, authEmulador: offline);
+      await openApp(tester, apiUrl: offlineApi, authEmulator: offline);
 
       await ingresar(tester, '', contrasena);
 
@@ -79,7 +79,7 @@ void main() {
     'intenta ingresar con la contraseña vacía y no se envía nada al backend @CU-01-H02-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await openApp(tester, apiUrl: offlineApi, authEmulador: offline);
+      await openApp(tester, apiUrl: offlineApi, authEmulator: offline);
 
       await ingresar(tester, 'socio@correo.com', '');
 
@@ -114,7 +114,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: contrasena);
+      await createAccount(email: correo, password: contrasena);
       await openApp(tester);
 
       await ingresar(tester, correo, 'OtraClave9');
@@ -148,7 +148,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: contrasena);
+      await createAccount(email: correo, password: contrasena);
       await openApp(tester, apiUrl: await failingApi());
 
       await ingresar(tester, correo, contrasena);
@@ -174,7 +174,7 @@ void main() {
     'sin conexión a internet, se le pide restablecer la conexión @CU-01-H06-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await openApp(tester, apiUrl: offlineApi, authEmulador: offline);
+      await openApp(tester, apiUrl: offlineApi, authEmulator: offline);
 
       await ingresar(tester, 'socio@correo.com', contrasena);
 

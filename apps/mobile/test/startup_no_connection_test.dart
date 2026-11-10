@@ -22,7 +22,7 @@ void main() {
       );
       final sesion = Session(
         repository: SessionRepository(
-          credentials: FakeCredentials(conCuenta: true),
+          credentials: FakeCredentials(withAccount: true),
           api: api,
         ),
       );

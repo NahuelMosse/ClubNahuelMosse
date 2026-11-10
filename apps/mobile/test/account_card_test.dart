@@ -96,7 +96,7 @@ void main() {
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
 
-    expect(sesion.cierres, 1);
+    expect(sesion.closes, 1);
     expect(find.text('INICIAR SESIÓN'), findsOneWidget);
     semantica.dispose();
   });
@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cerrar sesión'), findsNothing);
-    expect(sesion.cierres, 0);
+    expect(sesion.closes, 0);
     semantica.dispose();
   });
 
@@ -139,7 +139,7 @@ void main() {
     await mountScreen(
       tester,
       MyProfileScreen(session: sesion, appearance: Appearance.inMemory()),
-      tema: darkTheme,
+      theme: darkTheme,
     );
 
     await tester.ensureVisible(find.text('CERRAR SESIÓN'));
@@ -147,7 +147,7 @@ void main() {
     await tester.tap(find.text('CERRAR SESIÓN'));
     await tester.pump();
 
-    expect(sesion.cierres, 1);
+    expect(sesion.closes, 1);
     semantica.dispose();
   });
 

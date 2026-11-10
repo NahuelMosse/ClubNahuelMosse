@@ -22,10 +22,10 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       final held = HeldApi({
-        ...venueRoutes(espacios: '[$spaceF5Json, $f5TechadaJson]'),
+        ...venueRoutes(spaces: '[$spaceF5Json, $f5CoveredJson]'),
         'GET /spaces/available': (
           200,
-          '{"spaces": [$spaceF5Json, $f5TechadaJson]}',
+          '{"spaces": [$spaceF5Json, $f5CoveredJson]}',
         ),
       });
       await mountApp(

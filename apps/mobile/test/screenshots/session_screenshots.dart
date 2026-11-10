@@ -42,8 +42,8 @@ void main() {
         await mountScreen(
           tester,
           loginRejectingCredentials(),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await capturar(tester, 'session/login_empty_${ancho}_$modo.png');
       });
@@ -53,8 +53,8 @@ void main() {
         await mountScreen(
           tester,
           loginRejectingCredentials(),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.tap(find.text('INICIAR SESIÓN'));
         await tester.pumpAndSettle();
@@ -67,8 +67,8 @@ void main() {
         await mountScreen(
           tester,
           loginRejectingCredentials(),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.enterText(
           find.bySemanticsLabel('Correo'),
@@ -88,8 +88,8 @@ void main() {
         await mountScreen(
           tester,
           fakeHome(FakeSession(userProfile)),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await capturar(tester, 'session/home_${ancho}_$modo.png');
       });
@@ -99,8 +99,8 @@ void main() {
         await mountScreen(
           tester,
           fakeHome(FakeSession(userProfile)),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.tap(find.bySemanticsLabel('Tu cuenta'));
         await tester.pumpAndSettle();
@@ -115,8 +115,8 @@ void main() {
             session: FakeSession(userProfile),
             appearance: Appearance.inMemory(dark: modo == 'dark'),
           ),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await capturar(tester, 'session/my_profile_${ancho}_$modo.png');
       });
@@ -126,10 +126,10 @@ void main() {
         await mountScreen(
           tester,
           ForgotPasswordScreen(
-            recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
+            recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
           ),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.enterText(
           find.bySemanticsLabel('Correo electrónico'),
@@ -146,10 +146,10 @@ void main() {
         await mountScreen(
           tester,
           ForgotPasswordScreen(
-            recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
+            recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
           ),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.enterText(
           find.bySemanticsLabel('Correo electrónico'),
@@ -162,20 +162,17 @@ void main() {
         semantica.dispose();
       });
 
-      for (final (nombre, codigo) in [
-        ('new', 204),
-        ('link_invalid', 410),
-      ]) {
+      for (final (nombre, codigo) in [('new', 204), ('link_invalid', 410)]) {
         testWidgets('recuperar $nombre $ancho $modo', (tester) async {
           await mountScreen(
             tester,
             NewPasswordScreen(
-              recovery: PasswordRecovery(fakeApi(codigo: codigo, cuerpo: '')),
+              recovery: PasswordRecovery(fakeApi(status: codigo, body: '')),
               session: FakeSession(null),
               code: 'abc',
             ),
-            tema: tema,
-            tamano: tamano,
+            theme: tema,
+            size: tamano,
           );
           await capturar(
             tester,
@@ -196,8 +193,8 @@ void main() {
               session: FakeSession(userProfile),
               appearance: Appearance.inMemory(dark: modo == 'dark'),
             ),
-            tema: tema,
-            tamano: tamano,
+            theme: tema,
+            size: tamano,
           );
           await tester.tap(find.text('Editar'));
           await tester.pumpAndSettle();
@@ -229,8 +226,8 @@ void main() {
             session: FakeSession(userProfile),
             appearance: Appearance.inMemory(dark: modo == 'dark'),
           ),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
         await tester.pumpAndSettle();
@@ -262,8 +259,8 @@ void main() {
             session: sesionAdmin,
             pending: PendingPanelFilters(),
           ),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await capturar(tester, 'session/panel_admin_${ancho}_$modo.png');
       });
@@ -272,10 +269,10 @@ void main() {
         await mountScreen(
           tester,
           ForgotPasswordScreen(
-            recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
+            recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
           ),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await capturar(tester, 'session/recover_${ancho}_$modo.png');
       });

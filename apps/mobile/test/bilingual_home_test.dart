@@ -23,7 +23,7 @@ void main() {
     await mountScreen(
       tester,
       fakeHome(FakeSession(userProfile)),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     expect(
       find.textContaining(RegExp(r'^GOOD (MORNING|AFTERNOON|EVENING),$')),

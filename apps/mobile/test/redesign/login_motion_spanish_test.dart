@@ -52,7 +52,7 @@ void main() {
     'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
     (tester) async {
       final credenciales = FakeCredentials(
-        alIngresar: (_, _) async => throw const InvalidCredentials(),
+        onSignIn: (_, _) async => throw const InvalidCredentials(),
       );
       await _montarLibre(tester, _login(credenciales: credenciales));
       await tester.pumpAndSettle();
@@ -86,7 +86,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(invalidCredentialsMessage), findsNothing);
       }
-      expect(credenciales.intentos, hasLength(2));
+      expect(credenciales.attempts, hasLength(2));
     },
   );
 }
@@ -143,7 +143,7 @@ Widget _login({FakeCredentials? credenciales}) => LoginScreen(
   session: Session(
     repository: SessionRepository(
       credentials: credenciales ?? FakeCredentials(),
-      api: fakeApi(codigo: 200, cuerpo: profileJson()),
+      api: fakeApi(status: 200, body: profileJson()),
     ),
   ),
   pending: PendingBooking(),

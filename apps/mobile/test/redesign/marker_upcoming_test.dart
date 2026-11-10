@@ -52,8 +52,8 @@ void main() {
             repository: VenuesRepository(api: api, session: sesion),
           ),
         ),
-        tema: darkTheme,
-        tamano: const Size(393, 852),
+        theme: darkTheme,
+        size: const Size(393, 852),
       );
 
       expect(

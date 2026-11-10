@@ -26,7 +26,7 @@ void main() {
     final session = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: api ?? fakeApi(codigo: 200, cuerpo: profileJson()),
+        api: api ?? fakeApi(status: 200, body: profileJson()),
       ),
     );
     final rutas = GoRouter(
@@ -82,7 +82,7 @@ void main() {
 
     expect(find.text('Completá tu correo electrónico'), findsOneWidget);
     expect(find.text('Completá tu contraseña'), findsOneWidget);
-    expect(credenciales.intentos, isEmpty);
+    expect(credenciales.attempts, isEmpty);
 
     // Al escribir, el error del campo se va.
     await tester.enterText(find.bySemanticsLabel('Correo'), 'a');
@@ -100,7 +100,7 @@ void main() {
     await ingresar(tester, '  Nahuel@Correo.COM ', ' Clave 1 ');
 
     // La contraseña va tal cual: los espacios pueden ser parte de ella.
-    expect(credenciales.intentos, [('nahuel@correo.com', ' Clave 1 ')]);
+    expect(credenciales.attempts, [('nahuel@correo.com', ' Clave 1 ')]);
     expect(find.text('HOME'), findsOneWidget);
     semantica.dispose();
   });
@@ -110,7 +110,7 @@ void main() {
     await montarLogin(
       tester,
       FakeCredentials(),
-      api: fakeApi(codigo: 200, cuerpo: profileJson(rol: 'admin')),
+      api: fakeApi(status: 200, body: profileJson(role: 'admin')),
     );
 
     await ingresar(tester, 'admin@club.com', 'Clave1234');
@@ -126,7 +126,7 @@ void main() {
     await montarLogin(
       tester,
       FakeCredentials(
-        alIngresar: (_, _) async => throw const InvalidCredentials(),
+        onSignIn: (_, _) async => throw const InvalidCredentials(),
       ),
     );
 
@@ -147,13 +147,13 @@ void main() {
     await montarLogin(
       tester,
       credenciales,
-      api: fakeApi(codigo: 401, cuerpo: '{"detail": "Sesión inválida"}'),
+      api: fakeApi(status: 401, body: '{"detail": "Sesión inválida"}'),
     );
 
     await ingresar(tester, 'baja@correo.com', 'Clave1234');
 
     expect(find.text(invalidCredentialsMessage), findsOneWidget);
-    expect(credenciales.salidas, 1);
+    expect(credenciales.signOuts, 1);
     expect(credenciales.hasAccount, isFalse);
     semantica.dispose();
   });
@@ -166,7 +166,7 @@ void main() {
       await montarLogin(
         tester,
         credenciales,
-        api: fakeApi(codigo: 500, cuerpo: 'Internal Server Error'),
+        api: fakeApi(status: 500, body: 'Internal Server Error'),
       );
 
       await ingresar(tester, 'nahuel@correo.com', 'Clave1234');
@@ -187,7 +187,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       var fallar = true;
       final credenciales = FakeCredentials(
-        alIngresar: (_, _) async {
+        onSignIn: (_, _) async {
           if (fallar) throw const SinConexion();
         },
       );
@@ -199,7 +199,7 @@ void main() {
       fallar = false;
       await tester.tap(find.text('REINTENTAR'));
       await tester.pumpAndSettle();
-      expect(credenciales.intentos, hasLength(2));
+      expect(credenciales.attempts, hasLength(2));
       expect(find.text('HOME'), findsOneWidget);
       semantica.dispose();
     },
@@ -210,9 +210,7 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final espera = Completer<void>();
-    final credenciales = FakeCredentials(
-      alIngresar: (_, _) => espera.future,
-    );
+    final credenciales = FakeCredentials(onSignIn: (_, _) => espera.future);
     await montarLogin(tester, credenciales);
 
     await tester.enterText(find.bySemanticsLabel('Correo'), 'n@correo.com');
@@ -222,7 +220,7 @@ void main() {
     await tester.tap(find.byType(FilledButton), warnIfMissed: false);
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    expect(credenciales.intentos, hasLength(1));
+    expect(credenciales.attempts, hasLength(1));
 
     espera.complete();
     await tester.pumpAndSettle();

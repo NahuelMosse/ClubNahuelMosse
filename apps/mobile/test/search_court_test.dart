@@ -83,12 +83,12 @@ void main() {
       final pedidos = <http.Request>[];
       await mountUser(
         tester,
-        inicio: '/inicio/buscar',
-        tamano: escala > 1 ? const Size(360, 800) : const Size(393, 852),
+        start: '/inicio/buscar',
+        size: escala > 1 ? const Size(360, 800) : const Size(393, 852),
         api: apiRoutes({
           ...venueRoutes(),
           'GET /spaces/available': respuesta,
-        }, pedidos: pedidos),
+        }, requests: pedidos),
       );
       return pedidos;
     }
@@ -210,10 +210,7 @@ void main() {
 
       expect(find.text('La duración mínima es de una hora'), findsOneWidget);
       expect(habilitado(tester, 'CONSULTAR'), isFalse);
-      expect(
-        pedidos.where((p) => p.url.path == '/spaces/available'),
-        isEmpty,
-      );
+      expect(pedidos.where((p) => p.url.path == '/spaces/available'), isEmpty);
       semantica.dispose();
     });
 

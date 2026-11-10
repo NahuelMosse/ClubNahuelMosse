@@ -42,7 +42,7 @@ Future<(FakeApi, NotificationCenter)> _abrirCentro(
       now: () => noticesNow,
       onOpen: (_, _) {},
     ),
-    tema: darkTheme,
+    theme: darkTheme,
   );
   return (api, centro);
 }
@@ -60,9 +60,9 @@ Future<(FakeApi, SistemaConToques, NotificationCenter)> _montarApp(
   late NotificationCenter centro;
   await mountUser(
     tester,
-    inicio: '/inicio',
+    start: '/inicio',
     api: api.cliente,
-    centro: (session) => centro = centerOf(api, session, sistema: sistema),
+    center: (session) => centro = centerOf(api, session, sistema: sistema),
   );
   return (api, sistema, centro);
 }

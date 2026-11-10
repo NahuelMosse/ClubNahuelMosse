@@ -30,11 +30,11 @@ void main() {
     session: Session(
       repository: SessionRepository(
         credentials: FakeCredentials(
-          alIngresar: rechaza
+          onSignIn: rechaza
               ? (_, _) async => throw const InvalidCredentials()
               : null,
         ),
-        api: fakeApi(codigo: 200, cuerpo: profileJson()),
+        api: fakeApi(status: 200, body: profileJson()),
       ),
     ),
   );
@@ -72,19 +72,19 @@ void main() {
       );
     },
     'recuperar contraseña': () => ForgotPasswordScreen(
-      recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
+      recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
     ),
     'Mi perfil': () => MyProfileScreen(
       session: FakeSession(userProfile),
       appearance: Appearance.inMemory(),
     ),
     'la contraseña nueva': () => NewPasswordScreen(
-      recovery: PasswordRecovery(fakeApi(codigo: 204, cuerpo: '')),
+      recovery: PasswordRecovery(fakeApi(status: 204, body: '')),
       session: FakeSession(null),
       code: 'abc',
     ),
     'el enlace inválido': () => NewPasswordScreen(
-      recovery: PasswordRecovery(fakeApi(codigo: 410, cuerpo: '')),
+      recovery: PasswordRecovery(fakeApi(status: 410, body: '')),
       session: FakeSession(null),
       code: 'abc',
     ),
@@ -98,7 +98,7 @@ void main() {
         tester,
       ) async {
         final semantica = tester.ensureSemantics();
-        await mountScreen(tester, pantalla(), tema: tema);
+        await mountScreen(tester, pantalla(), theme: tema);
         await cumpleLasGuias(tester);
         semantica.dispose();
       });
@@ -108,7 +108,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await mountScreen(tester, login(rechaza: true), tema: tema);
+      await mountScreen(tester, login(rechaza: true), theme: tema);
       await tester.tap(find.text('INICIAR SESIÓN'));
       await tester.pumpAndSettle();
       await cumpleLasGuias(tester);
@@ -133,7 +133,7 @@ void main() {
           session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
-        tema: tema,
+        theme: tema,
       );
       await tester.tap(find.text('Editar'));
       await tester.pumpAndSettle();
@@ -153,7 +153,7 @@ void main() {
           session: FakeSession(userProfile),
           appearance: Appearance.inMemory(),
         ),
-        tema: tema,
+        theme: tema,
       );
       await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
       await tester.pumpAndSettle();
@@ -166,7 +166,7 @@ void main() {
 
   testWidgets('los campos del login anuncian su nombre', (tester) async {
     final semantica = tester.ensureSemantics();
-    await mountScreen(tester, login(), tema: darkTheme);
+    await mountScreen(tester, login(), theme: darkTheme);
     expect(find.bySemanticsLabel('Correo'), findsOneWidget);
     expect(find.bySemanticsLabel('Contraseña'), findsOneWidget);
     expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
@@ -178,9 +178,9 @@ void main() {
       await mountScreen(
         tester,
         pantalla(),
-        tema: darkTheme,
-        tamano: const Size(360, 800),
-        escalaTexto: 2,
+        theme: darkTheme,
+        size: const Size(360, 800),
+        textScale: 2,
       );
       expect(tester.takeException(), isNull);
     }

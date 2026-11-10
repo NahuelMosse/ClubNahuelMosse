@@ -50,9 +50,9 @@ void main() {
         Map<String, (int, String)>? rutas,
       ]) => mountAdmin(
         tester,
-        oscuro: oscuro,
-        tamano: tamano,
-        inicio: inicio,
+        dark: oscuro,
+        size: tamano,
+        start: inicio,
         api: apiRoutes(rutas ?? spaceRoutes()),
       );
 
@@ -96,10 +96,7 @@ void main() {
           find.byType(SingleChildScrollView),
           const Offset(0, 800),
         );
-        await capturar(
-          tester,
-          'admin/create_space_missing_${ancho}_$modo.png',
-        );
+        await capturar(tester, 'admin/create_space_missing_${ancho}_$modo.png');
         semantica.dispose();
       });
 
@@ -108,7 +105,7 @@ void main() {
         await abrir(
           tester,
           '/admin/espacios/nuevo',
-          spaceRoutes(alta: (409, duplicado)),
+          spaceRoutes(create: (409, duplicado)),
         );
         await completar(tester);
         await guardar(tester);

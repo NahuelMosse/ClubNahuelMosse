@@ -138,7 +138,7 @@ void main() {
     expect(find.text('DATOS PERSONALES'), findsNothing);
     await tester.tap(find.text('IR AL INICIO DE SESIÓN'));
     await tester.pumpAndSettle();
-    expect(credenciales.salidas, 1);
+    expect(credenciales.signOuts, 1);
     expect(find.text('INICIAR SESIÓN'), findsOneWidget);
     semantica.dispose();
   });
@@ -156,7 +156,7 @@ void main() {
     await tester.tap(find.text('CANCELAR'));
     await tester.pumpAndSettle();
     expect(find.text('¿Eliminar tu cuenta?'), findsNothing);
-    expect(credenciales.salidas, 0);
+    expect(credenciales.signOuts, 0);
     semantica.dispose();
   });
 
@@ -375,7 +375,7 @@ void main() {
       await montarPerfil(tester);
       await confirmarBaja(tester);
       expect(bajas, 1);
-      expect(credenciales.salidas, 1);
+      expect(credenciales.signOuts, 1);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       semantica.dispose();
     });
@@ -389,7 +389,7 @@ void main() {
         expect(find.text('Error del servidor'), findsOneWidget);
         await tester.tap(find.text('ACEPTAR'));
         await tester.pumpAndSettle();
-        expect(credenciales.salidas, 0);
+        expect(credenciales.signOuts, 0);
         expect(find.text('ELIMINAR CUENTA'), findsOneWidget);
         expect(find.text('DATOS PERSONALES'), findsOneWidget);
         semantica.dispose();
@@ -432,7 +432,7 @@ void main() {
       await baja;
 
       expect(sesion.profile, isNotNull);
-      expect(credenciales.salidas, 1);
+      expect(credenciales.signOuts, 1);
     },
   );
 

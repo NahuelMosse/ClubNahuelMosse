@@ -13,7 +13,7 @@ void main() {
     (tester) async {
       await mountUser(
         tester,
-        api: apiRoutes(venueRoutes(sedes: '[$venueMoronWithSports]')),
+        api: apiRoutes(venueRoutes(venues: '[$venueMoronWithSports]')),
       );
 
       final dorsal = find.descendant(

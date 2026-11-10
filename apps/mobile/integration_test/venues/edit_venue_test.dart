@@ -55,10 +55,7 @@ void main() {
         ),
       );
       // Verifica: un usuario ve la sede con la dirección nueva.
-      expect(
-        (await venueAUserSees(nombre))?['address'],
-        'Av. Vergara 1900',
-      );
+      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1900');
       semantica.dispose();
     },
   );
@@ -71,8 +68,8 @@ void main() {
       await createVenue(nombre, 'Av. Vergara 1850');
       final cancha = await createSpace(nombre);
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-      await occupy(cancha, manana, 21, correo: correo);
+      await createAccount(email: correo, password: 'ClubNahuel1');
+      await occupy(cancha, manana, 21, email: correo);
       await signInAsAdmin(tester);
       await abrirEdicion(tester, nombre);
 
@@ -112,10 +109,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      (await venueAUserSees(nombre))?['address'],
-      'Av. Vergara 1850',
-    );
+    expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1850');
     semantica.dispose();
   });
 
@@ -133,10 +127,7 @@ void main() {
       // Verifica: el aviso en el campo y GUARDAR CAMBIOS deshabilitado.
       expect(find.text('La dirección es obligatoria'), findsOneWidget);
       expect(banderas(tester, 'GUARDAR CAMBIOS').isEnabled, isFalse);
-      expect(
-        (await venueAUserSees(nombre))?['address'],
-        'Av. Vergara 1850',
-      );
+      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1850');
       semantica.dispose();
     },
   );
@@ -150,9 +141,9 @@ void main() {
       final una = await createSpace(nombre);
       final otra = await createSpace(nombre);
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-      await occupy(una, manana, 8, correo: correo);
-      await occupy(otra, manana, 8, correo: correo);
+      await createAccount(email: correo, password: 'ClubNahuel1');
+      await occupy(una, manana, 8, email: correo);
+      await occupy(otra, manana, 8, email: correo);
       await signInAsAdmin(tester);
       await abrirEdicion(tester, nombre);
 
@@ -269,34 +260,28 @@ void main() {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await abrirEdicion(tester, nombre);
       await typeInto(tester, 'Dirección', 'Av. Vergara 1900');
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR CAMBIOS');
 
       // Verifica: el aviso, lo escrito sigue y la sede no cambió.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
       expect(find.text('Av. Vergara 1900'), findsOneWidget);
-      expect(
-        (await venueAUserSees(nombre))?['address'],
-        'Av. Vergara 1850',
-      );
+      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1850');
 
       // Verifica: con la red de vuelta, guardar funciona.
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'GUARDAR CAMBIOS');
       await waitUntil(
         tester,
         find.text('Los cambios se guardaron correctamente'),
       );
-      expect(
-        (await venueAUserSees(nombre))?['address'],
-        'Av. Vergara 1900',
-      );
+      expect((await venueAUserSees(nombre))?['address'], 'Av. Vergara 1900');
       semantica.dispose();
     },
   );

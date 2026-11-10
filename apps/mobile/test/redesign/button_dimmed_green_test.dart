@@ -38,7 +38,7 @@ void main() {
               ),
             ),
           ),
-          tema: tema,
+          theme: tema,
         );
         final estilo = tester
             .widget<FilledButton>(find.byType(FilledButton))

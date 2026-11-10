@@ -41,7 +41,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
+      await createAccount(email: correo, password: vieja);
       await openApp(tester);
 
       await pedirEnlace(tester, correo);
@@ -70,7 +70,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
+      await createAccount(email: correo, password: vieja);
       await openApp(tester);
       await pedirEnlace(tester, correo);
       await waitUntil(tester, find.text('Revisá tu correo'));
@@ -127,7 +127,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
+      await createAccount(email: correo, password: vieja);
       await openApp(tester);
       await pedirEnlace(tester, correo);
       await waitUntil(tester, find.text('Revisá tu correo'));
@@ -149,7 +149,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
+      await createAccount(email: correo, password: vieja);
       await openApp(tester);
       await pedirEnlace(tester, correo);
       await waitUntil(tester, find.text('Revisá tu correo'));
@@ -175,7 +175,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
+      await createAccount(email: correo, password: vieja);
       await openApp(tester);
       await pedirEnlace(tester, correo);
       await waitUntil(tester, find.text('Revisá tu correo'));
@@ -196,7 +196,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
+      await createAccount(email: correo, password: vieja);
       await openApp(tester);
       await pedirEnlace(tester, correo);
       await waitUntil(tester, find.text('Revisá tu correo'));
@@ -220,18 +220,18 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: vieja);
-      final api = await ApiIntermedia.abrir();
+      await createAccount(email: correo, password: vieja);
+      final api = await ProxyApi.open();
       await openApp(tester, apiUrl: api.url);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await pedirEnlace(tester, correo);
       // Verifica: sin conexión se ve el aviso de conexión y no sale ningún correo.
       await waitUntil(tester, find.text('Error de conexión'));
       await tapText(tester, 'Volver');
       expect(find.text('Revisá tu correo'), findsNothing);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'ENVIAR ENLACE');
       // Verifica: con el servidor caído se ve su aviso, y la contraseña sigue igual.
       await waitUntil(tester, find.text('Error del servidor'));

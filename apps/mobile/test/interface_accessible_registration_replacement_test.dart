@@ -27,10 +27,10 @@ void main() {
           registration: RegistrationService(
             apiRoutes({
               'POST /register': (422, '{"errors": {"dni": "DNI repetido"}}'),
-            }, pedidos: pedidos),
+            }, requests: pedidos),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.enterText(find.bySemanticsLabel('Nombre'), 'Ana');
       await tester.enterText(find.bySemanticsLabel('Apellido'), 'Pérez');

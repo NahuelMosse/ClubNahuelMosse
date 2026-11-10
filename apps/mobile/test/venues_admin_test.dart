@@ -40,7 +40,10 @@ void main() {
 
   group('Sedes', () {
     Venues sedes(ApiClient api) => Venues(
-      repository: VenuesRepository(api: api, session: FakeSession(adminProfile)),
+      repository: VenuesRepository(
+        api: api,
+        session: FakeSession(adminProfile),
+      ),
     );
 
     test('lee las sedes activas', () async {
@@ -73,7 +76,7 @@ void main() {
       final pedidos = <http.Request>[];
       final api = apiRoutes({
         'POST /venues': (201, venueHaedoJson),
-      }, pedidos: pedidos);
+      }, requests: pedidos);
       final sede = await sedes(api).create(
         name: 'Sede Haedo',
         address: 'Av. Vergara 1850',
@@ -144,7 +147,10 @@ void main() {
       await mountAdmin(
         tester,
         api: apiRoutes({
-          'GET /venues': (200, '{"venues": [$venueMoronJson, $venueHaedoJson]}'),
+          'GET /venues': (
+            200,
+            '{"venues": [$venueMoronJson, $venueHaedoJson]}',
+          ),
         }),
       );
       expect(find.text('2 SEDES ACTIVAS'), findsOneWidget);
@@ -190,11 +196,11 @@ void main() {
       final pedidos = <http.Request>[];
       await mountAdmin(
         tester,
-        inicio: '/admin/sedes/nueva',
+        start: '/admin/sedes/nueva',
         api: apiRoutes({
           'POST /venues': respuesta,
           'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),
-        }, pedidos: pedidos),
+        }, requests: pedidos),
       );
       return pedidos;
     }
@@ -340,7 +346,7 @@ void main() {
     ) async {
       await mountAdmin(
         tester,
-        inicio: '/admin/sedes/creada',
+        start: '/admin/sedes/creada',
         api: apiRoutes({'GET /venues': (200, '{"venues": [$venueHaedoJson]}')}),
       );
       expect(find.text('¡Sede creada!'), findsNothing);
@@ -403,7 +409,8 @@ void main() {
       final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
-          if (pedido.method == 'POST') return http.Response(venueHaedoJson, 201);
+          if (pedido.method == 'POST')
+            return http.Response(venueHaedoJson, 201);
           lecturas++;
           if (lecturas > 1) throw const _Corte();
           return http.Response('{"venues": []}', 200);

@@ -10,8 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'held_api.dart';
 import 'mount.dart';
 
-/// The second covered space of the Morón venue, next to `espacioF5Json`.
-const f5TechadaJson =
+/// The second covered space of the Morón venue, next to `spaceF5Json`.
+const f5CoveredJson =
     '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
     '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
     '"covered": true, "lit": true, "price_per_hour": 43000}';

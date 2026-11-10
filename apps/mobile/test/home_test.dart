@@ -26,7 +26,7 @@ void main() {
     await mountScreen(
       tester,
       fakeHome(FakeSession(userProfile)),
-      tema: darkTheme,
+      theme: darkTheme,
     );
 
     expect(find.text(HomeGreeting.forHour(clubNow())), findsOneWidget);
@@ -54,8 +54,8 @@ void main() {
   ) async {
     await mountScreen(
       tester,
-      fakeHome(FakeSession(userProfile), conReserva: false),
-      tema: darkTheme,
+      fakeHome(FakeSession(userProfile), withBooking: false),
+      theme: darkTheme,
     );
 
     expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
@@ -68,8 +68,8 @@ void main() {
   ) async {
     await mountScreen(
       tester,
-      fakeHome(FakeSession(userProfile), unaSede: true),
-      tema: darkTheme,
+      fakeHome(FakeSession(userProfile), oneVenue: true),
+      theme: darkTheme,
     );
 
     expect(_enElMarcador('01'), findsNWidgets(3));
@@ -84,9 +84,9 @@ void main() {
         await mountScreen(
           tester,
           fakeHome(FakeSession(userProfile)),
-          tema: tema,
-          tamano: const Size(360, 800),
-          escalaTexto: 2,
+          theme: tema,
+          size: const Size(360, 800),
+          textScale: 2,
         );
         expect(tester.takeException(), isNull);
         expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
@@ -121,7 +121,7 @@ void main() {
           repository: VenuesRepository(api: api, session: sesion),
         ),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
 
     expect(find.text('Error del servidor'), findsOneWidget);

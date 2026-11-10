@@ -27,7 +27,7 @@ void main() {
     Map<String, (int, String)> extra = const {},
   }) async {
     final held = HeldApi({
-      ...venueRoutes(espacios: '[$spaceF5Json, $f5TechadaJson]'),
+      ...venueRoutes(spaces: '[$spaceF5Json, $f5CoveredJson]'),
       ...extra,
     });
     await mountApp(
@@ -87,7 +87,7 @@ void main() {
       extra: {
         'GET /spaces/available': (
           200,
-          '{"spaces": [$spaceF5Json, $f5TechadaJson]}',
+          '{"spaces": [$spaceF5Json, $f5CoveredJson]}',
         ),
       },
     );

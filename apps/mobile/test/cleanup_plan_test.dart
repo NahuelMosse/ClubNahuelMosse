@@ -58,7 +58,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
 
       await tester.tap(find.text('Cerrar sesión'));

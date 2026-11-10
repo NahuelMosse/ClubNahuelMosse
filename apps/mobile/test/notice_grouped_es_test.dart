@@ -48,7 +48,7 @@ void main() {
             NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.runAsync(centro.load);
       await tester.pumpAndSettle();

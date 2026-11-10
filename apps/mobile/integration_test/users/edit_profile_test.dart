@@ -36,7 +36,7 @@ void main() {
     'edita su nombre, guarda, y el perfil muestra el dato nuevo al volver a abrirlo @CU-06-H01-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await editar(tester);
 
       await typeInto(tester, 'Nombre', 'Agustín');
@@ -58,7 +58,7 @@ void main() {
   testWidgets('el correo no se puede editar @CU-06-H01-02', (tester) async {
     final semantica = tester.ensureSemantics();
     final correo = 'socio.${unique()}@correo.com';
-    await signInAsUser(tester, correo: correo);
+    await signInAsUser(tester, email: correo);
     await editar(tester);
 
     // Verifica: el correo está en el formulario pero deshabilitado, con su valor.
@@ -73,7 +73,7 @@ void main() {
     'alterna el modo oscuro y el tema cambia al opuesto @CU-06-H01-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await editar(tester);
       final antes = brillo(tester);
 
@@ -97,7 +97,7 @@ void main() {
     'guarda un DNI o una fecha con formato inválido, ve el error y no se guarda nada @CU-06-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await editar(tester);
 
       await typeInto(tester, 'Nombre', 'Agustín');
@@ -122,16 +122,16 @@ void main() {
     'sin conexión al guardar, ve el error de conectividad y conserva lo escrito @CU-06-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
       await editar(tester);
       await typeInto(tester, 'Nombre', 'Agustín');
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR');
 
       // Verifica: avisa que no hay conexión y lo escrito sigue en el campo.

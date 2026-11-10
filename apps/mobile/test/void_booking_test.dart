@@ -50,7 +50,7 @@ void main() {
       'GET /spaces/catalog': (200, catalogJson),
       'POST /bookings/00000000-0000-7000-8000-000000000001/void':
           alAnular ?? (200, bookingJson(anulable: false, estado: 'voided')),
-    }, pedidos: pedidos);
+    }, requests: pedidos);
     final sesion = FakeSession(adminProfile);
     await mountScreen(
       tester,
@@ -65,9 +65,9 @@ void main() {
         session: sesion,
         pending: PendingPanelFilters(),
       ),
-      tema: darkTheme,
-      tamano: tamano,
-      escalaTexto: escala,
+      theme: darkTheme,
+      size: tamano,
+      textScale: escala,
     );
     return pedidos;
   }
@@ -212,7 +212,7 @@ void main() {
           200,
           bookingJson(anulable: false, estado: 'voided'),
         ),
-      }, pedidos: pedidos);
+      }, requests: pedidos);
       final sesion = FakeSession(adminProfile);
       final reserva = parseBookingHistoryEntry(jsonDecode(bookingJson()));
       if (reserva == null) fail('la reserva de prueba no se lee');
@@ -247,7 +247,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();

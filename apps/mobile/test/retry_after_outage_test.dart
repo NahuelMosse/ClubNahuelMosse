@@ -67,7 +67,7 @@ void main() {
     var cancelada = false;
     await mountUser(
       tester,
-      inicio: '/reservas',
+      start: '/reservas',
       api: ApiClient(
         'http://api.falsa',
         cliente: _conCorte(
@@ -131,7 +131,7 @@ void main() {
         session: sesion,
         pending: PendingPanelFilters(),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
 
     await tester.ensureVisible(find.text('ANULAR RESERVA'));

@@ -69,11 +69,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await mountUser(
-        tester,
-        oscuro: oscuro,
-        api: apiRoutes(venueRoutes()),
-      );
+      await mountUser(tester, dark: oscuro, api: apiRoutes(venueRoutes()));
       await conFotos(tester);
       await cumpleLasGuias(tester);
       semantica.dispose();
@@ -85,8 +81,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        oscuro: oscuro,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        dark: oscuro,
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: apiRoutes(venueRoutes()),
       );
       await conFotos(tester);
@@ -100,8 +96,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        oscuro: oscuro,
-        inicio:
+        dark: oscuro,
+        start:
             '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
         api: apiRoutes(venueRoutes()),
       );
@@ -115,8 +111,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        oscuro: oscuro,
-        inicio: '/inicio/buscar',
+        dark: oscuro,
+        start: '/inicio/buscar',
         api: apiRoutes(venueRoutes()),
       );
       await cumpleLasGuias(tester);
@@ -129,8 +125,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        oscuro: oscuro,
-        inicio: '/inicio',
+        dark: oscuro,
+        start: '/inicio',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
@@ -144,8 +140,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        oscuro: oscuro,
-        inicio: '/reservas',
+        dark: oscuro,
+        start: '/reservas',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),

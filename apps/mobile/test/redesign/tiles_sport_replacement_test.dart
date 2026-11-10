@@ -18,8 +18,8 @@ void main() {
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": []}'),
         }),
-        inicio: '/inicio',
-        tamano: const Size(393, 1400),
+        start: '/inicio',
+        size: const Size(393, 1400),
       );
 
       final tiles = tester.widgetList<SportTile>(find.byType(SportTile));

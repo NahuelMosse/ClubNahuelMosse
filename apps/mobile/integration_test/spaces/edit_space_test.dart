@@ -71,7 +71,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final cancha = await unEspacio();
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+      await createAccount(email: correo, password: 'ClubNahuel1');
       expect(await bookThroughApi(correo, cancha, manana, 20), 43000);
       await signInAsAdmin(tester);
       await abrirEdicion(tester, cancha);
@@ -196,12 +196,12 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final cancha = await unEspacio();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await abrirEdicion(tester, cancha);
       await typeInto(tester, 'Precio por hora', '45000');
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR ESPACIO');
 
       // Verifica: el aviso, el precio escrito sigue y el espacio no cambió.
@@ -211,7 +211,7 @@ void main() {
       expect((await spaceAUserSees(cancha))?['price_per_hour'], 43000);
 
       // Verifica: con la red de vuelta, guardar funciona.
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'GUARDAR ESPACIO');
       await waitUntil(
         tester,

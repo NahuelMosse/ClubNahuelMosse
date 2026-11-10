@@ -56,9 +56,9 @@ void main() {
       testWidgets('listado con reservas $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -75,9 +75,9 @@ void main() {
       testWidgets('listado cargando $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -97,9 +97,9 @@ void main() {
       testWidgets('sin resultados $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -114,18 +114,15 @@ void main() {
           find.bySemanticsLabel('Buscar reserva'),
           'sin coincidencia',
         );
-        await capturar(
-          tester,
-          'admin/bookings_no_results_${ancho}_$modo.png',
-        );
+        await capturar(tester, 'admin/bookings_no_results_${ancho}_$modo.png');
       });
 
       testWidgets('historial vacío $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -142,9 +139,9 @@ void main() {
       testWidgets('panel de filtros $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -165,9 +162,9 @@ void main() {
       testWidgets('rango de fechas inválido $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -192,9 +189,9 @@ void main() {
       testWidgets('detalle de reserva $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -211,9 +208,9 @@ void main() {
       testWidgets('detalle de reserva anulada $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/admin',
-          oscuro: oscuro,
-          tamano: tamano,
+          start: '/admin',
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /bookings/all': (
               200,
@@ -234,8 +231,8 @@ void main() {
         await mountScreen(
           tester,
           AccessDeniedScreen(session: FakeSession(userProfile)),
-          tema: oscuro ? darkTheme : lightTheme,
-          tamano: tamano,
+          theme: oscuro ? darkTheme : lightTheme,
+          size: tamano,
         );
         await capturar(tester, 'admin/access_denied_${ancho}_$modo.png');
       });

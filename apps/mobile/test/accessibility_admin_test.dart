@@ -21,8 +21,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        oscuro: oscuro,
-        inicio: '/admin/espacios',
+        dark: oscuro,
+        start: '/admin/espacios',
         api: apiRoutes({
           ...spaceRoutes(),
           'GET /spaces': (
@@ -41,8 +41,8 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          inicio: '/admin/espacios/nuevo',
+          dark: oscuro,
+          start: '/admin/espacios/nuevo',
           api: apiRoutes(spaceRoutes()),
         );
         await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
@@ -59,8 +59,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        oscuro: oscuro,
-        inicio: '/admin/espacios/nuevo',
+        dark: oscuro,
+        start: '/admin/espacios/nuevo',
         api: apiRoutes(spaceRoutes()),
       );
       await choose(tester, 'Sede', 'Sede Morón');
@@ -80,9 +80,12 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        oscuro: oscuro,
+        dark: oscuro,
         api: apiRoutes({
-          'GET /venues': (200, '{"venues": [$venueMoronJson, $venueHaedoJson]}'),
+          'GET /venues': (
+            200,
+            '{"venues": [$venueMoronJson, $venueHaedoJson]}',
+          ),
         }),
       );
       await cumpleLasGuias(tester);
@@ -95,8 +98,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        oscuro: oscuro,
-        inicio: '/admin/sedes/nueva',
+        dark: oscuro,
+        start: '/admin/sedes/nueva',
         api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.text('GUARDAR SEDE'));
@@ -111,8 +114,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        oscuro: oscuro,
-        inicio: '/admin/sedes/nueva',
+        dark: oscuro,
+        start: '/admin/sedes/nueva',
         api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.bySemanticsLabel('Horario de apertura'));
@@ -127,8 +130,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        oscuro: oscuro,
-        inicio: '/admin/sedes/nueva',
+        dark: oscuro,
+        start: '/admin/sedes/nueva',
         api: apiRoutes({
           'POST /venues': (201, venueHaedoJson),
           'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),

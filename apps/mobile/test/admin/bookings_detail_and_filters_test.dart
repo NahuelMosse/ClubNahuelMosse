@@ -77,7 +77,11 @@ void main() {
         ),
         'GET /spaces/catalog': (200, catalogJson),
       });
-      await mountScreen(tester, detalle(leida(_reserva()), api), tema: darkTheme);
+      await mountScreen(
+        tester,
+        detalle(leida(_reserva()), api),
+        theme: darkTheme,
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Notificación enviada al usuario'), findsOneWidget);
@@ -89,7 +93,11 @@ void main() {
       tester,
     ) async {
       final api = apiRoutes({'GET /spaces/catalog': (200, catalogJson)});
-      await mountScreen(tester, detalle(leida(_reserva()), api), tema: darkTheme);
+      await mountScreen(
+        tester,
+        detalle(leida(_reserva()), api),
+        theme: darkTheme,
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Fútbol'), findsOneWidget);
@@ -99,7 +107,11 @@ void main() {
     testWidgets('la flecha tiene nombre accesible', (tester) async {
       final semantica = tester.ensureSemantics();
       final api = apiRoutes({'GET /spaces/catalog': (200, catalogJson)});
-      await mountScreen(tester, detalle(leida(_reserva()), api), tema: darkTheme);
+      await mountScreen(
+        tester,
+        detalle(leida(_reserva()), api),
+        theme: darkTheme,
+      );
       await tester.pumpAndSettle();
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -139,7 +151,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
@@ -194,7 +206,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();

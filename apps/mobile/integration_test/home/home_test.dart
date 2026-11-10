@@ -26,8 +26,8 @@ void main() {
       ' @TP-01-H01-01', (tester) async {
     await signInAsUser(
       tester,
-      correo: 'socio.${unique()}@correo.com',
-      nombre: 'Valentina',
+      email: 'socio.${unique()}@correo.com',
+      name: 'Valentina',
     );
 
     // Verifica: el saludo de la hora del club y el nombre de quien inició sesión.
@@ -42,14 +42,14 @@ void main() {
       final sede = 'Sede Haedo ${unique()}';
       await createVenue(sede, 'Av. Vergara 1850');
       final cancha = await createSpace(sede);
-      final otraCancha = await createSpace(sede, tipo: 'F7');
+      final otraCancha = await createSpace(sede, kind: 'F7');
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+      await createAccount(email: correo, password: 'ClubNahuel1');
       // Dos próximas reservas: la de mañana tiene que ganarle a la de en cinco días.
-      await occupy(otraCancha, enCincoDias, 10, correo: correo);
-      await occupy(cancha, manana, 21, correo: correo);
+      await occupy(otraCancha, enCincoDias, 10, email: correo);
+      await occupy(cancha, manana, 21, email: correo);
 
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
 
       // Verifica: se muestra la más cercana (mañana), con su sede y horario.
       await waitUntil(tester, find.text('TU PRÓXIMA RESERVA'));
@@ -67,10 +67,10 @@ void main() {
       await createVenue(sede, 'Av. Vergara 1850');
       final cancha = await createSpace(sede);
       final correo = 'socio.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-      await occupy(cancha, manana, 21, correo: correo);
+      await createAccount(email: correo, password: 'ClubNahuel1');
+      await occupy(cancha, manana, 21, email: correo);
 
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       await waitUntil(tester, find.text('MODIFICAR'));
       expect(find.text('CANCELAR'), findsOneWidget);
 
@@ -91,10 +91,10 @@ void main() {
     await createVenue(sede, 'Av. Vergara 1850');
     final cancha = await createSpace(sede);
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-    await occupy(cancha, manana, 21, correo: correo);
+    await createAccount(email: correo, password: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, email: correo);
 
-    await signInAsUser(tester, correo: correo);
+    await signInAsUser(tester, email: correo);
     await waitUntil(tester, find.text('VER TODAS →'));
     await tapText(tester, 'VER TODAS →');
 
@@ -106,7 +106,7 @@ void main() {
     'la cantidad de sedes y canchas del hero sale de los datos cargados @TP-01-H01-05',
     (tester) async {
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       await waitUntil(
         tester,
         find.textContaining('disponibilidad en tiempo real'),
@@ -132,7 +132,7 @@ void main() {
     '«Buscar cancha» lleva a Consultar canchas y «Ver sedes» al listado de sedes'
     ' @TP-01-H01-06',
     (tester) async {
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await tapText(tester, 'Buscar cancha');
       await waitUntil(tester, find.text('Consultar canchas'));
@@ -148,7 +148,7 @@ void main() {
   testWidgets(
     'la barra inferior lleva a Inicio, Sedes, Reservas y Perfil @TP-01-H01-07',
     (tester) async {
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await tapText(tester, 'SEDES');
       await waitUntil(tester, find.text('Sedes'));
@@ -164,7 +164,7 @@ void main() {
   testWidgets(
     'desde la tarjeta del avatar llega a su perfil y a Mis reservas @TP-01-H01-08',
     (tester) async {
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
       await tester.pumpAndSettle();
@@ -183,7 +183,7 @@ void main() {
     'sin reservas próximas, el Home no muestra la tarjeta de próxima reserva'
     ' @TP-01-H02-01 @supuesto:TP-01-SUP-01',
     (tester) async {
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       // Verifica: el Home terminó de cargar y el bloque de la próxima reserva no está.
       await waitUntil(

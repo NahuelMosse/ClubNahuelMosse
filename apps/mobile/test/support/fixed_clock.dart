@@ -1,17 +1,17 @@
 import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart' as flutter_test;
 
-/// Las capturas no dependen del día en que se generan: el club está en el jueves
-/// 12 de noviembre de 2026 a las 15:00 (18:00 UTC), la semana de los datos de prueba.
+/// Screenshots do not depend on the day they are generated: the club is on Thursday,
+/// November 12, 2026 at 15:00 (18:00 UTC), the week of the test data.
 final screenshotClock = Clock.fixed(DateTime.utc(2026, 11, 12, 18));
 
-/// `testWidgets` con el reloj fijo; las capturas lo usan en lugar del de `flutter_test`.
+/// `testWidgets` with the fixed clock; the screenshots use it instead of `flutter_test`'s.
 void testWidgets(
-  String descripcion,
-  Future<void> Function(flutter_test.WidgetTester tester) cuerpo,
+  String description,
+  Future<void> Function(flutter_test.WidgetTester tester) body,
 ) {
   flutter_test.testWidgets(
-    descripcion,
-    (tester) => withClock(screenshotClock, () => cuerpo(tester)),
+    description,
+    (tester) => withClock(screenshotClock, () => body(tester)),
   );
 }

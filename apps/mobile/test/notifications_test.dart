@@ -305,9 +305,9 @@ void main() {
           now: () => noticesNow,
           onOpen: (_, n) => alAbrir?.call(n),
         ),
-        tema: oscuro ? darkTheme : lightTheme,
-        tamano: tamano,
-        escalaTexto: escala,
+        theme: oscuro ? darkTheme : lightTheme,
+        size: tamano,
+        textScale: escala,
       );
       return (api, centro);
     }
@@ -392,7 +392,12 @@ void main() {
     testWidgets(
       'sin permiso pero con avisos, los muestra debajo de la franja',
       (tester) async {
-        await abrir(tester, avisos: [reminderNotice], unread: 1, permiso: false);
+        await abrir(
+          tester,
+          avisos: [reminderNotice],
+          unread: 1,
+          permiso: false,
+        );
 
         expect(find.text('Notificaciones desactivadas'), findsOneWidget);
         expect(find.text('ACTIVAR NOTIFICACIONES'), findsOneWidget);
@@ -439,7 +444,7 @@ void main() {
             now: () => noticesNow,
             onOpen: (_, _) {},
           ),
-          tema: darkTheme,
+          theme: darkTheme,
         );
 
         expect(find.text('Error de conexión'), findsOneWidget);
@@ -468,7 +473,7 @@ void main() {
             now: () => noticesNow,
             onOpen: (_, _) {},
           ),
-          tema: darkTheme,
+          theme: darkTheme,
         );
 
         expect(find.text('Error de conexión'), findsOneWidget);
@@ -544,9 +549,9 @@ void main() {
             ),
           ],
         ),
-        tema: darkTheme,
-        tamano: tamano,
-        escalaTexto: escala,
+        theme: darkTheme,
+        size: tamano,
+        textScale: escala,
       );
       return (api, centro, abiertas);
     }
@@ -575,7 +580,7 @@ void main() {
       await mountScreen(
         tester,
         NoticePanel(center: centro, onOpen: (_) {}),
-        tema: darkTheme,
+        theme: darkTheme,
       );
 
       expect(centro.unread, 1);
@@ -738,7 +743,7 @@ void main() {
             NoticePanel(center: centro, onOpen: (_) {}),
           ],
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       return (api, centro);
     }
@@ -836,8 +841,8 @@ void main() {
     ) async {
       final api = FakeApi();
       final sistema = FakeSystem();
-      final credenciales = FakeCredentials(conCuenta: true)
-        ..tokenFalla = true;
+      final credenciales = FakeCredentials(withAccount: true)
+        ..tokenFails = true;
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
@@ -849,7 +854,7 @@ void main() {
       final perfil = await tester.runAsync(sesion.resume);
 
       expect(perfil, isNull);
-      expect(credenciales.salidas, 1);
+      expect(credenciales.signOuts, 1);
       expect(sistema.olvidos, 1);
     });
 
@@ -914,7 +919,7 @@ void main() {
 
       await tester.runAsync(sesion.close);
 
-      expect(credenciales.salidas, 1);
+      expect(credenciales.signOuts, 1);
     });
 
     testWidgets(
@@ -941,7 +946,7 @@ void main() {
         await tester.pump();
 
         expect(cerro, isTrue);
-        expect(credenciales.salidas, 1);
+        expect(credenciales.signOuts, 1);
       },
     );
 
@@ -965,7 +970,7 @@ void main() {
         await tester.runAsync(sesion.close);
 
         expect(tester.takeException(), isNull);
-        expect(credenciales.salidas, 1);
+        expect(credenciales.signOuts, 1);
         expect(sesion.profile, isNull);
       },
     );
@@ -1109,7 +1114,7 @@ void main() {
         });
         // La baja va con la sesión que se cerró, tomada antes de cerrarla.
         expect(autorizacionDeLaBaja, 'Bearer token-falso');
-        expect(credenciales.salidas, 1);
+        expect(credenciales.signOuts, 1);
         expect(centro.list, isEmpty);
       },
     );
@@ -1135,7 +1140,7 @@ void main() {
         api.caida = true;
         await tester.runAsync(sesion.close);
 
-        expect(credenciales.salidas, 1);
+        expect(credenciales.signOuts, 1);
         expect(sesion.profile, isNull);
       },
     );
@@ -1151,9 +1156,9 @@ void main() {
           ..unread = 2;
         await mountUser(
           tester,
-          inicio: '/inicio',
+          start: '/inicio',
           api: api.cliente,
-          centro: (sesion) => centerOf(api, sesion),
+          center: (sesion) => centerOf(api, sesion),
         );
 
         expect(
@@ -1177,9 +1182,9 @@ void main() {
       final api = FakeApi();
       await mountUser(
         tester,
-        inicio: '/inicio',
+        start: '/inicio',
         api: api.cliente,
-        centro: (sesion) => centerOf(api, sesion),
+        center: (sesion) => centerOf(api, sesion),
       );
 
       expect(find.bySemanticsLabel('Notificaciones'), findsOneWidget);
@@ -1188,7 +1193,7 @@ void main() {
 
     testWidgets('sin centro el Home no tiene campana', (tester) async {
       final semantica = tester.ensureSemantics();
-      await mountUser(tester, inicio: '/inicio', api: FakeApi().cliente);
+      await mountUser(tester, start: '/inicio', api: FakeApi().cliente);
 
       expect(find.bySemanticsLabel(RegExp('^Notificaciones')), findsNothing);
       semantica.dispose();
@@ -1199,7 +1204,7 @@ void main() {
       (tester) async {
         await mountAdmin(
           tester,
-          inicio: '/notificaciones',
+          start: '/notificaciones',
           api: FakeApi().cliente,
         );
 
@@ -1222,9 +1227,9 @@ void main() {
         ..unread = 1;
       await mountUser(
         tester,
-        inicio: '/notificaciones',
+        start: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centerOf(api, sesion),
+        center: (sesion) => centerOf(api, sesion),
       );
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
@@ -1259,9 +1264,9 @@ void main() {
           ..unread = 1;
         await mountUser(
           tester,
-          inicio: '/notificaciones',
+          start: '/notificaciones',
           api: api.cliente,
-          centro: (sesion) => centerOf(api, sesion),
+          center: (sesion) => centerOf(api, sesion),
         );
 
         await tester.tap(find.text('Reserva cancelada'));
@@ -1295,7 +1300,7 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       final api = FakeApi();
-      await mountUser(tester, inicio: '/reservas', api: api.cliente);
+      await mountUser(tester, start: '/reservas', api: api.cliente);
 
       expect(
         tester

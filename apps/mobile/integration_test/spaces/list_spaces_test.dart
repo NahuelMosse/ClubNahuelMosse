@@ -19,7 +19,7 @@ void main() {
     final (sede, prefijo) = await sedePropia();
     await createSpace(sede);
     await createSpace(sede);
-    await createSpace(sede, deporte: 'Hockey', tipo: 'H7');
+    await createSpace(sede, sport: 'Hockey', kind: 'H7');
     return (sede, prefijo);
   }
 
@@ -56,7 +56,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedeConCanchas();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await entrarA(tester, sede, '3 CANCHAS · TODOS LOS DEPORTES');
 
@@ -75,9 +75,9 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
-      final uno = await createSpace(sede, deporte: 'Padel', tipo: 'PAD');
-      final dos = await createSpace(sede, deporte: 'Padel', tipo: 'PAD');
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      final uno = await createSpace(sede, sport: 'Padel', kind: 'PAD');
+      final dos = await createSpace(sede, sport: 'Padel', kind: 'PAD');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await entrarA(tester, sede, '2 CANCHAS · TODOS LOS DEPORTES');
 
@@ -98,7 +98,7 @@ void main() {
       final s = unique();
       await createVenue('Sede Ramos $s', 'Av. Vergara 1850');
       final enHaedo = await createSpace(haedo);
-      final enRamos = await createSpace('Sede Ramos $s', tipo: 'F7');
+      final enRamos = await createSpace('Sede Ramos $s', kind: 'F7');
       await signInAsAdmin(tester);
 
       await tapText(tester, 'ESPACIOS');
@@ -145,7 +145,7 @@ void main() {
       await waitUntil(tester, tarjeta);
 
       // Verifica: un usuario lo ve en la pantalla de la sede.
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await entrarA(tester, sede, '1 CANCHA · TODOS LOS DEPORTES');
       expect(find.text(nombre), findsOneWidget);
       semantica.dispose();
@@ -157,7 +157,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedeConCanchas();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await entrarA(tester, sede, '3 CANCHAS · TODOS LOS DEPORTES');
 
       await filtrar(tester, 'Deporte Hockey');
@@ -176,7 +176,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedeConCanchas();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await entrarA(tester, sede, '3 CANCHAS · TODOS LOS DEPORTES');
       await filtrar(tester, 'Deporte Fútbol');
       await waitUntil(tester, find.text('2 CANCHAS · FÚTBOL'));

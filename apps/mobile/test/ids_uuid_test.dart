@@ -108,12 +108,12 @@ void main() {
       final pedidos = <http.Request>[];
       await mountUser(
         tester,
-        inicio: '/sedes/$_sede',
+        start: '/sedes/$_sede',
         api: apiRoutes({
           'GET /spaces/catalog': (200, catalogJson),
           'GET /venues': (200, '{"venues": [${_json(_sedeJson())}]}'),
           'GET /spaces': (200, '{"spaces": [${_json(_espacioJson())}]}'),
-        }, pedidos: pedidos),
+        }, requests: pedidos),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
       final canchas = pedidos.where((p) => p.url.path == '/spaces').single;
@@ -141,10 +141,7 @@ void main() {
     });
 
     test('uno sin reserva_id abre Mis reservas', () {
-      expect(
-        NoticeTapped.fromData({'kind': 'reminder'}).route,
-        '/reservas',
-      );
+      expect(NoticeTapped.fromData({'kind': 'reminder'}).route, '/reservas');
     });
   });
 }

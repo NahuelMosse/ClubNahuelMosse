@@ -16,13 +16,13 @@ void main() {
     final (codigo, cuerpo) = respuesta;
     await mountUser(
       tester,
-      inicio:
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      tamano: tamano,
+      size: tamano,
       api: apiRoutes({
         ...venueRoutes(),
         'POST /bookings': (codigo, cuerpo.isEmpty ? bookingJson() : cuerpo),
-      }, pedidos: pedidos),
+      }, requests: pedidos),
     );
     final franja = find.bySemanticsLabel('18:00 – 19:00');
     await tester.ensureVisible(franja);

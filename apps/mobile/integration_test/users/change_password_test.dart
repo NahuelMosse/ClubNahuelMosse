@@ -16,7 +16,7 @@ void main() {
     String correo, {
     String? apiUrl,
   }) async {
-    await signInAsUser(tester, correo: correo, apiUrl: apiUrl);
+    await signInAsUser(tester, email: correo, apiUrl: apiUrl);
     await tester.tap(find.bySemanticsLabel('Tu cuenta'));
     await tester.pumpAndSettle();
     await tapText(tester, 'Perfil completo');
@@ -156,11 +156,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await irACambiar(tester, correo, apiUrl: api.url);
       await completar(tester);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR CONTRASEÑA');
 
       // Verifica: avisa que no hay conexión y no pierde lo escrito.
@@ -178,11 +178,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await irACambiar(tester, correo, apiUrl: api.url);
       await completar(tester);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'GUARDAR CONTRASEÑA');
 
       // Verifica: avisa del servidor y la contraseña sigue siendo la de antes.

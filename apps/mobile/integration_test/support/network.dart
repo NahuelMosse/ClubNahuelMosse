@@ -10,152 +10,152 @@ enum ApiState {
   offline,
   failing,
 
-  /// Reenvía igual que [normal], pero tres segundos más tarde: deja ver lo que la app
-  /// muestra mientras espera.
+  /// Forwards like [normal], but three seconds later: shows what the app displays
+  /// while it waits.
   slow,
 
-  /// La API responde como si la sesión ya no fuera válida (401), sin llegar a tocar la
-  /// API real: simula una sesión vencida sin depender de que Firebase la venza de verdad.
+  /// The API answers as if the session were no longer valid (401), without reaching the
+  /// real API: simulates an expired session without waiting for Firebase to expire it.
   sessionExpired,
 }
 
-/// Una API intermedia en el mismo dispositivo que la app: reenvía a la API de la corrida
-/// hasta que el escenario la corta o la hace fallar. Sirve para simular que la red o el
-/// servidor se caen después de iniciar sesión.
-class ApiIntermedia {
-  ApiIntermedia._(this._servidor, this._destino) {
-    _servidor.listen(_atender);
+/// An intermediate API on the same device as the app: forwards to the run's API until the
+/// scenario cuts it or makes it fail. It simulates the network or the server going down
+/// after signing in.
+class ProxyApi {
+  ProxyApi._(this._server, this._target) {
+    _server.listen(_serve);
   }
 
-  static Future<ApiIntermedia> abrir() async {
-    final servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final api = ApiIntermedia._(
-      servidor,
+  static Future<ProxyApi> open() async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final api = ProxyApi._(
+      server,
       Uri.parse(AppConfig.fromEnvironment().apiUrl),
     );
-    addTearDown(() => servidor.close(force: true));
+    addTearDown(() => server.close(force: true));
     return api;
   }
 
-  final HttpServer _servidor;
-  final Uri _destino;
-  // Una conexión que queda quieta se suelta antes de que la API la cierre por su cuenta
-  // (su keep-alive es de cinco segundos): así no se reusa una que ya está cerrada.
-  final _cliente = HttpClient()..idleTimeout = const Duration(seconds: 1);
-  ApiState estado = ApiState.normal;
+  final HttpServer _server;
+  final Uri _target;
+  // An idle connection is dropped before the API closes it on its own
+  // (its keep-alive is five seconds): so a connection that is already closed is not reused.
+  final _client = HttpClient()..idleTimeout = const Duration(seconds: 1);
+  ApiState state = ApiState.normal;
 
-  String get url => 'http://127.0.0.1:${_servidor.port}';
+  String get url => 'http://127.0.0.1:${_server.port}';
 
-  /// Un reenvío que se corta a mitad de camino (la API cierra la conexión) llega a la app
-  /// como una red que se cayó, y no como un error del escenario que esté corriendo.
-  Future<void> _atender(HttpRequest pedido) async {
+  /// A forward cut halfway (the API closes the connection) reaches the app
+  /// as a network that went down, and not as an error of the running scenario.
+  Future<void> _serve(HttpRequest request) async {
     try {
-      await _reenviar(pedido);
+      await _forward(request);
     } on Object {
       try {
-        (await pedido.response.detachSocket(writeHeaders: false)).destroy();
+        (await request.response.detachSocket(writeHeaders: false)).destroy();
       } on Object {
-        // La respuesta ya había empezado a salir: la conexión se cierra con ella.
+        // The response had already started going out: the connection closes with it.
       }
     }
   }
 
-  Future<void> _reenviar(HttpRequest pedido) async {
-    switch (estado) {
+  Future<void> _forward(HttpRequest request) async {
+    switch (state) {
       case ApiState.offline:
-        // La conexión se corta sin respuesta, como cuando se va la señal.
-        final socket = await pedido.response.detachSocket(writeHeaders: false);
+        // The connection is cut without a response, as when the signal is lost.
+        final socket = await request.response.detachSocket(writeHeaders: false);
         socket.destroy();
       case ApiState.failing:
-        pedido.response.statusCode = HttpStatus.internalServerError;
-        await pedido.response.close();
+        request.response.statusCode = HttpStatus.internalServerError;
+        await request.response.close();
       case ApiState.sessionExpired:
-        pedido.response.statusCode = HttpStatus.unauthorized;
-        await pedido.response.close();
+        request.response.statusCode = HttpStatus.unauthorized;
+        await request.response.close();
       case ApiState.normal:
       case ApiState.slow:
-        if (estado == ApiState.slow) {
+        if (state == ApiState.slow) {
           await Future<void>.delayed(const Duration(seconds: 3));
         }
-        final cuerpo = await pedido.fold<List<int>>(
+        final body = await request.fold<List<int>>(
           [],
-          (bytes, parte) => bytes..addAll(parte),
+          (bytes, part) => bytes..addAll(part),
         );
-        final (codigo, encabezados, respuesta) = await _pedirALaApi(
-          pedido,
-          cuerpo,
+        final (status, headers, response) = await _requestFromApi(
+          request,
+          body,
         );
-        pedido.response.statusCode = codigo;
-        encabezados.forEach((nombre, valores) {
-          // El largo y la conexión son de este tramo, no del de la API.
-          if (nombre != HttpHeaders.transferEncodingHeader &&
-              nombre != HttpHeaders.connectionHeader &&
-              nombre != HttpHeaders.contentLengthHeader) {
-            for (final valor in valores) {
-              pedido.response.headers.add(nombre, valor);
+        request.response.statusCode = status;
+        headers.forEach((name, values) {
+          // The length and the connection belong to this hop, not to the API's.
+          if (name != HttpHeaders.transferEncodingHeader &&
+              name != HttpHeaders.connectionHeader &&
+              name != HttpHeaders.contentLengthHeader) {
+            for (final value in values) {
+              request.response.headers.add(name, value);
             }
           }
         });
-        pedido.response.contentLength = respuesta.length;
-        pedido.response.add(respuesta);
-        await pedido.response.close();
+        request.response.contentLength = response.length;
+        request.response.add(response);
+        await request.response.close();
     }
   }
 
-  /// Reenvía el pedido entero a la API y trae la respuesta entera. Si la conexión llega
-  /// cerrada, lo intenta una vez más con otra.
-  Future<(int, HttpHeaders, List<int>)> _pedirALaApi(
-    HttpRequest pedido,
-    List<int> cuerpo,
+  /// Forwards the whole request to the API and brings back the whole response. If the
+  /// connection arrives closed, it tries once more with another.
+  Future<(int, HttpHeaders, List<int>)> _requestFromApi(
+    HttpRequest request,
+    List<int> body,
   ) async {
-    for (var intento = 1; ; intento++) {
+    for (var attempt = 1; ; attempt++) {
       try {
-        final reenvio = await _cliente.openUrl(
-          pedido.method,
-          _destino.replace(
-            path: pedido.uri.path,
-            query: pedido.uri.hasQuery ? pedido.uri.query : null,
+        final forwarded = await _client.openUrl(
+          request.method,
+          _target.replace(
+            path: request.uri.path,
+            query: request.uri.hasQuery ? request.uri.query : null,
           ),
         );
-        pedido.headers.forEach((nombre, valores) {
-          if (nombre != HttpHeaders.hostHeader &&
-              nombre != HttpHeaders.connectionHeader &&
-              nombre != HttpHeaders.contentLengthHeader) {
-            for (final valor in valores) {
-              reenvio.headers.add(nombre, valor);
+        request.headers.forEach((name, values) {
+          if (name != HttpHeaders.hostHeader &&
+              name != HttpHeaders.connectionHeader &&
+              name != HttpHeaders.contentLengthHeader) {
+            for (final value in values) {
+              forwarded.headers.add(name, value);
             }
           }
         });
-        reenvio.contentLength = cuerpo.length;
-        reenvio.add(cuerpo);
-        final respuesta = await reenvio.close();
-        final bytes = await respuesta.fold<List<int>>(
+        forwarded.contentLength = body.length;
+        forwarded.add(body);
+        final response = await forwarded.close();
+        final bytes = await response.fold<List<int>>(
           [],
-          (todo, parte) => todo..addAll(parte),
+          (all, part) => all..addAll(part),
         );
-        return (respuesta.statusCode, respuesta.headers, bytes);
+        return (response.statusCode, response.headers, bytes);
       } on HttpException {
-        if (intento == 2) rethrow;
+        if (attempt == 2) rethrow;
       }
     }
   }
 }
 
-Uri _identidad(String metodo) {
-  const emulador = String.fromEnvironment('AUTH_EMULADOR');
+Uri _identity(String method) {
+  const emulator = String.fromEnvironment('AUTH_EMULADOR');
   return Uri.parse(
-    'http://$emulador/identitytoolkit.googleapis.com/v1/accounts:$metodo'
+    'http://$emulator/identitytoolkit.googleapis.com/v1/accounts:$method'
     '?key=clave-del-emulador',
   );
 }
 
-Future<String?> _token(String correo, String contrasena) async {
+Future<String?> _token(String email, String password) async {
   final r = await http.post(
-    _identidad('signInWithPassword'),
+    _identity('signInWithPassword'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'email': correo,
-      'password': contrasena,
+      'email': email,
+      'password': password,
       'returnSecureToken': true,
     }),
   );
@@ -164,42 +164,42 @@ Future<String?> _token(String correo, String contrasena) async {
   return null;
 }
 
-/// Si esa contraseña sirve hoy para entrar, preguntado a Firebase y no a la app.
-Future<bool> canSignIn(String correo, String contrasena) async =>
-    await _token(correo, contrasena) != null;
+/// Whether that password works today to sign in, asked to Firebase and not to the app.
+Future<bool> canSignIn(String email, String password) async =>
+    await _token(email, password) != null;
 
-/// Cambia la contraseña desde otro dispositivo: Firebase invalida las sesiones abiertas.
+/// Changes the password from another device: Firebase invalidates the open sessions.
 Future<void> changeFromAnotherDevice(
-  String correo,
-  String actual,
-  String nueva,
+  String email,
+  String current,
+  String next,
 ) async {
-  // Firebase cuenta la revocación por segundos: el token de la app tiene que ser de un
-  // segundo anterior al cambio para que quede vencido.
+  // Firebase counts the revocation in seconds: the app's token has to be from a
+  // second before the change for it to end up expired.
   await Future<void>.delayed(const Duration(milliseconds: 1100));
-  final token = await _token(correo, actual);
-  if (token == null) throw StateError('la contraseña actual no sirve');
+  final token = await _token(email, current);
+  if (token == null) throw StateError('the current password does not work');
   final r = await http.post(
-    _identidad('update'),
+    _identity('update'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
       'idToken': token,
-      'password': nueva,
+      'password': next,
       'returnSecureToken': true,
     }),
   );
   if (r.statusCode != 200) {
-    throw StateError('no se pudo cambiar la contraseña: ${r.statusCode}');
+    throw StateError('could not change the password: ${r.statusCode}');
   }
 }
 
-/// Las sedes que ve hoy una persona con cuenta de usuario, preguntado a la API de la
-/// corrida y no a la app: nombre y cantidad de canchas de cada una.
+/// The venues a person with a user account sees today, asked to the run's API
+/// and not to the app: name and number of courts of each one.
 Future<Map<String, int>> venuesAUserSees() async {
-  final correo = 'mirada.${DateTime.now().microsecondsSinceEpoch}@correo.com';
-  const contrasena = 'ClubNahuel1';
+  final email = 'mirada.${DateTime.now().microsecondsSinceEpoch}@correo.com';
+  const password = 'ClubNahuel1';
   final api = AppConfig.fromEnvironment().apiUrl;
-  final alta = await http.post(
+  final signup = await http.post(
     Uri.parse('$api/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
@@ -208,34 +208,36 @@ Future<Map<String, int>> venuesAUserSees() async {
       'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
           .toString(),
       'birth_date': '1995-05-20',
-      'email': correo,
-      'password': contrasena,
+      'email': email,
+      'password': password,
     }),
   );
-  if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta nueva no entra');
+  if (signup.statusCode != 201) {
+    throw StateError('signup: ${signup.statusCode}');
+  }
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the new account cannot sign in');
   final r = await http.get(
     Uri.parse('$api/sedes'),
     headers: {'authorization': 'Bearer $token'},
   );
-  if (r.statusCode != 200) throw StateError('sedes: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('venues: ${r.statusCode}');
   return {
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'venues': final List<Object?> sedes,
+      'venues': final List<Object?> venues,
     })
-      for (final sede in sedes)
-        if (sede case {'name': final String nombre, 'space_count': final int n})
-          nombre: n,
+      for (final venue in venues)
+        if (venue case {'name': final String name, 'space_count': final int n})
+          name: n,
   };
 }
 
-/// Los nombres de los espacios activos que ve hoy una persona con cuenta de usuario.
+/// The names of the active spaces a person with a user account sees today.
 Future<List<String>> spacesAUserSees() async {
-  final correo = 'mira.${DateTime.now().microsecondsSinceEpoch}@correo.com';
-  const contrasena = 'ClubNahuel1';
+  final email = 'mira.${DateTime.now().microsecondsSinceEpoch}@correo.com';
+  const password = 'ClubNahuel1';
   final api = AppConfig.fromEnvironment().apiUrl;
-  final alta = await http.post(
+  final signup = await http.post(
     Uri.parse('$api/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
@@ -244,211 +246,215 @@ Future<List<String>> spacesAUserSees() async {
       'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
           .toString(),
       'birth_date': '1995-05-20',
-      'email': correo,
-      'password': contrasena,
+      'email': email,
+      'password': password,
     }),
   );
-  if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta nueva no entra');
+  if (signup.statusCode != 201) {
+    throw StateError('signup: ${signup.statusCode}');
+  }
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the new account cannot sign in');
   final r = await http.get(
     Uri.parse('$api/espacios'),
     headers: {'authorization': 'Bearer $token'},
   );
-  if (r.statusCode != 200) throw StateError('espacios: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('spaces: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'spaces': final List<Object?> espacios,
+      'spaces': final List<Object?> spaces,
     })
-      for (final espacio in espacios)
-        if (espacio case {'name': final String nombre}) nombre,
+      for (final space in spaces)
+        if (space case {'name': final String name}) name,
   ];
 }
 
-/// La sesión del administrador que siembra `scripts/e2e.sh`, como la de otro teléfono.
-Future<String> _tokenAdmin() async {
+/// The session of the administrator that `scripts/e2e.sh` seeds, like that of another phone.
+Future<String> _adminToken() async {
   final token = await _token(
     const String.fromEnvironment('ADMIN_CORREO'),
     const String.fromEnvironment('ADMIN_CONTRASENA'),
   );
-  if (token == null) throw StateError('el administrador no entra');
+  if (token == null) throw StateError('the administrator cannot sign in');
   return token;
 }
 
-/// Un alta en la API de la corrida hecha por el administrador desde otro teléfono.
-Future<Map<String, Object?>> _comoAdmin(
-  String ruta,
-  Map<String, Object?> cuerpo,
+/// A creation in the run's API made by the administrator from another phone.
+Future<Map<String, Object?>> _asAdmin(
+  String route,
+  Map<String, Object?> body,
 ) async {
-  final token = await _tokenAdmin();
+  final token = await _adminToken();
   final r = await http.post(
-    Uri.parse('${AppConfig.fromEnvironment().apiUrl}$ruta'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}$route'),
     headers: {
       'content-type': 'application/json',
       'authorization': 'Bearer $token',
     },
-    body: jsonEncode(cuerpo),
+    body: jsonEncode(body),
   );
-  if (r.statusCode != 201) throw StateError('$ruta: ${r.statusCode}');
-  final datos = jsonDecode(utf8.decode(r.bodyBytes));
-  if (datos is! Map<String, Object?>) throw StateError('$ruta: respuesta rara');
-  return datos;
+  if (r.statusCode != 201) throw StateError('$route: ${r.statusCode}');
+  final data = jsonDecode(utf8.decode(r.bodyBytes));
+  if (data is! Map<String, Object?>) {
+    throw StateError('$route: unexpected response');
+  }
+  return data;
 }
 
-/// Da de alta una sede por la API, abierta de 08:00 a 23:00 los [dias] de la semana (1 es
-/// lunes): por defecto, todos.
+/// Creates a venue through the API, open from 08:00 to 23:00 on the given [days] of the week
+/// (1 is Monday): every day by default.
 Future<void> createVenue(
-  String nombre,
-  String direccion, {
-  List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
+  String name,
+  String address, {
+  List<int> days = const [1, 2, 3, 4, 5, 6, 7],
 }) async {
-  await _comoAdmin('/venues', {
-    'name': nombre,
-    'address': direccion,
+  await _asAdmin('/venues', {
+    'name': name,
+    'address': address,
     'opens_at': '08:00',
     'closes_at': '23:00',
-    'open_days': dias,
+    'open_days': days,
   });
 }
 
-/// El día de hoy en el club, que está en la hora de Argentina (UTC−3, sin horario de
-/// verano), sea cual sea la zona del teléfono de prueba.
+/// Today at the club, which is on Argentina time (UTC−3, no daylight saving),
+/// whatever the time zone of the test phone.
 DateTime todayAtClub() {
-  final ahora = DateTime.now().toUtc().subtract(const Duration(hours: 3));
-  return DateTime.utc(ahora.year, ahora.month, ahora.day);
+  final now = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+  return DateTime.utc(now.year, now.month, now.day);
 }
 
-/// La hora en punto que está corriendo ahora en el club.
+/// The o'clock hour that is running now at the club.
 int hourAtClub() =>
     DateTime.now().toUtc().subtract(const Duration(hours: 3)).hour;
 
-/// Una reserva del espacio [nombreEspacio] el [dia] a la [hora] en punto, por [horas]
-/// horas, cargada por fuera de la app: de la cuenta [correo] o, si no viene, de otra
-/// persona. [estado] es `activa`, `cancelada` o `anulada` (con [motivo]).
+/// A booking of the space [spaceName] on [day] at [hour] o'clock, for [hours] hours,
+/// loaded outside the app: from the account [email] or, if absent, from another
+/// person. [status] is `active`, `canceled` or `voided` (with [reason]).
 Future<void> occupy(
-  String nombreEspacio,
-  DateTime dia,
-  int hora, {
-  int horas = 1,
-  String? correo,
-  String estado = 'active',
-  String? motivo,
+  String spaceName,
+  DateTime day,
+  int hour, {
+  int hours = 1,
+  String? email,
+  String status = 'active',
+  String? reason,
 }) async {
-  final fecha =
-      '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
-      '${dia.day.toString().padLeft(2, '0')}';
+  final date =
+      '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+      '${day.day.toString().padLeft(2, '0')}';
   final r = await http.post(
-    _pruebas('reservas'),
+    _testRoute('reservas'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'space': nombreEspacio,
-      'date': fecha,
-      'hora': hora,
-      'hours': horas,
-      'email': ?correo,
-      'status': estado,
-      'reason': ?motivo,
+      'space': spaceName,
+      'date': date,
+      'hora': hour,
+      'hours': hours,
+      'email': ?email,
+      'status': status,
+      'reason': ?reason,
     }),
   );
-  if (r.statusCode != 204) throw StateError('ocupar: ${r.statusCode}');
+  if (r.statusCode != 204) throw StateError('occupy: ${r.statusCode}');
 }
 
-/// Da de alta por la API el próximo espacio de [deporte] y [tipo] en la sede [nombreSede],
-/// y devuelve su nombre compuesto.
+/// Creates through the API the next space of [sport] and [kind] in the venue [venueName],
+/// and returns its composed name.
 Future<String> createSpace(
-  String nombreSede, {
-  String deporte = 'Futbol',
-  String tipo = 'F5',
+  String venueName, {
+  String sport = 'Futbol',
+  String kind = 'F5',
 }) async {
   final api = AppConfig.fromEnvironment().apiUrl;
   final r = await http.get(
     Uri.parse('$api/sedes'),
-    headers: {'authorization': 'Bearer ${await _tokenAdmin()}'},
+    headers: {'authorization': 'Bearer ${await _adminToken()}'},
   );
-  final sedes = jsonDecode(utf8.decode(r.bodyBytes));
-  final id = switch (sedes) {
-    {'venues': final List<Object?> lista} => [
-      for (final s in lista)
-        if (s case {'id': final String id, 'name': final String n})
-          if (n == nombreSede) id,
+  final venues = jsonDecode(utf8.decode(r.bodyBytes));
+  final id = switch (venues) {
+    {'venues': final List<Object?> list} => [
+      for (final v in list)
+        if (v case {'id': final String id, 'name': final String n})
+          if (n == venueName) id,
     ].firstOrNull,
     _ => null,
   };
-  if (id == null) throw StateError('no está la sede $nombreSede');
-  final espacio = await _comoAdmin('/spaces', {
+  if (id == null) throw StateError('venue $venueName not found');
+  final space = await _asAdmin('/spaces', {
     'venue_id': id,
-    'sport': deporte,
-    'kind': tipo,
-    // Otra cancha que la que carga el escenario en la pantalla: con los mismos datos y la
-    // misma cuenta, la API la tomaría por el mismo pedido repetido después de un corte.
+    'sport': sport,
+    'kind': kind,
+    // A different court from the one the scenario creates on screen: with the same data and the
+    // same account, the API would take it for the same request repeated after a cut.
     'covered': true,
     'lit': true,
     'price_per_hour': 43000,
   });
-  final nombre = espacio['name'];
-  if (nombre is! String) throw StateError('el alta no devolvió el nombre');
-  return nombre;
+  final name = space['name'];
+  if (name is! String) throw StateError('the creation did not return the name');
+  return name;
 }
 
-Uri _pruebas(String ruta) =>
-    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/_pruebas/$ruta');
+Uri _testRoute(String route) =>
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/_pruebas/$route');
 
-/// Los correos que la API de la corrida dejó en su buzón para [para], del más viejo al
-/// más nuevo. En la corrida los correos no salen: quedan en el buzón.
-Future<List<String>> emailsFor(String para) async {
+/// The emails the run's API left in its mailbox for [to], from oldest to
+/// newest. In the run emails are not sent: they stay in the mailbox.
+Future<List<String>> emailsFor(String to) async {
   final r = await http.get(
-    _pruebas('correos?para=${Uri.encodeQueryComponent(para)}'),
+    _testRoute('correos?para=${Uri.encodeQueryComponent(to)}'),
   );
-  if (r.statusCode != 200) throw StateError('buzón: ${r.statusCode}');
-  final datos = jsonDecode(utf8.decode(r.bodyBytes));
+  if (r.statusCode != 200) throw StateError('mailbox: ${r.statusCode}');
+  final data = jsonDecode(utf8.decode(r.bodyBytes));
   return [
-    if (datos case {'correos': final List<Object?> correos})
-      for (final correo in correos)
-        if (correo case {'body': final String cuerpo}) cuerpo,
+    if (data case {'correos': final List<Object?> emails})
+      for (final email in emails)
+        if (email case {'body': final String body}) body,
   ];
 }
 
-/// El código del enlace de recuperación del último correo que recibió [correo].
-Future<String> lastCode(String correo) async {
-  final correos = await emailsFor(correo);
-  if (correos.isEmpty) throw StateError('no llegó ningún correo a $correo');
-  final enlace = RegExp(r'codigo=([A-Za-z0-9_-]+)').firstMatch(correos.last);
-  final codigo = enlace?.group(1);
-  if (codigo == null) throw StateError('el correo no trae un enlace');
-  return codigo;
+/// The recovery link code of the last email [email] received.
+Future<String> lastCode(String email) async {
+  final emails = await emailsFor(email);
+  if (emails.isEmpty) throw StateError('no email arrived at $email');
+  final link = RegExp(r'codigo=([A-Za-z0-9_-]+)').firstMatch(emails.last);
+  final code = link?.group(1);
+  if (code == null) throw StateError('the email has no link');
+  return code;
 }
 
-/// Hace vencer el enlace ya, sin esperar los 30 minutos.
-Future<void> expireLink(String codigo) async {
-  final r = await http.post(_pruebas('recuperacion/$codigo/vencer'));
-  if (r.statusCode != 204) throw StateError('vencer: ${r.statusCode}');
+/// Expires the link right now, without waiting the 30 minutes.
+Future<void> expireLink(String code) async {
+  final r = await http.post(_testRoute('recuperacion/$code/vencer'));
+  if (r.statusCode != 204) throw StateError('expire: ${r.statusCode}');
 }
 
-/// Las próximas reservas de la cuenta [correo], preguntadas a la API y no a la app: el
-/// espacio y la hora de inicio (`HH:MM`, en la hora del club) de cada una.
+/// The upcoming bookings of the account [email], asked to the API and not to the app: the
+/// space and the start hour (`HH:MM`, on club time) of each one.
 Future<List<(String, String)>> bookingsOf(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
   final r = await http.get(
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas?cuando=proximas'),
     headers: {'authorization': 'Bearer $token'},
   );
-  if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('bookings: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'bookings': final List<Object?> reservas,
+      'bookings': final List<Object?> bookings,
     })
-      for (final reserva in reservas)
-        if (reserva case {
-          'space': final String espacio,
-          'starts_at': final String inicio,
+      for (final booking in bookings)
+        if (booking case {
+          'space': final String space,
+          'starts_at': final String start,
         })
           (
-            espacio,
-            DateTime.parse(inicio)
+            space,
+            DateTime.parse(start)
                 .toUtc()
                 .subtract(const Duration(hours: 3))
                 .toIso8601String()
@@ -457,109 +463,111 @@ Future<List<(String, String)>> bookingsOf(
   ];
 }
 
-/// Las reservas activas de [nombreEspacio] pasan a haber empezado en la hora en curso del
-/// club, como si el tiempo corriera mientras la app está abierta.
-Future<void> startBookingsOf(String nombreEspacio) async {
+/// The active bookings of [spaceName] become started at the club's current hour,
+/// as if time ran while the app is open.
+Future<void> startBookingsOf(String spaceName) async {
   final r = await http.post(
-    _pruebas('reservas/empezar'),
+    _testRoute('reservas/empezar'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'space': nombreEspacio}),
+    body: jsonEncode({'space': spaceName}),
   );
-  if (r.statusCode != 204) throw StateError('empezar: ${r.statusCode}');
+  if (r.statusCode != 204) throw StateError('start: ${r.statusCode}');
 }
 
-/// El sistema queda sin ninguna reserva (ni los avisos que las mencionan).
+/// The system is left without any booking (nor the notices that mention them).
 Future<void> clearBookings() async {
-  final r = await http.post(_pruebas('reservas/vaciar'));
-  if (r.statusCode != 204) throw StateError('vaciar: ${r.statusCode}');
+  final r = await http.post(_testRoute('reservas/vaciar'));
+  if (r.statusCode != 204) throw StateError('clear: ${r.statusCode}');
 }
 
-/// El club anula las reservas activas de [nombreEspacio], como lo haría un administrador.
-Future<void> voidBookingsOf(String nombreEspacio) async {
+/// The club voids the active bookings of [spaceName], as an administrator would.
+Future<void> voidBookingsOf(String spaceName) async {
   final r = await http.post(
-    _pruebas('reservas/anular'),
+    _testRoute('reservas/anular'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'space': nombreEspacio}),
+    body: jsonEncode({'space': spaceName}),
   );
-  if (r.statusCode != 204) throw StateError('anular: ${r.statusCode}');
+  if (r.statusCode != 204) throw StateError('void: ${r.statusCode}');
 }
 
-/// El barrido de recordatorios de la API corre como si en el club fueran las [hora]:[minuto]
-/// del [dia], sólo para las reservas de la cuenta [correo], y devuelve cuántos avisos
-/// registró.
+/// The API's reminder sweep runs as if it were [hour]:[minute] at the club
+/// on [day], only for the bookings of the account [email], and returns how many notices
+/// it registered.
 Future<int> dispatchReminders({
-  required String correo,
-  required DateTime dia,
-  required int hora,
-  int minuto = 0,
+  required String email,
+  required DateTime day,
+  required int hour,
+  int minute = 0,
 }) async {
-  String dos(int n) => n.toString().padLeft(2, '0');
-  final ahora =
-      '${dia.year}-${dos(dia.month)}-${dos(dia.day)}T${dos(hora)}:${dos(minuto)}:00-03:00';
+  String two(int n) => n.toString().padLeft(2, '0');
+  final now =
+      '${day.year}-${two(day.month)}-${two(day.day)}T${two(hour)}:${two(minute)}:00-03:00';
   final r = await http.post(
-    _pruebas('recordatorios'),
+    _testRoute('recordatorios'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'email': correo, 'ahora': ahora}),
+    body: jsonEncode({'email': email, 'ahora': now}),
   );
-  if (r.statusCode != 200) throw StateError('recordatorios: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('reminders: ${r.statusCode}');
   if (jsonDecode(utf8.decode(r.bodyBytes)) case {'registrados': final int n}) {
     return n;
   }
-  throw StateError('recordatorios: respuesta sin conteo');
+  throw StateError('reminders: response without a count');
 }
 
-/// Si el permiso de cada dispositivo activo de la cuenta [correo] está concedido, según la
-/// API y no según la app.
-Future<List<bool>> devicesOf(String correo) async {
+/// Whether the permission of each active device of the account [email] is granted, according
+/// to the API and not to the app.
+Future<List<bool>> devicesOf(String email) async {
   final r = await http.get(
-    _pruebas('dispositivos?correo=${Uri.encodeQueryComponent(correo)}'),
+    _testRoute('dispositivos?correo=${Uri.encodeQueryComponent(email)}'),
   );
-  if (r.statusCode != 200) throw StateError('dispositivos: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('devices: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'dispositivos': final List<Object?> dispositivos,
+      'dispositivos': final List<Object?> devices,
     })
-      for (final d in dispositivos)
-        if (d case {'permission_granted': final bool permiso}) permiso,
+      for (final d in devices)
+        if (d case {'permission_granted': final bool granted}) granted,
   ];
 }
 
-/// Los números de las próximas reservas de la cuenta [correo], según la API.
+/// The numbers of the upcoming bookings of the account [email], according to the API.
 Future<List<String>> bookingNumbers(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
   final r = await http.get(
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas?cuando=proximas'),
     headers: {'authorization': 'Bearer $token'},
   );
-  if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('bookings: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'bookings': final List<Object?> reservas,
+      'bookings': final List<Object?> bookings,
     })
-      for (final reserva in reservas)
-        if (reserva case {'id': final String id}) id,
+      for (final booking in bookings)
+        if (booking case {'id': final String id}) id,
   ];
 }
 
-/// Otro administrador da de baja la sede [nombre] mientras la app la sigue mostrando.
-Future<void> deactivateVenueFromAnotherSession(String nombre) async {
+/// Another administrator deactivates the venue [name] while the app keeps showing it.
+Future<void> deactivateVenueFromAnotherSession(String name) async {
   final r = await http.post(
-    _pruebas('sedes/baja'),
+    _testRoute('sedes/baja'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'name': nombre}),
+    body: jsonEncode({'name': name}),
   );
-  if (r.statusCode != 204) throw StateError('baja de sede: ${r.statusCode}');
+  if (r.statusCode != 204) {
+    throw StateError('venue deactivation: ${r.statusCode}');
+  }
 }
 
-/// La sesión de una cuenta de usuario nueva, como la de otra persona que mira la app.
-Future<String> _tokenDeOtraPersona() async {
-  final correo = 'otra.${DateTime.now().microsecondsSinceEpoch}@correo.com';
-  const contrasena = 'ClubNahuel1';
-  final alta = await http.post(
+/// The session of a new user account, like that of another person looking at the app.
+Future<String> _otherPersonToken() async {
+  final email = 'otra.${DateTime.now().microsecondsSinceEpoch}@correo.com';
+  const password = 'ClubNahuel1';
+  final signup = await http.post(
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
@@ -568,81 +576,84 @@ Future<String> _tokenDeOtraPersona() async {
       'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
           .toString(),
       'birth_date': '1995-05-20',
-      'email': correo,
-      'password': contrasena,
+      'email': email,
+      'password': password,
     }),
   );
-  if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta nueva no entra');
+  if (signup.statusCode != 201) {
+    throw StateError('signup: ${signup.statusCode}');
+  }
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the new account cannot sign in');
   return token;
 }
 
-Future<Object?> _leer(String ruta, String token) async {
+Future<Object?> _read(String route, String token) async {
   final r = await http.get(
-    Uri.parse('${AppConfig.fromEnvironment().apiUrl}$ruta'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}$route'),
     headers: {'authorization': 'Bearer $token'},
   );
-  if (r.statusCode != 200) throw StateError('$ruta: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('$route: ${r.statusCode}');
   return jsonDecode(utf8.decode(r.bodyBytes));
 }
 
-/// La sede activa [nombre] como la ve un usuario (dirección, apertura, cierre, días), o
-/// `null` si no la ve.
-Future<Map<String, Object?>?> venueAUserSees(String nombre) async {
-  final datos = await _leer('/venues', await _tokenDeOtraPersona());
-  if (datos case {'venues': final List<Object?> sedes}) {
-    for (final sede in sedes) {
-      if (sede case final Map<String, Object?> s when s['name'] == nombre) {
-        return s;
+/// The active venue [name] as a user sees it (address, opening, closing, days), or
+/// `null` if they do not see it.
+Future<Map<String, Object?>?> venueAUserSees(String name) async {
+  final data = await _read('/venues', await _otherPersonToken());
+  if (data case {'venues': final List<Object?> venues}) {
+    for (final venue in venues) {
+      if (venue case final Map<String, Object?> v when v['name'] == name) {
+        return v;
       }
     }
   }
   return null;
 }
 
-/// Las horas de inicio (`HH:MM`) que un usuario puede elegir el [dia] en [nombreEspacio].
-Future<List<String>> freeStarts(String nombreEspacio, DateTime dia) async {
-  final token = await _tokenDeOtraPersona();
-  final espacios = await _leer('/spaces', token);
-  final id = switch (espacios) {
-    {'spaces': final List<Object?> lista} => [
-      for (final e in lista)
+/// The start hours (`HH:MM`) a user can choose on [day] in [spaceName].
+Future<List<String>> freeStarts(String spaceName, DateTime day) async {
+  final token = await _otherPersonToken();
+  final spaces = await _read('/spaces', token);
+  final id = switch (spaces) {
+    {'spaces': final List<Object?> list} => [
+      for (final e in list)
         if (e case {'id': final String id, 'name': final String n})
-          if (n == nombreEspacio) id,
+          if (n == spaceName) id,
     ].firstOrNull,
     _ => null,
   };
-  if (id == null) throw StateError('no está el espacio $nombreEspacio');
-  final fecha =
-      '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
-      '${dia.day.toString().padLeft(2, '0')}';
-  final grilla = await _leer('/spaces/$id/slots?date=$fecha', token);
+  if (id == null) throw StateError('space $spaceName not found');
+  final date =
+      '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+      '${day.day.toString().padLeft(2, '0')}';
+  final grid = await _read('/spaces/$id/slots?date=$date', token);
   return [
-    if (grilla case {'slots': final List<Object?> franjas})
-      for (final f in franjas)
-        if (f case {'starts_at': final String inicio, 'available': true}) inicio,
+    if (grid case {'slots': final List<Object?> slots})
+      for (final f in slots)
+        if (f case {'starts_at': final String start, 'available': true}) start,
   ];
 }
 
-/// Otro administrador da de baja el espacio [nombre] mientras la app lo sigue mostrando.
-Future<void> deactivateSpaceFromAnotherSession(String nombre) async {
+/// Another administrator deactivates the space [name] while the app keeps showing it.
+Future<void> deactivateSpaceFromAnotherSession(String name) async {
   final r = await http.post(
-    _pruebas('espacios/baja'),
+    _testRoute('espacios/baja'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'space': nombre}),
+    body: jsonEncode({'space': name}),
   );
-  if (r.statusCode != 204) throw StateError('baja de espacio: ${r.statusCode}');
+  if (r.statusCode != 204) {
+    throw StateError('space deactivation: ${r.statusCode}');
+  }
 }
 
-/// El espacio activo [nombre] como lo ve un usuario (precio, condición, iluminación), o
-/// `null` si no lo ve.
-Future<Map<String, Object?>?> spaceAUserSees(String nombre) async {
-  final datos = await _leer('/spaces', await _tokenDeOtraPersona());
-  if (datos case {'spaces': final List<Object?> espacios}) {
-    for (final espacio in espacios) {
-      if (espacio case final Map<String, Object?> e
-          when e['name'] == nombre) {
+/// The active space [name] as a user sees it (price, condition, lighting), or
+/// `null` if they do not see it.
+Future<Map<String, Object?>?> spaceAUserSees(String name) async {
+  final data = await _read('/spaces', await _otherPersonToken());
+  if (data case {'spaces': final List<Object?> spaces}) {
+    for (final space in spaces) {
+      if (space case final Map<String, Object?> e when e['name'] == name) {
         return e;
       }
     }
@@ -650,27 +661,27 @@ Future<Map<String, Object?>?> spaceAUserSees(String nombre) async {
   return null;
 }
 
-/// La cuenta [correo] reserva por la API una hora de [nombreEspacio] el [dia] a la [hora]
-/// en punto, y devuelve el total que quedó guardado.
+/// The account [email] books through the API one hour of [spaceName] on [day] at [hour]
+/// o'clock, and returns the total that was saved.
 Future<int> bookThroughApi(
-  String correo,
-  String nombreEspacio,
-  DateTime dia,
-  int hora, {
-  String contrasena = 'ClubNahuel1',
+  String email,
+  String spaceName,
+  DateTime day,
+  int hour, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
-  final espacios = await _leer('/spaces', token);
-  final id = switch (espacios) {
-    {'spaces': final List<Object?> lista} => [
-      for (final e in lista)
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
+  final spaces = await _read('/spaces', token);
+  final id = switch (spaces) {
+    {'spaces': final List<Object?> list} => [
+      for (final e in list)
         if (e case {'id': final String id, 'name': final String n})
-          if (n == nombreEspacio) id,
+          if (n == spaceName) id,
     ].firstOrNull,
     _ => null,
   };
-  if (id == null) throw StateError('no está el espacio $nombreEspacio');
+  if (id == null) throw StateError('space $spaceName not found');
   final r = await http.post(
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas'),
     headers: {
@@ -680,36 +691,36 @@ Future<int> bookThroughApi(
     body: jsonEncode({
       'space_id': id,
       'date':
-          '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
-          '${dia.day.toString().padLeft(2, '0')}',
-      'start_hour': '${hora.toString().padLeft(2, '0')}:00',
+          '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+          '${day.day.toString().padLeft(2, '0')}',
+      'start_hour': '${hour.toString().padLeft(2, '0')}:00',
       'hours': 1,
     }),
   );
-  if (r.statusCode != 201) throw StateError('reservar: ${r.statusCode}');
+  if (r.statusCode != 201) throw StateError('book: ${r.statusCode}');
   return switch (jsonDecode(utf8.decode(r.bodyBytes))) {
     {'total': final int total} => total,
-    _ => throw StateError('la reserva no trae el total'),
+    _ => throw StateError('the booking has no total'),
   };
 }
 
-/// Los totales de las próximas reservas de la cuenta [correo], por hora de inicio
-/// (`HH:MM`, en la hora del club).
+/// The totals of the upcoming bookings of the account [email], by start hour
+/// (`HH:MM`, on club time).
 Future<Map<String, int>> bookingTotals(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
-  final datos = await _leer('/bookings?when=upcoming', token);
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
+  final data = await _read('/bookings?when=upcoming', token);
   return {
-    if (datos case {'bookings': final List<Object?> reservas})
-      for (final reserva in reservas)
-        if (reserva case {
-          'starts_at': final String inicio,
+    if (data case {'bookings': final List<Object?> bookings})
+      for (final booking in bookings)
+        if (booking case {
+          'starts_at': final String start,
           'total': final int total,
         })
-          DateTime.parse(inicio)
+          DateTime.parse(start)
                   .toUtc()
                   .subtract(const Duration(hours: 3))
                   .toIso8601String()
@@ -718,134 +729,135 @@ Future<Map<String, int>> bookingTotals(
   };
 }
 
-/// La cuenta [correo] cancela por la API todas sus próximas reservas, como si lo hiciera desde
-/// otro teléfono mientras el administrador mira la confirmación.
+/// The account [email] cancels through the API all its upcoming bookings, as if doing it from
+/// another phone while the administrator looks at the confirmation.
 Future<void> cancelUpcomingOf(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
-  for (final id in await bookingNumbers(correo, contrasena: contrasena)) {
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
+  for (final id in await bookingNumbers(email, password: password)) {
     final r = await http.post(
       Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas/$id/cancelar'),
       headers: {'authorization': 'Bearer $token'},
     );
-    if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
+    if (r.statusCode != 200) throw StateError('cancel: ${r.statusCode}');
   }
 }
 
-/// La reserva de [nombreEspacio] como la ve el administrador en la API (estado, motivo,
-/// quién y cuándo la anuló), o `null` si el espacio no tiene ninguna.
-Future<Map<String, Object?>?> bookingAdminSees(String nombreEspacio) async {
-  final datos = await _leer(
-    '/bookings/all?q=${Uri.encodeQueryComponent(nombreEspacio)}',
-    await _tokenAdmin(),
+/// The booking of [spaceName] as the administrator sees it in the API (status, reason,
+/// who voided it and when), or `null` if the space has none.
+Future<Map<String, Object?>?> bookingAdminSees(String spaceName) async {
+  final data = await _read(
+    '/bookings/all?q=${Uri.encodeQueryComponent(spaceName)}',
+    await _adminToken(),
   );
-  if (datos case {'bookings': final List<Object?> reservas}) {
-    for (final reserva in reservas) {
-      if (reserva is Map<String, Object?> &&
-          reserva['space'] == nombreEspacio) {
-        return reserva;
+  if (data case {'bookings': final List<Object?> bookings}) {
+    for (final booking in bookings) {
+      if (booking is Map<String, Object?> && booking['space'] == spaceName) {
+        return booking;
       }
     }
   }
   return null;
 }
 
-/// Las reservas del historial de la cuenta [correo] según la API: el espacio, el estado y el
-/// motivo de cada una.
+/// The history bookings of the account [email] according to the API: the space, the status and
+/// the reason of each one.
 Future<List<(String, String, String?)>> historyOf(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
-  final datos = await _leer('/bookings?when=history', token);
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
+  final data = await _read('/bookings?when=history', token);
   return [
-    if (datos case {'bookings': final List<Object?> reservas})
-      for (final reserva in reservas)
-        if (reserva case {
-          'space': final String espacio,
-          'status': final String estado,
-          'reason': final Object? motivo,
+    if (data case {'bookings': final List<Object?> bookings})
+      for (final booking in bookings)
+        if (booking case {
+          'space': final String space,
+          'status': final String status,
+          'reason': final Object? reason,
         })
-          (espacio, estado, motivo is String ? motivo : null),
+          (space, status, reason is String ? reason : null),
   ];
 }
 
-/// La cuenta [correo] cancela por la API su única reserva próxima, como si lo hiciera desde
-/// otro teléfono.
+/// The account [email] cancels through the API its only upcoming booking, as if doing it from
+/// another phone.
 Future<void> cancelFromAnotherPhone(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
-  final numeros = await bookingNumbers(correo, contrasena: contrasena);
-  if (numeros.length != 1) throw StateError('cancelar: hay ${numeros.length}');
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
+  final numbers = await bookingNumbers(email, password: password);
+  if (numbers.length != 1) {
+    throw StateError('cancel: there are ${numbers.length}');
+  }
   final r = await http.post(
     Uri.parse(
-      '${AppConfig.fromEnvironment().apiUrl}/reservas/${numeros.single}/cancelar',
+      '${AppConfig.fromEnvironment().apiUrl}/reservas/${numbers.single}/cancelar',
     ),
     headers: {'authorization': 'Bearer $token'},
   );
-  if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
+  if (r.statusCode != 200) throw StateError('cancel: ${r.statusCode}');
 }
 
-/// Una reserva próxima como la ve quien la hizo: lo que el administrador necesita para anularla.
-typedef VoidableBooking = ({String id, String espacioId, String inicio});
+/// An upcoming booking as the person who made it sees it: what the administrator needs to void it.
+typedef VoidableBooking = ({String id, String spaceId, String start});
 
-/// Las próximas reservas de la cuenta [correo], según la API, de la más cercana a la más lejana.
+/// The upcoming bookings of the account [email], according to the API, from nearest to farthest.
 Future<List<VoidableBooking>> upcomingOf(
-  String correo, {
-  String contrasena = 'ClubNahuel1',
+  String email, {
+  String password = 'ClubNahuel1',
 }) async {
-  final token = await _token(correo, contrasena);
-  if (token == null) throw StateError('la cuenta $correo no entra');
-  final datos = await _leer('/bookings?when=upcoming', token);
+  final token = await _token(email, password);
+  if (token == null) throw StateError('the account $email cannot sign in');
+  final data = await _read('/bookings?when=upcoming', token);
   return [
-    if (datos case {'bookings': final List<Object?> reservas})
-      for (final reserva in reservas)
-        if (reserva case {
+    if (data case {'bookings': final List<Object?> bookings})
+      for (final booking in bookings)
+        if (booking case {
           'id': final String id,
-          'space_id': final String espacioId,
-          'starts_at': final String inicio,
+          'space_id': final String spaceId,
+          'starts_at': final String start,
         })
-          (id: id, espacioId: espacioId, inicio: inicio),
+          (id: id, spaceId: spaceId, start: start),
   ];
 }
 
-/// El administrador anula [reserva] con [motivo] desde otro teléfono, por la API, y devuelve el
-/// estado de la respuesta.
+/// The administrator voids [booking] with [reason] from another phone, through the API, and returns the
+/// response status.
 Future<int> voidFromAdmin(
-  VoidableBooking reserva, {
-  String motivo = 'mantenimiento de la cancha',
+  VoidableBooking booking, {
+  String reason = 'mantenimiento de la cancha',
 }) async {
   final r = await http.post(
     Uri.parse(
-      '${AppConfig.fromEnvironment().apiUrl}/reservas/${reserva.id}/anular',
+      '${AppConfig.fromEnvironment().apiUrl}/reservas/${booking.id}/anular',
     ),
     headers: {
       'content-type': 'application/json',
-      'authorization': 'Bearer ${await _tokenAdmin()}',
+      'authorization': 'Bearer ${await _adminToken()}',
     },
     body: jsonEncode({
-      'reason': motivo,
-      'space_id': reserva.espacioId,
-      'starts_at': reserva.inicio,
+      'reason': reason,
+      'space_id': booking.spaceId,
+      'starts_at': booking.start,
     }),
   );
   return r.statusCode;
 }
 
-/// Espera a que la API registre el envío del aviso de la reserva de [nombreEspacio], que sale
-/// después de responder la anulación, y devuelve cómo salió.
-Future<String> waitForNoticeDelivery(String nombreEspacio) async {
+/// Waits for the API to register the delivery of the notice of the booking of [spaceName], which goes out
+/// after answering the voiding, and returns how it went.
+Future<String> waitForNoticeDelivery(String spaceName) async {
   for (var i = 0; i < 40; i++) {
-    final reserva = await bookingAdminSees(nombreEspacio);
-    if (reserva?['notice_delivery'] case final String envio) return envio;
+    final booking = await bookingAdminSees(spaceName);
+    if (booking?['notice_delivery'] case final String delivery) return delivery;
     await Future<void>.delayed(const Duration(milliseconds: 250));
   }
-  throw StateError('el aviso de $nombreEspacio no salió a despacho');
+  throw StateError('the notice of $spaceName was not sent out');
 }

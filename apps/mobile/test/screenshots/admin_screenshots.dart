@@ -36,8 +36,8 @@ void main() {
       testWidgets('panel de sedes $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /venues': (
               200,
@@ -51,8 +51,8 @@ void main() {
       testWidgets('panel sin sedes $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await capturar(tester, 'admin/venues_empty_${ancho}_$modo.png');
@@ -61,9 +61,9 @@ void main() {
       testWidgets('alta de sede vacía $ancho $modo', (tester) async {
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/admin/sedes/nueva',
+          dark: oscuro,
+          size: tamano,
+          start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await capturar(tester, 'admin/create_empty_${ancho}_$modo.png');
@@ -73,9 +73,9 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/admin/sedes/nueva',
+          dark: oscuro,
+          size: tamano,
+          start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await completar(tester);
@@ -87,9 +87,9 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/admin/sedes/nueva',
+          dark: oscuro,
+          size: tamano,
+          start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.enterText(
@@ -107,9 +107,9 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/admin/sedes/nueva',
+          dark: oscuro,
+          size: tamano,
+          start: '/admin/sedes/nueva',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.tap(find.bySemanticsLabel('Horario de cierre'));
@@ -123,8 +123,8 @@ void main() {
       }) async {
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
             'PUT /venues/00000000-0000-7000-8000-000000000001': alGuardar,
@@ -175,8 +175,8 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
+          dark: oscuro,
+          size: tamano,
           api: apiRoutes({
             'GET /venues': (200, '{"venues": [$venueMoronJson]}'),
             'DELETE /venues/00000000-0000-7000-8000-000000000001': (
@@ -188,7 +188,10 @@ void main() {
         await tester.tap(find.bySemanticsLabel('Dar de baja Sede Morón'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('DAR DE BAJA'));
-        await capturar(tester, 'admin/deactivate_with_bookings_${ancho}_$modo.png');
+        await capturar(
+          tester,
+          'admin/deactivate_with_bookings_${ancho}_$modo.png',
+        );
         semantica.dispose();
       });
 
@@ -196,9 +199,9 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/admin/espacios',
+          dark: oscuro,
+          size: tamano,
+          start: '/admin/espacios',
           api: apiRoutes({
             'GET /spaces': (200, '{"spaces": [$spaceF5Json]}'),
             'GET /spaces/catalog': (200, catalogJson),
@@ -218,9 +221,9 @@ void main() {
         final semantica = tester.ensureSemantics();
         await mountAdmin(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/admin/sedes/nueva',
+          dark: oscuro,
+          size: tamano,
+          start: '/admin/sedes/nueva',
           api: apiRoutes({
             'POST /venues': (201, venueHaedoJson),
             'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),

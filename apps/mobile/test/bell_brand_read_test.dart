@@ -42,7 +42,7 @@ Future<(FakeApi, NotificationCenter)> _abrirCentro(
       now: () => noticesNow,
       onOpen: (_, _) {},
     ),
-    tema: darkTheme,
+    theme: darkTheme,
   );
   return (api, centro);
 }
@@ -60,9 +60,9 @@ Future<(FakeApi, SistemaConToques, NotificationCenter)> _montarApp(
   late NotificationCenter centro;
   await mountUser(
     tester,
-    inicio: '/inicio',
+    start: '/inicio',
     api: api.cliente,
-    centro: (sesion) => centro = centerOf(api, sesion, sistema: sistema),
+    center: (sesion) => centro = centerOf(api, sesion, sistema: sistema),
   );
   return (api, sistema, centro);
 }
@@ -172,10 +172,7 @@ void main() {
         final (api, _, centro) = await _montarApp(tester, [reminderNotice]);
 
         expect(centro.unread, 1);
-        expect(
-          api.de('POST', '/notifications/$_idRecordatorio/read'),
-          isEmpty,
-        );
+        expect(api.de('POST', '/notifications/$_idRecordatorio/read'), isEmpty);
         expect(api.de('POST', '/notifications/read-all'), isEmpty);
       },
     );

@@ -19,7 +19,7 @@ void main() {
           date: 'sábado 7 de junio',
           time: '18:00 – 19:00',
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       expect(find.text('sábado 7 de junio'), findsOneWidget);
       expect(find.text('18:00 – 19:00'), findsOneWidget);

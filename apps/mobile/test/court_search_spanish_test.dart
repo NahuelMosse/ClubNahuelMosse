@@ -100,12 +100,12 @@ void main() {
       final requests = <http.Request>[];
       await mountUser(
         tester,
-        inicio: '/inicio/buscar',
-        tamano: escala > 1 ? const Size(360, 800) : const Size(393, 852),
+        start: '/inicio/buscar',
+        size: escala > 1 ? const Size(360, 800) : const Size(393, 852),
         api: apiRoutes({
           ...venueRoutes(),
           'GET /spaces/available': respuesta,
-        }, pedidos: requests),
+        }, requests: requests),
       );
       return requests;
     }

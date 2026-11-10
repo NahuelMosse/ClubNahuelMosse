@@ -66,7 +66,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final servidor = _Servidor();
-      await mountUser(tester, api: servidor.api, inicio: '/inicio');
+      await mountUser(tester, api: servidor.api, start: '/inicio');
       expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
@@ -89,7 +89,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     final cancelacion = Completer<void>();
     final servidor = _Servidor(frenar: cancelacion.future);
-    await mountUser(tester, api: servidor.api, inicio: '/inicio');
+    await mountUser(tester, api: servidor.api, start: '/inicio');
 
     await tocar(tester, find.text('CANCELAR'));
     await tester.tap(find.text('CANCELAR RESERVA'));
@@ -123,7 +123,7 @@ void main() {
     tester,
   ) async {
     final servidor = _Servidor();
-    await mountUser(tester, api: servidor.api, inicio: '/inicio');
+    await mountUser(tester, api: servidor.api, start: '/inicio');
     final antes = servidor.lecturas;
 
     await tocar(tester, find.text('MODIFICAR'));

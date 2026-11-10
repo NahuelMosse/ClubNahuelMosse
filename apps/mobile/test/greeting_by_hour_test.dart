@@ -16,7 +16,7 @@ Future<void> _montarSaludo(WidgetTester tester, {Key? key}) => mountScreen(
   Scaffold(
     body: HomeGreeting(key: key, sesion: FakeSession(userProfile)),
   ),
-  tema: darkTheme,
+  theme: darkTheme,
 );
 
 void main() {

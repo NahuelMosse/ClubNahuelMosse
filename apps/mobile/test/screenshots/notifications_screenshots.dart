@@ -54,9 +54,9 @@ void main() {
             now: () => noticesNow,
             onOpen: (_, _) {},
           ),
-          tema: oscuro ? darkTheme : lightTheme,
-          tamano: tamano,
-          escalaTexto: escala,
+          theme: oscuro ? darkTheme : lightTheme,
+          size: tamano,
+          textScale: escala,
         );
       }
 
@@ -86,14 +86,16 @@ void main() {
 
       testWidgets('notificaciones desactivadas $ancho $modo', (tester) async {
         await centro(tester, permiso: false);
-        await capturar(
-          tester,
-          'notifications/disabled_${ancho}_$modo.png',
-        );
+        await capturar(tester, 'notifications/disabled_${ancho}_$modo.png');
       });
 
       testWidgets('desactivadas con avisos $ancho $modo', (tester) async {
-        await centro(tester, avisos: [reminderNotice], unread: 1, permiso: false);
+        await centro(
+          tester,
+          avisos: [reminderNotice],
+          unread: 1,
+          permiso: false,
+        );
         await capturar(
           tester,
           'notifications/disabled_with_notices_${ancho}_$modo.png',
@@ -106,11 +108,11 @@ void main() {
           ..unread = 2;
         await mountUser(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/inicio',
+          dark: oscuro,
+          size: tamano,
+          start: '/inicio',
           api: api.cliente,
-          centro: (sesion) => centerOf(api, sesion),
+          center: (sesion) => centerOf(api, sesion),
         );
         await capturar(tester, 'notifications/home_${ancho}_$modo.png');
       });
@@ -130,8 +132,8 @@ void main() {
               ),
             ],
           ),
-          tema: oscuro ? darkTheme : lightTheme,
-          tamano: tamano,
+          theme: oscuro ? darkTheme : lightTheme,
+          size: tamano,
         );
         api
           ..avisos = [

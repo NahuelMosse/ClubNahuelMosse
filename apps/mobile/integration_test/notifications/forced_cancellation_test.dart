@@ -21,14 +21,14 @@ void main() {
     final sede = 'Sede Morón ${unique()}';
     await createVenue(sede, 'Av. Rivadavia 19850');
     final cancha = await createSpace(sede);
-    await occupy(cancha, manana, hora, correo: correo);
+    await occupy(cancha, manana, hora, email: correo);
     return (sede, cancha);
   }
 
   /// Una cuenta nueva con una reserva mañana a las 21.
   Future<(String, String, String)> reservaDeManana() async {
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await createAccount(email: correo, password: 'ClubNahuel1');
     final (sede, cancha) = await otraReserva(correo);
     return (correo, sede, cancha);
   }
@@ -39,7 +39,7 @@ void main() {
     bool permiso = true,
   }) async {
     await openApp(tester);
-    await setNotificationPermission(concedido: permiso);
+    await setNotificationPermission(granted: permiso);
     await typeInto(tester, 'Correo', correo);
     await typeInto(tester, 'Contraseña', 'ClubNahuel1');
     await tapText(tester, 'INICIAR SESIÓN');

@@ -187,7 +187,7 @@ List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
 // ---- las apps ----
 
 ApiClient _apiUsuario() => apiRoutes({
-  ...venueRoutes(grilla: gridJson(ocupadas: {9, 12})),
+  ...venueRoutes(grid: gridJson(taken: {9, 12})),
   'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
 });
 
@@ -213,24 +213,20 @@ ApiClient _apiAdmin() => apiRoutes({
 /// Alto para que el inicio construya todos sus bloques, también los de abajo.
 const _telefonoAlto = Size(393, 1600);
 
-Future<void> _usuarioEn(WidgetTester tester, String inicio) => mountUser(
-  tester,
-  api: _apiUsuario(),
-  inicio: inicio,
-  tamano: _telefonoAlto,
-);
+Future<void> _usuarioEn(WidgetTester tester, String inicio) =>
+    mountUser(tester, api: _apiUsuario(), start: inicio, size: _telefonoAlto);
 
 Future<void> _adminEn(WidgetTester tester, String inicio) =>
-    mountAdmin(tester, api: _apiAdmin(), inicio: inicio);
+    mountAdmin(tester, api: _apiAdmin(), start: inicio);
 
 Future<void> _usuarioConCentro(WidgetTester tester, String inicio) {
   final api = FakeApi();
   return mountUser(
     tester,
     api: api.cliente,
-    inicio: inicio,
-    tamano: _telefonoAlto,
-    centro: (sesion) => centerOf(api, sesion),
+    start: inicio,
+    size: _telefonoAlto,
+    center: (sesion) => centerOf(api, sesion),
   );
 }
 

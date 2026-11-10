@@ -14,8 +14,8 @@ void main() {
     (tester) async {
       await mountUser(
         tester,
-        tamano: const Size(393, 1400),
-        api: apiRoutes(venueRoutes(sedes: '[$venueMoronWithSports]')),
+        size: const Size(393, 1400),
+        api: apiRoutes(venueRoutes(venues: '[$venueMoronWithSports]')),
       );
 
       final tarjeta = find.byType(VenueCard);

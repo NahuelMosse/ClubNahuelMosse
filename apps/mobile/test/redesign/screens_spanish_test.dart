@@ -23,7 +23,7 @@ void main() {
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
-          api: fakeApi(codigo: 200, cuerpo: profileJson()),
+          api: fakeApi(status: 200, body: profileJson()),
         ),
       );
       final rutas = GoRouter(

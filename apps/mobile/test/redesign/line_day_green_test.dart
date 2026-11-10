@@ -26,7 +26,7 @@ void main() {
           const Scaffold(
             body: Center(child: DayTimeline(slots: _franjas, from: 8)),
           ),
-          tema: tema,
+          theme: tema,
         );
 
         Color? franja(String hora) =>

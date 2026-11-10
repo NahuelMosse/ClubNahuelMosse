@@ -65,7 +65,7 @@ void main() {
           'GET /spaces/catalog': (200, catalogJson),
         }),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await tester.pumpAndSettle();
 
@@ -91,7 +91,7 @@ void main() {
           'GET /spaces/catalog': (200, catalogJson),
         }),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await tester.pumpAndSettle();
 
@@ -115,9 +115,9 @@ void main() {
             'GET /spaces/catalog': (200, catalogJson),
           }),
         ),
-        tema: darkTheme,
-        tamano: const Size(360, 800),
-        escalaTexto: 2,
+        theme: darkTheme,
+        size: const Size(360, 800),
+        textScale: 2,
       );
       await tester.pumpAndSettle();
 
@@ -169,8 +169,8 @@ void main() {
       await mountScreen(
         tester,
         pantalla(api: api),
-        tema: darkTheme,
-        tamano: const Size(393, 852),
+        theme: darkTheme,
+        size: const Size(393, 852),
       );
       await tester.pumpAndSettle();
 

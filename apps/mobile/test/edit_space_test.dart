@@ -23,8 +23,8 @@ void main() {
     var guardado = false;
     await mountAdmin(
       tester,
-      inicio: '/admin/espacios',
-      tamano: tamano,
+      start: '/admin/espacios',
+      size: tamano,
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {

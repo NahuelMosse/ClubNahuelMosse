@@ -19,7 +19,7 @@ void main() {
       await mountScreen(
         tester,
         RegistrationScreen(registration: RegistrationService(fakeApi())),
-        tema: tema,
+        theme: tema,
       );
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -31,7 +31,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await mountScreen(tester, const RegistrationDoneScreen(), tema: tema);
+      await mountScreen(tester, const RegistrationDoneScreen(), theme: tema);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -46,7 +46,7 @@ void main() {
       await mountScreen(
         tester,
         RegistrationScreen(registration: RegistrationService(fakeApi())),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       for (final campo in [
         'Nombre',
@@ -67,15 +67,15 @@ void main() {
     await mountScreen(
       tester,
       RegistrationScreen(registration: RegistrationService(fakeApi())),
-      tema: darkTheme,
-      escalaTexto: 2,
+      theme: darkTheme,
+      textScale: 2,
     );
     expect(tester.takeException(), isNull);
     await mountScreen(
       tester,
       const RegistrationDoneScreen(),
-      tema: darkTheme,
-      escalaTexto: 2,
+      theme: darkTheme,
+      textScale: 2,
     );
     expect(tester.takeException(), isNull);
   });

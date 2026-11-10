@@ -104,7 +104,7 @@ void main() {
   Future<void> mountEnglish(WidgetTester tester, Widget widget) async {
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await mountScreen(tester, widget, tema: darkTheme);
+    await mountScreen(tester, widget, theme: darkTheme);
   }
 
   group('notifications', () {

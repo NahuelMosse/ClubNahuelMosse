@@ -64,7 +64,7 @@ void main() {
     });
 
     testWidgets('sin sedes lo dice', (tester) async {
-      await mountUser(tester, api: apiRoutes(venueRoutes(sedes: '[]')));
+      await mountUser(tester, api: apiRoutes(venueRoutes(venues: '[]')));
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
       expect(find.text('El club todavía no cargó sus sedes.'), findsOneWidget);
     });
@@ -91,8 +91,8 @@ void main() {
       final pedidos = <http.Request>[];
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: apiRoutes(venueRoutes(), pedidos: pedidos),
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
+        api: apiRoutes(venueRoutes(), requests: pedidos),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
       expect(find.text('AV. RIVADAVIA 19850 · 08:00 A 23:00'), findsOneWidget);
@@ -120,8 +120,8 @@ void main() {
     testWidgets('sin canchas lo dice con el contador en cero', (tester) async {
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000005',
-        api: apiRoutes(venueRoutes(espacios: '[]')),
+        start: '/sedes/00000000-0000-7000-8000-000000000005',
+        api: apiRoutes(venueRoutes(spaces: '[]')),
       );
       expect(find.text('0 CANCHAS'), findsOneWidget);
       expect(find.text('Todavía no hay canchas'), findsOneWidget);
@@ -133,7 +133,7 @@ void main() {
       (tester) async {
         await mountUser(
           tester,
-          inicio: '/sedes/00000000-0000-7000-8000-000000000099',
+          start: '/sedes/00000000-0000-7000-8000-000000000099',
           api: apiRoutes(venueRoutes()),
         );
         expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
@@ -144,7 +144,7 @@ void main() {
     );
 
     testWidgets('«Todas las sedes» vuelve al listado', (tester) async {
-      await mountUser(tester, api: apiRoutes(venueRoutes(espacios: '[]')));
+      await mountUser(tester, api: apiRoutes(venueRoutes(spaces: '[]')));
       await tester.tap(find.text('SEDE HAEDO'));
       await tester.pumpAndSettle();
       expect(find.text('0 CANCHAS'), findsOneWidget);
@@ -167,7 +167,7 @@ void main() {
       );
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api,
       );
       expect(find.text('Error de conexión'), findsOneWidget);
@@ -231,7 +231,7 @@ void main() {
       final pedidos = <http.Request>[];
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(pedidos: pedidos),
       );
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
@@ -289,7 +289,7 @@ void main() {
       );
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: cliente,
       );
       await tocarChip(tester, 'Deporte Fútbol');
@@ -316,7 +316,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(),
       );
       await tocarChip(tester, 'Deporte Tenis');
@@ -329,7 +329,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(fallaAlFiltrar: true),
       );
       await tocarChip(tester, 'Deporte Fútbol');
@@ -348,7 +348,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountUser(
         tester,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: apiRoutes(venueRoutes()),
       );
       await tester.ensureVisible(find.text('VER HORARIOS / RESERVAR').first);

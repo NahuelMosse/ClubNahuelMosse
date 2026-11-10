@@ -16,8 +16,8 @@ void main() {
       {
         'F5_1': await createSpace(sede),
         'F5_2': await createSpace(sede),
-        'F7_1': await createSpace(sede, tipo: 'F7'),
-        'H7_1': await createSpace(sede, deporte: 'Hockey', tipo: 'H7'),
+        'F7_1': await createSpace(sede, kind: 'F7'),
+        'H7_1': await createSpace(sede, sport: 'Hockey', kind: 'H7'),
       },
     );
   }
@@ -29,7 +29,7 @@ void main() {
   }) async {
     await signInAsUser(
       tester,
-      correo: 'socio.${unique()}@correo.com',
+      email: 'socio.${unique()}@correo.com',
       apiUrl: apiUrl,
     );
     await tapText(tester, 'SEDES');
@@ -65,7 +65,10 @@ void main() {
       await filtrar(tester, 'Deporte Fútbol');
 
       // Verifica: el contador dice el deporte y quedan sólo sus canchas.
-      await waitUntil(tester, find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
       expect(elegido(tester, 'Deporte Fútbol'), isTrue);
       for (final c in ['F5_1', 'F5_2', 'F7_1']) {
         expect(find.text(canchas[c]!), findsOneWidget);
@@ -82,7 +85,10 @@ void main() {
       final (sede, canchas) = await sedeConCanchas();
       await entrarA(tester, sede);
       await filtrar(tester, 'Deporte Fútbol');
-      await waitUntil(tester, find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
 
       await filtrar(tester, 'Tipo Fútbol 5');
 
@@ -104,9 +110,12 @@ void main() {
       await entrarA(tester, sede);
 
       // El administrador carga otra cancha mientras el usuario mira la sede.
-      final nueva = await createSpace(sede, tipo: 'F7');
+      final nueva = await createSpace(sede, kind: 'F7');
       await filtrar(tester, 'Deporte Fútbol');
-      await waitUntil(tester, find.text('4 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('4 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
       await filtrar(tester, 'Tipo Fútbol 7');
 
       // Verifica: la nueva aparece entre las de su tipo.
@@ -123,7 +132,10 @@ void main() {
       final (sede, _) = await sedeConCanchas();
       await entrarA(tester, sede);
       await filtrar(tester, 'Deporte Fútbol');
-      await waitUntil(tester, find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
       await filtrar(tester, 'Tipo Fútbol 5');
       await waitUntil(tester, find.text('2 CANCHAS · FÚTBOL 5'));
 
@@ -168,14 +180,20 @@ void main() {
       final (sede, canchas) = await sedeConCanchas();
       await entrarA(tester, sede);
       await filtrar(tester, 'Deporte Fútbol');
-      await waitUntil(tester, find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
       await filtrar(tester, 'Tipo Fútbol 7');
       await waitUntil(tester, find.text('1 CANCHA · FÚTBOL 7'));
 
       await filtrar(tester, 'Tipo Todos');
 
       // Verifica: vuelven todas las de Fútbol y el deporte sigue elegido.
-      await waitUntil(tester, find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
       expect(elegido(tester, 'Deporte Fútbol'), isTrue);
       expect(elegido(tester, 'Tipo Todos'), isTrue);
       expect(find.text(canchas['F5_1']!), findsOneWidget);
@@ -189,7 +207,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final sede = 'Sede Haedo ${unique()}';
       await createVenue(sede, 'Av. Vergara 1850');
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await tapText(tester, 'SEDES');
       final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
       await waitUntil(tester, tarjeta);
@@ -211,10 +229,10 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, canchas) = await sedeConCanchas();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrarA(tester, sede, apiUrl: api.url);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await filtrar(tester, 'Deporte Fútbol');
 
       // Verifica: avisa sin conexión y el listado sigue con todos los deportes.
@@ -232,12 +250,15 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, canchas) = await sedeConCanchas();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrarA(tester, sede, apiUrl: api.url);
       await filtrar(tester, 'Deporte Fútbol');
-      await waitUntil(tester, find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'));
+      await waitUntil(
+        tester,
+        find.text('3 CANCHAS · FÚTBOL · TODOS LOS TIPOS'),
+      );
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await filtrar(tester, 'Tipo Fútbol 5');
 
       // Verifica: avisa del servidor y sigue el filtro anterior.

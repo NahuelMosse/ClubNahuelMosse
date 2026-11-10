@@ -56,13 +56,13 @@ void main() {
         String? espacios,
       }) => mountUser(
         tester,
-        oscuro: oscuro,
-        tamano: tamano,
-        inicio: inicio,
+        dark: oscuro,
+        size: tamano,
+        start: inicio,
         api: apiRoutes({
           ...venueRoutes(
-            sedes: sedes,
-            espacios:
+            venues: sedes,
+            spaces:
                 espacios ??
                 '[$spaceF5Json, $spaceTennisJson]'.replaceAll(
                   idMoron,
@@ -136,12 +136,12 @@ void main() {
       testWidgets('horarios sin turnos $ancho $modo', (tester) async {
         await mountUser(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio:
+          dark: oscuro,
+          size: tamano,
+          start:
               '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
           api: apiRoutes({
-            ...venueRoutes(sedes: sedes, grilla: gridJson(abre: false)),
+            ...venueRoutes(venues: sedes, grid: gridJson(opens: false)),
             'GET /spaces/catalog': (200, catalogoCompleto),
           }),
         );

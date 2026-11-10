@@ -26,8 +26,8 @@ void main() {
     await createVenue(sede, 'Av. Vergara 1850');
     final cancha = await createSpace(sede);
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-    await occupy(cancha, manana, 21, correo: correo);
+    await createAccount(email: correo, password: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, email: correo);
     return (sede, cancha, correo);
   }
 
@@ -92,7 +92,7 @@ void main() {
 
       // Otra persona mira los horarios de esa cancha.
       final otra = 'socio.${unique()}@correo.com';
-      await createAccount(correo: otra, contrasena: 'ClubNahuel1');
+      await createAccount(email: otra, password: 'ClubNahuel1');
       await entrar(tester, otra);
       await tapText(tester, 'SEDES');
       final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
@@ -138,12 +138,12 @@ void main() {
     'sin conexión al confirmar, ve el error con reintento y la reserva sigue activa @CU-10-H03-01',
     (tester) async {
       final (_, cancha, correo) = await reservaDeManana();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await abrirMisReservas(tester, cancha);
       await pedirCancelar(tester);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'CANCELAR RESERVA');
 
       // Verifica: el aviso con reintento y la reserva intacta.
@@ -158,12 +158,12 @@ void main() {
     'el servidor falla al cancelar y la reserva sigue activa @CU-10-H04-01',
     (tester) async {
       final (_, cancha, correo) = await reservaDeManana();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await abrirMisReservas(tester, cancha);
       await pedirCancelar(tester);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'CANCELAR RESERVA');
 
       // Verifica: el aviso del servidor y la reserva intacta.

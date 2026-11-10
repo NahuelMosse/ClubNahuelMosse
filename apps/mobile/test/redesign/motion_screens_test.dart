@@ -277,7 +277,7 @@ Widget _login({FakeCredentials? credenciales}) => LoginScreen(
   session: Session(
     repository: SessionRepository(
       credentials: credenciales ?? FakeCredentials(),
-      api: fakeApi(codigo: 200, cuerpo: profileJson()),
+      api: fakeApi(status: 200, body: profileJson()),
     ),
   ),
   pending: PendingBooking(),
@@ -333,11 +333,7 @@ void main() {
     'cambiar a Historial cambia sólo la lista con un fundido de 150 ms @RED-04-S5',
     (tester) async {
       final espera = Completer<void>();
-      await mountUser(
-        tester,
-        api: _apiMisReservas(espera),
-        inicio: '/reservas',
-      );
+      await mountUser(tester, api: _apiMisReservas(espera), start: '/reservas');
       final titulo = tester.element(find.text('Mis reservas'));
       final selector = tester.element(find.text('Historial'));
       final lista = _fundidoDeLaLista;
@@ -388,7 +384,7 @@ void main() {
       await mountUser(
         tester,
         api: _apiSede(espera),
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        start: '/sedes/00000000-0000-7000-8000-000000000001',
       );
       const tenis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
       const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
@@ -435,11 +431,7 @@ void main() {
     'con reducir movimiento la lista cambia en el primer cuadro @RED-04-S14',
     (tester) async {
       _reducirMovimiento(tester);
-      await mountUser(
-        tester,
-        api: _apiMisReservas(null),
-        inicio: '/reservas',
-      );
+      await mountUser(tester, api: _apiMisReservas(null), start: '/reservas');
       expect(find.text('ACTIVA'), findsOneWidget);
 
       await tester.tap(find.text('Historial'));
@@ -455,11 +447,7 @@ void main() {
     'la lista de la otra pestaña no queda a la vista mientras carga @RED-04-ASM-07',
     (tester) async {
       final espera = Completer<void>();
-      await mountUser(
-        tester,
-        api: _apiMisReservas(espera),
-        inicio: '/reservas',
-      );
+      await mountUser(tester, api: _apiMisReservas(espera), start: '/reservas');
       expect(find.text('ACTIVA'), findsOneWidget);
 
       await tester.tap(find.text('Historial'));
@@ -627,7 +615,7 @@ void main() {
         tester,
         ValueListenableBuilder<int>(
           valueListenable: datos,
-          builder: (context, n, _) => fakeHome(sesion, conReserva: n.isEven),
+          builder: (context, n, _) => fakeHome(sesion, withBooking: n.isEven),
         ),
       );
       await _hastaQue(
@@ -769,7 +757,7 @@ void main() {
     'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
     (tester) async {
       final credenciales = FakeCredentials(
-        alIngresar: (_, _) async => throw const InvalidCredentials(),
+        onSignIn: (_, _) async => throw const InvalidCredentials(),
       );
       await _montarLibre(tester, _login(credenciales: credenciales));
       await tester.pumpAndSettle();
@@ -803,7 +791,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(invalidCredentialsMessage), findsNothing);
       }
-      expect(credenciales.intentos, hasLength(2));
+      expect(credenciales.attempts, hasLength(2));
     },
   );
 
@@ -932,7 +920,7 @@ void main() {
       await mountUser(
         tester,
         api: apiRoutes(venueRoutes()),
-        inicio:
+        start:
             '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
       final linea = find.byType(DayTimeline);
@@ -982,7 +970,7 @@ void main() {
           NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
         ],
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     api
       ..avisos = [reminderNotice]
@@ -1027,7 +1015,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
 
       for (final texto in ['PRIMARIO', 'TEXTO', 'CONTORNO', 'PELIGRO']) {
@@ -1117,7 +1105,7 @@ void main() {
   testWidgets(
     'un diálogo de DialogFrame entra con fundido y escala de 0,88 a 1 @RED-04-S11',
     (tester) async {
-      await mountScreen(tester, _cancelacion(), tema: darkTheme);
+      await mountScreen(tester, _cancelacion(), theme: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
@@ -1162,7 +1150,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
@@ -1187,11 +1175,9 @@ void main() {
       await mountScreen(
         tester,
         Scaffold(
-          body: Center(
-            child: AccountButton(session: FakeSession(userProfile)),
-          ),
+          body: Center(child: AccountButton(session: FakeSession(userProfile))),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.tap(find.byType(AccountButton));
       await tester.pump();
@@ -1220,7 +1206,7 @@ void main() {
   testWidgets(
     'los botones de un diálogo se achican mientras se presionan @RED-04-S13',
     (tester) async {
-      await mountScreen(tester, _cancelacion(), tema: darkTheme);
+      await mountScreen(tester, _cancelacion(), theme: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
 
@@ -1253,7 +1239,7 @@ void main() {
     'con reducir movimiento el diálogo aparece entero en el primer cuadro @RED-04-S14',
     (tester) async {
       _reducirMovimiento(tester);
-      await mountScreen(tester, _cancelacion(), tema: darkTheme);
+      await mountScreen(tester, _cancelacion(), theme: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
@@ -1285,7 +1271,7 @@ void main() {
       };
       for (final MapEntry(key: nombre, value: pantalla) in pantallas.entries) {
         // Como los helpers de test/screenshots: `montar` termina con pumpAndSettle.
-        await mountScreen(tester, pantalla, tema: darkTheme);
+        await mountScreen(tester, pantalla, theme: darkTheme);
         expect(find.byType(FadeIn), findsWidgets, reason: nombre);
         expect(_todasEnSuFinal(tester), isTrue, reason: nombre);
         expect(tester.binding.hasScheduledFrame, isFalse, reason: nombre);

@@ -39,7 +39,7 @@ void main() {
             onTap: () => toques++,
           ),
         ),
-        tema: lightTheme,
+        theme: lightTheme,
       );
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
       await tester.tap(find.byType(NoticeCard));

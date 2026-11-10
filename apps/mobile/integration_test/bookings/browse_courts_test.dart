@@ -35,14 +35,14 @@ void main() {
       sede,
       await createSpace(sede),
       await createSpace(sede),
-      await createSpace(sede, tipo: 'F7'),
+      await createSpace(sede, kind: 'F7'),
     );
   }
 
   Future<void> abrirBusqueda(WidgetTester tester, {String? apiUrl}) async {
     await signInAsUser(
       tester,
-      correo: 'socio.${unique()}@correo.com',
+      email: 'socio.${unique()}@correo.com',
       apiUrl: apiUrl,
     );
     await tapText(tester, 'Buscar cancha');
@@ -98,7 +98,7 @@ void main() {
       final (sede, f5a, f5b, _) = await sedeConCanchas();
       // La de la Cancha 1 termina cuando empieza el rango; la de la Cancha 2 lo pisa.
       await occupy(f5a, manana, 9);
-      await occupy(f5b, manana, 11, horas: 2);
+      await occupy(f5b, manana, 11, hours: 2);
       await abrirBusqueda(tester);
       await completar(tester, sede);
 
@@ -173,7 +173,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, f5a, f5b, _) = await sedeConCanchas();
-      await occupy(f5a, manana, 10, horas: 2);
+      await occupy(f5a, manana, 10, hours: 2);
       await occupy(f5b, manana, 10);
       await abrirBusqueda(tester);
       await completar(tester, sede);
@@ -242,11 +242,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, _, _, _) = await sedeConCanchas();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await abrirBusqueda(tester, apiUrl: api.url);
       await completar(tester, sede);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'CONSULTAR');
 
       // Verifica: el error con reintento, y los filtros siguen cargados.
@@ -267,13 +267,13 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, f5a, _, _) = await sedeConCanchas();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await abrirBusqueda(tester, apiUrl: api.url);
       await completar(tester, sede);
       await tapText(tester, 'CONSULTAR');
       await waitUntil(tester, find.text(f5a));
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'CONSULTAR');
 
       // Verifica: el error, y el resultado anterior ya no está.

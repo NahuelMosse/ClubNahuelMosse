@@ -31,8 +31,8 @@ void main() {
       final nombre = 'Sede Ituzaingó ${unique()}';
       await createVenue(nombre, 'Av. Ratti 1400');
       await createSpace(nombre);
-      await createSpace(nombre, deporte: 'Tenis', tipo: 'PDL');
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await createSpace(nombre, sport: 'Tenis', kind: 'PDL');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await abrirSedes(tester);
 
@@ -56,8 +56,8 @@ void main() {
       final nombre = 'Sede Ituzaingó ${unique()}';
       await createVenue(nombre, 'Av. Ratti 1400');
       final futbol = await createSpace(nombre);
-      final tenis = await createSpace(nombre, deporte: 'Tenis', tipo: 'PDL');
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      final tenis = await createSpace(nombre, sport: 'Tenis', kind: 'PDL');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await abrirSedes(tester);
 
       await entrarA(tester, nombre);
@@ -87,7 +87,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Ituzaingó ${unique()}';
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await abrirSedes(tester);
       expect(tarjeta(nombre), findsNothing);
 
@@ -119,7 +119,7 @@ void main() {
     final nombre = 'Sede Ituzaingó ${unique()}';
     await createVenue(nombre, 'Av. Ratti 1400');
     await createSpace(nombre);
-    await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+    await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
     await abrirSedes(tester);
     await entrarA(tester, nombre);
     await waitUntil(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
@@ -145,7 +145,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await abrirSedes(tester);
 
       await entrarA(tester, nombre);
@@ -169,7 +169,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     final nombre = 'Sede Haedo ${unique()}';
     await createVenue(nombre, 'Av. Vergara 1850');
-    await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+    await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
     await abrirSedes(tester);
     await entrarA(tester, nombre);
     await waitUntil(tester, find.text('0 CANCHAS'));
@@ -190,21 +190,21 @@ void main() {
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
       final cancha = await createSpace(nombre);
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
       await abrirSedes(tester);
       await waitUntil(tester, tarjeta(nombre));
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await entrarA(tester, nombre);
 
       // Verifica: avisa sin conexión, y al reintentar con la red de vuelta muestra la sede.
       await waitUntil(tester, find.text('Error de conexión'));
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'REINTENTAR');
       await waitUntil(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
       expect(find.text(cancha), findsOneWidget);
@@ -218,14 +218,14 @@ void main() {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'SEDES');
 
       // Verifica: avisa del servidor y no queda ninguna sede a la vista.

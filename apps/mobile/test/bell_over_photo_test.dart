@@ -19,7 +19,7 @@ Future<void> _montarCampana(
   await mountScreen(
     tester,
     Material(child: NotificationsButton(center: centro)),
-    tema: tema,
+    theme: tema,
   );
   await tester.pumpAndSettle();
 }

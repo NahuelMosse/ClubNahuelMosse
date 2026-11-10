@@ -28,16 +28,13 @@ void main() {
     final rutas = venueRoutes();
     await mountUser(
       tester,
-      inicio: '/reservas',
+      start: '/reservas',
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            (
-              'POST',
-              '/bookings/00000000-0000-7000-8000-000000000001/cancel',
-            ) =>
+            ('POST', '/bookings/00000000-0000-7000-8000-000000000001/cancel') =>
               () {
                 final respuesta =
                     alCancelar ?? (200, bookingJson(estado: 'canceled'));
@@ -143,7 +140,7 @@ void main() {
       );
       await mountUser(
         tester,
-        inicio: '/reservas',
+        start: '/reservas',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [$empezada]}'),

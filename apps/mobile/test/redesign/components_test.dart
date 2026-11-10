@@ -32,7 +32,7 @@ const _p = Palette.dark;
 Future<void> _montar(WidgetTester tester, Widget hijo) => mountScreen(
   tester,
   Scaffold(body: Center(child: hijo)),
-  tema: darkTheme,
+  theme: darkTheme,
 );
 
 const _celdas = [

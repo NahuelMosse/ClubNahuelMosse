@@ -39,8 +39,8 @@ void main() {
     final rutas = venueRoutes();
     await mountUser(
       tester,
-      inicio: '/reservas',
-      tamano: tamano,
+      start: '/reservas',
+      size: tamano,
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {

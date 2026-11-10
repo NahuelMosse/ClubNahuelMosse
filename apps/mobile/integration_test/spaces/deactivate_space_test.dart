@@ -120,11 +120,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (_, cancha, _) = await sedeConDos();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await pedirLaBaja(tester, cancha);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'CONFIRMAR BAJA');
 
       // Verifica: sin conexión, el aviso y el espacio sigue.
@@ -133,7 +133,7 @@ void main() {
       expect(find.text(cancha), findsOneWidget);
       expect(await spaceAUserSees(cancha), isNotNull);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await pedirLaBaja(tester, cancha);
       await tapText(tester, 'CONFIRMAR BAJA');
 

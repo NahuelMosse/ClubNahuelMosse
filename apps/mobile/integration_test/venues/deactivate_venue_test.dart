@@ -187,12 +187,12 @@ void main() {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await abrirEdicion(tester, nombre);
       await pedirLaBaja(tester);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'DAR DE BAJA');
 
       // Verifica: el error, sigue en la edición y la sede está activa.

@@ -36,7 +36,7 @@ void main() {
 
   Future<String> cuenta() async {
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await createAccount(email: correo, password: 'ClubNahuel1');
     return correo;
   }
 
@@ -260,7 +260,7 @@ void main() {
       expect(find.text('${franja(16)} · 1 hora'), findsOneWidget);
       await tapText(tester, 'CONFIRMAR RESERVA');
       await waitUntil(tester, find.text('¡Reserva confirmada!'));
-      expect(await bookingsOf(correo, contrasena: 'ClubNahuel2'), [
+      expect(await bookingsOf(correo, password: 'ClubNahuel2'), [
         (cancha, '16:00'),
       ]);
     },
@@ -271,11 +271,11 @@ void main() {
     (tester) async {
       final (sede, _) = await sedeConCancha();
       final correo = await cuenta();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await irAConfirmar(tester, sede);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: el aviso de conexión, sigue en la confirmación y no hay reserva.
@@ -291,11 +291,11 @@ void main() {
     (tester) async {
       final (sede, _) = await sedeConCancha();
       final correo = await cuenta();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await irAConfirmar(tester, sede);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'CONFIRMAR RESERVA');
 
       // Verifica: el error del servidor, sigue en la confirmación y no hay reserva.

@@ -44,11 +44,11 @@ void main() {
       final cancha = await createSpace(nombreSede);
       final correo = 'socio.${unique()}@correo.com';
       await createAccount(
-        correo: correo,
-        contrasena: 'ClubNahuel1',
-        nombre: 'Nahuel',
+        email: correo,
+        password: 'ClubNahuel1',
+        name: 'Nahuel',
       );
-      await occupy(cancha, manana, 21, correo: correo);
+      await occupy(cancha, manana, 21, email: correo);
       await signInAsAdmin(tester);
       await typeInto(tester, 'Buscar reserva', nombreSede);
       await waitUntil(tester, find.text(cancha));
@@ -97,8 +97,8 @@ void main() {
         anulado,
         manana,
         15,
-        estado: 'voided',
-        motivo: 'mantenimiento',
+        status: 'voided',
+        reason: 'mantenimiento',
       );
       await signInAsAdmin(tester);
       await typeInto(tester, 'Buscar reserva', nombreSede);
@@ -124,11 +124,7 @@ void main() {
       final nombreSede = 'Sede San Justo ${unique()}';
       await createVenue(nombreSede, 'Av. Rivadavia 5000');
       final futbol = await createSpace(nombreSede);
-      final tenis = await createSpace(
-        nombreSede,
-        deporte: 'Tenis',
-        tipo: 'PDL',
-      );
+      final tenis = await createSpace(nombreSede, sport: 'Tenis', kind: 'PDL');
       final futbolViejo = await createSpace(nombreSede);
       await occupy(futbol, manana, 10);
       await occupy(tenis, manana, 10);
@@ -164,17 +160,17 @@ void main() {
       final correoUno = 'valentina.${unique()}@correo.com';
       final correoDos = 'bruno.${unique()}@correo.com';
       await createAccount(
-        correo: correoUno,
-        contrasena: 'ClubNahuel1',
-        nombre: 'Valentina',
+        email: correoUno,
+        password: 'ClubNahuel1',
+        name: 'Valentina',
       );
       await createAccount(
-        correo: correoDos,
-        contrasena: 'ClubNahuel1',
-        nombre: 'Bruno',
+        email: correoDos,
+        password: 'ClubNahuel1',
+        name: 'Bruno',
       );
-      await occupy(canchaUno, manana, 9, correo: correoUno);
-      await occupy(canchaDos, manana, 9, correo: correoDos);
+      await occupy(canchaUno, manana, 9, email: correoUno);
+      await occupy(canchaDos, manana, 9, email: correoDos);
       await signInAsAdmin(tester);
 
       await tapText(tester, 'Filtros');
@@ -200,11 +196,11 @@ void main() {
       final cancha = await createSpace(nombreSede);
       final correo = 'camila.${unique()}@correo.com';
       await createAccount(
-        correo: correo,
-        contrasena: 'ClubNahuel1',
-        nombre: 'Camila',
+        email: correo,
+        password: 'ClubNahuel1',
+        name: 'Camila',
       );
-      await occupy(cancha, manana, 11, correo: correo);
+      await occupy(cancha, manana, 11, email: correo);
       await signInAsAdmin(tester);
       await typeInto(tester, 'Buscar reserva', nombreSede);
       await waitUntil(tester, find.text(cancha));
@@ -245,8 +241,8 @@ void main() {
     'mientras carga el historial ve «Cargando reservas…» y no una pantalla en blanco @CU-14-H01-09',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = await ApiIntermedia.abrir();
-      api.estado = ApiState.slow;
+      final api = await ProxyApi.open();
+      api.state = ApiState.slow;
       await signInAsAdmin(tester, apiUrl: api.url);
 
       // Verifica: mientras el pedido lento no volvió, se ve el aviso y no una pantalla vacía.
@@ -295,11 +291,11 @@ void main() {
     'falla el servidor y ve el error con «Reintentar», sin datos parciales @CU-14-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await waitUntil(tester, find.textContaining('RESERVA'));
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'Filtros');
       await waitUntil(tester, find.text('APLICAR'));
       await tapText(tester, 'APLICAR');
@@ -308,7 +304,7 @@ void main() {
       expect(find.textContaining('RESERVAS EN TOTAL'), findsNothing);
       expect(find.textContaining('RESULTADO'), findsNothing);
 
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'REINTENTAR');
       await waitUntil(tester, find.textContaining('RESERVA'));
       semantica.dispose();
@@ -359,7 +355,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       expect(find.text('PANEL ADMIN'), findsNothing);
 
       final contexto = tester.element(find.byType(Scaffold).first);
@@ -379,12 +375,12 @@ void main() {
       final semantica = tester.ensureSemantics();
       final nombreSede = 'Sede Haedo ${unique()}';
       await createVenue(nombreSede, 'Av. Vergara 1850');
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await typeInto(tester, 'Buscar reserva', nombreSede);
       await waitUntil(tester, find.text('Sin resultados'));
 
-      api.estado = ApiState.sessionExpired;
+      api.state = ApiState.sessionExpired;
       await tapText(tester, 'Filtros');
       await waitUntil(tester, find.text('APLICAR'));
       await tapText(tester, 'APLICAR');
@@ -393,7 +389,7 @@ void main() {
       await tapText(tester, 'IR AL INICIO DE SESIÓN');
       await waitUntil(tester, find.text('INICIAR SESIÓN'));
 
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await typeInto(tester, 'Correo', adminEmail);
       await typeInto(tester, 'Contraseña', adminPassword);
       await tapText(tester, 'INICIAR SESIÓN');

@@ -33,8 +33,8 @@ void main() {
     final cancha = await createSpace(sede);
     await createSpace(sede);
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
-    await occupy(cancha, manana, 21, correo: correo);
+    await createAccount(email: correo, password: 'ClubNahuel1');
+    await occupy(cancha, manana, 21, email: correo);
     return (sede, cancha, correo);
   }
 
@@ -67,7 +67,10 @@ void main() {
     await tapText(tester, 'RESERVAS');
     await waitUntil(tester, find.text(cancha));
     await tapText(tester, 'MODIFICAR');
-    await waitUntil(tester, find.textContaining('Estás modificando tu reserva'));
+    await waitUntil(
+      tester,
+      find.textContaining('Estás modificando tu reserva'),
+    );
   }
 
   /// Elige las 19 y llega a «Confirmá el cambio».
@@ -115,7 +118,7 @@ void main() {
 
       // Otra persona mira los horarios de la Cancha 1.
       final otra = 'socio.${unique()}@correo.com';
-      await createAccount(correo: otra, contrasena: 'ClubNahuel1');
+      await createAccount(email: otra, password: 'ClubNahuel1');
       await entrar(tester, otra);
       await tapText(tester, 'SEDES');
       final tarjeta = find.bySemanticsLabel(RegExp('^${RegExp.escape(sede)},'));
@@ -247,12 +250,12 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (_, cancha, correo) = await reservaDeManana();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await abrirModificar(tester, cancha);
       await hastaConfirmar(tester);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: sin conexión, el aviso y la reserva intacta.
@@ -261,7 +264,7 @@ void main() {
       expect(find.text('Confirmá el cambio'), findsOneWidget);
       expect(await bookingsOf(correo), [(cancha, '21:00')]);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'GUARDAR EL CAMBIO');
 
       // Verifica: con el servidor caído, lo mismo.

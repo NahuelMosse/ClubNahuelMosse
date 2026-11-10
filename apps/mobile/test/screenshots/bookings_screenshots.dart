@@ -44,14 +44,12 @@ void main() {
         String historialJson = '[]',
       }) {
         // La reserva de las 21 es la que se modifica: la grilla la da por libre.
-        final rutas = venueRoutes(
-          grilla: gridJson(ocupadas: {9, 12, 16, 17}),
-        );
+        final rutas = venueRoutes(grid: gridJson(taken: {9, 12, 16, 17}));
         return mountUser(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/reservas',
+          dark: oscuro,
+          size: tamano,
+          start: '/reservas',
           api: ApiClient(
             'http://api.falsa',
             cliente: MockClient((pedido) async {

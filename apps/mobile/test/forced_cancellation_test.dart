@@ -53,9 +53,9 @@ void main() {
         filters: const HistoryFilters(),
         pending: PendingPanelFilters(),
       ),
-      tema: darkTheme,
-      tamano: tamano,
-      escalaTexto: escala,
+      theme: darkTheme,
+      size: tamano,
+      textScale: escala,
     );
   }
 
@@ -97,7 +97,10 @@ void main() {
       testWidgets('al 200 % en $ancho de ancho no se corta', (tester) async {
         await abrir(
           tester,
-          reservaJson(envio: 'no_channel', envioEn: '2026-11-03T10:00:05-03:00'),
+          reservaJson(
+            envio: 'no_channel',
+            envioEn: '2026-11-03T10:00:05-03:00',
+          ),
           tamano: Size(ancho, alto),
           escala: 2,
         );

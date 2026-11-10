@@ -25,16 +25,16 @@ void main() {
     final pedidos = <http.Request>[];
     await mountUser(
       tester,
-      inicio:
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRoutes({
-        ...venueRoutes(espacios: espacios),
+        ...venueRoutes(spaces: espacios),
         'GET /spaces/00000000-0000-7000-8000-000000000011/slots': (
           200,
-          gridJson(ocupadas: {18}),
+          gridJson(taken: {18}),
         ),
         ...cambios,
-      }, pedidos: pedidos),
+      }, requests: pedidos),
     );
     return pedidos;
   }
@@ -148,7 +148,7 @@ void main() {
       cambios: {
         'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           200,
-          gridJson(abre: false),
+          gridJson(opens: false),
         ),
       },
     );
@@ -168,7 +168,7 @@ void main() {
       cambios: {
         'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           200,
-          gridJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
+          gridJson(taken: {for (var h = 8; h < 23; h++) h}),
         ),
       },
     );
@@ -186,10 +186,7 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
-          500,
-          '{}',
-        ),
+        'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (500, '{}'),
       },
     );
 
@@ -223,9 +220,9 @@ void main() {
   ) async {
     await mountUser(
       tester,
-      inicio:
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009/reservar',
-      api: apiRoutes(venueRoutes(espacios: espacios)),
+      api: apiRoutes(venueRoutes(spaces: espacios)),
     );
 
     expect(find.text('SELECCIONÁ CANCHA'), findsOneWidget);
@@ -261,22 +258,19 @@ void main() {
     final pedidos = <http.Request>[];
     await mountUser(
       tester,
-      inicio:
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
-          final rutas = venueRoutes(espacios: espacios);
+          final rutas = venueRoutes(spaces: espacios);
           final vencida =
               pedido.url.path ==
                   '/spaces/00000000-0000-7000-8000-000000000009/slots' &&
               pedido.url.queryParameters.containsKey('fecha');
           final (codigo, cuerpo) = vencida
-              ? (
-                  422,
-                  '{"errors": {"date": "Elegí un día de los próximos 7"}}',
-                )
+              ? (422, '{"errors": {"date": "Elegí un día de los próximos 7"}}')
               : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
           return http.Response.bytes(
             utf8.encode(cuerpo),
@@ -303,10 +297,10 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await mountUser(
       tester,
-      tamano: const Size(360, 800),
-      inicio:
+      size: const Size(360, 800),
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      api: apiRoutes(venueRoutes(espacios: espacios)),
+      api: apiRoutes(venueRoutes(spaces: espacios)),
     );
 
     expect(tester.takeException(), isNull);

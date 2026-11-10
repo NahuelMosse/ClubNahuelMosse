@@ -16,7 +16,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
 
       await tapText(tester, 'PERFIL');
 
@@ -44,7 +44,7 @@ void main() {
     'cambia a modo claro y la app entera cambia de tema sin salir del perfil @CU-05-H01-02',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await tapText(tester, 'PERFIL');
       await waitUntil(tester, find.text('DATOS PERSONALES'));
       expect(brillo(tester, 'DATOS PERSONALES'), Brightness.dark);
@@ -68,7 +68,7 @@ void main() {
     'desde el perfil llega a Editar perfil, Cambiar contraseña, Cerrar sesión y Eliminar cuenta @CU-05-H01-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       Future<void> abrirPerfil() async {
         await tapText(tester, 'PERFIL');
         await waitUntil(tester, find.text('DATOS PERSONALES'));
@@ -104,7 +104,7 @@ void main() {
     'abre el perfil desde «Perfil completo» en la tarjeta del avatar @CU-05-H02-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
       await tester.pumpAndSettle();
@@ -121,14 +121,14 @@ void main() {
     'sin conexión, ve la alerta de conexión y ningún dato del perfil @CU-05-H03-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'PERFIL');
 
       // Verifica: avisa que no hay conexión y no muestra datos viejos.
@@ -143,14 +143,14 @@ void main() {
     'el servidor falla y la pantalla no muestra datos @CU-05-H04-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'PERFIL');
 
       // Verifica: avisa del servidor y no muestra datos.
@@ -165,7 +165,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       await changeFromAnotherDevice(correo, 'ClubNahuel1', 'ClubNahuel3');
 
       await tapText(tester, 'PERFIL');

@@ -26,7 +26,7 @@ void main() {
     String inicio = '/admin/sedes',
   }) async {
     await tester.pumpWidget(const SizedBox());
-    await mountAdmin(tester, api: api, inicio: inicio);
+    await mountAdmin(tester, api: api, start: inicio);
   }
 
   testWidgets(

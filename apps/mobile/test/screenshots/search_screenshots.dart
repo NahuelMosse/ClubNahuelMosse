@@ -64,28 +64,22 @@ void main() {
         (int, String) respuesta = (200, disponibles),
       }) => mountUser(
         tester,
-        oscuro: oscuro,
-        tamano: tamano,
-        inicio: '/inicio/buscar',
-        api: apiRoutes({
-          ...venueRoutes(),
-          'GET /spaces/available': respuesta,
-        }),
+        dark: oscuro,
+        size: tamano,
+        start: '/inicio/buscar',
+        api: apiRoutes({...venueRoutes(), 'GET /spaces/available': respuesta}),
       );
 
       testWidgets('inicio con accesos $ancho $modo', (tester) async {
         await mountUser(
           tester,
-          oscuro: oscuro,
-          tamano: tamano,
-          inicio: '/inicio',
+          dark: oscuro,
+          size: tamano,
+          start: '/inicio',
           api: apiRoutes({
             ...venueRoutes(),
             'GET /bookings': (200, '{"bookings": []}'),
-            'GET /notifications': (
-              200,
-              '{"notifications": [], "unread": 0}',
-            ),
+            'GET /notifications': (200, '{"notifications": [], "unread": 0}'),
           }),
         );
         await capturar(tester, 'search/home_${ancho}_$modo.png');

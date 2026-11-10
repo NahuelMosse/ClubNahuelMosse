@@ -28,7 +28,7 @@ void main() {
     final rutas = venueRoutes();
     await mountUser(
       tester,
-      inicio: '/reservas',
+      start: '/reservas',
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
@@ -56,7 +56,7 @@ void main() {
     await mountScreen(
       tester,
       fakeHome(FakeSession(userProfile)),
-      tema: darkTheme,
+      theme: darkTheme,
     );
 
     await kitA11y(tester);
@@ -96,7 +96,7 @@ void main() {
           session: sesion,
           pending: PendingPanelFilters(),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
 
       await kitA11y(tester);

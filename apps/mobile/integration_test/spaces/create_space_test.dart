@@ -53,10 +53,7 @@ void main() {
       expect(find.text('${prefijo}_Futbol_F5_1'), findsOneWidget);
 
       // Verifica: un usuario ya lo ve entre los espacios disponibles.
-      expect(
-        await spacesAUserSees(),
-        contains('${prefijo}_Futbol_F5_1'),
-      );
+      expect(await spacesAUserSees(), contains('${prefijo}_Futbol_F5_1'));
       expect((await venuesAUserSees())[sede], 1);
       semantica.dispose();
     },
@@ -172,14 +169,14 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, prefijo) = await sedePropia();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await abrirAlta(tester);
       await completar(tester, sede);
       await waitUntil(tester, find.text('${prefijo}_Futbol_F5_1'));
 
       // Verifica: con el servidor caído avisa y lo cargado sigue en el formulario.
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'GUARDAR ESPACIO');
       await waitUntil(tester, find.text('Error del servidor'));
       await tapText(tester, 'ACEPTAR');
@@ -187,16 +184,13 @@ void main() {
       expect(find.text('${prefijo}_Futbol_F5_1'), findsOneWidget);
 
       // Verifica: sin conexión avisa, y al reintentar con la red de vuelta lo guarda.
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR ESPACIO');
       await waitUntil(tester, find.text('Error de conexión'));
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'REINTENTAR');
       await waitUntil(tester, find.text('¡Espacio deportivo creado!'));
-      expect(
-        await spacesAUserSees(),
-        contains('${prefijo}_Futbol_F5_1'),
-      );
+      expect(await spacesAUserSees(), contains('${prefijo}_Futbol_F5_1'));
       semantica.dispose();
     },
   );

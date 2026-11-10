@@ -28,9 +28,9 @@ void main() {
   }) async {
     await mountAdmin(
       tester,
-      inicio: '/admin',
-      oscuro: oscuro,
-      tamano: tamano,
+      start: '/admin',
+      dark: oscuro,
+      size: tamano,
       api: apiRoutes({
         'GET /bookings/all': (
           200,

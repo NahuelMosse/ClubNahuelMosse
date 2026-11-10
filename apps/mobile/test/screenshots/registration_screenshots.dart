@@ -21,8 +21,8 @@ void main() {
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(fakeApi())),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await expectLater(
           find.byType(RegistrationScreen),
@@ -35,8 +35,8 @@ void main() {
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(fakeApi())),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await tester.enterText(
           find.bySemanticsLabel('Nombre'),
@@ -60,8 +60,8 @@ void main() {
         await mountScreen(
           tester,
           const RegistrationDoneScreen(),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
         await expectLater(
           find.byType(RegistrationDoneScreen),

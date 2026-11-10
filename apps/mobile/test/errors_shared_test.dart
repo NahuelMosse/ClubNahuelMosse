@@ -73,9 +73,9 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
-        tamano: const Size(360, 800),
-        escalaTexto: 2,
+        theme: darkTheme,
+        size: const Size(360, 800),
+        textScale: 2,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
@@ -94,9 +94,9 @@ void main() {
     await mountScreen(
       tester,
       AccessDeniedScreen(session: FakeSession(userProfile)),
-      tema: darkTheme,
-      tamano: const Size(360, 800),
-      escalaTexto: 2,
+      theme: darkTheme,
+      size: const Size(360, 800),
+      textScale: 2,
     );
 
     expect(tester.takeException(), isNull);
@@ -183,18 +183,14 @@ void main() {
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
 
-    expect(sesion.cierres, 1);
+    expect(sesion.closes, 1);
     expect(find.text('Acceso denegado'), findsNothing);
   });
 
   testWidgets(
     'un 403 al cargar el alta de espacio no navega sobre «Acceso denegado»',
     (tester) async {
-      await mountAdmin(
-        tester,
-        api: _api403(),
-        inicio: '/admin/espacios/nuevo',
-      );
+      await mountAdmin(tester, api: _api403(), start: '/admin/espacios/nuevo');
       await tester.pumpAndSettle();
 
       expect(find.text('Acceso denegado'), findsOneWidget);

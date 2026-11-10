@@ -42,8 +42,8 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
-        tamano: const Size(360, 800),
+        theme: darkTheme,
+        size: const Size(360, 800),
       );
 
       await tester.tap(find.text('ABRIR'));

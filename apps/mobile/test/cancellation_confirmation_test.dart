@@ -39,9 +39,9 @@ void main() {
             NoticePanel(center: centro, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
-        tema: darkTheme,
-        tamano: tamano,
-        escalaTexto: escala,
+        theme: darkTheme,
+        size: tamano,
+        textScale: escala,
       );
       return (api, centro);
     }
@@ -142,9 +142,9 @@ void main() {
         ..unread = 1;
       await mountUser(
         tester,
-        inicio: '/notificaciones',
+        start: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centerOf(api, sesion),
+        center: (sesion) => centerOf(api, sesion),
       );
       api.pedidos.clear();
 
@@ -164,9 +164,9 @@ void main() {
         ..unread = 1;
       await mountUser(
         tester,
-        inicio: '/notificaciones',
+        start: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centerOf(api, sesion),
+        center: (sesion) => centerOf(api, sesion),
       );
       api.pedidos.clear();
 

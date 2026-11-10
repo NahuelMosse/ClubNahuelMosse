@@ -46,9 +46,9 @@ void main() {
 
   Future<void> openVenues(WidgetTester tester, String start) => mountUser(
     tester,
-    oscuro: false,
-    tamano: phone,
-    inicio: start,
+    dark: false,
+    size: phone,
+    start: start,
     api: apiRoutes({
       ...venueRoutes(),
       'POST /bookings': (
@@ -66,8 +66,8 @@ void main() {
     await mountScreen(
       tester,
       loginRejectingCredentials(),
-      tema: lightTheme,
-      tamano: phone,
+      theme: lightTheme,
+      size: phone,
     );
     expect(find.text('SIGN IN'), findsOneWidget);
     expect(find.text('Forgot your password?'), findsOneWidget);

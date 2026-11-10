@@ -28,7 +28,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       await pedirBaja(tester);
 
       await tester.tap(confirmar());
@@ -56,15 +56,15 @@ void main() {
     'mientras se elimina la cuenta, el botón muestra «Eliminando tu cuenta…» y no se puede volver a tocar @CU-07-H01-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
       await pedirBaja(tester);
 
-      api.estado = ApiState.slow;
+      api.state = ApiState.slow;
       await tester.tap(confirmar());
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -85,7 +85,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       await pedirBaja(tester);
 
       await tapText(tester, 'CANCELAR');
@@ -103,11 +103,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      final api = await ApiIntermedia.abrir();
-      await signInAsUser(tester, correo: correo, apiUrl: api.url);
+      final api = await ProxyApi.open();
+      await signInAsUser(tester, email: correo, apiUrl: api.url);
       await pedirBaja(tester);
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tester.tap(confirmar());
       await tester.pumpAndSettle();
 
@@ -125,18 +125,18 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'socio.${unique()}@correo.com';
-      final api = await ApiIntermedia.abrir();
-      await signInAsUser(tester, correo: correo, apiUrl: api.url);
+      final api = await ProxyApi.open();
+      await signInAsUser(tester, email: correo, apiUrl: api.url);
       await pedirBaja(tester);
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tester.tap(confirmar());
       await tester.pumpAndSettle();
 
       // Verifica: avisa del servidor y la cuenta sigue sirviendo.
       await waitUntil(tester, find.text('Error del servidor'));
       await tapText(tester, 'ACEPTAR');
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       expect(find.text('DATOS PERSONALES'), findsOneWidget);
       expect(await canSignIn(correo, contrasena), isTrue);
       semantica.dispose();

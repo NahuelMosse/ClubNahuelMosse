@@ -46,7 +46,7 @@ void main() {
 
   PasswordRecovery recuperacion(Map<String, (int, String)> respuestas) {
     requests = [];
-    return PasswordRecovery(apiRoutes(respuestas, pedidos: requests));
+    return PasswordRecovery(apiRoutes(respuestas, requests: requests));
   }
 
   bool habilitado(WidgetTester tester, String button) =>
@@ -268,7 +268,7 @@ void main() {
         final requests = <http.Request>[];
         final api = apiRoutes({
           'POST /password-recovery/check': (410, ''),
-        }, pedidos: requests);
+        }, requests: requests);
         await tester.pumpWidget(
           App(
             api: api,
@@ -319,7 +319,7 @@ void main() {
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
 
-      expect(session.cierres, 1);
+      expect(session.closes, 1);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       semantica.dispose();
     });

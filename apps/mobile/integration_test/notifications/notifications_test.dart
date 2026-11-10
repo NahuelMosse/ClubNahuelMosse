@@ -12,7 +12,7 @@ void main() {
 
   Future<String> nuevaCuenta() async {
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await createAccount(email: correo, password: 'ClubNahuel1');
     return correo;
   }
 
@@ -24,7 +24,7 @@ void main() {
     final sede = 'Sede Morón ${unique()}';
     await createVenue(sede, 'Av. Rivadavia 19850');
     final cancha = await createSpace(sede);
-    await occupy(cancha, manana, hora, correo: correo);
+    await occupy(cancha, manana, hora, email: correo);
     return (sede, cancha);
   }
 
@@ -37,7 +37,7 @@ void main() {
     String? apiUrl,
   }) async {
     await openApp(tester, apiUrl: apiUrl);
-    await setNotificationPermission(concedido: permiso);
+    await setNotificationPermission(granted: permiso);
     await typeInto(tester, 'Correo', correo);
     await typeInto(tester, 'Contraseña', 'ClubNahuel1');
     await tapText(tester, 'INICIAR SESIÓN');
@@ -46,12 +46,7 @@ void main() {
 
   /// El barrido de recordatorios de la API corriendo a las [hora] de mañana.
   Future<int> barrido(String correo, int hora, {int minuto = 0}) =>
-      dispatchReminders(
-        correo: correo,
-        dia: manana,
-        hora: hora,
-        minuto: minuto,
-      );
+      dispatchReminders(email: correo, day: manana, hour: hora, minute: minuto);
 
   Finder campana(int sinLeer) => find.bySemanticsLabel(
     sinLeer == 0 ? 'Notificaciones' : 'Notificaciones, $sinLeer sin leer',
@@ -331,11 +326,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = await nuevaCuenta();
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await waitUntil(tester, campana(0));
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tester.tap(campana(0));
       await tester.pumpAndSettle();
 

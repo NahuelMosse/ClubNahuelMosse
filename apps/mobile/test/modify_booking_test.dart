@@ -11,7 +11,7 @@ import 'support/user.dart';
 
 void main() {
   // La reserva es del jueves 12 a las 21 en el club; la grilla ya la da por libre.
-  final grilla = gridJson(ocupadas: {9, 12});
+  final grilla = gridJson(taken: {9, 12});
 
   Future<List<http.Request>> abrir(
     WidgetTester tester, {
@@ -20,20 +20,17 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     var modificada = false;
-    final rutas = venueRoutes(grilla: grilla);
+    final rutas = venueRoutes(grid: grilla);
     await mountUser(
       tester,
-      inicio: '/reservas',
-      tamano: tamano,
+      start: '/reservas',
+      size: tamano,
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            (
-              'POST',
-              '/bookings/00000000-0000-7000-8000-000000000001/modify',
-            ) =>
+            ('POST', '/bookings/00000000-0000-7000-8000-000000000001/modify') =>
               () {
                 final r =
                     alModificar ??

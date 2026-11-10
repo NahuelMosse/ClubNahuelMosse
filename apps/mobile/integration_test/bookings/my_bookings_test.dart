@@ -37,13 +37,13 @@ void main() {
     return (
       sede,
       await createSpace(sede),
-      await createSpace(sede, deporte: 'Tenis', tipo: 'PDL'),
+      await createSpace(sede, sport: 'Tenis', kind: 'PDL'),
     );
   }
 
   Future<String> cuenta() async {
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await createAccount(email: correo, password: 'ClubNahuel1');
     return correo;
   }
 
@@ -81,8 +81,8 @@ void main() {
     (tester) async {
       final (sede, f5, tenis) = await sedeConCanchas();
       final correo = await cuenta();
-      await occupy(tenis, dia(3), 10, correo: correo);
-      await occupy(f5, dia(1), 18, horas: 2, correo: correo);
+      await occupy(tenis, dia(3), 10, email: correo);
+      await occupy(f5, dia(1), 18, hours: 2, email: correo);
       await entrar(tester, correo);
 
       await abrirMisReservas(tester);
@@ -108,7 +108,7 @@ void main() {
     await abrirMisReservas(tester);
     await waitUntil(tester, find.text('No hay próximas reservas'));
 
-    await occupy(f5, dia(2), 9, correo: correo);
+    await occupy(f5, dia(2), 9, email: correo);
     await tapText(tester, 'INICIO');
     await abrirMisReservas(tester);
 
@@ -122,8 +122,8 @@ void main() {
     (tester) async {
       final (_, f5, tenis) = await sedeConCanchas();
       final correo = await cuenta();
-      await occupy(f5, dia(-6), 10, correo: correo);
-      await occupy(tenis, dia(-2), 19, correo: correo);
+      await occupy(f5, dia(-6), 10, email: correo);
+      await occupy(tenis, dia(-2), 19, email: correo);
       await entrar(tester, correo);
       await abrirMisReservas(tester);
 
@@ -142,14 +142,14 @@ void main() {
     (tester) async {
       final (_, f5, tenis) = await sedeConCanchas();
       final correo = await cuenta();
-      await occupy(f5, dia(2), 20, correo: correo, estado: 'canceled');
+      await occupy(f5, dia(2), 20, email: correo, status: 'canceled');
       await occupy(
         tenis,
         dia(-1),
         19,
-        correo: correo,
-        estado: 'voided',
-        motivo: 'mantenimiento de la cancha',
+        email: correo,
+        status: 'voided',
+        reason: 'mantenimiento de la cancha',
       );
       await entrar(tester, correo);
       await abrirMisReservas(tester);
@@ -175,9 +175,9 @@ void main() {
     final (_, f5, tenis) = await sedeConCanchas();
     final correo = await cuenta();
     final otra = await cuenta();
-    await occupy(f5, dia(1), 10, correo: correo);
-    await occupy(tenis, dia(1), 10, correo: otra);
-    await occupy(tenis, dia(-1), 10, correo: otra);
+    await occupy(f5, dia(1), 10, email: correo);
+    await occupy(tenis, dia(1), 10, email: otra);
+    await occupy(tenis, dia(-1), 10, email: otra);
     await entrar(tester, correo);
 
     await abrirMisReservas(tester);
@@ -195,7 +195,7 @@ void main() {
     (tester) async {
       final (_, f5, _) = await sedeConCanchas();
       final correo = await cuenta();
-      await occupy(f5, dia(-3), 10, correo: correo);
+      await occupy(f5, dia(-3), 10, email: correo);
       await entrar(tester, correo);
 
       await abrirMisReservas(tester);
@@ -214,7 +214,7 @@ void main() {
     (tester) async {
       final (_, f5, _) = await sedeConCanchas();
       final correo = await cuenta();
-      await occupy(f5, dia(3), 10, correo: correo);
+      await occupy(f5, dia(3), 10, email: correo);
       await entrar(tester, correo);
       await abrirMisReservas(tester);
       await waitUntil(tester, find.text(f5));
@@ -235,11 +235,11 @@ void main() {
   ) async {
     final (_, f5, _) = await sedeConCanchas();
     final correo = await cuenta();
-    await occupy(f5, dia(1), 10, correo: correo);
-    final api = await ApiIntermedia.abrir();
+    await occupy(f5, dia(1), 10, email: correo);
+    final api = await ProxyApi.open();
     await entrar(tester, correo, apiUrl: api.url);
 
-    api.estado = ApiState.offline;
+    api.state = ApiState.offline;
     await tapText(tester, 'RESERVAS');
 
     // Verifica: el aviso de conexión y, al cerrarlo, ninguna reserva.
@@ -254,14 +254,14 @@ void main() {
     (tester) async {
       final (_, f5, _) = await sedeConCanchas();
       final correo = await cuenta();
-      await occupy(f5, dia(1), 10, correo: correo);
-      await occupy(f5, dia(-1), 10, correo: correo);
-      final api = await ApiIntermedia.abrir();
+      await occupy(f5, dia(1), 10, email: correo);
+      await occupy(f5, dia(-1), 10, email: correo);
+      final api = await ProxyApi.open();
       await entrar(tester, correo, apiUrl: api.url);
       await abrirMisReservas(tester);
       await waitUntil(tester, find.text(f5));
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await verHistorial(tester);
 
       // Verifica: el error del servidor y ninguna tarjeta del historial.

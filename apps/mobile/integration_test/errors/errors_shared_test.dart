@@ -25,16 +25,16 @@ void main() {
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
       await createSpace(nombre);
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
       await tapText(tester, 'SEDES');
       await waitUntil(tester, tarjeta(nombre));
 
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await entrarA(tester, nombre);
 
       // Verifica: el aviso compartido con sus dos salidas. Si falla, la persona queda
@@ -63,19 +63,19 @@ void main() {
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
       final cancha = await createSpace(nombre);
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
       await tapText(tester, 'SEDES');
       await waitUntil(tester, tarjeta(nombre));
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await entrarA(tester, nombre);
       await waitUntil(tester, find.text('Error de conexión'));
 
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
 
       // Verifica: con la red de vuelta la operación no se completa sola; espera al
       // reintento de la persona.
@@ -96,14 +96,14 @@ void main() {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsUser(
         tester,
-        correo: 'socio.${unique()}@correo.com',
+        email: 'socio.${unique()}@correo.com',
         apiUrl: api.url,
       );
 
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'SEDES');
 
       // Verifica: el aviso del servidor con su única salida y nada del listado.
@@ -125,7 +125,7 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final correo = 'socio.${unique()}@correo.com';
-    await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+    await createAccount(email: correo, password: 'ClubNahuel1');
     await openApp(tester);
 
     await typeInto(tester, 'Correo', correo);
@@ -148,7 +148,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final correo = 'repetido.${unique()}@correo.com';
-      await createAccount(correo: correo, contrasena: 'ClubNahuel1');
+      await createAccount(email: correo, password: 'ClubNahuel1');
       await openApp(tester);
       await tapText(tester, 'COMENZAR');
       await typeInto(tester, 'Nombre', 'Nahuel Agustín');
@@ -179,7 +179,7 @@ void main() {
       final nombre = 'Sede Haedo ${unique()}';
       await createVenue(nombre, 'Av. Vergara 1850');
       final correo = 'socio.${unique()}@correo.com';
-      await signInAsUser(tester, correo: correo);
+      await signInAsUser(tester, email: correo);
       await changeFromAnotherDevice(correo, 'ClubNahuel1', 'ClubNahuel3');
 
       await tapText(tester, 'SEDES');
@@ -197,7 +197,7 @@ void main() {
     'un usuario sin rol de administrador que entra al panel ve «Acceso denegado» y llega a Mis reservas @TP-07-H06-01 @supuesto:TP-07-SUP-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
 
       // La ruta directa es el vector deliberado: la app no ofrece el panel a un usuario,
       // y el enlace copiado o la sesión reabierta es la forma de llegar.
@@ -230,7 +230,7 @@ void main() {
       await createVenue(sede, 'Av. Vergara 1850');
       final cancha1 = await createSpace(sede);
       final cancha2 = await createSpace(sede);
-      await signInAsUser(tester, correo: 'socio.${unique()}@correo.com');
+      await signInAsUser(tester, email: 'socio.${unique()}@correo.com');
       await tapText(tester, 'SEDES');
       await entrarA(tester, sede);
       // La sede tiene dos canchas: se abren los horarios de la primera, que es cancha1.

@@ -126,8 +126,8 @@ Future<void> _montarInicio(
         repository: VenuesRepository(api: api, session: sesion),
       ),
     ),
-    tema: tema ?? darkTheme,
-    tamano: tamano,
+    theme: tema ?? darkTheme,
+    size: tamano,
   );
 }
 
@@ -141,9 +141,9 @@ Future<void> _montarMisReservas(
   final rutas = venueRoutes();
   return mountUser(
     tester,
-    inicio: inicio,
-    oscuro: oscuro,
-    tamano: const Size(393, 1600),
+    start: inicio,
+    dark: oscuro,
+    size: const Size(393, 1600),
     api: ApiClient(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
@@ -588,8 +588,8 @@ void main() {
     Future<void> montarPerfil(WidgetTester tester, {bool oscuro = true}) =>
         mountUser(
           tester,
-          inicio: '/perfil',
-          oscuro: oscuro,
+          start: '/perfil',
+          dark: oscuro,
           api: apiRoutes(venueRoutes()),
         );
 
@@ -646,10 +646,10 @@ void main() {
       (tester) async {
         await mountUser(
           tester,
-          tamano: const Size(393, 1800),
+          size: const Size(393, 1800),
           api: apiRoutes(
             venueRoutes(
-              sedes:
+              venues:
                   '[$venueMoronWithSports, $venueHaedoWithoutCourts, '
                   '${_sede('00000000-0000-7000-8000-000000000007', 'Sede Ituzaingó', 'Blas Parera 300', 12)}]',
             ),
@@ -690,10 +690,10 @@ void main() {
       String? grilla,
     }) => mountUser(
       tester,
-      inicio:
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      tamano: const Size(393, 2400),
-      api: apiRoutes(venueRoutes(grilla: grilla)),
+      size: const Size(393, 2400),
+      api: apiRoutes(venueRoutes(grid: grilla)),
     );
 
     String estadoDe(int hora) {
@@ -796,8 +796,8 @@ void main() {
         expect(find.byType(DayTimeline), findsOneWidget);
 
         for (final grilla in [
-          gridJson(abre: false),
-          gridJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
+          gridJson(opens: false),
+          gridJson(taken: {for (var h = 8; h < 23; h++) h}),
         ]) {
           await abrirHorarios(tester, grilla: grilla);
 
@@ -816,7 +816,7 @@ void main() {
       final sesion = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
-          api: fakeApi(codigo: 200, cuerpo: profileJson()),
+          api: fakeApi(status: 200, body: profileJson()),
         ),
       );
       final rutas = GoRouter(

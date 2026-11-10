@@ -10,67 +10,67 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Un valor que sólo usa este test: los escenarios afirman sobre datos propios.
+/// A value only this test uses: the scenarios assert on their own data.
 String unique() => DateTime.now().microsecondsSinceEpoch.toString();
 
-/// DNI de 8 dígitos derivado de [s], para que dos tests no choquen.
+/// An 8-digit DNI derived from [s], so two tests do not collide.
 String dniOf(String s) =>
     (10000000 + int.parse(s.substring(s.length - 7))).toString();
 
-/// La cuenta de administrador que `scripts/e2e.sh` siembra en la base de la corrida.
+/// The administrator account that `scripts/e2e.sh` seeds in the run's database.
 const adminEmail = String.fromEnvironment('ADMIN_CORREO');
 const adminPassword = String.fromEnvironment('ADMIN_CONTRASENA');
 
-/// Un emulador de Firebase Auth y una API donde no escucha nadie: la app sin red.
+/// A Firebase Auth emulator and an API where nobody listens: the app without a network.
 const offline = '127.0.0.1:9';
 const offlineApi = 'http://127.0.0.1:9';
 
-/// Arranca la app real, contra la API y el emulador de Firebase de la corrida.
+/// Starts the real app, against the run's API and Firebase emulator.
 ///
-/// [apiUrl] y [authEmulador] reemplazan los de la corrida para simular fallas.
+/// [apiUrl] and [authEmulator] replace the run's to simulate failures.
 Future<void> openApp(
   WidgetTester tester, {
   String? apiUrl,
-  String? authEmulador,
+  String? authEmulator,
 }) async {
-  final configuracion = AppConfig.fromEnvironment().copyWith(
+  final config = AppConfig.fromEnvironment().copyWith(
     apiUrl: apiUrl,
-    authEmulator: authEmulador,
+    authEmulator: authEmulator,
   );
-  // Cada escenario arranca sin la sesión ni el tema que haya dejado el anterior.
-  await (await initFirebase(configuracion)).signOut();
+  // Each scenario starts without the session or theme the previous one left.
+  await (await initFirebase(config)).signOut();
   await (await SharedPreferences.getInstance()).clear();
-  await app.bootstrap(configuracion);
+  await app.bootstrap(config);
   await tester.pumpAndSettle();
 }
 
-/// Vuelve a bootstrap la app como al reabrirla: con la sesión que haya quedado guardada.
+/// Bootstraps the app again as on reopening it: with the session that was left saved.
 Future<void> reopenApp(WidgetTester tester) async {
   await app.bootstrap(AppConfig.fromEnvironment());
   await tester.pumpAndSettle();
 }
 
-/// Crea una cuenta, abre la app e inicia sesión con ella hasta llegar al Home.
+/// Creates an account, opens the app and signs in with it until reaching the Home.
 Future<void> signInAsUser(
   WidgetTester tester, {
-  required String correo,
-  String contrasena = 'ClubNahuel1',
-  String nombre = 'Nahuel',
+  required String email,
+  String password = 'ClubNahuel1',
+  String name = 'Nahuel',
   String? apiUrl,
 }) async {
   try {
-    await createAccount(correo: correo, contrasena: contrasena, nombre: nombre);
+    await createAccount(email: email, password: password, name: name);
   } on AccountAlreadyCreated {
-    // El escenario ya la registró para cargarle datos antes de entrar.
+    // The scenario already registered it to load data before signing in.
   }
   await openApp(tester, apiUrl: apiUrl);
-  await typeInto(tester, 'Correo', correo);
-  await typeInto(tester, 'Contraseña', contrasena);
+  await typeInto(tester, 'Correo', email);
+  await typeInto(tester, 'Contraseña', password);
   await tapText(tester, 'INICIAR SESIÓN');
   await waitUntil(tester, find.text('RESERVÁ TU CANCHA'));
 }
 
-/// Abre la app e inicia sesión con la cuenta de administrador hasta llegar al panel.
+/// Opens the app and signs in with the administrator account until reaching the panel.
 Future<void> signInAsAdmin(WidgetTester tester, {String? apiUrl}) async {
   await openApp(tester, apiUrl: apiUrl);
   await typeInto(tester, 'Correo', adminEmail);
@@ -79,165 +79,164 @@ Future<void> signInAsAdmin(WidgetTester tester, {String? apiUrl}) async {
   await waitUntil(tester, find.text('PANEL ADMIN'));
 }
 
-/// Abre el selector de hora de [campo] y elige [hora], por ejemplo `08:00`.
-Future<void> chooseTime(WidgetTester tester, String campo, String hora) =>
-    choose(tester, campo, hora);
+/// Opens the time selector of [field] and picks [time], for example `08:00`.
+Future<void> chooseTime(WidgetTester tester, String field, String time) =>
+    choose(tester, field, time);
 
-/// Abre el selector de [campo] y toca [opcion].
-Future<void> choose(WidgetTester tester, String campo, String opcion) async {
-  final selector = find.bySemanticsLabel(campo);
-  // Al cerrarse el selector anterior, un campo de texto puede recuperar el foco y abrir el
-  // teclado, que corre la pantalla.
-  await _esperarPantallaQuieta(tester);
+/// Opens the selector of [field] and taps [option].
+Future<void> choose(WidgetTester tester, String field, String option) async {
+  final selector = find.bySemanticsLabel(field);
+  // When the previous selector closes, a text field can regain focus and open the
+  // keyboard, which shifts the screen.
+  await _waitForStillScreen(tester);
   await tester.ensureVisible(selector);
   await tester.pumpAndSettle();
   await tester.tap(selector);
   await tester.pumpAndSettle();
-  final boton = find.descendant(
+  final button = find.descendant(
     of: find.byType(Dialog),
-    matching: find.text(opcion),
+    matching: find.text(option),
   );
-  await tester.ensureVisible(boton);
+  await tester.ensureVisible(button);
   await tester.pumpAndSettle();
-  await tester.tap(boton);
+  await tester.tap(button);
   await tester.pumpAndSettle();
 }
 
-/// Lo que el sistema operativo simulado del dispositivo de prueba contesta cuando la app
-/// pregunta por el permiso de notificaciones. Se fija después de abrir la app y antes de
-/// iniciar sesión.
-Future<void> setNotificationPermission({required bool concedido}) async {
+/// What the simulated operating system of the test device answers when the app asks for
+/// the notification permission. It is set after opening the app and before signing in.
+Future<void> setNotificationPermission({required bool granted}) async {
   await (await SharedPreferences.getInstance()).setString(
     'permiso_notificaciones_simulado',
-    concedido ? 'concedido' : 'denegado',
+    granted ? 'concedido' : 'denegado',
   );
 }
 
-/// Registra una cuenta por la API, como si la persona ya se hubiera registrado.
+/// Registers an account through the API, as if the person had already signed up.
 Future<void> createAccount({
-  required String correo,
-  required String contrasena,
-  String nombre = 'Nahuel',
+  required String email,
+  required String password,
+  String name = 'Nahuel',
 }) async {
   final r = await http.post(
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'name': nombre,
+      'name': name,
       'last_name': 'Mosse',
       'dni': dniOf(unique()),
       'birth_date': '2000-03-14',
-      'email': correo,
-      'password': contrasena,
+      'email': email,
+      'password': password,
     }),
   );
-  if (r.statusCode == 409 && _soloElCorreoRepetido(r.body)) {
+  if (r.statusCode == 409 && _onlyTheEmailIsRepeated(r.body)) {
     throw const AccountAlreadyCreated();
   }
   if (r.statusCode != 201) {
     throw StateError(
-      'no se pudo crear la cuenta de prueba: ${r.statusCode} ${r.body}',
+      'could not create the test account: ${r.statusCode} ${r.body}',
     );
   }
 }
 
-/// El 409 del registro dice que el único campo repetido es el correo.
-bool _soloElCorreoRepetido(String cuerpo) {
-  if (jsonDecode(cuerpo) case {'campos': ['email']}) return true;
+/// The signup 409 says the only repeated field is the email.
+bool _onlyTheEmailIsRepeated(String body) {
+  if (jsonDecode(body) case {'campos': ['email']}) return true;
   return false;
 }
 
-/// La API ya tiene una cuenta con ese correo.
+/// The API already has an account with that email.
 class AccountAlreadyCreated implements Exception {
   const AccountAlreadyCreated();
 
   @override
-  String toString() => 'la cuenta de prueba ya existe (409)';
+  String toString() => 'the test account already exists (409)';
 }
 
-/// Una API que responde 500 a todo, en el mismo dispositivo que la app.
+/// An API that answers 500 to everything, on the same device as the app.
 Future<String> failingApi() async {
-  final servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-  servidor.listen((pedido) {
-    pedido.response.statusCode = HttpStatus.internalServerError;
-    pedido.response.close();
+  final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+  server.listen((request) {
+    request.response.statusCode = HttpStatus.internalServerError;
+    request.response.close();
   });
-  addTearDown(() => servidor.close(force: true));
-  return 'http://127.0.0.1:${servidor.port}';
+  addTearDown(() => server.close(force: true));
+  return 'http://127.0.0.1:${server.port}';
 }
 
-/// Espera a que [finder] aparezca: la red no avisa cuándo termina.
+/// Waits for [finder] to appear: the network does not say when it finishes.
 Future<void> waitUntil(
   WidgetTester tester,
   Finder finder, {
-  Duration limite = const Duration(seconds: 20),
+  Duration limit = const Duration(seconds: 20),
 }) async {
-  final fin = DateTime.now().add(limite);
-  while (DateTime.now().isBefore(fin)) {
+  final end = DateTime.now().add(limit);
+  while (DateTime.now().isBefore(end)) {
     await tester.pump(const Duration(milliseconds: 100));
     if (finder.evaluate().isNotEmpty) return;
   }
   expect(finder, findsOneWidget);
 }
 
-Future<void> tapText(WidgetTester tester, String texto) async {
-  final boton = find.text(texto);
-  await _esperarPantallaQuieta(tester);
-  await tester.ensureVisible(boton);
-  // El scroll se aplica en el cuadro siguiente: sin esperarlo, el toque va a la posición vieja.
+Future<void> tapText(WidgetTester tester, String text) async {
+  final button = find.text(text);
+  await _waitForStillScreen(tester);
+  await tester.ensureVisible(button);
+  // The scroll applies on the next frame: without waiting for it, the tap goes to the old position.
   await tester.pumpAndSettle();
-  await tester.tap(boton);
+  await tester.tap(button);
   await tester.pumpAndSettle();
 }
 
-/// Espera a que el teclado del dispositivo termine de abrirse o cerrarse. Android lo mueve
-/// por su cuenta (por ejemplo, cuando un campo recupera el foco al cerrarse un aviso) y
-/// `pumpAndSettle` no lo espera: un toque en medio cae donde el botón ya no está.
-Future<void> _esperarPantallaQuieta(WidgetTester tester) async {
-  final fin = DateTime.now().add(const Duration(seconds: 3));
-  var anterior = tester.view.viewInsets.bottom;
-  var quieto = 0;
-  while (quieto < 4 && DateTime.now().isBefore(fin)) {
+/// Waits for the device keyboard to finish opening or closing. Android moves it on its own
+/// (for example, when a field regains focus as a notice closes) and `pumpAndSettle` does
+/// not wait for it: a tap in between lands where the button no longer is.
+Future<void> _waitForStillScreen(WidgetTester tester) async {
+  final end = DateTime.now().add(const Duration(seconds: 3));
+  var previous = tester.view.viewInsets.bottom;
+  var still = 0;
+  while (still < 4 && DateTime.now().isBefore(end)) {
     await tester.pump(const Duration(milliseconds: 100));
-    final ahora = tester.view.viewInsets.bottom;
-    quieto = ahora == anterior ? quieto + 1 : 0;
-    anterior = ahora;
+    final now = tester.view.viewInsets.bottom;
+    still = now == previous ? still + 1 : 0;
+    previous = now;
   }
 }
 
-Future<void> typeInto(WidgetTester tester, String campo, String valor) async {
-  final finder = find.bySemanticsLabel(campo);
+Future<void> typeInto(WidgetTester tester, String field, String value) async {
+  final finder = find.bySemanticsLabel(field);
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
   await tester.showKeyboard(finder);
-  // Como una escritura de verdad y no con `enterText`: en la app real `enterText` no le
-  // avisa del cambio a Android, y un campo precargado puede volver con el texto viejo
-  // cuando el teclado del dispositivo manda su estado.
+  // Like real typing and not `enterText`: in the real app `enterText` does not tell
+  // Android about the change, and a prefilled field can come back with the old text
+  // when the device keyboard sends its state.
   tester
       .state<EditableTextState>(
         find.descendant(of: finder, matching: find.byType(EditableText)),
       )
       .userUpdateTextEditingValue(
         TextEditingValue(
-          text: valor,
-          selection: TextSelection.collapsed(offset: valor.length),
+          text: value,
+          selection: TextSelection.collapsed(offset: value.length),
         ),
         SelectionChangedCause.keyboard,
       );
   await tester.pumpAndSettle();
-  // El teclado del dispositivo se abre y cambia el tamaño de la pantalla por su cuenta,
-  // sin que `pumpAndSettle` lo espere: un toque siguiente caería donde el botón ya no está.
+  // The device keyboard opens and resizes the screen on its own, without
+  // `pumpAndSettle` waiting for it: a following tap would land where the button no longer is.
   await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
-  final fin = DateTime.now().add(const Duration(seconds: 3));
-  while (tester.view.viewInsets.bottom > 0 && DateTime.now().isBefore(fin)) {
+  final end = DateTime.now().add(const Duration(seconds: 3));
+  while (tester.view.viewInsets.bottom > 0 && DateTime.now().isBefore(end)) {
     await tester.pump(const Duration(milliseconds: 100));
   }
   await tester.pumpAndSettle();
 }
 
-/// Entra a un campo y lo deja sin escribir nada.
-Future<void> enterAndLeave(WidgetTester tester, String campo) async {
-  final finder = find.bySemanticsLabel(campo);
+/// Enters a field and leaves it without typing anything.
+Future<void> enterAndLeave(WidgetTester tester, String field) async {
+  final finder = find.bySemanticsLabel(field);
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
   await tester.tap(finder);
@@ -246,11 +245,8 @@ Future<void> enterAndLeave(WidgetTester tester, String campo) async {
   await tester.pumpAndSettle();
 }
 
-/// Abre la app desde el enlace del correo de recuperación, como lo haría Android.
-Future<void> openRecoveryLink(
-  WidgetTester tester,
-  String codigo,
-) async {
-  await tester.binding.handlePushRoute('/recuperar?codigo=$codigo');
+/// Opens the app from the link in the recovery email, as Android would.
+Future<void> openRecoveryLink(WidgetTester tester, String code) async {
+  await tester.binding.handlePushRoute('/recuperar?codigo=$code');
   await tester.pumpAndSettle();
 }

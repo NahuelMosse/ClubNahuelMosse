@@ -167,13 +167,13 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final nombre = 'Sede Haedo ${unique()}';
-      final api = await ApiIntermedia.abrir();
+      final api = await ProxyApi.open();
       await signInAsAdmin(tester, apiUrl: api.url);
       await abrirAlta(tester);
       await completar(tester, nombre: nombre);
 
       // Verifica: con el servidor caído avisa y lo cargado sigue en el formulario.
-      api.estado = ApiState.failing;
+      api.state = ApiState.failing;
       await tapText(tester, 'GUARDAR SEDE');
       await waitUntil(tester, find.text('Error del servidor'));
       await tapText(tester, 'ACEPTAR');
@@ -181,10 +181,10 @@ void main() {
       expect(find.text('Av. Vergara 1850'), findsOneWidget);
 
       // Verifica: sin conexión avisa, y al reintentar con la red de vuelta la guarda.
-      api.estado = ApiState.offline;
+      api.state = ApiState.offline;
       await tapText(tester, 'GUARDAR SEDE');
       await waitUntil(tester, find.text('Error de conexión'));
-      api.estado = ApiState.normal;
+      api.state = ApiState.normal;
       await tapText(tester, 'REINTENTAR');
       await waitUntil(tester, find.text('¡Sede creada!'));
       expect((await venuesAUserSees()).keys, contains(nombre));

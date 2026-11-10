@@ -20,7 +20,7 @@ void main() {
     var dadaDeBaja = false;
     await mountAdmin(
       tester,
-      tamano: tamano,
+      size: tamano,
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {

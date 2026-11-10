@@ -36,7 +36,7 @@ void main() {
     List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
   }) async {
     final sede = 'Sede Haedo ${unique()}';
-    await createVenue(sede, 'Av. Vergara 1850', dias: dias);
+    await createVenue(sede, 'Av. Vergara 1850', days: dias);
     return (sede, await createSpace(sede), await createSpace(sede));
   }
 
@@ -49,7 +49,7 @@ void main() {
   }) async {
     await signInAsUser(
       tester,
-      correo: 'socio.${unique()}@correo.com',
+      email: 'socio.${unique()}@correo.com',
       apiUrl: apiUrl,
     );
     await tapText(tester, 'SEDES');
@@ -327,10 +327,10 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha1, _) = await sedeConDosCanchas();
-      await occupy(cancha1, manana, 8, horas: 4);
-      await occupy(cancha1, manana, 12, horas: 4);
-      await occupy(cancha1, manana, 16, horas: 4);
-      await occupy(cancha1, manana, 20, horas: 3);
+      await occupy(cancha1, manana, 8, hours: 4);
+      await occupy(cancha1, manana, 12, hours: 4);
+      await occupy(cancha1, manana, 16, hours: 4);
+      await occupy(cancha1, manana, 20, hours: 3);
       await abrirHorarios(tester, sede);
 
       await verDia(tester, manana);
@@ -379,13 +379,13 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final (sede, _, _) = await sedeConDosCanchas();
-    final api = await ApiIntermedia.abrir();
+    final api = await ProxyApi.open();
 
     await abrirHorarios(
       tester,
       sede,
       apiUrl: api.url,
-      antesDeEntrar: () => api.estado = ApiState.offline,
+      antesDeEntrar: () => api.state = ApiState.offline,
     );
 
     // Verifica: la alerta de conexión y, al cerrarla, ningún horario.
@@ -402,13 +402,13 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final (sede, _, _) = await sedeConDosCanchas();
-    final api = await ApiIntermedia.abrir();
+    final api = await ProxyApi.open();
 
     await abrirHorarios(
       tester,
       sede,
       apiUrl: api.url,
-      antesDeEntrar: () => api.estado = ApiState.failing,
+      antesDeEntrar: () => api.state = ApiState.failing,
     );
 
     // Verifica: el error del servidor y, al cerrarlo, ningún horario.

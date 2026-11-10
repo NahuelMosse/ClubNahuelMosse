@@ -57,8 +57,8 @@ void main() {
         await mountScreen(
           tester,
           ChangePasswordScreen(session: sesion),
-          tema: tema,
-          tamano: tamano,
+          theme: tema,
+          size: tamano,
         );
       }
 
@@ -138,8 +138,8 @@ void main() {
                 ),
               ),
             ),
-            tema: tema,
-            tamano: tamano,
+            theme: tema,
+            size: tamano,
           );
           await tester.tap(find.text('abrir'));
           await tester.pumpAndSettle();

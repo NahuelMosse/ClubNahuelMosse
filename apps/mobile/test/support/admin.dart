@@ -19,41 +19,41 @@ const venueCastelarJson =
     '"opens_at": "08:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6,7], '
     '"space_count": 4}';
 
-/// La app entera con la sesión de un administrador, abierta en [inicio].
+/// The whole app with an administrator's session, opened at [start].
 Future<void> mountAdmin(
   WidgetTester tester, {
   required ApiClient api,
-  String inicio = '/admin/sedes',
-  bool oscuro = true,
-  Size tamano = const Size(393, 852),
+  String start = '/admin/sedes',
+  bool dark = true,
+  Size size = const Size(393, 852),
 }) async {
-  tester.view.physicalSize = tamano * 3;
+  tester.view.physicalSize = size * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     App(
       api: api,
       session: FakeSession(adminProfile),
-      appearance: Appearance.inMemory(dark: oscuro),
-      initialLocation: inicio,
+      appearance: Appearance.inMemory(dark: dark),
+      initialLocation: start,
     ),
   );
   await tester.pumpAndSettle();
 }
 
-/// Abre el selector de [campo] y toca [opcion].
-Future<void> choose(WidgetTester tester, String campo, String opcion) async {
-  await tester.ensureVisible(find.bySemanticsLabel(campo));
+/// Opens the selector [field] and taps [option].
+Future<void> choose(WidgetTester tester, String field, String option) async {
+  await tester.ensureVisible(find.bySemanticsLabel(field));
   await tester.pumpAndSettle();
-  await tester.tap(find.bySemanticsLabel(campo));
+  await tester.tap(find.bySemanticsLabel(field));
   await tester.pumpAndSettle();
-  final boton = find.descendant(
+  final button = find.descendant(
     of: find.byType(Dialog),
-    matching: find.text(opcion),
+    matching: find.text(option),
   );
-  await tester.ensureVisible(boton);
+  await tester.ensureVisible(button);
   await tester.pumpAndSettle();
-  await tester.tap(boton);
+  await tester.tap(button);
   await tester.pumpAndSettle();
 }
 
@@ -77,10 +77,10 @@ const spaceCastelarJson =
     '"venue": "Sede Castelar", "sport": "Futbol", "kind": "F7", "number": 1, "covered": true, '
     '"lit": true, "price_per_hour": 55000}';
 
-/// Las respuestas de la API que usa el alta de espacio, con [alta] para el POST.
+/// The API responses the space creation uses, with [create] for the POST.
 Map<String, (int, String)> spaceRoutes({
-  (int, String) alta = (201, spaceF5Json),
-  String sedes = '[$venueMoronJson, $venueCastelarJson]',
+  (int, String) create = (201, spaceF5Json),
+  String venues = '[$venueMoronJson, $venueCastelarJson]',
 }) => {
   'GET /spaces/catalog': (200, catalogJson),
   'GET /spaces': (200, '{"spaces": [$spaceF5Json]}'),
@@ -88,6 +88,6 @@ Map<String, (int, String)> spaceRoutes({
     200,
     '{"name": "Moron_Rivadavia_19850_Futbol_F5_1", "number": 1}',
   ),
-  'GET /venues': (200, '{"venues": $sedes}'),
-  'POST /spaces': alta,
+  'GET /venues': (200, '{"venues": $venues}'),
+  'POST /spaces': create,
 };

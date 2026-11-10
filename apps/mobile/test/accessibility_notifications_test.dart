@@ -50,7 +50,7 @@ void main() {
           now: () => noticesNow,
           onOpen: (_, _) {},
         ),
-        tema: tema,
+        theme: tema,
       );
     }
 
@@ -58,7 +58,10 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await centro(tester, avisos: [reminderNotice, confirmationNotice, alertNotice]);
+      await centro(
+        tester,
+        avisos: [reminderNotice, confirmationNotice, alertNotice],
+      );
       await cumpleLasGuias(tester);
       semantica.dispose();
     });
@@ -96,7 +99,7 @@ void main() {
             NoticePanel(center: avisos, now: () => noticesNow, onOpen: (_) {}),
           ],
         ),
-        tema: tema,
+        theme: tema,
       );
       api
         ..avisos = [reminderNotice]
@@ -116,10 +119,10 @@ void main() {
         ..unread = 2;
       await mountUser(
         tester,
-        oscuro: oscuro,
-        inicio: '/inicio',
+        dark: oscuro,
+        start: '/inicio',
         api: api.cliente,
-        centro: (sesion) => centerOf(api, sesion),
+        center: (sesion) => centerOf(api, sesion),
       );
       await cumpleLasGuias(tester);
       semantica.dispose();

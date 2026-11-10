@@ -45,7 +45,7 @@ void main() {
             ],
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       FilledButton boton(String texto) =>
           tester.widget<FilledButton>(find.widgetWithText(FilledButton, texto));

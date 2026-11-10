@@ -54,7 +54,7 @@ void main() {
     await mountScreen(
       tester,
       RegistrationScreen(registration: RegistrationService(api)),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await completar(tester);
 
@@ -95,15 +95,15 @@ void main() {
       RegistrationScreen(
         registration: RegistrationService(
           fakeApi(
-            codigo: 409,
-            cuerpo:
+            status: 409,
+            body:
                 '{"message": "El usuario ya está registrado. Modificá el correo o el DNI.",'
                 ' "campos": ["email"],'
                 ' "errors": {"email": "Este correo ya está registrado"}}',
           ),
         ),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await completar(tester);
     await tocar(tester, find.text('CREAR CUENTA'));
@@ -136,10 +136,10 @@ void main() {
       tester,
       RegistrationScreen(
         registration: RegistrationService(
-          fakeApi(codigo: 404, cuerpo: '<html>no</html>'),
+          fakeApi(status: 404, body: '<html>no</html>'),
         ),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await completar(tester);
     await tocar(tester, find.text('CREAR CUENTA'));
@@ -155,7 +155,7 @@ void main() {
     await mountScreen(
       tester,
       RegistrationScreen(registration: RegistrationService(fakeApi())),
-      tema: darkTheme,
+      theme: darkTheme,
     );
 
     await tester.enterText(find.bySemanticsLabel('Correo electrónico'), 'ana');

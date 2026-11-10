@@ -18,59 +18,59 @@ const venueHaedoWithoutCourts =
     '"opens_at": "08:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6,7], '
     '"space_count": 0, "sports": []}';
 
-/// La grilla del prototipo: jueves 12 de noviembre, 1 hora, seis horarios ocupados.
+/// The prototype's grid: Thursday, November 12, 1 hour, six taken time slots.
 String gridJson({
-  String fecha = '2026-11-12',
-  Set<int> ocupadas = const {9, 12, 16, 17, 21, 22},
-  bool abre = true,
+  String date = '2026-11-12',
+  Set<int> taken = const {9, 12, 16, 17, 21, 22},
+  bool opens = true,
 }) {
-  String hora(int h) => '${h.toString().padLeft(2, '0')}:00';
-  final franjas = [
-    if (abre)
+  String hour(int h) => '${h.toString().padLeft(2, '0')}:00';
+  final slots = [
+    if (opens)
       for (var h = 8; h < 23; h++)
-        '{"starts_at": "${hora(h)}", "ends_at": "${hora(h + 1)}", '
-            '"available": ${!ocupadas.contains(h)}}',
+        '{"starts_at": "${hour(h)}", "ends_at": "${hour(h + 1)}", '
+            '"available": ${!taken.contains(h)}}',
   ];
-  return '{"date": "$fecha", "today": "2026-11-12", "opens": $abre, '
-      '"slots": [${franjas.join(', ')}], '
-      '"unavailable": ${abre ? ocupadas.length : 0}}';
+  return '{"date": "$date", "today": "2026-11-12", "opens": $opens, '
+      '"slots": [${slots.join(', ')}], '
+      '"unavailable": ${opens ? taken.length : 0}}';
 }
 
-/// Las respuestas de la API para recorrer las sedes como usuario.
+/// The API responses to browse the venues as a user.
 Map<String, (int, String)> venueRoutes({
-  String sedes = '[$venueMoronWithSports, $venueHaedoWithoutCourts]',
-  String espacios = '[$spaceF5Json, $spaceTennisJson]',
-  String? grilla,
+  String venues = '[$venueMoronWithSports, $venueHaedoWithoutCourts]',
+  String spaces = '[$spaceF5Json, $spaceTennisJson]',
+  String? grid,
 }) => {
   'GET /spaces/catalog': (200, catalogJson),
-  'GET /venues': (200, '{"venues": $sedes}'),
-  'GET /spaces': (200, '{"spaces": $espacios}'),
+  'GET /venues': (200, '{"venues": $venues}'),
+  'GET /spaces': (200, '{"spaces": $spaces}'),
   'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
     200,
-    grilla ?? gridJson(),
+    grid ?? gridJson(),
   ),
 };
 
-/// La app entera con la sesión de un usuario, abierta en [inicio].
+/// The whole app with a user's session, opened at [start].
 Future<void> mountUser(
   WidgetTester tester, {
   required ApiClient api,
-  String inicio = '/sedes',
-  bool oscuro = true,
-  Size tamano = const Size(393, 852),
-  NotificationCenter Function(Session)? centro,
+  String start = '/sedes',
+  bool dark = true,
+  Size size = const Size(393, 852),
+  NotificationCenter Function(Session)? center,
 }) async {
-  tester.view.physicalSize = tamano * 3;
+  tester.view.physicalSize = size * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  final sesion = FakeSession(userProfile);
+  final session = FakeSession(userProfile);
   await tester.pumpWidget(
     App(
       api: api,
-      session: sesion,
-      appearance: Appearance.inMemory(dark: oscuro),
-      notificationCenter: centro?.call(sesion),
-      initialLocation: inicio,
+      session: session,
+      appearance: Appearance.inMemory(dark: dark),
+      notificationCenter: center?.call(session),
+      initialLocation: start,
     ),
   );
   await tester.pumpAndSettle();

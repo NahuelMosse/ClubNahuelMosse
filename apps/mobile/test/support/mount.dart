@@ -24,45 +24,45 @@ import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-/// El aviso del login cuando las credenciales no sirven, en castellano.
+/// The login notice when the credentials are rejected, in Spanish.
 const invalidCredentialsMessage =
     'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
 
-/// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
+/// An API client that always answers [status] with [body], without a network.
 ApiClient fakeApi({
-  int codigo = 201,
-  String cuerpo = '{"id": "00000000-0000-7000-8000-000000000001"}',
+  int status = 201,
+  String body = '{"id": "00000000-0000-7000-8000-000000000001"}',
 }) => ApiClient(
   'http://api.falsa',
   cliente: MockClient(
     (_) async => http.Response.bytes(
-      utf8.encode(cuerpo),
-      codigo,
+      utf8.encode(body),
+      status,
       headers: {'content-type': 'application/json; charset=utf-8'},
     ),
   ),
 );
 
-/// Un cliente de la API que responde según `MÉTODO /ruta`; lo que no está es un 404.
-/// Guarda cada pedido en [pedidos] para afirmar qué se mandó.
+/// An API client that answers by `METHOD /path`; what is missing is a 404.
+/// Keeps every request in [requests] to assert what was sent.
 ApiClient apiRoutes(
-  Map<String, (int, String)> respuestas, {
-  List<http.Request>? pedidos,
+  Map<String, (int, String)> responses, {
+  List<http.Request>? requests,
 }) => ApiClient(
   'http://api.falsa',
-  cliente: MockClient((pedido) async {
-    pedidos?.add(pedido);
-    final (codigo, cuerpo) =
-        respuestas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+  cliente: MockClient((request) async {
+    requests?.add(request);
+    final (status, body) =
+        responses['${request.method} ${request.url.path}'] ?? (404, '{}');
     return http.Response.bytes(
-      utf8.encode(cuerpo),
-      codigo,
+      utf8.encode(body),
+      status,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
   }),
 );
 
-const _catalogoJson =
+const _catalogJson =
     '{"sports": ['
     '{"key": "Futbol", "name": "Fútbol", "kinds": ['
     '{"key": "F5", "name": "Fútbol 5"}, {"key": "F7", "name": "Fútbol 7"}]}, '
@@ -75,93 +75,93 @@ const _catalogoJson =
     '{"key": "Golf", "name": "Golf", "kinds": [{"key": "DR", "name": "Driving range"}]}'
     ']}';
 
-String _sedeJson(String id, String nombre, String direccion, int canchas) =>
-    '{"id": "$id", "name": "$nombre", "address": "$direccion", '
+String _venueJson(String id, String name, String address, int courts) =>
+    '{"id": "$id", "name": "$name", "address": "$address", '
     '"opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7], '
-    '"space_count": $canchas, "sports": ["Futbol", "Tenis"]}';
+    '"space_count": $courts, "sports": ["Futbol", "Tenis"]}';
 
-const _proximaJson =
+const _upcomingJson =
     '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000003", "venue_id": "00000000-0000-7000-8000-000000000002", '
     '"space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", '
     '"kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850", '
     '"starts_at": "2026-11-13T00:00:00Z", "ends_at": "2026-11-13T01:00:00Z", '
     '"total": 38000, "status": "active", "reason": null, "cancelable": true}';
 
-/// Una API con lo que lee el Home: 4 sedes con 17 canchas (o, con [unaSede], una sede con
-/// una cancha), el catálogo de deportes y, con [conReserva], una próxima reserva.
+/// An API with what the Home reads: 4 venues with 17 courts (or, with [oneVenue], one venue
+/// with one court), the sports catalog and, with [withBooking], an upcoming booking.
 ApiClient homeApi({
-  bool conReserva = true,
-  bool unaSede = false,
+  bool withBooking = true,
+  bool oneVenue = false,
 }) => apiRoutes({
-  'GET /bookings': (200, '{"bookings": [${conReserva ? _proximaJson : ''}]}'),
-  'GET /spaces/catalog': (200, _catalogoJson),
+  'GET /bookings': (200, '{"bookings": [${withBooking ? _upcomingJson : ''}]}'),
+  'GET /spaces/catalog': (200, _catalogJson),
   'GET /venues': (
     200,
-    unaSede
-        ? '{"venues": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
-        : '{"venues": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
-              '${_sedeJson('00000000-0000-7000-8000-000000000002', 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
-              '${_sedeJson('00000000-0000-7000-8000-000000000003', 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
-              '${_sedeJson('00000000-0000-7000-8000-000000000004', 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
+    oneVenue
+        ? '{"venues": [${_venueJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
+        : '{"venues": [${_venueJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+              '${_venueJson('00000000-0000-7000-8000-000000000002', 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
+              '${_venueJson('00000000-0000-7000-8000-000000000003', 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
+              '${_venueJson('00000000-0000-7000-8000-000000000004', 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
   ),
 });
 
-/// El Home leyendo de [apiInicio].
+/// The Home reading from [homeApi].
 Widget fakeHome(
-  Session sesion, {
-  bool conReserva = true,
-  bool unaSede = false,
+  Session session, {
+  bool withBooking = true,
+  bool oneVenue = false,
 }) {
-  final api = homeApi(conReserva: conReserva, unaSede: unaSede);
+  final api = homeApi(withBooking: withBooking, oneVenue: oneVenue);
   return HomeScreen(
-    sesion: sesion,
-    reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+    sesion: session,
+    reservas: Bookings(BookingsApi(api: api, sesion: session)),
     espacios: Spaces(
-      repository: SpacesRepository(api: api, session: sesion),
+      repository: SpacesRepository(api: api, session: session),
     ),
     venues: Venues(
-      repository: VenuesRepository(api: api, session: sesion),
+      repository: VenuesRepository(api: api, session: session),
     ),
   );
 }
 
-/// Monta [pantalla] con el tema y el idioma de la app, en un teléfono de [tamano].
+/// Mounts [screen] with the app's theme and language, on a phone of [size].
 Future<void> mountScreen(
   WidgetTester tester,
-  Widget pantalla, {
-  required ThemeData tema,
-  Size tamano = const Size(393, 852),
-  double escalaTexto = 1,
+  Widget screen, {
+  required ThemeData theme,
+  Size size = const Size(393, 852),
+  double textScale = 1,
 }) async {
-  tester.view.physicalSize = tamano * 3;
+  tester.view.physicalSize = size * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: tema,
+      theme: theme,
       localeListResolutionCallback: resolveLanguage,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      builder: (context, hijo) {
+      builder: (context, child) {
         useLanguage(Localizations.localeOf(context));
         return MediaQuery(
           data: MediaQuery.of(
             context,
-          ).copyWith(textScaler: TextScaler.linear(escalaTexto)),
-          child: hijo ?? const SizedBox.shrink(),
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child ?? const SizedBox.shrink(),
         );
       },
       // A new key makes a second mount in the same test start from a fresh state.
-      home: KeyedSubtree(key: UniqueKey(), child: pantalla),
+      home: KeyedSubtree(key: UniqueKey(), child: screen),
     ),
   );
   await tester.pumpAndSettle();
 }
 
-/// Carga las fuentes del prototipo y los íconos: en los tests de widgets no vienen solas.
+/// Loads the prototype's fonts and icons: widget tests do not bring them.
 Future<void> loadFonts() async {
-  const familias = {
+  const families = {
     'Inter': [
       'assets/fuentes/Inter-Regular.ttf',
       'assets/fuentes/Inter-Medium.ttf',
@@ -173,54 +173,54 @@ Future<void> loadFonts() async {
     'JetBrains Mono': ['assets/fuentes/JetBrainsMono-Regular.ttf'],
     'MaterialIcons': ['fonts/MaterialIcons-Regular.otf'],
   };
-  for (final MapEntry(key: familia, value: archivos) in familias.entries) {
-    final cargador = FontLoader(familia);
-    for (final archivo in archivos) {
-      cargador.addFont(rootBundle.load(archivo));
+  for (final MapEntry(key: family, value: files) in families.entries) {
+    final loader = FontLoader(family);
+    for (final file in files) {
+      loader.addFont(rootBundle.load(file));
     }
-    await cargador.load();
+    await loader.load();
   }
 }
 
-/// Firebase sin red: [alIngresar] decide qué pasa con cada intento.
+/// Firebase without a network: [onSignIn] decides what happens with each attempt.
 class FakeCredentials implements Credentials {
-  FakeCredentials({this.alIngresar, this.conCuenta = false});
+  FakeCredentials({this.onSignIn, this.withAccount = false});
 
-  final Future<void> Function(String correo, String contrasena)? alIngresar;
-  bool conCuenta;
-  final intentos = <(String, String)>[];
-  int salidas = 0;
-
-  @override
-  bool get hasAccount => conCuenta;
+  final Future<void> Function(String email, String password)? onSignIn;
+  bool withAccount;
+  final attempts = <(String, String)>[];
+  int signOuts = 0;
 
   @override
-  Future<void> signIn(String correo, String contrasena) async {
-    intentos.add((correo, contrasena));
-    await alIngresar?.call(correo, contrasena);
-    conCuenta = true;
+  bool get hasAccount => withAccount;
+
+  @override
+  Future<void> signIn(String email, String password) async {
+    attempts.add((email, password));
+    await onSignIn?.call(email, password);
+    withAccount = true;
   }
 
-  /// Como cuando Firebase ya no puede refrescar la sesión.
-  bool tokenFalla = false;
+  /// As when Firebase can no longer refresh the session.
+  bool tokenFails = false;
 
   @override
   Future<String?> token() async {
-    if (tokenFalla) throw const InvalidCredentials();
-    return conCuenta ? 'token-falso' : null;
+    if (tokenFails) throw const InvalidCredentials();
+    return withAccount ? 'token-falso' : null;
   }
 
   @override
   Future<void> signOut() async {
-    salidas++;
-    conCuenta = false;
+    signOuts++;
+    withAccount = false;
   }
 }
 
-/// El perfil que devuelve `GET /yo` en los tests.
-String profileJson({String rol = 'user'}) =>
+/// The profile that `GET /yo` returns in the tests.
+String profileJson({String role = 'user'}) =>
     '{"first_name": "Nahuel", "last_name": "Mosse", "email": "nahuel@correo.com", '
-    '"role": "$rol", "dni": "42118507", "birth_date": "2000-03-14"}';
+    '"role": "$role", "dni": "42118507", "birth_date": "2000-03-14"}';
 
 final userProfile = Profile(
   firstName: 'Nahuel',
@@ -240,33 +240,33 @@ final adminProfile = Profile(
   birthDate: DateTime(1980, 1, 1),
 );
 
-/// Una sesión ya iniciada con [perfil], sin Firebase ni API.
+/// A session already signed in with the given profile, without Firebase or the API.
 class FakeSession extends Session {
-  FakeSession(this._perfilFalso)
+  FakeSession(this._fakeProfile)
     : super(
         repository: SessionRepository(
-          credentials: FakeCredentials(conCuenta: true),
+          credentials: FakeCredentials(withAccount: true),
           api: fakeApi(),
         ),
       );
 
-  Profile? _perfilFalso;
-  int cierres = 0;
+  Profile? _fakeProfile;
+  int closes = 0;
 
   @override
-  Profile? get profile => _perfilFalso;
+  Profile? get profile => _fakeProfile;
 
   @override
   Future<Profile> refresh() async {
-    final perfil = _perfilFalso;
-    if (perfil == null) throw const SessionExpired();
-    return perfil;
+    final current = _fakeProfile;
+    if (current == null) throw const SessionExpired();
+    return current;
   }
 
   @override
   Future<void> close() async {
-    cierres++;
-    _perfilFalso = null;
+    closes++;
+    _fakeProfile = null;
     notifyListeners();
   }
 }
@@ -277,9 +277,9 @@ Widget loginRejectingCredentials() => LoginScreen(
   session: Session(
     repository: SessionRepository(
       credentials: FakeCredentials(
-        alIngresar: (_, _) async => throw const InvalidCredentials(),
+        onSignIn: (_, _) async => throw const InvalidCredentials(),
       ),
-      api: fakeApi(codigo: 200, cuerpo: profileJson()),
+      api: fakeApi(status: 200, body: profileJson()),
     ),
   ),
 );

@@ -32,7 +32,7 @@ void main() {
           session: Session(
             repository: SessionRepository(
               credentials: credenciales ?? FakeCredentials(),
-              api: fakeApi(codigo: 200, cuerpo: profileJson()),
+              api: fakeApi(status: 200, body: profileJson()),
             ),
           ),
           pending: PendingBooking(),
@@ -81,7 +81,7 @@ void main() {
       await montarLogin(
         tester,
         credenciales: FakeCredentials(
-          alIngresar: (_, _) async => throw const InvalidCredentials(),
+          onSignIn: (_, _) async => throw const InvalidCredentials(),
         ),
       );
       await tester.enterText(find.bySemanticsLabel('Correo'), 'a@correo.com');

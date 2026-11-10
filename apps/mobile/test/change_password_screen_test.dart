@@ -23,7 +23,7 @@ void main() {
         api: apiRoutes({
           'GET /me': (200, profileJson()),
           'PUT /me/password': cambio,
-        }, pedidos: pedidos),
+        }, requests: pedidos),
       ),
     );
     await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
@@ -31,7 +31,11 @@ void main() {
   }
 
   Future<void> montarPantalla(WidgetTester tester, Session sesion) =>
-      mountScreen(tester, ChangePasswordScreen(session: sesion), tema: darkTheme);
+      mountScreen(
+        tester,
+        ChangePasswordScreen(session: sesion),
+        theme: darkTheme,
+      );
 
   Future<void> completar(
     WidgetTester tester, {
@@ -120,10 +124,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Contraseña actualizada'), findsOneWidget);
-    expect(credenciales.intentos.last, ('nahuel@correo.com', 'ClubNahuel2'));
+    expect(credenciales.attempts.last, ('nahuel@correo.com', 'ClubNahuel2'));
     final put = pedidos.singleWhere((p) => p.method == 'PUT');
     expect(put.headers['authorization'], 'Bearer token-falso');
-    expect(put.body, '{"current_password":"ClubNahuel1","new_password":"ClubNahuel2"}');
+    expect(
+      put.body,
+      '{"current_password":"ClubNahuel1","new_password":"ClubNahuel2"}',
+    );
     semantica.dispose();
   });
 
@@ -162,7 +169,7 @@ void main() {
     expect(find.text('Tu sesión expiró'), findsOneWidget);
     await tester.tap(find.text('IR AL INICIO DE SESIÓN'));
     await tester.pumpAndSettle();
-    expect(credenciales.salidas, 1);
+    expect(credenciales.signOuts, 1);
     semantica.dispose();
   });
 
@@ -184,7 +191,7 @@ void main() {
   ) async {
     final semantica = tester.ensureSemantics();
     final sesion = await sesionCon((204, ''));
-    credenciales.tokenFalla = true;
+    credenciales.tokenFails = true;
     await montarPantalla(tester, sesion);
     await completar(tester);
     await tester.tap(find.text('GUARDAR CONTRASEÑA'));

@@ -18,7 +18,7 @@ void main() {
     final respuestas = [...alGuardar];
     await mountAdmin(
       tester,
-      tamano: tamano,
+      size: tamano,
       api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {

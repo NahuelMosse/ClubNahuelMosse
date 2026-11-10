@@ -38,13 +38,13 @@ void main() {
     final session = Session(
       repository: SessionRepository(
         credentials: credentials ?? FakeCredentials(),
-        api: api ?? fakeApi(codigo: 200, cuerpo: profileJson()),
+        api: api ?? fakeApi(status: 200, body: profileJson()),
       ),
     );
     await mountScreen(
       tester,
       LoginScreen(session: session, pending: PendingBooking()),
-      tema: darkTheme,
+      theme: darkTheme,
     );
   }
 
@@ -120,7 +120,7 @@ void main() {
           await mountLogin(
             tester,
             device,
-            api: fakeApi(codigo: 429, cuerpo: '{"mensaje": "$message"}'),
+            api: fakeApi(status: 429, body: '{"mensaje": "$message"}'),
           );
           await tester.enterText(find.bySemanticsLabel(email), 'a@b.com');
           await tester.enterText(find.bySemanticsLabel(password), 'Clave1234');
@@ -141,7 +141,7 @@ void main() {
           tester,
           _english,
           credentials: FakeCredentials(
-            alIngresar: (_, _) async => throw const InvalidCredentials(),
+            onSignIn: (_, _) async => throw const InvalidCredentials(),
           ),
         );
         expect(find.bySemanticsLabel('Email'), findsOneWidget);

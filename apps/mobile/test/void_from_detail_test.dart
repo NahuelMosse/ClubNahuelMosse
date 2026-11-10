@@ -52,7 +52,7 @@ void main() {
         200,
         anulada,
       ),
-    }, pedidos: pedidos);
+    }, requests: pedidos);
     final sesion = FakeSession(adminProfile);
     final leida = parseBookingHistoryEntry(jsonDecode(reserva));
     expect(leida, isNotNull);
@@ -68,7 +68,7 @@ void main() {
         filters: const HistoryFilters(),
         pending: PendingPanelFilters(),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await tester.pumpAndSettle();
   }
@@ -84,8 +84,7 @@ void main() {
       pedidos.where(
         (p) =>
             p.method == 'POST' &&
-            p.url.path ==
-                '/bookings/00000000-0000-7000-8000-000000000001/void',
+            p.url.path == '/bookings/00000000-0000-7000-8000-000000000001/void',
       );
 
   testWidgets(

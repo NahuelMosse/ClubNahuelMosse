@@ -17,7 +17,7 @@ void main() {
       final sesion = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
-          api: fakeApi(codigo: 500),
+          api: fakeApi(status: 500),
         ),
       );
       expect(await sesion.resume(), isNull);
@@ -26,8 +26,8 @@ void main() {
     test('con la cuenta vigente entra con su rol', () async {
       final sesion = Session(
         repository: SessionRepository(
-          credentials: FakeCredentials(conCuenta: true),
-          api: fakeApi(codigo: 200, cuerpo: profileJson(rol: 'admin')),
+          credentials: FakeCredentials(withAccount: true),
+          api: fakeApi(status: 200, body: profileJson(role: 'admin')),
         ),
       );
       final perfil = await sesion.resume();
@@ -37,27 +37,27 @@ void main() {
     });
 
     test('si la API ya no la reconoce, la cierra', () async {
-      final credenciales = FakeCredentials(conCuenta: true);
+      final credenciales = FakeCredentials(withAccount: true);
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: fakeApi(codigo: 401, cuerpo: '{}'),
+          api: fakeApi(status: 401, body: '{}'),
         ),
       );
       expect(await sesion.resume(), isNull);
-      expect(credenciales.salidas, 1);
+      expect(credenciales.signOuts, 1);
     });
 
     test('sin red o con la API caída la conserva para la próxima', () async {
-      final credenciales = FakeCredentials(conCuenta: true);
+      final credenciales = FakeCredentials(withAccount: true);
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: fakeApi(codigo: 503),
+          api: fakeApi(status: 503),
         ),
       );
       await expectLater(sesion.resume(), throwsA(isA<ErrorDelServidor>()));
-      expect(credenciales.salidas, 0);
+      expect(credenciales.signOuts, 0);
     });
   });
 
@@ -65,7 +65,7 @@ void main() {
     final sesion = Session(
       repository: SessionRepository(
         credentials: FakeCredentials(),
-        api: fakeApi(codigo: 200, cuerpo: profileJson()),
+        api: fakeApi(status: 200, body: profileJson()),
       ),
     );
     var avisos = 0;
@@ -80,7 +80,7 @@ void main() {
     final sesion = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: fakeApi(codigo: 200, cuerpo: profileJson(rol: 'dueño')),
+        api: fakeApi(status: 200, body: profileJson(role: 'dueño')),
       ),
     );
     await expectLater(
@@ -94,7 +94,7 @@ void main() {
     final sesion = Session(
       repository: SessionRepository(
         credentials: _SalirFalla(),
-        api: fakeApi(codigo: 200, cuerpo: profileJson()),
+        api: fakeApi(status: 200, body: profileJson()),
       ),
     );
     await sesion.signIn('a@b.com', 'Clave1234');
@@ -168,7 +168,7 @@ void main() {
     final sesion = Session(
       repository: SessionRepository(
         credentials: credenciales,
-        api: fakeApi(codigo: 200, cuerpo: profileJson()),
+        api: fakeApi(status: 200, body: profileJson()),
       ),
     );
     await sesion.signIn('a@b.com', 'Clave1234');

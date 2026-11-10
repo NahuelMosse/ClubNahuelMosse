@@ -59,9 +59,9 @@ void main() {
         await mountScreen(
           tester,
           RegistrationScreen(
-            registration: RegistrationService(apiRoutes({}, pedidos: pedidos)),
+            registration: RegistrationService(apiRoutes({}, requests: pedidos)),
           ),
-          tema: darkTheme,
+          theme: darkTheme,
         );
 
         await tocar(tester, find.text('CREAR CUENTA'));
@@ -80,7 +80,7 @@ void main() {
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
-          tema: darkTheme,
+          theme: darkTheme,
         );
 
         await tester.tap(find.bySemanticsLabel('Nombre'));
@@ -99,7 +99,7 @@ void main() {
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
-          tema: darkTheme,
+          theme: darkTheme,
         );
 
         final nodo = tester.getSemantics(
@@ -201,7 +201,7 @@ void main() {
   Future<void> hastaConfirmarReserva(WidgetTester tester) async {
     await mountUser(
       tester,
-      inicio:
+      start:
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRoutes({
         ...venueRoutes(),
@@ -237,10 +237,10 @@ void main() {
     'el rechazo de un cambio de reserva sigue a la vista hasta que la persona lo cierra '
     '@REV-04-S6 @assumption:REV-04-ASM-02',
     (tester) async {
-      final rutas = venueRoutes(grilla: gridJson(ocupadas: {9, 12}));
+      final rutas = venueRoutes(grid: gridJson(taken: {9, 12}));
       await mountUser(
         tester,
-        inicio: '/reservas',
+        start: '/reservas',
         api: apiRoutes({
           ...rutas,
           'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
@@ -277,7 +277,7 @@ void main() {
       );
       await mountUser(
         tester,
-        inicio: '/reservas',
+        start: '/reservas',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [$proxima]}'),
@@ -308,7 +308,7 @@ void main() {
           ),
         ),
       ),
-      tema: darkTheme,
+      theme: darkTheme,
     );
     await tocar(tester, find.text('ABRIR'));
   }
@@ -361,7 +361,7 @@ void main() {
             error: 'Elegí un deporte',
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
 
       final nodo = tester.getSemantics(
@@ -384,7 +384,7 @@ void main() {
       await mountScreen(
         tester,
         RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
-        tema: darkTheme,
+        theme: darkTheme,
       );
 
       await tocar(tester, find.text('CREAR CUENTA'));
@@ -415,10 +415,10 @@ void main() {
                 201,
                 '{"id": "00000000-0000-7000-8000-000000000001"}',
               ),
-            }, pedidos: pedidos),
+            }, requests: pedidos),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       await tester.enterText(find.bySemanticsLabel('Nombre'), 'Ana');
       await tester.enterText(find.bySemanticsLabel('Apellido'), 'Pérez');
@@ -457,7 +457,7 @@ void main() {
         await mountScreen(
           tester,
           RegistrationScreen(registration: RegistrationService(apiRoutes({}))),
-          tema: darkTheme,
+          theme: darkTheme,
         );
         await tester.enterText(
           find.bySemanticsLabel('Fecha de nacimiento'),
@@ -492,9 +492,9 @@ void main() {
           const Scaffold(
             bottomNavigationBar: BottomBar(current: Section.bookings),
           ),
-          tema: darkTheme,
-          tamano: Size(ancho, 800),
-          escalaTexto: 2,
+          theme: darkTheme,
+          size: Size(ancho, 800),
+          textScale: 2,
         );
 
         for (final destino in ['INICIO', 'SEDES', 'RESERVAS', 'PERFIL']) {
@@ -526,9 +526,9 @@ void main() {
         const Scaffold(
           bottomNavigationBar: BottomBar(current: Section.bookings),
         ),
-        tema: darkTheme,
-        tamano: const Size(360, 800),
-        escalaTexto: 2,
+        theme: darkTheme,
+        size: const Size(360, 800),
+        textScale: 2,
       );
 
       final reservas = tester.renderObject<RenderParagraph>(
@@ -547,9 +547,9 @@ void main() {
         const Scaffold(
           bottomNavigationBar: AdminBar(current: AdminSection.spaces),
         ),
-        tema: darkTheme,
-        tamano: const Size(360, 800),
-        escalaTexto: 2,
+        theme: darkTheme,
+        size: const Size(360, 800),
+        textScale: 2,
       );
 
       final espacios = tester.renderObject<RenderParagraph>(
@@ -577,7 +577,7 @@ void main() {
             ),
           ),
         ),
-        tema: darkTheme,
+        theme: darkTheme,
       );
       final estilo = tester
           .widget<FilledButton>(find.byType(FilledButton))
@@ -645,8 +645,8 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await mountAdmin(
       tester,
-      inicio: '/admin/espacios/nuevo',
-      tamano: const Size(320, 568),
+      start: '/admin/espacios/nuevo',
+      size: const Size(320, 568),
       api: apiRoutes(spaceRoutes()),
     );
   }

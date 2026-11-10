@@ -32,13 +32,13 @@ void main() {
         final session = Session(
           repository: SessionRepository(
             credentials: FakeCredentials(),
-            api: fakeApi(codigo: 429, cuerpo: '{"message": "$message"}'),
+            api: fakeApi(status: 429, body: '{"message": "$message"}'),
           ),
         );
         await mountScreen(
           tester,
           LoginScreen(session: session, pending: PendingBooking()),
-          tema: darkTheme,
+          theme: darkTheme,
         );
         await tester.enterText(find.bySemanticsLabel(email), 'a@b.com');
         await tester.enterText(find.bySemanticsLabel(password), 'Clave1234');

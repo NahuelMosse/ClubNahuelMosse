@@ -125,12 +125,15 @@ void main() {
 
   group('Espacios', () {
     Spaces espacios(ApiClient api) => Spaces(
-      repository: SpacesRepository(api: api, session: FakeSession(adminProfile)),
+      repository: SpacesRepository(
+        api: api,
+        session: FakeSession(adminProfile),
+      ),
     );
 
     test('pide el catálogo una sola vez', () async {
       final pedidos = <http.Request>[];
-      final e = espacios(apiRoutes(spaceRoutes(), pedidos: pedidos));
+      final e = espacios(apiRoutes(spaceRoutes(), requests: pedidos));
       await e.repository.catalog();
       await e.repository.catalog();
       expect(
@@ -141,7 +144,7 @@ void main() {
 
     test('el nombre sugerido va con la sede, el deporte y el tipo', () async {
       final pedidos = <http.Request>[];
-      final e = espacios(apiRoutes(spaceRoutes(), pedidos: pedidos));
+      final e = espacios(apiRoutes(spaceRoutes(), requests: pedidos));
       final (nombre, numero) = await e.suggestedName(
         venueId: '00000000-0000-7000-8000-000000000001',
         sport: 'Futbol',
@@ -167,7 +170,7 @@ void main() {
 
     test('el alta manda el número que se vio', () async {
       final pedidos = <http.Request>[];
-      final e = espacios(apiRoutes(spaceRoutes(), pedidos: pedidos));
+      final e = espacios(apiRoutes(spaceRoutes(), requests: pedidos));
       final espacio = await alta(e);
       expect(espacio.name, 'Moron_Rivadavia_19850_Futbol_F5_1');
       expect(jsonDecode(pedidos.single.body), {
@@ -185,7 +188,7 @@ void main() {
       final e = espacios(
         apiRoutes(
           spaceRoutes(
-            alta: (
+            create: (
               409,
               '{"errors": {"name": "Ya existe"}, '
                   '"name": "Moron_Rivadavia_19850_Futbol_F5_2", "number": 2}',
@@ -211,7 +214,7 @@ void main() {
       final e = espacios(
         apiRoutes(
           spaceRoutes(
-            alta: (
+            create: (
               422,
               '{"errors": {"venue_id": "La sede ya no está disponible"}}',
             ),
@@ -227,7 +230,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        inicio: '/admin/espacios',
+        start: '/admin/espacios',
         api: apiRoutes({
           ...spaceRoutes(),
           'GET /spaces': (
@@ -250,7 +253,7 @@ void main() {
     testWidgets('sin espacios lo dice', (tester) async {
       await mountAdmin(
         tester,
-        inicio: '/admin/espacios',
+        start: '/admin/espacios',
         api: apiRoutes({
           ...spaceRoutes(),
           'GET /spaces': (200, '{"spaces": []}'),
@@ -269,8 +272,8 @@ void main() {
       final pedidos = <http.Request>[];
       await mountAdmin(
         tester,
-        inicio: '/admin/espacios/nuevo',
-        api: apiRoutes(rutas ?? spaceRoutes(), pedidos: pedidos),
+        start: '/admin/espacios/nuevo',
+        api: apiRoutes(rutas ?? spaceRoutes(), requests: pedidos),
       );
       return pedidos;
     }
@@ -354,7 +357,7 @@ void main() {
       await abrir(
         tester,
         rutas: spaceRoutes(
-          alta: (
+          create: (
             409,
             '{"errors": {"name": "Ya existe un espacio deportivo con ese nombre '
                 'en la sede seleccionada."}, '
@@ -433,7 +436,7 @@ void main() {
 
     testWidgets('sin sedes lo dice y no deja elegir', (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrir(tester, rutas: spaceRoutes(sedes: '[]'));
+      await abrir(tester, rutas: spaceRoutes(venues: '[]'));
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('Sede'));
       await tester.pumpAndSettle();
@@ -446,7 +449,7 @@ void main() {
     ) async {
       await mountAdmin(
         tester,
-        inicio: '/admin/espacios/creado',
+        start: '/admin/espacios/creado',
         api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('¡Espacio deportivo creado!'), findsNothing);

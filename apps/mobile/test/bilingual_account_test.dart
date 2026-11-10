@@ -26,7 +26,7 @@ void main() {
   ) async {
     tester.platformDispatcher.localesTestValue = device;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await mountScreen(tester, screen, tema: darkTheme);
+    await mountScreen(tester, screen, theme: darkTheme);
   }
 
   Future<void> tap(WidgetTester tester, Finder finder) async {
@@ -66,7 +66,7 @@ void main() {
         tester,
         _english,
         ForgotPasswordScreen(
-          recovery: PasswordRecovery(fakeApi(codigo: 202, cuerpo: '')),
+          recovery: PasswordRecovery(fakeApi(status: 202, body: '')),
         ),
       );
       expect(find.text('Recover password'), findsOneWidget);
@@ -88,7 +88,7 @@ void main() {
         tester,
         _english,
         NewPasswordScreen(
-          recovery: PasswordRecovery(fakeApi(codigo: 204, cuerpo: '')),
+          recovery: PasswordRecovery(fakeApi(status: 204, body: '')),
           session: FakeSession(null),
           code: 'abc',
         ),
@@ -101,7 +101,7 @@ void main() {
         tester,
         _english,
         NewPasswordScreen(
-          recovery: PasswordRecovery(fakeApi(codigo: 410, cuerpo: '')),
+          recovery: PasswordRecovery(fakeApi(status: 410, body: '')),
           session: FakeSession(null),
           code: 'abc',
         ),
