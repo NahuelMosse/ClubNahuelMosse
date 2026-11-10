@@ -10,7 +10,7 @@ String _sources(List<String> dirs) => [
 
 void main() {
   test(
-    'los textos, rutas de la API, claves JSON y rutas de pantalla de reservas e inicio son los de antes @ENG-10-S3',
+    'the texts, API routes, JSON keys and screen routes of bookings and home are the same as before @ENG-10-S3',
     () {
       final source = _sources(['lib/features/bookings', 'lib/features/home']);
       for (final piece in [

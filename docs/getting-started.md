@@ -90,7 +90,7 @@ flowchart LR
   repository --> rules
 ```
 
-The rules know nothing about HTTP or SQL; a test (`apps/api/tests/unit/test_arquitectura_funcionalidades.py`) fails if someone
+The rules know nothing about HTTP or SQL; a test (`apps/api/tests/unit/test_architecture_features.py`) fails if someone
 breaks it.
 
 ## How to change something typical
@@ -151,7 +151,7 @@ cd apps/api && uv run pytest          # the server; needs the test database and 
 | **Tag** (`@CU-09-S2`) | Goes in the name of a test and says which scenario it tests. With it you go from the requirement to the test and back ([Traceability](../specs/TRAZABILIDAD.md)) |
 | **Assumption** (`ASM`) | Something the requirement did not say and was decided, noted with its test |
 | **Replacement** (`replaces:`) | A test already in `main` is not edited; if it came out wrong, a new one is written and noted in the card |
-| **Screenshot** (`test/capturas/`) | Images of each screen in two phone sizes and in light and dark mode, to look at by eye |
+| **Screenshot** (`test/screenshots/`) | Images of each screen in two phone sizes and in light and dark mode, to look at by eye |
 | **Migration** | A file that changes the tables; they are applied in order and never edited once in `main` |
 
 ## What to read next

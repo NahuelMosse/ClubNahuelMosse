@@ -1,9 +1,9 @@
-"""El contrato y el mensaje push de notificaciones, con los errores de cuerpo documentados."""
+"""The notifications contract and push message, with the body errors documented."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tag and are not split)
 import pytest
 
-# (ruta, método) -> (operationId, parámetros, códigos, ¿lleva cuerpo?); todas llevan HTTPBearer.
+# (route, method) -> (operationId, parameters, codes, has a body?); all carry HTTPBearer.
 CONTRACT = {
     ("/devices", "put"): ("register_devices_put", [], {"204", "400", "401", "403", "408", "409", "413", "422"}, True),
     ("/devices/unregister", "post"): ("unregister_devices_unregister_post", [], {"204", "400", "401", "408", "413", "422"}, True),
@@ -21,7 +21,7 @@ CONTRACT = {
 def test_the_notifications_contract_and_push_message_are_mains(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """el contrato y el mensaje push de notificaciones son los de main @ENG-04-S3 @assumption:ENG-04-ASM-01"""
+    """the notifications contract and push message are main's @ENG-04-S3 @assumption:ENG-04-ASM-01"""
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     from app.main import create_app
     from app.modules.notifications.push import build_message

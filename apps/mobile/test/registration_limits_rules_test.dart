@@ -2,7 +2,7 @@ import 'package:clubnahuelmosse/features/users/domain/registration_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('el nombre ignora los espacios del principio al medir el largo', () {
+  test('the name ignores leading spaces when measuring its length', () {
     final sixtyLetters = 'a' * maxNameLength;
 
     expect(
@@ -11,7 +11,7 @@ void main() {
     );
   });
 
-  test('la contraseña de exactamente 8 caracteres alcanza el largo mínimo', () {
+  test('a password of exactly 8 characters meets the minimum length', () {
     expect(passwordProblems('Abcdef12'), isEmpty);
     expect(passwordProblems('Abcde12'), ['Al menos 8 caracteres']);
   });

@@ -25,7 +25,7 @@ String _name(File f) => f.path.replaceAll('\\', '/').split('/').last;
 
 void main() {
   test(
-    'sedes, espacios, sesión, usuarios, notificaciones y el router viven en inglés y no quedan carpetas en castellano @ENG-11-S1 @assumption:ENG-11-ASM-02',
+    'venues, spaces, session, users, notifications and the router live in English and no Spanish-named folders remain @ENG-11-S1 @assumption:ENG-11-ASM-02',
     () {
       for (final old in _oldFolders) {
         expect(Directory('lib/$old').existsSync(), isFalse, reason: 'lib/$old');
@@ -46,7 +46,7 @@ void main() {
   );
 
   test(
-    'cada funcionalidad está partida en data, domain y presentation y cumple la regla de capas @ENG-11-S2',
+    'each feature is split into data, domain and presentation and follows the layer rule @ENG-11-S2',
     () {
       for (final f in _features) {
         for (final layer in ['data', 'domain', 'presentation']) {
@@ -55,8 +55,8 @@ void main() {
           expect(_dartFiles(dir), isNotEmpty, reason: dir);
         }
       }
-      // The import rule itself is enforced for every feature by capas_test.dart.
-      expect(File('test/capas_test.dart').existsSync(), isTrue);
+      // The import rule itself is enforced for every feature by layers_test.dart.
+      expect(File('test/layers_test.dart').existsSync(), isTrue);
     },
   );
 }

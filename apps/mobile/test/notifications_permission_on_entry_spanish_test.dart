@@ -5,116 +5,119 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'notifications_spanish_test.dart'
-    show ApiFalsa, SistemaFalso, centroDe, cuerpoDe;
-import 'soporte/montar.dart';
+    show FakeApi, FakeSystem, centerOf, bodyOf;
+import 'support/mount.dart';
 
-/// Un sistema que arranca sin haber preguntado y contesta lo que se le fije al preguntar.
-class SistemaSinPreguntar extends SistemaFalso {
-  SistemaSinPreguntar({this.respuesta = true}) : super(concedido: false);
+/// A system that starts without having asked and answers whatever is set when asked.
+class UnaskedSystem extends FakeSystem {
+  UnaskedSystem({this.answer = true}) : super(granted: false);
 
-  final bool respuesta;
-  bool yaPreguntado = false;
+  final bool answer;
+  bool alreadyAsked = false;
 
   @override
-  Future<bool> wasAsked() async => yaPreguntado;
+  Future<bool> wasAsked() async => alreadyAsked;
 
   @override
   Future<bool> requestPermission() async {
-    solicitudes++;
-    yaPreguntado = true;
-    concedido = respuesta;
-    return respuesta;
+    requests++;
+    alreadyAsked = true;
+    granted = answer;
+    return answer;
   }
 }
 
 void main() {
   testWidgets(
-    'al entrar, si el sistema todavía no le preguntó, la app pide el permiso y registra el teléfono con la respuesta @NOT-01-S1 @assumption:NOT-01-ASM-02',
+    'on entry, if the system has not asked yet, the app requests the permission and registers the phone with the answer @NOT-01-S1 @assumption:NOT-01-ASM-02',
     (tester) async {
-      final api = ApiFalsa();
-      final sistema = SistemaSinPreguntar();
-      centroDe(api, SesionFalsa(perfilUsuario), sistema: sistema);
+      final api = FakeApi();
+      final system = UnaskedSystem();
+      centerOf(api, FakeSession(userProfile), system: system);
       await tester.pumpAndSettle();
 
-      expect(sistema.solicitudes, 1);
-      final request = cuerpoDe(api.de('PUT', '/devices').last);
+      expect(system.requests, 1);
+      final request = bodyOf(api.of('PUT', '/devices').last);
       expect(request['permission_granted'], isTrue);
     },
   );
 
-  testWidgets('si ya contestó, al entrar no vuelve a preguntar @NOT-01-S2', (
-    tester,
-  ) async {
-    final sistema = SistemaSinPreguntar()..yaPreguntado = true;
-    centroDe(ApiFalsa(), SesionFalsa(perfilUsuario), sistema: sistema);
-    await tester.pumpAndSettle();
-
-    expect(sistema.solicitudes, 0);
-  });
-
   testWidgets(
-    'un administrador no recibe la pregunta al entrar @assumption:NOT-01-ASM-01',
+    'if it already answered, it does not ask again on entry @NOT-01-S2',
     (tester) async {
-      final sistema = SistemaSinPreguntar();
-      centroDe(ApiFalsa(), SesionFalsa(perfilAdmin), sistema: sistema);
+      final system = UnaskedSystem()..alreadyAsked = true;
+      centerOf(FakeApi(), FakeSession(userProfile), system: system);
       await tester.pumpAndSettle();
 
-      expect(sistema.solicitudes, 0);
+      expect(system.requests, 0);
     },
   );
 
-  testWidgets('Activar sigue pidiendo el permiso @NOT-01-S2', (tester) async {
-    final sistema = SistemaSinPreguntar()..yaPreguntado = true;
-    final centro = centroDe(
-      ApiFalsa(),
-      SesionFalsa(perfilUsuario),
-      sistema: sistema,
+  testWidgets(
+    'an admin does not get the question on entry @assumption:NOT-01-ASM-01',
+    (tester) async {
+      final system = UnaskedSystem();
+      centerOf(FakeApi(), FakeSession(adminProfile), system: system);
+      await tester.pumpAndSettle();
+
+      expect(system.requests, 0);
+    },
+  );
+
+  testWidgets('«Activar» still asks for the permission @NOT-01-S2', (
+    tester,
+  ) async {
+    final system = UnaskedSystem()..alreadyAsked = true;
+    final center = centerOf(
+      FakeApi(),
+      FakeSession(userProfile),
+      system: system,
     );
     await tester.pumpAndSettle();
 
-    await centro.enable();
+    await center.enable();
 
-    expect(sistema.solicitudes, 1);
+    expect(system.requests, 1);
   });
 
   testWidgets(
-    'si al entrar niega el permiso, el teléfono se registra sin permiso y no se vuelve a preguntar @NOT-01-S1 @NOT-01-S2',
+    'if it denies the permission on entry, the phone is registered without permission and not asked again @NOT-01-S1 @NOT-01-S2',
     (tester) async {
-      final api = ApiFalsa();
-      final sistema = SistemaSinPreguntar(respuesta: false);
-      final session = SesionFalsa(perfilUsuario);
-      centroDe(api, session, sistema: sistema);
+      final api = FakeApi();
+      final system = UnaskedSystem(answer: false);
+      final session = FakeSession(userProfile);
+      centerOf(api, session, system: system);
       await tester.pumpAndSettle();
 
-      expect(sistema.solicitudes, 1);
-      final request = cuerpoDe(api.de('PUT', '/devices').last);
+      expect(system.requests, 1);
+      final request = bodyOf(api.of('PUT', '/devices').last);
       expect(request['permission_granted'], isFalse);
 
-      centroDe(api, session, sistema: sistema);
+      centerOf(api, session, system: system);
       await tester.pumpAndSettle();
-      expect(sistema.solicitudes, 1);
+      expect(system.requests, 1);
       expect(jsonEncode(request), contains('token-del-telefono'));
     },
   );
 
   test(
-    'el sistema simulado sin respuesta guardada dice que todavía no preguntó y pedirle el permiso concedido o negado lo guarda @assumption:NOT-01-ASM-03',
+    'the simulated system with no saved answer says it has not asked yet, and requesting the permission granted or denied saves it @assumption:NOT-01-ASM-03',
     () async {
       SharedPreferences.setMockInitialValues({});
-      var sistema = SimulatedNotificationSystem();
-      expect(await sistema.wasAsked(), isFalse);
-      expect(await sistema.requestPermission(), isTrue);
-      expect(await sistema.wasAsked(), isTrue);
-      expect(await sistema.isAllowed(), isTrue);
+      var system = SimulatedNotificationSystem();
+      expect(await system.wasAsked(), isFalse);
+      expect(await system.requestPermission(), isTrue);
+      expect(await system.wasAsked(), isTrue);
+      expect(await system.isAllowed(), isTrue);
 
       SharedPreferences.setMockInitialValues({
         'permiso_notificaciones_simulado': 'denegado',
       });
-      sistema = SimulatedNotificationSystem();
-      expect(await sistema.wasAsked(), isTrue);
-      expect(await sistema.isAllowed(), isFalse);
-      expect(await sistema.requestPermission(), isFalse);
-      expect(await sistema.wasAsked(), isTrue);
+      system = SimulatedNotificationSystem();
+      expect(await system.wasAsked(), isTrue);
+      expect(await system.isAllowed(), isFalse);
+      expect(await system.requestPermission(), isFalse);
+      expect(await system.wasAsked(), isTrue);
     },
   );
 }

@@ -15,7 +15,7 @@ from app.modules.notifications import use_cases
 from app.modules.notifications.rules import DeliveryResult, Notice
 from app.modules.notifications.use_cases import deliver
 from app.shared.message import Message
-from tests.unit.test_aviso_por_correo import AVISO, USUARIO, _Repositorio
+from tests.unit.test_notice_by_email import NOTICE, USER, _Repository
 
 ZONE = ZoneInfo("America/Argentina/Buenos_Aires")
 EVERY_DAY = (1, 2, 3, 4, 5, 6, 7)
@@ -57,8 +57,8 @@ def test_a_push_no_device_accepted_is_recorded_as_failed(monkeypatch: pytest.Mon
     """a push that no device accepted is recorded with the English value failed @ENG-18-S3"""
     sent_emails: list[Message] = []
     monkeypatch.setattr(use_cases, "send", sent_emails.append)
-    repo = _Repositorio(tokens=["t1"])
+    repo = _Repository(tokens=["t1"])
 
-    deliver(cast(Any, repo), _NoDeviceAccepted(), UUID(int=1), USUARIO, AVISO)
+    deliver(cast(Any, repo), _NoDeviceAccepted(), UUID(int=1), USER, NOTICE)
 
-    assert repo.envios == ["failed"]
+    assert repo.deliveries == ["failed"]

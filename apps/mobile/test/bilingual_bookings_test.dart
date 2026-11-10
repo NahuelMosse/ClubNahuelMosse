@@ -9,27 +9,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'mis_reservas_test.dart' show reservaJson;
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'my_bookings_test.dart' show bookingJson;
+import 'support/mount.dart';
+import 'support/user.dart';
 
 const _english = [Locale('en', 'US')];
 const _venueId = '00000000-0000-7000-8000-000000000001';
 const _spaceId = '00000000-0000-7000-8000-000000000009';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> open(WidgetTester tester, String route) async {
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montarUsuario(
+    await mountUser(
       tester,
-      inicio: route,
-      api: apiRutas({
-        ...rutasDeSedes(),
-        'POST /bookings': (201, reservaJson()),
-        'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+      start: route,
+      api: apiRoutes({
+        ...venueRoutes(),
+        'POST /bookings': (201, bookingJson()),
+        'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
       }),
     );
   }

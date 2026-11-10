@@ -2,12 +2,12 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/montar.dart';
+import 'support/mount.dart';
 
 const _english = [Locale('en', 'US')];
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> tap(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
@@ -20,10 +20,10 @@ void main() {
     final semantics = tester.ensureSemantics();
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montar(
+    await mountScreen(
       tester,
-      inicioFalso(SesionFalsa(perfilUsuario)),
-      tema: darkTheme,
+      fakeHome(FakeSession(userProfile)),
+      theme: darkTheme,
     );
     expect(
       find.textContaining(RegExp(r'^GOOD (MORNING|AFTERNOON|EVENING),$')),

@@ -53,33 +53,32 @@ max-args = 4
 # booleanos de `parametrize`, valores esperados escritos en el test).
 "tests/**/*.py" = ["C90", "PLR", "RET", "N", "ERA", "FBT"]
 # Test congelado: sus literales son los umbrales que comprueba.
-"tests/unit/test_codigo_legible.py" = ["E501", "PLR2004", "SIM102", "C901"]
-"tests/integracion/test_api_legible.py" = ["E501"]
+"tests/unit/test_code_readable.py" = ["E501", "PLR2004", "SIM102", "C901"]
+"tests/integration/test_api_readable.py" = ["E501"]
 # Los escenarios quedan congelados al commitearse en rojo: el estilo no justifica recongelarlos.
-"tests/escenarios/*" = ["E501", "SIM117", "I001", "B008"]
-# Estos escenarios importan los fixtures de test_datos.py para que pytest los vea.
-"tests/escenarios/test_datos_*.py" = ["E501", "SIM117", "I001", "B008", "F811"]
+"tests/scenarios/*" = ["E501", "SIM117", "I001", "B008"]
+# Estos escenarios importan los fixtures de test_data.py para que pytest los vea.
+"tests/scenarios/test_data_*.py" = ["E501", "SIM117", "I001", "B008", "F811"]
 # Tests congelados de SIM-01 (docstrings con la tag y el nombre de la spec).
-"tests/unit/test_sin_sobreingenieria.py" = ["E501"]
-"tests/unit/test_cuerpo_acotado.py" = ["E501"]
-"tests/integracion/test_sin_sobreingenieria_api.py" = ["E501", "I001"]
-"tests/integracion/test_aviso_en_envio_perdido.py" = ["E501"]
-"tests/integracion/test_uuid_y_auditoria.py" = ["E501"]
-"tests/integracion/test_recordatorio_cinco_base.py" = ["E501"]
-"tests/unit/test_recordatorio_cinco.py" = ["SIM300"]
+"tests/unit/test_no_overengineering.py" = ["E501"]
+"tests/unit/test_body_bounded.py" = ["E501"]
+"tests/integration/test_no_overengineering_api.py" = ["E501", "I001"]
+"tests/integration/test_notice_in_delivery_lost.py" = ["E501"]
+"tests/integration/test_uuid_and_audit.py" = ["E501"]
+"tests/integration/test_reminder_five_base.py" = ["E501"]
+"tests/unit/test_reminder_five.py" = ["SIM300"]
 # Tests congelados con literales largos.
-"tests/unit/test_capas.py" = ["E501"]
-"tests/unit/test_capas_funcionalidades.py" = ["E501"]
+"tests/unit/test_layers_features.py" = ["E501"]
 # Imports the admin and user token fixtures so that pytest sees them.
-"tests/escenarios/test_basquet_3x3.py" = ["E501", "SIM117", "I001", "B008", "F811"]
-"tests/unit/test_sin_supresiones.py" = ["E501"]
+"tests/scenarios/test_basketball_3x3.py" = ["E501", "SIM117", "I001", "B008", "F811"]
+"tests/unit/test_without_suppressions.py" = ["E501"]
 "tests/unit/test_emails_with_design.py" = ["E501"]
 
 [tool.mypy]
 strict = true
 files = ["app", "tests"]
 explicit_package_bases = true
-mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/tests/escenarios"
+mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/tests/scenarios"
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]

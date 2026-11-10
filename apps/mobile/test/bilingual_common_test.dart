@@ -23,7 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'soporte/montar.dart';
+import 'support/mount.dart';
 
 const _english = [Locale('en', 'US')];
 
@@ -70,7 +70,7 @@ class _System implements NotificationSystem {
 }
 
 NotificationCenter _center(List<String> notices, {bool allowed = true}) {
-  final session = SesionFalsa(perfilUsuario);
+  final session = FakeSession(userProfile);
   final api = ApiClient(
     'http://api.falsa',
     cliente: MockClient((request) async {
@@ -79,7 +79,7 @@ NotificationCenter _center(List<String> notices, {bool allowed = true}) {
           200,
           '{"notificaciones": [${notices.join(', ')}], "no_leidas": ${notices.length}}',
         ),
-        ('GET', '/yo') => (200, perfilJson()),
+        ('GET', '/yo') => (200, profileJson()),
         _ => (204, ''),
       };
       return http.Response.bytes(
@@ -99,12 +99,12 @@ NotificationCenter _center(List<String> notices, {bool allowed = true}) {
 }
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> mountEnglish(WidgetTester tester, Widget widget) async {
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await montar(tester, widget, tema: darkTheme);
+    await mountScreen(tester, widget, theme: darkTheme);
   }
 
   group('notifications', () {
@@ -121,7 +121,7 @@ void main() {
           tester,
           NotificationsScreen(
             center: center,
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             now: () => _now,
             onOpen: (_, _) {},
           ),
@@ -145,7 +145,7 @@ void main() {
           tester,
           NotificationsScreen(
             center: empty,
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             now: () => _now,
             onOpen: (_, _) {},
           ),
@@ -161,7 +161,7 @@ void main() {
           tester,
           NotificationsScreen(
             center: off,
-            session: SesionFalsa(perfilUsuario),
+            session: FakeSession(userProfile),
             now: () => _now,
             onOpen: (_, _) {},
           ),

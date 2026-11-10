@@ -15,7 +15,7 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/montar.dart';
+import 'support/mount.dart';
 
 const _english = [Locale('en', 'US')];
 const _spanish = [Locale('es', 'AR')];
@@ -25,26 +25,26 @@ Map<String, Object?> _catalog(String name) =>
         as Map<String, Object?>;
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   Future<void> mountLogin(
     WidgetTester tester,
     List<Locale> device, {
-    CredencialesFalsas? credentials,
+    FakeCredentials? credentials,
     ApiClient? api,
   }) async {
     tester.platformDispatcher.localesTestValue = device;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
     final session = Session(
       repository: SessionRepository(
-        credentials: credentials ?? CredencialesFalsas(),
-        api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        credentials: credentials ?? FakeCredentials(),
+        api: api ?? fakeApi(status: 200, body: profileJson()),
       ),
     );
-    await montar(
+    await mountScreen(
       tester,
       LoginScreen(session: session, pending: PendingBooking()),
-      tema: darkTheme,
+      theme: darkTheme,
     );
   }
 
@@ -120,7 +120,7 @@ void main() {
           await mountLogin(
             tester,
             device,
-            api: apiFalsa(codigo: 429, cuerpo: '{"mensaje": "$message"}'),
+            api: fakeApi(status: 429, body: '{"mensaje": "$message"}'),
           );
           await tester.enterText(find.bySemanticsLabel(email), 'a@b.com');
           await tester.enterText(find.bySemanticsLabel(password), 'Clave1234');
@@ -140,8 +140,8 @@ void main() {
         await mountLogin(
           tester,
           _english,
-          credentials: CredencialesFalsas(
-            alIngresar: (_, _) async => throw const InvalidCredentials(),
+          credentials: FakeCredentials(
+            onSignIn: (_, _) async => throw const InvalidCredentials(),
           ),
         );
         expect(find.bySemanticsLabel('Email'), findsOneWidget);

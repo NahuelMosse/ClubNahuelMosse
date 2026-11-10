@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-    'los errores por campo que manda la API con la clave errores se siguen mostrando @assumption:ENG-08-ASM-06',
+    'the per-field errors the API sends under the key «errores» are still shown @assumption:ENG-08-ASM-06',
     () {
       expect(
         fieldErrors({

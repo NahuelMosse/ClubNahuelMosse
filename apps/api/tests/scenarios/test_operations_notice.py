@@ -1,0 +1,42 @@
+"""A notice that was not sent stays visible to whoever operates."""
+
+import logging
+
+import pytest
+from sqlalchemy import Engine, text
+
+
+class _FailingChannel:
+    def send(self, tokens: list[str], notice: object) -> object:
+        raise ConnectionError("FCM does not answer")
+
+
+def test_a_notice_that_was_not_sent_is_left_visible(
+    engine: Engine, caplog: pytest.LogCaptureFixture
+) -> None:
+    """a reminder that was not sent stays visible to whoever operates @REV-02-S4"""
+    from app.modules.notifications.use_cases import dispatch_pending
+    from app.modules.notifications.repository import NotificationsSql
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO notification (user_id, kind, title, body, delivery)"
+                " SELECT id, 'forced_cancellation', 'Cancelaron tu reserva', 'Fútbol 5',"
+                " 'pending' FROM app_user WHERE active LIMIT 1"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO device (user_id, token, platform, permission_granted)"
+                " SELECT user_id, 'fcm-' || id, 'android', true FROM notification"
+                " WHERE delivery = 'pending' ON CONFLICT DO NOTHING"
+            )
+        )
+
+    with caplog.at_level(logging.INFO), engine.connect() as conn:
+        dispatch_pending(NotificationsSql(conn), _FailingChannel())
+
+    errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+    assert any("aviso_sin_enviar" in r.getMessage() for r in errors)
+    assert not any("fcm-" in r.getMessage() for r in caplog.records)

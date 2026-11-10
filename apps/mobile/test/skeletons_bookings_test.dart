@@ -18,15 +18,15 @@ import 'package:clubnahuelmosse/features/venues/presentation/space_card_skeleton
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'mis_reservas_test.dart' show reservaJson;
-import 'soporte/admin.dart';
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'my_bookings_test.dart' show bookingJson;
+import 'support/admin.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 const _moron = '00000000-0000-7000-8000-000000000001';
 const _f5 = '00000000-0000-7000-8000-000000000009';
-const _f5Techada =
+const _f5Covered =
     '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "$_moron", '
     '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
     '"covered": true, "lit": true, "price_per_hour": 43000}';
@@ -41,15 +41,15 @@ Future<HeldApi> _mount(
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  await cargarFuentes();
+  await loadFonts();
   final held = HeldApi({
-    ...rutasDeSedes(espacios: '[$espacioF5Json, $_f5Techada]'),
+    ...venueRoutes(spaces: '[$spaceF5Json, $_f5Covered]'),
     ...extra,
   });
   await tester.pumpWidget(
     App(
       api: held.client,
-      session: SesionFalsa(perfilUsuario),
+      session: FakeSession(userProfile),
       appearance: Appearance.inMemory(dark: true),
       initialLocation: route,
     ),
@@ -129,7 +129,7 @@ String _nextWorkingDay() {
 
 void main() {
   testWidgets(
-    'Horarios carga con la forma de su portada, días y grilla @VIS-03-S1',
+    '«Horarios» loads shaped like its cover, days and grid @VIS-03-S1',
     (tester) async {
       final held = await _mount(tester, '/sedes/$_moron/canchas/$_f5');
       expect(find.byType(AvailabilitySkeleton), findsOneWidget);
@@ -162,7 +162,7 @@ void main() {
   );
 
   testWidgets(
-    'Horarios al cambiar el día carga la grilla alineada con sus columnas y filas @VIS-03-S1 @assumption:VIS-03-ASM-01',
+    '«Horarios» on day change loads the grid aligned with its columns and rows @VIS-03-S1 @assumption:VIS-03-ASM-01',
     (tester) async {
       final held = await _mount(tester, '/sedes/$_moron/canchas/$_f5');
       held.release();
@@ -200,7 +200,7 @@ void main() {
     },
   );
 
-  testWidgets('Buscar cancha carga con la forma de su formulario @VIS-03-S1', (
+  testWidgets('«Buscar cancha» loads shaped like its form @VIS-03-S1', (
     tester,
   ) async {
     final held = await _mount(tester, '/inicio/buscar');
@@ -229,7 +229,7 @@ void main() {
   });
 
   testWidgets(
-    'Buscar cancha carga los resultados con la forma de su tarjeta @VIS-03-S1',
+    '«Buscar cancha» loads the results shaped like its card @VIS-03-S1',
     (tester) async {
       final semantics = tester.ensureSemantics();
       final held = await _mount(
@@ -238,7 +238,7 @@ void main() {
         extra: {
           'GET /spaces/available': (
             200,
-            '{"spaces": [$espacioF5Json, $_f5Techada]}',
+            '{"spaces": [$spaceF5Json, $_f5Covered]}',
           ),
         },
       );
@@ -273,35 +273,34 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Mis reservas carga con la forma de la tarjeta de reserva @VIS-03-S1',
-    (tester) async {
-      final second = reservaJson(id: '00000000-0000-7000-8000-000000000002');
-      final held = await _mount(
-        tester,
-        '/reservas',
-        extra: {
-          'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
-        },
-      );
-      expect(find.byType(BookingCardSkeleton), findsAtLeastNWidgets(2));
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-      final cards = [
-        _rect(find.byType(BookingCardSkeleton).at(0)),
-        _rect(find.byType(BookingCardSkeleton).at(1)),
-      ];
+  testWidgets('«Mis reservas» loads shaped like the booking card @VIS-03-S1', (
+    tester,
+  ) async {
+    final second = bookingJson(id: '00000000-0000-7000-8000-000000000002');
+    final held = await _mount(
+      tester,
+      '/reservas',
+      extra: {
+        'GET /bookings': (200, '{"bookings": [${bookingJson()}, $second]}'),
+      },
+    );
+    expect(find.byType(BookingCardSkeleton), findsAtLeastNWidgets(2));
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    final cards = [
+      _rect(find.byType(BookingCardSkeleton).at(0)),
+      _rect(find.byType(BookingCardSkeleton).at(1)),
+    ];
 
-      held.release();
-      await tester.pumpAndSettle();
-      expect(find.byType(BookingCardSkeleton), findsNothing);
-      for (var i = 0; i < 2; i++) {
-        expectSameBox(
-          cards[i],
-          _rect(find.byType(BookingCard).at(i)),
-          reason: 'booking $i',
-        );
-      }
-      await _drain(tester);
-    },
-  );
+    held.release();
+    await tester.pumpAndSettle();
+    expect(find.byType(BookingCardSkeleton), findsNothing);
+    for (var i = 0; i < 2; i++) {
+      expectSameBox(
+        cards[i],
+        _rect(find.byType(BookingCard).at(i)),
+        reason: 'booking $i',
+      );
+    }
+    await _drain(tester);
+  });
 }

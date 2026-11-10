@@ -13,23 +13,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'soporte/montar.dart';
+import 'support/mount.dart';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
-  Future<void> montarLogin(
+  Future<void> mountLogin(
     WidgetTester tester,
-    CredencialesFalsas credenciales, {
+    FakeCredentials credentials, {
     ApiClient? api,
   }) async {
     final session = Session(
       repository: SessionRepository(
-        credentials: credenciales,
-        api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        credentials: credentials,
+        api: api ?? fakeApi(status: 200, body: profileJson()),
       ),
     );
-    final rutas = GoRouter(
+    final routes = GoRouter(
       routes: [
         GoRoute(
           path: '/',
@@ -44,7 +44,7 @@ void main() {
         ),
       ],
     );
-    addTearDown(rutas.dispose);
+    addTearDown(routes.dispose);
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -54,166 +54,168 @@ void main() {
         localeListResolutionCallback: resolveLanguage,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
-        routerConfig: rutas,
+        routerConfig: routes,
       ),
     );
     await tester.pumpAndSettle();
   }
 
-  Future<void> ingresar(
+  Future<void> signIn(
     WidgetTester tester,
-    String correo,
-    String clave,
+    String email,
+    String password,
   ) async {
-    await tester.enterText(find.bySemanticsLabel('Correo'), correo);
-    await tester.enterText(find.bySemanticsLabel('Contraseña'), clave);
+    await tester.enterText(find.bySemanticsLabel('Correo'), email);
+    await tester.enterText(find.bySemanticsLabel('Contraseña'), password);
     await tester.tap(find.text('INICIAR SESIÓN'));
     await tester.pumpAndSettle();
   }
 
-  testWidgets('con los dos campos vacíos marca ambos y no intenta ingresar', (
+  testWidgets(
+    'with both fields empty it flags both and does not try to sign in',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final credentials = FakeCredentials();
+      await mountLogin(tester, credentials);
+
+      await signIn(tester, '   ', '');
+
+      expect(find.text('Completá tu correo electrónico'), findsOneWidget);
+      expect(find.text('Completá tu contraseña'), findsOneWidget);
+      expect(credentials.attempts, isEmpty);
+
+      // Typing clears the field's error.
+      await tester.enterText(find.bySemanticsLabel('Correo'), 'a');
+      await tester.pump();
+      expect(find.text('Completá tu correo electrónico'), findsNothing);
+      expect(find.text('Completá tu contraseña'), findsOneWidget);
+      semantics.dispose();
+    },
+  );
+
+  testWidgets('sends the email without spaces and in lowercase', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final credenciales = CredencialesFalsas();
-    await montarLogin(tester, credenciales);
+    final semantics = tester.ensureSemantics();
+    final credentials = FakeCredentials();
+    await mountLogin(tester, credentials);
 
-    await ingresar(tester, '   ', '');
+    await signIn(tester, '  Nahuel@Correo.COM ', ' Clave 1 ');
 
-    expect(find.text('Completá tu correo electrónico'), findsOneWidget);
-    expect(find.text('Completá tu contraseña'), findsOneWidget);
-    expect(credenciales.intentos, isEmpty);
-
-    // Al escribir, el error del campo se va.
-    await tester.enterText(find.bySemanticsLabel('Correo'), 'a');
-    await tester.pump();
-    expect(find.text('Completá tu correo electrónico'), findsNothing);
-    expect(find.text('Completá tu contraseña'), findsOneWidget);
-    semantica.dispose();
-  });
-
-  testWidgets('manda el correo sin espacios y en minúsculas', (tester) async {
-    final semantica = tester.ensureSemantics();
-    final credenciales = CredencialesFalsas();
-    await montarLogin(tester, credenciales);
-
-    await ingresar(tester, '  Nahuel@Correo.COM ', ' Clave 1 ');
-
-    // La contraseña va tal cual: los espacios pueden ser parte de ella.
-    expect(credenciales.intentos, [('nahuel@correo.com', ' Clave 1 ')]);
+    // The password goes as typed: spaces may be part of it.
+    expect(credentials.attempts, [('nahuel@correo.com', ' Clave 1 ')]);
     expect(find.text('HOME'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('el administrador entra al panel', (tester) async {
-    final semantica = tester.ensureSemantics();
-    await montarLogin(
+  testWidgets('the admin lands on the panel', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await mountLogin(
       tester,
-      CredencialesFalsas(),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson(rol: 'admin')),
+      FakeCredentials(),
+      api: fakeApi(status: 200, body: profileJson(role: 'admin')),
     );
 
-    await ingresar(tester, 'admin@club.com', 'Clave1234');
+    await signIn(tester, 'admin@club.com', 'Clave1234');
 
     expect(find.text('PANEL'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('credenciales inválidas: aviso genérico que se cierra con la X', (
+  testWidgets('invalid credentials: generic notice closed with the X', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarLogin(
+    final semantics = tester.ensureSemantics();
+    await mountLogin(
       tester,
-      CredencialesFalsas(
-        alIngresar: (_, _) async => throw const InvalidCredentials(),
+      FakeCredentials(
+        onSignIn: (_, _) async => throw const InvalidCredentials(),
       ),
     );
 
-    await ingresar(tester, 'nahuel@correo.com', 'Mala1234');
+    await signIn(tester, 'nahuel@correo.com', 'Mala1234');
     expect(find.text(invalidCredentialsMessage), findsOneWidget);
 
     await tester.tap(find.byTooltip('Cerrar aviso'));
     await tester.pumpAndSettle();
     expect(find.text(invalidCredentialsMessage), findsNothing);
-    semantica.dispose();
-  });
-
-  testWidgets('una cuenta sin perfil activo no entra y no queda con sesión', (
-    tester,
-  ) async {
-    final semantica = tester.ensureSemantics();
-    final credenciales = CredencialesFalsas();
-    await montarLogin(
-      tester,
-      credenciales,
-      api: apiFalsa(codigo: 401, cuerpo: '{"detail": "Sesión inválida"}'),
-    );
-
-    await ingresar(tester, 'baja@correo.com', 'Clave1234');
-
-    expect(find.text(invalidCredentialsMessage), findsOneWidget);
-    expect(credenciales.salidas, 1);
-    expect(credenciales.hasAccount, isFalse);
-    semantica.dispose();
+    semantics.dispose();
   });
 
   testWidgets(
-    'si la API falla, avisa del servidor y cierra la sesión de Firebase',
+    'an account without an active profile does not get in and is left signed out',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final credenciales = CredencialesFalsas();
-      await montarLogin(
+      final semantics = tester.ensureSemantics();
+      final credentials = FakeCredentials();
+      await mountLogin(
         tester,
-        credenciales,
-        api: apiFalsa(codigo: 500, cuerpo: 'Internal Server Error'),
+        credentials,
+        api: fakeApi(status: 401, body: '{"detail": "Sesión inválida"}'),
       );
 
-      await ingresar(tester, 'nahuel@correo.com', 'Clave1234');
+      await signIn(tester, 'baja@correo.com', 'Clave1234');
+
+      expect(find.text(invalidCredentialsMessage), findsOneWidget);
+      expect(credentials.signOuts, 1);
+      expect(credentials.hasAccount, isFalse);
+      semantics.dispose();
+    },
+  );
+
+  testWidgets(
+    'if the API fails, it warns about the server and signs out of Firebase',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final credentials = FakeCredentials();
+      await mountLogin(
+        tester,
+        credentials,
+        api: fakeApi(status: 500, body: 'Internal Server Error'),
+      );
+
+      await signIn(tester, 'nahuel@correo.com', 'Clave1234');
 
       expect(find.text('Error del servidor'), findsOneWidget);
       expect(find.text('REINTENTAR'), findsNothing);
-      expect(credenciales.hasAccount, isFalse);
+      expect(credentials.hasAccount, isFalse);
       await tester.tap(find.text('ACEPTAR'));
       await tester.pumpAndSettle();
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
   testWidgets(
-    'sin conexión, REINTENTAR vuelve a intentar con los mismos datos',
+    'without a connection, «REINTENTAR» tries again with the same data',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      var fallar = true;
-      final credenciales = CredencialesFalsas(
-        alIngresar: (_, _) async {
-          if (fallar) throw const SinConexion();
+      final semantics = tester.ensureSemantics();
+      var shouldFail = true;
+      final credentials = FakeCredentials(
+        onSignIn: (_, _) async {
+          if (shouldFail) throw const SinConexion();
         },
       );
-      await montarLogin(tester, credenciales);
+      await mountLogin(tester, credentials);
 
-      await ingresar(tester, 'nahuel@correo.com', 'Clave1234');
+      await signIn(tester, 'nahuel@correo.com', 'Clave1234');
       expect(find.text('Error de conexión'), findsOneWidget);
 
-      fallar = false;
+      shouldFail = false;
       await tester.tap(find.text('REINTENTAR'));
       await tester.pumpAndSettle();
-      expect(credenciales.intentos, hasLength(2));
+      expect(credentials.attempts, hasLength(2));
       expect(find.text('HOME'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('un segundo toque mientras ingresa no manda otro intento', (
+  testWidgets('a second tap while signing in does not send another attempt', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final espera = Completer<void>();
-    final credenciales = CredencialesFalsas(
-      alIngresar: (_, _) => espera.future,
-    );
-    await montarLogin(tester, credenciales);
+    final semantics = tester.ensureSemantics();
+    final wait = Completer<void>();
+    final credentials = FakeCredentials(onSignIn: (_, _) => wait.future);
+    await mountLogin(tester, credentials);
 
     await tester.enterText(find.bySemanticsLabel('Correo'), 'n@correo.com');
     await tester.enterText(find.bySemanticsLabel('Contraseña'), 'Clave1234');
@@ -222,31 +224,31 @@ void main() {
     await tester.tap(find.byType(FilledButton), warnIfMissed: false);
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    expect(credenciales.intentos, hasLength(1));
+    expect(credentials.attempts, hasLength(1));
 
-    espera.complete();
+    wait.complete();
     await tester.pumpAndSettle();
     expect(find.text('HOME'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('«¿Olvidaste tu contraseña?» lleva a recuperarla', (
+  testWidgets('«¿Olvidaste tu contraseña?» leads to recovering it', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    await montarLogin(tester, CredencialesFalsas());
+    final semantics = tester.ensureSemantics();
+    await mountLogin(tester, FakeCredentials());
 
     await tester.tap(find.text('¿Olvidaste tu contraseña?'));
     await tester.pumpAndSettle();
 
     expect(find.text('RECUPERAR'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('el ojo muestra y oculta la contraseña', (tester) async {
-    final semantica = tester.ensureSemantics();
-    await montarLogin(tester, CredencialesFalsas());
-    bool oculta() => tester
+  testWidgets('the eye shows and hides the password', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await mountLogin(tester, FakeCredentials());
+    bool hidden() => tester
         .widget<TextField>(
           find.descendant(
             of: find.bySemanticsLabel('Contraseña'),
@@ -255,10 +257,10 @@ void main() {
         )
         .obscureText;
 
-    expect(oculta(), isTrue);
+    expect(hidden(), isTrue);
     await tester.tap(find.byTooltip('Mostrar contraseña'));
     await tester.pump();
-    expect(oculta(), isFalse);
-    semantica.dispose();
+    expect(hidden(), isFalse);
+    semantics.dispose();
   });
 }

@@ -21,7 +21,7 @@ String _sources(List<String> dirs) => [
 
 void main() {
   test(
-    'las reservas y el inicio viven en features/bookings y features/home con nombres en inglés @ENG-10-S1 @assumption:ENG-10-ASM-02',
+    'bookings and home live in features/bookings and features/home with English names @ENG-10-S1 @assumption:ENG-10-ASM-02',
     () {
       expect(Directory('lib/reservas').existsSync(), isFalse);
       expect(Directory('lib/inicio').existsSync(), isFalse);
@@ -43,7 +43,7 @@ void main() {
   );
 
   test(
-    'bookings y home están partidos en data, domain y presentation y cumplen la regla de capas @ENG-10-S2 @assumption:ENG-10-ASM-03',
+    'bookings and home are split into data, domain and presentation and follow the layer rule @ENG-10-S2 @assumption:ENG-10-ASM-03',
     () {
       for (final layer in ['data', 'domain', 'presentation']) {
         expect(
@@ -76,7 +76,7 @@ void main() {
   );
 
   test(
-    'los textos, rutas de la API, claves JSON y rutas de pantalla de reservas e inicio son los de antes @ENG-10-S3',
+    'the texts, API routes, JSON keys and screen routes of bookings and home are the same as before @ENG-10-S3',
     () {
       final source = _sources(['lib/features/bookings', 'lib/features/home']);
       for (final piece in [
@@ -100,7 +100,7 @@ void main() {
   );
 
   test(
-    'BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01',
+    'BookingStatus shows its label in Spanish and reads the same API value as always @assumption:ENG-10-ASM-01',
     () async {
       await initializeDateFormatting();
       final es = await AppLocalizations.delegate.load(const Locale('es'));

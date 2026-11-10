@@ -2,8 +2,8 @@ import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/admin.dart';
-import 'soporte/montar.dart';
+import 'support/admin.dart';
+import 'support/mount.dart';
 
 const _english = [Locale('en', 'US')];
 
@@ -17,16 +17,16 @@ const _bookingJson =
     ' "canceled_by_name": null, "space_deactivated": false, "voidable": true}';
 
 void main() {
-  setUpAll(cargarFuentes);
+  setUpAll(loadFonts);
 
   // A fresh tree per screen: pumping the same App keeps its router and its forms.
   Future<void> mount(
     WidgetTester tester, {
     required ApiClient api,
-    String inicio = '/admin/sedes',
+    String start = '/admin/sedes',
   }) async {
     await tester.pumpWidget(const SizedBox());
-    await montarAdmin(tester, api: api, inicio: inicio);
+    await mountAdmin(tester, api: api, start: start);
   }
 
   testWidgets(
@@ -38,15 +38,15 @@ void main() {
 
       await mount(
         tester,
-        inicio: '/admin',
-        api: apiRutas({
+        start: '/admin',
+        api: apiRoutes({
           'GET /bookings/all': (
             200,
             '{"bookings": [$_bookingJson], "total": 1, "page": 1,'
                 ' "per_page": 20, "counters": {"all": 1, "active": 1,'
                 ' "completed": 0, "voided": 0}}',
           ),
-          'GET /spaces/catalog': (200, catalogoJson),
+          'GET /spaces/catalog': (200, catalogJson),
         }),
       );
       expect(find.text('ADMIN PANEL'), findsOneWidget);
@@ -58,7 +58,7 @@ void main() {
 
       await mount(
         tester,
-        api: apiRutas({'GET /venues': (200, '{"venues": [$sedeMoronJson]}')}),
+        api: apiRoutes({'GET /venues': (200, '{"venues": [$venueMoronJson]}')}),
       );
       expect(find.text('Venues'), findsOneWidget);
       expect(find.text('ADD VENUE'), findsOneWidget);
@@ -68,8 +68,8 @@ void main() {
 
       await mount(
         tester,
-        inicio: '/admin/espacios',
-        api: apiRutas(rutasDeEspacios()),
+        start: '/admin/espacios',
+        api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('Spaces'), findsOneWidget);
       expect(find.text('ADD SPACE'), findsOneWidget);
@@ -78,8 +78,8 @@ void main() {
 
       await mount(
         tester,
-        inicio: '/admin/sedes/nueva',
-        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
+        start: '/admin/sedes/nueva',
+        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       expect(find.text('New venue'), findsOneWidget);
       expect(find.text('VENUE NAME'), findsOneWidget);
@@ -91,8 +91,8 @@ void main() {
 
       await mount(
         tester,
-        inicio: '/admin/espacios/nuevo',
-        api: apiRutas(rutasDeEspacios()),
+        start: '/admin/espacios/nuevo',
+        api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('New sports space'), findsOneWidget);
       expect(find.text('SAVE SPACE'), findsOneWidget);

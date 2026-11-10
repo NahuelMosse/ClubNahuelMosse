@@ -5,11 +5,11 @@ import 'package:clubnahuelmosse/features/venues/presentation/space_card_skeleton
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/admin.dart';
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
-import 'soporte/skeleton_capture.dart';
-import 'soporte/usuario.dart';
+import 'support/admin.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
+import 'support/skeleton_capture.dart';
+import 'support/user.dart';
 
 Rect _rect(Finder finder) {
   final box = finder.evaluate().first.renderObject! as RenderBox;
@@ -18,20 +18,20 @@ Rect _rect(Finder finder) {
 
 void main() {
   testWidgets(
-    'Buscar cancha carga los resultados con la forma de su tarjeta @VIS-03-S1',
+    '«Buscar cancha» loads the results shaped like its card @VIS-03-S1',
     (tester) async {
       final semantics = tester.ensureSemantics();
       final held = HeldApi({
-        ...rutasDeSedes(espacios: '[$espacioF5Json, $f5TechadaJson]'),
+        ...venueRoutes(spaces: '[$spaceF5Json, $f5CoveredJson]'),
         'GET /spaces/available': (
           200,
-          '{"spaces": [$espacioF5Json, $f5TechadaJson]}',
+          '{"spaces": [$spaceF5Json, $f5CoveredJson]}',
         ),
       });
       await mountApp(
         tester,
         api: held.client,
-        session: SesionFalsa(perfilUsuario),
+        session: FakeSession(userProfile),
         route: '/inicio/buscar',
         pumps: 0,
       );

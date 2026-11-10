@@ -6,17 +6,14 @@ import 'package:flutter_test/flutter_test.dart';
 // ENG-19, Log L4): the interface labels left the domain and live in the .arb files.
 void main() {
   test(
-    'Role y NotificationKind muestran su label en castellano y leen el valor de la API de siempre @assumption:ENG-11-ASM-01',
+    'Role and NotificationKind show their Spanish label and read the same API value as always @assumption:ENG-11-ASM-01',
     () {
       expect(Role.fromApi('user'), Role.user);
       expect(Role.fromApi('admin'), Role.admin);
       expect(Role.fromApi('otro'), isNull);
       expect(Role.user.apiValue, 'user');
       expect(Role.admin.apiValue, 'admin');
-      expect(
-        NotificationKind.fromApi('reminder'),
-        NotificationKind.reminder,
-      );
+      expect(NotificationKind.fromApi('reminder'), NotificationKind.reminder);
       expect(
         NotificationKind.fromApi('forced_cancellation'),
         NotificationKind.forcedCancellation,

@@ -86,8 +86,8 @@ flowchart TB
   `{"errors": {field: message}}`, and conflicts into 409.
 - **A feature enters another only through its `__init__.py`**; `shared/` imports none.
 
-The tests `apps/api/tests/unit/test_arquitectura_funcionalidades.py`, `test_capas_funcionalidades.py` and
-`test_capas_integracion_funcionalidades.py` fail if anyone breaks these arrows.
+The tests `apps/api/tests/unit/test_architecture_features.py`, `test_layers_features.py` and
+`test_layers_integration_features.py` fail if anyone breaks these arrows.
 
 FastAPI always publishes `/docs`, `/redoc` and `/openapi.json`.
 
@@ -287,10 +287,10 @@ for a cron), and the database expires after 30 days.
 | Level | Where | What it ensures |
 |---|---|---|
 | API unit tests | `apps/api/tests/unit` | the rules of each feature, use cases with doubles, the layer rules |
-| API integration | `apps/api/tests/integracion` | each route against Postgres and the Auth emulator; the database constraints |
-| API scenarios | `apps/api/tests/escenarios` | every scenario of every card, with its tag; the published OpenAPI contract; migrations; `render.yaml` |
+| API integration | `apps/api/tests/integration` | each route against Postgres and the Auth emulator; the database constraints |
+| API scenarios | `apps/api/tests/scenarios` | every scenario of every card, with its tag; the published OpenAPI contract; migrations; `render.yaml` |
 | App widgets | `apps/mobile/test` | screens and flows against a fake API, with the clock fixed; accessibility; motion |
-| Captures | `apps/mobile/test/capturas` | the screens at two widths and two themes, to compare with the Figma |
+| Captures | `apps/mobile/test/screenshots` | the screens at two widths and two themes, to compare with the Figma |
 | End to end | `apps/mobile/integration_test` | the real app on the Android emulator against the real API |
 
 `scripts/test.sh` runs the first four levels with their linters (ruff, strict mypy, `flutter analyze`,

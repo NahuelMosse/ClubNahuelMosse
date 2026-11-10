@@ -284,20 +284,20 @@ main queries:
 | A person's notification center | `notification` | `notification_user` |
 | Dispatch of the oldest pending one | `notification` | `notification_to_dispatch` |
 
-The tests in `tests/escenarios/test_datos*.py` check that the history plans do not scan the whole table. The plan
+The tests in `tests/scenarios/test_datos*.py` check that the history plans do not scan the whole table. The plan
 of the other queries was not measured.
 
 ## Migrations, retention and backup
 
 - **Migrations:** Alembic (`apps/api/alembic.ini`, `migrations/`), twelve linear revisions, 0001 to 0012. They run inside the
-  Render build (`render.yaml`, `buildCommand`), each in its own transaction. `tests/escenarios/test_datos*.py` watches the
+  Render build (`render.yaml`, `buildCommand`), each in its own transaction. `tests/scenarios/test_datos*.py` watches the
   round trip.
 - **Retention:** there is no policy. No `DELETE` happens on the main tables and notices, links and emails do not expire.
 - **Backup:** no automatic backups; the Render database is on the free plan, with no copies.
 
 ## Who writes each table
 
-Each repository (`apps/api/app/modules/<feature>/repository.py`) writes only its own tables; the test `apps/api/tests/unit/test_capas_funcionalidades.py` checks it.
+Each repository (`apps/api/app/modules/<feature>/repository.py`) writes only its own tables; the test `apps/api/tests/unit/test_layers_features.py` checks it.
 If a case needs another table, it calls the owning repository (for example, removing an account cancels its bookings
 through the bookings one).
 

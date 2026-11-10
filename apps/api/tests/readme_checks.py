@@ -30,7 +30,7 @@ def assert_app_readme_covers_setup_and_run(config_file: Path) -> None:
     for section in ("configure", "run", "test"):
         assert section in headings(readme), section
     assert {"API_URL", "AUTH_EMULADOR", "FIREBASE_API_KEY"} <= defined
-    assert not {v for v in defined if v not in readme}, "variables sin documentar"
+    assert not {v for v in defined if v not in readme}, "undocumented variables"
     assert_scripts_exist(readme)
     assert "flutter pub get" in readme
     assert "flutter run" in readme

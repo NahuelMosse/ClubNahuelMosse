@@ -1,0 +1,15 @@
+# ENG-22 · plan judge
+
+- ACT-01 · M · S4 «lo que cita una ruta de test (… reglas del kit, configuración …) cita la ruta nueva»: `.claude/kit.json:26` cita `apps/mobile/test/capturas/**` y no está en `## Tasks` (y `guard` protege `kit.json`); interpretation: «a sentence of L1 no spec covers» / cuantificador «lo que cita» sin cada miembro · card.md S4, T1 · plan · declared · el guard protege .claude/kit.json y kit.mjs no tiene comando para las rutas de una regla; .claude/rules/interfaz.md, que carga la regla, pasa a la ruta nueva en T1, y la línea de kit.json queda en Changes y en ## Needs a person
+- ACT-02 · M · `tests/docs-in-english.test.mjs:169,195` lee `apps/mobile/test/capturas/readme_screenshots.dart`; tras ASM-05 rompe y no figura en T1 ni en «Changes to existing behavior» (lista de tests que leen la ruta de otro test) · card.md Changes, T1 · plan · closed · T1 y Changes incluyen tests/docs-in-english.test.mjs, que sigue el renombre (refactor-tests)
+- ACT-03 · M · S2 «el texto castellano … que los tests comprueban (UI, mensajes de la API, datos de prueba) queda como está» no tiene test propio: el test de T4 prueba el detector, no que los literales comparados sigan iguales; un dato de prueba traducido (nombre, dirección) o un literal en un test de los reemplazados de ASM-06 (que ya falla) no rompe ninguna suite · card.md S2, T4 · plan · closed · ENG-22-ASM-03, Gate vs-main: (L6): cada literal de los tests de main que es un valor de app_es.arb sigue en los tests igual cantidad de veces, también en los reemplazados que no corren
+- ACT-04 · M · integrity «What is deleted, and what does it take with it»: el renombre masivo (`git mv` + traducción de ~384 archivos) no tiene test que compare con main la cantidad de tests y el conjunto de etiquetas `@<ID>-S<n>`/`@assumption:`; «sus etiquetas … quedan» (Changes, Gate `refactor-tests:`) es una afirmación sin chequeo · card.md Changes, Gate · plan · closed · T1, Gate vs-main: (L6): etiquetas y cantidad de casos de test iguales a las de main más las de ENG-22
+- ACT-05 · L · L3 dice que ASM-08 «no [lo cubre] un test etiquetado: la card no toca rutas», pero T7 planea `apps/api/tests/unit/test_head_not_allowed.py` etiquetado `@assumption:ENG-22-ASM-08`; Log y Tasks se contradicen · card.md L3, T7 · plan · closed · L5 corrige L3: ASM-08 tiene test etiquetado en T7
+- ACT-06 · L · ASM-07 «mismos bytes» sin test: el de T6 sólo comprueba que cada PNG nombrado existe; un PNG regenerado con `--update-goldens` pasa igual · card.md ASM-07, T6 · plan · closed · ENG-22-ASM-07, Gate vs-main: (L6): los PNG de test/screenshots son los blobs de main byte por byte
+
+## Verified
+
+- interpretation · fails (ACT-01, ACT-03, ACT-05)
+- contract · meets · la card no toca rutas ni contrato; HEAD 405 queda en ASM-08 con T7 y la línea `attacks:` del Gate
+- integrity · fails (ACT-04, ACT-06) · reinicio declarado en L4; `migrate-upgrade:` en el Gate
+- overdesign · meets · un único archivo nuevo de tests (`tests/tests-in-english.test.mjs`) y `test_head_not_allowed.py`; sin interfaces, capas ni flags

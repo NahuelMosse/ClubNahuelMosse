@@ -68,7 +68,7 @@ are those of the review; the column says which one affects each screen.
 | `space_created_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
 | `booking_filters_screen` | Partially Supports | I7 | widget tests and screenshots; TalkBack `not verified` |
 | `booking_detail_screen` | Partially Supports | I24 in voiding a booking | widget tests and screenshots; TalkBack `not verified` |
-| startup error (`resumeWithRetry` in `apps/mobile/lib/main.dart`) | Supports | no failures found (`apps/mobile/test/arranque_sin_conexion_test.dart`) | widget tests; TalkBack `not verified` |
+| startup error (`resumeWithRetry` in `apps/mobile/lib/main.dart`) | Supports | no failures found (`apps/mobile/test/startup_no_connection_test.dart`) | widget tests; TalkBack `not verified` |
 
 ## Known limitations
 
