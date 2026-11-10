@@ -9,8 +9,8 @@
 //                                    an update or an adoption keeps the one the manifest already records
 //
 // `--update` with a card open needs `--card-open "<reason>"`: the card cannot close without a fix of the kit
-// and the kit cannot update without closing. It appends `<ID>-KIT-NN · kit <old> → <new> · reason: …` to the
-// card's ambiguities.md; grade and modules still change only between cards.
+// and the kit cannot update without closing. It appends `- L<n> · <date> · kit updated <old> → <new> · <reason>` to the
+// card's `## Log`; grade and modules still change only between cards.
 // `--update` without `--from` uses the kit checkout whose install.mjs runs (the source saved in kit.json when it runs
 // from the repo's own copy) and prints which one it is; if that source is of another kit version than the installed
 // one and no file changes, it exits 2 instead of passing.
@@ -32,7 +32,7 @@
 // team edited is left alone and the new version goes to `.claude/.kit-incoming/<path>`.
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import { detectStack } from './doctor.mjs';
@@ -186,11 +186,19 @@ const mergeSettings = (current, kit) => {
   return `${JSON.stringify(out, null, 2)}\n`;
 };
 
+// `.kit-incoming/` is excluded locally (`info/exclude`, which git resolves in a worktree too), never through the repo's
+// .gitignore: a repo that checks its product commits carry no kit file flagged the .gitignore line an update added.
 const ensureIgnored = (target) => {
-  const path = join(target, '.gitignore');
   const line = '.claude/.kit-incoming/';
-  const text = existsSync(path) ? readFileSync(path, 'utf8') : '';
-  if (!text.split(/\r?\n/).includes(line)) appendFileSync(path, `${text && !text.endsWith('\n') ? '\n' : ''}${line}\n`);
+  const has = (path) => existsSync(path) && readFileSync(path, 'utf8').split(/\r?\n/).includes(line);
+  if (has(join(target, '.gitignore'))) return;
+  const where = gitOut(target, 'rev-parse', '--git-path', 'info/exclude');
+  if (where.status !== 0 || !where.stdout?.trim()) return;
+  const exclude = resolve(target, where.stdout.trim());
+  if (has(exclude)) return;
+  mkdirSync(dirname(exclude), { recursive: true });
+  const text = existsSync(exclude) ? readFileSync(exclude, 'utf8') : '';
+  appendFileSync(exclude, `${text && !text.endsWith('\n') ? '\n' : ''}${line}\n`);
 };
 
 const commitOf = (source) => gitOut(source, 'rev-parse', 'HEAD').stdout?.trim() || 'unknown';

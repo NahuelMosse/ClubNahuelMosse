@@ -1,11 +1,11 @@
 {
   ".claude/AUTONOMY.md": {
     "module": "core",
-    "sha256": "ce2884bf77dd95e816db265fb7a9e3f94c5aca546dbaae1e6c0df115dfc7be93"
+    "sha256": "4802a9e438d193844e4b326fb0a93112e4d5e80480635a7e46f126d1d7ff5a51"
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "5d5cf51b12f717d27e84b9014ba9abae136eaab52cf627fa33d8da714fef0596"
+    "sha256": "d8058adfa4addf6fa3ee876edb30aad826e50aefe7741c1ae42b8e11e76338f7"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -41,7 +41,7 @@
   },
   ".claude/commands/close.md": {
     "module": "core",
-    "sha256": "55a36f67ce4a9b4cc5142ee4fbf0ea01168fda58c4fea51c0ef9441ee700c7dc"
+    "sha256": "0bff30212765fa6b23a39aceb339e0e4a506dc137b2add10ceb0aac13210fbc4"
   },
   ".claude/commands/design-deslop.md": {
     "module": "ui",
@@ -49,7 +49,7 @@
   },
   ".claude/hooks/commit-why.mjs": {
     "module": "core",
-    "sha256": "d6b2dddd9bbf11f9f482b0fea0ebdc8877c99e1b2e714127f86b7940d8bb24d6"
+    "sha256": "89c6cafe17d132410c566b6a4f23533a375c9f2b3fc01b8c8050b1683dd433d0"
   },
   ".claude/hooks/context-cap.mjs": {
     "module": "core",
@@ -69,7 +69,7 @@
   },
   ".claude/hooks/guard.mjs": {
     "module": "core",
-    "sha256": "d61a1afa0ef6821d92be86dd7e9b021959bb444f65b779fbb95259222420fb08"
+    "sha256": "d30dd25e47b674c93c49f05e6e2253c4ec541463c246b87ae1099db7fb63f669"
   },
   ".claude/hooks/light-images.mjs": {
     "module": "core",
@@ -81,7 +81,7 @@
   },
   ".claude/hooks/publish.mjs": {
     "module": "core",
-    "sha256": "9436e6b449405bf334e4d4c4d7b7759b38a852112aa4da8657342c98f9718db6"
+    "sha256": "706246c43a914a867380a70f58cac64e43cca71f790ad929fe20cdf8caaacaec"
   },
   ".claude/hooks/require-at-close.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "ee60746270de2da2bbc7ae35e86e632dd6fd5f1dd4f8b19f5c7017815954c221"
+    "sha256": "52ce8041fa9e2ac45425ab0e725bc6035d98887d8e1a9dda651cc7f3071be962"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1129,11 +1129,11 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "3bfbabde0c357a61ca62b4545aebfd823661a624815878beaf9918c1306c7a55"
+    "sha256": "ba17ad8c2fc22dc7ccd4902c98f582cf0171feb317e36242a5d7e834b8acf1c5"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "037a1a664ac21f6eb3719d6bfd09c446eeefc220b10182f9357e4a5e4d99c7c3"
+    "sha256": "58c9650d3f4189ff3403be24f6f8e495cb9b11f6a6c0f2c0499d14a07ee505e7"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
@@ -1161,7 +1161,7 @@
   },
   ".claude/tools/install.mjs": {
     "module": "core",
-    "sha256": "330eac7dd6d95b6b7aeccd108da69407742d390803a000984421a2043a162643"
+    "sha256": "7037ca4c422e7591a0d78d1f19b2b42b08bb50466778389d31a35af7e1587eee"
   },
   ".claude/tools/judge-context.mjs": {
     "module": "core",
@@ -1225,7 +1225,7 @@
   },
   ".claude/tools/transcript.mjs": {
     "module": "core",
-    "sha256": "1de21338bbdc84db9de8985064f3e7e7e17c502619d48065188c0482d3f589cb"
+    "sha256": "e24786914d3a2e552d21a92ad40defc6fa65a2bbd700fa5c8239cf6bf6aa6230"
   },
   ".claude/tools/trim.mjs": {
     "module": "core",

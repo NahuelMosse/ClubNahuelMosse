@@ -118,7 +118,13 @@ if (messages.length > 0 && inCard && grade && grade !== 'poc' && !declared.skip)
     const log = spawnSync('git', ['log', '--format=%s', `${base}..HEAD`], { cwd: inCard.root, encoding: 'utf8', timeout: 20_000 });
     return log.status === 0 && log.stdout.split('\n').some((s) => s && !CONVENTIONAL.test(s) && !/^Merge /.test(s));
   };
-  if (!CONVENTIONAL.test(subject) && !started()) {
+  // A repo whose history already prefixes commits with the card key ("KIT-06: …") keeps that convention in its next cards.
+  const keyed = /^[A-Z][A-Z0-9]*-\d+\b[:\s]/;
+  const repoKeyed = () => {
+    const log = spawnSync('git', ['log', '-50', '--no-merges', '--format=%s'], { cwd: inCard.root, encoding: 'utf8', timeout: 20_000 });
+    return log.status === 0 && log.stdout.split('\n').filter((s) => keyed.test(s)).length >= 3;
+  };
+  if (!CONVENTIONAL.test(subject) && !started() && !(keyed.test(subject) && repoKeyed())) {
     reject('A card\'s commits are Conventional Commits: `type(scope)!: subject`, with type feat | fix | perf | refactor | docs | test | chore | style | build | ci | revert. ' +
       'Example: git commit -m "feat(customers): search by partial name" -m "why".');
   }
