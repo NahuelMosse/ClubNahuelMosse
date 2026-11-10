@@ -87,7 +87,7 @@ def test_a_route_with_two_repositories_builds_them_on_the_same_connection() -> N
     app = FastAPI()
     connections: list[object] = []
 
-    def test_connection() -> object:
+    def fake_connection() -> object:
         new = object()
         connections.append(new)
         return new
@@ -99,7 +99,7 @@ def test_a_route_with_two_repositories_builds_them_on_the_same_connection() -> N
     ) -> bool:
         return bookings._conn is notices._conn
 
-    app.dependency_overrides[connection] = test_connection
+    app.dependency_overrides[connection] = fake_connection
 
     response = TestClient(app).get("/dos")
 

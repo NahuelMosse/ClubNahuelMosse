@@ -76,9 +76,7 @@ def test_without_a_person_the_sweep_and_the_dispatch_look_at_everyone() -> None:
     assert repo.filters == [None, None, None]
 
 
-def test_only_a_user_registers_their_phone_with_a_token_and_an_active_account() -> (
-    None
-):  # @ENG-14-S1
+def test_only_a_user_registers_a_phone_with_token_and_active_account() -> None:  # @ENG-14-S1
     repo = cast(Any, _Notifications())
     use_cases.register_device(repo, _profile(), "tok", "ios", True)
 
@@ -92,9 +90,7 @@ def test_only_a_user_registers_their_phone_with_a_token_and_an_active_account() 
         )
 
 
-def test_my_notices_are_the_repository_ones_and_reading_anothers_does_not_exist() -> (
-    None
-):  # @ENG-14-S1
+def test_my_notices_are_the_repository_ones_and_anothers_does_not_exist() -> None:  # @ENG-14-S1
     assert use_cases.my_notifications(cast(Any, _Notifications()), _profile()) == ([], 3)
     use_cases.mark_read(cast(Any, _Notifications()), _profile(), UUID(int=9))
     with pytest.raises(NotFound):

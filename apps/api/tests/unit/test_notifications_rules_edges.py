@@ -34,9 +34,7 @@ def test_an_unknown_kind_of_the_sport_names_the_sport_and_does_not_fail() -> Non
     assert short_kind(unknown, unknown) == unknown
 
 
-def test_a_single_voided_booking_carries_its_booking_and_several_only_the_count() -> (
-    None
-):  # @ENG-14-S1
+def test_one_voided_booking_carries_it_and_several_only_the_count() -> None:  # @ENG-14-S1
     one = forced_cancellation_message([_voided("Lluvia")])
     assert one.title == "The club voided your booking"
     assert one.data["booking_id"]
