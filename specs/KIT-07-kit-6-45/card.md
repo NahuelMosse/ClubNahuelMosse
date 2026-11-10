@@ -37,3 +37,8 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.44.1 a
 ## Log
 
 - L1 · update this repo's kit from 6.44.1 to 6.45.1. The kit maintainer session announced 6.45.1 in main of dev-kit `D:/projects/SDD-implementation` on 2026-11-10. It brings: the brand sheet passes when the repo already used every colour (dev-kit PR #14); under refactor-tests, a tag-preserving `replaces:` is a rename and is recorded in Decisions, not in Needs a person; `close.mjs` routes `closing: could not run` to Could not run; the frozen-names cache; the `kit.mjs rule-paths` command; publish judges `gh pr` run after a `cd` in that repo. Its message said to update with `node D:/projects/SDD-implementation/.claude/tools/install.mjs --target . --update [--card-open "<reason>"]`.
+- L2 · 2026-11-10 · replaces: tests/kit.test.mjs "the installed kit is 6.44.1 @KIT-06-S1 @KIT-06-S3" · el kit pasa a 6.45.1 · by: tests/kit.test.mjs "the installed kit is 6.45.1 @KIT-07-S1"
+- L3 · 2026-11-10 · replaces: tests/kit.test.mjs "the kit records the source the installer updated it from @KIT-06-S2" · suma la etiqueta de KIT-07; conserva la de KIT-06 y la aserción no cambia · by: tests/kit.test.mjs "the kit records the source the installer updated it from @KIT-06-S2 @KIT-07-S2"
+- L4 · 2026-11-10 · replaces: tests/kit.test.mjs "the install source is the kit-v6.44.1 tag commit @KIT-06-ASM-01" · la fuente pasa al tag kit-v6.45.1 · by: tests/kit.test.mjs "the install source is the kit-v6.45.1 tag commit @KIT-07-ASM-01"
+- L5 · 2026-11-10 · declared · fault-db · la card no toca la base
+- L6 · 2026-11-10 · declared · attacks · la card no toca la API

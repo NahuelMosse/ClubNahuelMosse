@@ -16,18 +16,18 @@ const EDITED_BY_THE_TEAM = new Set([
   'apps/mobile/test/kit/kit_states.dart',
 ]);
 
-test('the installed kit is 6.44.1 @KIT-06-S1 @KIT-06-S3', () => {
-  assert.equal(kit.kit, '6.44.1');
+test('the installed kit is 6.45.1 @KIT-07-S1', () => {
+  assert.equal(kit.kit, '6.45.1');
 });
 
-test('the kit records the source the installer updated it from @KIT-06-S2', () => {
+test('the kit records the source the installer updated it from @KIT-06-S2 @KIT-07-S2', () => {
   assert.match(kit.source.commit, /^[0-9a-f]{40}$/);
   assert.ok(kit.source.path);
 });
 
 // The update installs from a clone of the release tag, not from the dev-kit working copy.
-test('the install source is the kit-v6.44.1 tag commit @KIT-06-ASM-01', () => {
-  assert.equal(kit.source.commit, 'e5da1ab1db40bebc8d1852d6c104c4d79a1b87b3');
+test('the install source is the kit-v6.45.1 tag commit @KIT-07-ASM-01', () => {
+  assert.equal(kit.source.commit, 'b2ab219bf5afa9bda90c3c24f3a3c043372fc1b0');
 });
 
 test('cada archivo del kit está como lo instaló la actualización, salvo settings.json y el formato de los ayudantes de Flutter @KIT-03-S1', () => {
