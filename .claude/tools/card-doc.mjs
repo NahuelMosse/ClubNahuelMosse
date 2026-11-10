@@ -196,8 +196,11 @@ export const actsOf = (text) => String(text).split('\n').flatMap((line) => {
   return [{ id: m[1], severity: parts.find((p) => /^[HML]$/.test(p)) ?? '', state, evidence, plan: parts.some((p) => /^plan$/i.test(p)), line: line.trim() }];
 });
 
-// What a plan ACT closed in the card points at: an `ASM-NN` of the card, a task `T<n>` or a Gate line.
+// What a plan ACT closed in the card points at: an `ASM-NN` of the card, a task `T<n>` or a Gate line (by its name and
+// colon, `vs-main:`, when `doc` has it in `## Gate`).
 const PLAN_EVIDENCE = /\b(?:[A-Z][A-Z0-9]*-\d+-)?ASM-\d+\b|\bT\d+\b|\bprobe\b|\battacks:|\bmigrate-upgrade\b/;
+const gateNames = (doc) => [...String(gateBlock(String(doc ?? '')) ?? '').matchAll(/^\s*([a-z][\w-]*)\s*:/gim)].map((m) => m[1].toLowerCase());
+const citesGate = (evidence, doc) => gateNames(doc).some((n) => new RegExp(`(?:^|[^\\w-])${n.replace(/[-]/g, '\\-')}:`, 'i').test(evidence));
 
 // Why an ACT still holds the close, or null. A code ACT closed carries the output of its command or test; a plan ACT closed
 // carries where the card now answers it (`doc` is card.md: an `ASM-NN` it cites must be there).
@@ -205,7 +208,7 @@ export const actHold = (a, doc = null) => {
   if (a.state === 'open') return 'open';
   if (!a.evidence) return `${a.state} with no ${a.state === 'closed' ? 'output' : 'reason'}`;
   if (a.plan && a.state === 'closed') {
-    if (!PLAN_EVIDENCE.test(a.evidence)) return 'a plan ACT closed in the card cites the `ASM-NN`, the task `T<n>` or the Gate line that answers it';
+    if (!PLAN_EVIDENCE.test(a.evidence) && !citesGate(a.evidence, doc)) return 'a plan ACT closed in the card cites the `ASM-NN`, the task `T<n>` or the Gate line that answers it';
     const missingAsm = doc === null ? [] : (a.evidence.match(/\b(?:[A-Z][A-Z0-9]*-\d+-)?ASM-\d+\b/g) ?? []).filter((x) => !String(doc).includes(x));
     if (missingAsm.length) return `${missingAsm.join(', ')} is not in card.md`;
   }

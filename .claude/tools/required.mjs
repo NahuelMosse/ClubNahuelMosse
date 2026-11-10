@@ -185,12 +185,15 @@ const missingOnce = (root, { closing = true } = {}) => {
   const mutations = passed(MUTATOR, [0, 3]);
   const unmutated = declaredUnmutated(cardDir);
   const lints = passed(LINTER, [0]);
+  // The card's own `lint:` line, run through once.mjs as `lint`, is its linter whatever it calls (`sh lint.sh`): it covers every test.
+  const lintLine = gateLine(cardDir, 'lint');
+  const declaredLint = !!lintLine && recorded.some((r) => r.name === 'lint' && r.exit === 0 && r.command.trim() === lintLine.trim() && runOnThisCode(r));
 
   const out = [
     ...production.filter((f) => mutationRequired(exempt, map, f, root) && !unmutated.has(f))
       .filter((f) => !mutations.some((r) => covers(r.command, f, { folders: false })))
       .map((f) => `mutation of ${f} · run: \`node .claude/tools/once.mjs mutate -- node .claude/tools/mutate.mjs ${f} --since ${base} -- ${asOneArg(gateLine(cardDir, 'suite') ?? '<unit suite command>')}\``),
-    ...(exempt.criteria.has('T6') ? [] : tests.filter((f) => !lints.some((r) => covers(r.command, f, { folders: true })))
+    ...(exempt.criteria.has('T6') || declaredLint ? [] : tests.filter((f) => !lints.some((r) => covers(r.command, f, { folders: true })))
       .map((f) => `linter on ${f} · run: \`node .claude/tools/once.mjs lint -- ${asOneArg(gateLine(cardDir, 'lint') ?? `<linter command> ${f}`)}\``)),
     // Measured: 2 runs brought files the card did not ask for.
     ...(map.length ? touched.filter((f) => !NOT_PRODUCTION.test(f) && !namedIn(map, f, root).length && !copiedFromKit(root, map, f))
