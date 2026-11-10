@@ -110,7 +110,7 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
         },
     ).scalar_one()
-    sede: Any = conn.execute(
+    venue: Any = conn.execute(
         text(
             "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias, creado_por,"
             " modificado_por, dado_de_baja_por)"
@@ -124,7 +124,7 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
             " precio_por_hora, creado_por, modificado_por, dado_de_baja_por)"
             " VALUES (:sede, 'Tenis', 'Polvo', 1, :n, true, true, 1000, :u, :u, :u) RETURNING id"
         ),
-        {"sede": sede, "n": f"Cancha {s}", "u": usuario},
+        {"sede": venue, "n": f"Cancha {s}", "u": usuario},
     ).scalar_one()
     reserva: Any = conn.execute(
         text(
@@ -172,7 +172,7 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
     )
     return {
         "usuario": usuario,
-        "sede": sede,
+        "sede": venue,
         "espacio": espacio,
         "reserva": reserva,
         "enlace": enlace,
@@ -280,7 +280,7 @@ def _foto(conn: Connection) -> dict[tuple[str, str], set[Any]]:
 
 
 @pytest.fixture
-def base_nueva() -> Iterator[tuple[AlembicConfig, str]]:
+def new_db() -> Iterator[tuple[AlembicConfig, str]]:
     """Una base vacía sólo para este test, para correr la migración hacia arriba y hacia abajo."""
     nombre = f"club_dat01_{uuid.uuid4().hex[:10]}_test"
     url = make_url(os.environ["DATABASE_URL"])
@@ -348,18 +348,18 @@ def test_ids_nuevos_version_7_y_en_orden(db: Connection) -> None:
     assert len(set(ids)) == 40
 
 
-def test_migracion_con_filas_existentes(base_nueva: tuple[AlembicConfig, str]) -> None:
+def test_migracion_con_filas_existentes(new_db: tuple[AlembicConfig, str]) -> None:
     """la migración 0010 da a las filas existentes un UUID versión 7 con sus relaciones intactas y vuelve atrás si no hay filas nuevas @assumption:DAT-01-ASM-02"""
-    config, url = base_nueva
-    motor = create_engine(url)
+    config, url = new_db
+    engine = create_engine(url)
     command.upgrade(config, "0009")
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         _sembrar_0009(conn)
         antes = _foto(conn)
     assert all(isinstance(v, int) for valores in antes.values() for v in valores)
 
     command.upgrade(config, "0010")
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         despues = _foto(conn)
         for clave, valores in antes.items():
             assert despues[clave] == {heredado(v) for v in valores}, clave
@@ -377,7 +377,7 @@ def test_migracion_con_filas_existentes(base_nueva: tuple[AlembicConfig, str]) -
         conn.execute(text("DELETE FROM correo_saliente WHERE id = :i"), {"i": nuevo})
 
     command.downgrade(config, "0009")
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         assert _foto(conn) == antes
         siguiente: Any = conn.execute(
             text(
@@ -389,16 +389,16 @@ def test_migracion_con_filas_existentes(base_nueva: tuple[AlembicConfig, str]) -
         assert conn.execute(text("SELECT estado_actual FROM reserva_con_estado")).scalar_one()
 
     command.upgrade(config, "0010")
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(
             text("INSERT INTO correo_saliente (para, asunto, cuerpo) VALUES ('a', 'b', 'c')")
         )
     with pytest.raises(Exception, match="hay filas creadas después de la migración 0010"):
         command.downgrade(config, "0009")
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
     assert version == "0010"
-    motor.dispose()
+    engine.dispose()
 
 
 def test_auditoria_en_las_9_tablas(db: Connection) -> None:
@@ -438,10 +438,10 @@ def test_auditoria_en_las_9_tablas(db: Connection) -> None:
         assert despues.updated_at > antes.updated_at, tabla
 
 
-def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, str]) -> None:
+def test_filas_existentes_conservan_su_fecha(new_db: tuple[AlembicConfig, str]) -> None:
     """las filas existentes conservan su fecha en creado_en y modificado_en arranca igual @assumption:DAT-01-ASM-07"""
-    config, url = base_nueva
-    motor = create_engine(url)
+    config, url = new_db
+    engine = create_engine(url)
     command.upgrade(config, "0009")
     viejas = {
         "enlace_recuperacion": ("emitido_en", datetime(2020, 1, 1, tzinfo=UTC)),
@@ -449,7 +449,7 @@ def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, st
         "notificacion": ("creada_en", datetime(2020, 3, 1, tzinfo=UTC)),
         "dispositivo": ("registrado_en", datetime(2020, 4, 1, tzinfo=UTC)),
     }
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         _sembrar_0009(conn)
         for tabla, (columna, fecha) in viejas.items():
             conn.execute(text(f"UPDATE {tabla} SET {columna} = :f"), {"f": fecha})
@@ -457,7 +457,7 @@ def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, st
         antes: Any = conn.execute(text("SELECT now()")).scalar_one()
 
     command.upgrade(config, "0010")
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         despues: Any = conn.execute(text("SELECT now()")).scalar_one()
         for tabla, (_, fecha) in viejas.items():
             fila = conn.execute(text(f"SELECT DISTINCT creado_en, modificado_en FROM {tabla}"))
@@ -469,4 +469,4 @@ def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, st
         ).one()
         assert antes <= creado <= despues
         assert modificado == creado
-    motor.dispose()
+    engine.dispose()

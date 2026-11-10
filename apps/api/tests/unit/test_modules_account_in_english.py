@@ -9,14 +9,14 @@ import tokenize
 from pathlib import Path
 
 from tests.contract_renames import SPANISH_NAMES
-from tests.unit.test_api_in_english_contract_current import operaciones_distintas_en
+from tests.unit.test_api_in_english_contract_current import operations_differing_in
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-RAIZ = RAIZ_API.parents[1]
-APP = RAIZ_API / "app"
-MODULOS = APP / "modules"
+API_ROOT = Path(__file__).resolve().parents[2]
+RAIZ = API_ROOT.parents[1]
+APP = API_ROOT / "app"
+MODULES = APP / "modules"
 
-ARCHIVOS = {
+FILES = {
     "venues": ["__init__", "use_cases", "rules", "repository", "routes"],
     "users": [
         "__init__", "admins", "deactivation", "password", "profile", "registration",
@@ -25,9 +25,9 @@ ARCHIVOS = {
     "session": ["__init__", "use_cases", "profile", "repository", "current_user"],
     "password_recovery": ["__init__", "use_cases", "email", "rules", "repository", "routes"],
 }  # fmt: skip
-NUEVOS = [MODULOS / m / f"{a}.py" for m, archivos in ARCHIVOS.items() for a in archivos]
-VIEJOS = ("sedes", "usuarios", "sesion", "recuperacion")
-IMPORTE_VIEJO = re.compile(
+NUEVOS = [MODULES / m / f"{a}.py" for m, archivos in FILES.items() for a in archivos]
+OLD_NAMES = ("sedes", "usuarios", "sesion", "recuperacion")
+OLD_IMPORT = re.compile(
     r"\bapp\.modules\.(?:sedes|usuarios|sesion|recuperacion)\b"
     r"|\bfrom app\.modules import [^\n]*\b(?:sedes|usuarios|sesion|recuperacion)\b"
     r"|\bapp/modules/(?:sedes|usuarios|sesion|recuperacion)\b"
@@ -35,12 +35,12 @@ IMPORTE_VIEJO = re.compile(
 )
 
 
-def _parametros_de_ruta(fuente: str) -> set[str]:
+def _route_params(fuente: str) -> set[str]:
     """Los `{nombre}` de las rutas: son parte de la URL y no cambian."""
     return set(re.findall(r"\{(\w+)\}", fuente))
 
 
-def _campos_de_modelo(arbol: ast.AST) -> set[str]:
+def _model_fields(arbol: ast.AST) -> set[str]:
     """Los campos anotados de una clase: son las claves JSON y conservan su nombre."""
     return {
         n.target.id
@@ -51,7 +51,7 @@ def _campos_de_modelo(arbol: ast.AST) -> set[str]:
     }
 
 
-def _nombres_definidos(arbol: ast.AST) -> set[str]:
+def _defined_names(arbol: ast.AST) -> set[str]:
     nombres: set[str] = set()
     for nodo in ast.walk(arbol):
         if isinstance(nodo, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
@@ -67,7 +67,7 @@ def _nombres_definidos(arbol: ast.AST) -> set[str]:
     return nombres
 
 
-def _prosa(fuente: str, arbol: ast.AST) -> list[str]:
+def _prose(fuente: str, arbol: ast.AST) -> list[str]:
     textos = [
         t.string
         for t in tokenize.generate_tokens(io.StringIO(fuente).readline)
@@ -106,7 +106,7 @@ def _contrato_normalizado(contrato: dict) -> dict:
 
 
 def _contrato_publicado() -> dict:
-    return json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
+    return json.loads((API_ROOT / "openapi.json").read_text(encoding="utf-8"))
 
 
 def test_los_campos_de_los_modelos_de_entrada_y_salida_son_las_claves_json_en_ingles() -> (
@@ -134,29 +134,29 @@ def test_e2e_sh_y_e2e_support_usan_los_modulos_nuevos_con_las_mismas_opciones() 
     script = (RAIZ / "scripts" / "e2e.sh").read_text(encoding="utf-8")
     soporte = (APP / "e2e_support.py").read_text(encoding="utf-8")
 
-    assert not IMPORTE_VIEJO.search(script)
-    assert not IMPORTE_VIEJO.search(soporte)
+    assert not OLD_IMPORT.search(script)
+    assert not OLD_IMPORT.search(soporte)
     assert "--correo" in script
     assert "app.modules.users" in script or "app.modules.users" in soporte
 
 
 def test_cada_operacion_conserva_sus_parametros_y_su_security() -> None:
     """cada operación conserva sus parámetros y su security @assumption:ENG-02-ASM-07"""
-    assert operaciones_distintas_en("/register", "/me", "/password-recovery", "/link", "/venues") == []
+    assert operations_differing_in("/register", "/me", "/password-recovery", "/link", "/venues") == []
 
 
 def test_ningun_documento_nombra_sedes_usuarios_sesion_ni_recuperacion_como_modulo() -> None:
     """ningún documento nombra sedes, usuarios, sesion ni recuperacion como módulo @assumption:ENG-02-ASM-08"""
     documentos = [
         RAIZ / "docs" / "technical" / "code-map.md",
-        RAIZ_API / "README.md",
+        API_ROOT / "README.md",
         *(RAIZ / "docs" / "features").glob("*.md"),
     ]
 
     problemas = [
         p.name
         for p in documentos
-        if p.exists() and IMPORTE_VIEJO.search(p.read_text(encoding="utf-8"))
+        if p.exists() and OLD_IMPORT.search(p.read_text(encoding="utf-8"))
     ]
 
     assert not problemas, problemas

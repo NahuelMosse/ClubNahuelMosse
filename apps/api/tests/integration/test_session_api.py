@@ -32,10 +32,10 @@ def _yo(api: TestClient, token: str | None) -> tuple[int, dict[str, object]]:
 
 
 def test_con_el_token_de_la_cuenta_devuelve_su_perfil_y_su_rol(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unico())
-    codigo, cuerpo = _yo(api, iniciar_sesion(correo, CONTRASENA))
+    correo = _registrar(api, unique())
+    codigo, cuerpo = _yo(api, sign_in(correo, CONTRASENA))
     assert codigo == 200
     assert cuerpo == {
         "first_name": "Lucía",
@@ -58,14 +58,14 @@ def test_sin_un_token_valido_no_hay_sesion(api: TestClient, cabecera: str | None
 
 def test_una_cuenta_dada_de_baja_no_tiene_sesion_aunque_el_token_sea_valido(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """Verifica CU-01-SUP-05."""
-    correo = _registrar(api, unico())
-    token = iniciar_sesion(correo, CONTRASENA)
-    with motor.begin() as conn:
+    correo = _registrar(api, unique())
+    token = sign_in(correo, CONTRASENA)
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE app_user SET active = false, deactivated_at = now() WHERE email = :c"),
             {"c": correo},
@@ -74,14 +74,14 @@ def test_una_cuenta_dada_de_baja_no_tiene_sesion_aunque_el_token_sea_valido(
 
 
 def test_una_cuenta_deshabilitada_en_firebase_no_tiene_sesion(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
     from firebase_admin import auth
 
     from app.shared.identity import FirebaseProvider, _firebase_app
 
-    correo = _registrar(api, unico())
-    token = iniciar_sesion(correo, CONTRASENA)
+    correo = _registrar(api, unique())
+    token = sign_in(correo, CONTRASENA)
     uid = FirebaseProvider().uid_of(correo)
     assert uid is not None
     auth.update_user(uid, disabled=True, app=_firebase_app())
@@ -90,11 +90,11 @@ def test_una_cuenta_deshabilitada_en_firebase_no_tiene_sesion(
 
 def test_la_siembra_crea_un_admin_que_inicia_sesion_con_rol_admin(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    s = unico()
+    s = unique()
     correo = f"admin.{s}@club.com"
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
@@ -105,33 +105,33 @@ def test_la_siembra_crea_un_admin_que_inicia_sesion_con_rol_admin(
     # Sembrar otra vez no duplica: la cuenta ya existe y sólo se asciende si se pide.
     assert sembrar(argumentos) == 1
     assert sembrar([*argumentos, "--promover"]) == 0
-    codigo, cuerpo = _yo(api, iniciar_sesion(correo, CONTRASENA))
+    codigo, cuerpo = _yo(api, sign_in(correo, CONTRASENA))
     assert (codigo, cuerpo["role"]) == (200, "admin")
 
 
 def test_la_siembra_no_asciende_una_cuenta_ajena_sin_pedirlo(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     monkeypatch.setenv("ADMIN_CONTRASENA", "OtraClave9")
     argumentos = [
         "--correo", correo, "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", "30111224", "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 1
-    assert _yo(api, iniciar_sesion(correo, CONTRASENA))[1]["role"] == "user"
+    assert _yo(api, sign_in(correo, CONTRASENA))[1]["role"] == "user"
 
 
 def test_la_siembra_promueve_una_cuenta_que_ya_existe(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     monkeypatch.setenv("ADMIN_CONTRASENA", "OtraClave9")
     argumentos = [
         "--correo", correo.upper(), "--nombre", "Lucía", "--apellido", "Gómez",
@@ -139,19 +139,19 @@ def test_la_siembra_promueve_una_cuenta_que_ya_existe(
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
     # La cuenta conserva su contraseña: la siembra sólo le cambia el rol.
-    assert _yo(api, iniciar_sesion(correo, CONTRASENA))[1]["role"] == "admin"
+    assert _yo(api, sign_in(correo, CONTRASENA))[1]["role"] == "admin"
 
 
 def test_la_siembra_sin_contrasena_no_toca_nada(
-    motor: Engine, unico: Callable[[], str], monkeypatch: pytest.MonkeyPatch
+    engine: Engine, unique: Callable[[], str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("ADMIN_CONTRASENA", raising=False)
-    correo = f"admin.{unico()}@club.com"
+    correo = f"admin.{unique()}@club.com"
     argumentos = [
         "--correo", correo, "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", "30111223", "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 2
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(text("SELECT 1 FROM app_user WHERE email = :c"), {"c": correo})
         assert fila.first() is None

@@ -31,12 +31,12 @@ def _editar(api: TestClient, token: str | None, **datos: str) -> tuple[int, dict
 
 def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
-    correo, _ = _registrar(api, unico())
-    token = iniciar_sesion(correo, CONTRASENA)
+    correo, _ = _registrar(api, unique())
+    token = sign_in(correo, CONTRASENA)
     codigo, cuerpo = _editar(
         api,
         token,
@@ -54,7 +54,7 @@ def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
         "dni": "30111225",
         "birth_date": "1998-11-03",
     }
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         creado, modificado = conn.execute(
             text("SELECT created_at, updated_at FROM app_user WHERE email = :c"), {"c": correo}
         ).one()
@@ -63,10 +63,10 @@ def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
 
 
 def test_el_correo_no_se_cambia_aunque_se_mande(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo, dni = _registrar(api, unico())
-    token = iniciar_sesion(correo, CONTRASENA)
+    correo, dni = _registrar(api, unique())
+    token = sign_in(correo, CONTRASENA)
     codigo, cuerpo = _editar(
         api,
         token,
@@ -80,10 +80,10 @@ def test_el_correo_no_se_cambia_aunque_se_mande(
 
 
 def test_datos_invalidos_no_guardan_nada(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo, _ = _registrar(api, unico())
-    token = iniciar_sesion(correo, CONTRASENA)
+    correo, _ = _registrar(api, unique())
+    token = sign_in(correo, CONTRASENA)
     codigo, cuerpo = _editar(
         api, token, first_name="Otra", last_name="", dni="42118", birth_date="2000-13-32"
     )
@@ -95,12 +95,12 @@ def test_datos_invalidos_no_guardan_nada(
 
 
 def test_un_dni_de_otra_cuenta_se_rechaza(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
     """Verifica CU-06-SUP-02."""
-    _, ajeno = _registrar(api, unico())
-    correo, _ = _registrar(api, unico())
-    token = iniciar_sesion(correo, CONTRASENA)
+    _, ajeno = _registrar(api, unique())
+    correo, _ = _registrar(api, unique())
+    token = sign_in(correo, CONTRASENA)
     codigo, cuerpo = _editar(
         api, token, first_name="Lucía", last_name="Gómez", dni=ajeno, birth_date="1998-11-02"
     )

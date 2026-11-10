@@ -44,10 +44,10 @@ def _manana() -> date:
 
 def _alta_socio(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> tuple[dict[str, str], str]:
-    s = unico()
+    s = unique()
     correo_socio = f"socio.{s}@correo.com"
     alta = api.post(
         "/register",
@@ -61,43 +61,43 @@ def _alta_socio(
         },
     )
     assert alta.status_code == 201
-    token = iniciar_sesion(correo_socio, CONTRASENA)
+    token = sign_in(correo_socio, CONTRASENA)
     assert token is not None
     return _con(token), correo_socio
 
 
 @pytest.fixture
-def token_usuario(
+def user_token(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> str:
-    return _alta_socio(api, iniciar_sesion, unico)[0]["Authorization"].removeprefix("Bearer ")
+    return _alta_socio(api, sign_in, unique)[0]["Authorization"].removeprefix("Bearer ")
 
 
 @pytest.fixture
-def token_admin(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+def admin_token(
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
-    s = unico()
+    s = unique()
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(f"admin.{s}@club.com", CONTRASENA)
+    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
     assert token is not None
     return token
 
 
 @pytest.fixture
-def cancha(api: TestClient, motor: Engine, unico: Callable[[], str]) -> str:
+def cancha(api: TestClient, engine: Engine, unique: Callable[[], str]) -> str:
     """Un Fútbol 5 en una sede abierta de 08:00 a 23:00 todos los días."""
-    s = unico()
-    with motor.begin() as conn:
+    s = unique()
+    with engine.begin() as conn:
         espacio = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
@@ -209,12 +209,12 @@ def test_la_recuperacion_responde_igual_aunque_el_correo_no_salga(
 
 @pytest.mark.parametrize("horas", [10**12, 5, 0, -1, None, "x"])
 def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
-    api: TestClient, token_usuario: str, cancha: str, horas: object
+    api: TestClient, user_token: str, cancha: str, horas: object
 ) -> None:
     """una reserva con horas desmesuradas se rechaza como dato inválido @REV-01-S2"""
     r = api.post(
         "/bookings",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         json={
             "space_id": cancha,
             "date": _manana().isoformat(),
@@ -228,12 +228,12 @@ def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
 
 
 def test_una_reserva_de_cuatro_horas_se_acepta(
-    api: TestClient, token_usuario: str, cancha: str
+    api: TestClient, user_token: str, cancha: str
 ) -> None:
     """el borde de cuatro horas sigue aceptándose @REV-01-S2"""
     r = api.post(
         "/bookings",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         json={"space_id": cancha, "date": _manana().isoformat(), "start_hour": "10:00", "hours": 4},
     )
 
@@ -242,12 +242,12 @@ def test_una_reserva_de_cuatro_horas_se_acepta(
 
 @pytest.mark.parametrize(("desde", "horas"), [("23:00", 4), ("23:00", 1), ("10:00", 1)])
 def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
-    api: TestClient, token_usuario: str, cancha: str, desde: str, horas: int
+    api: TestClient, user_token: str, cancha: str, desde: str, horas: int
 ) -> None:
     """una reserva que termina después del último día representable es inválida @REV-01-S3"""
     r = api.post(
         "/bookings",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         json={"space_id": cancha, "date": "9999-12-31", "start_hour": desde, "hours": horas},
     )
 
@@ -257,20 +257,20 @@ def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
 
 @pytest.mark.parametrize("pagina", [2**70, 10_001, 0, "x"])
 def test_una_pagina_fuera_de_rango_del_historial_global_es_un_dato_invalido(
-    api: TestClient, token_admin: str, pagina: object
+    api: TestClient, admin_token: str, pagina: object
 ) -> None:
     """pedir una página enorme del historial global se rechaza como dato inválido @REV-01-S4"""
-    r = api.get("/bookings/all", headers=_con(token_admin), params={"page": pagina})
+    r = api.get("/bookings/all", headers=_con(admin_token), params={"page": pagina})
 
     assert r.status_code == 422
     assert "page" in r.json()["errors"]
 
 
 def test_la_ultima_pagina_permitida_del_historial_global_responde(
-    api: TestClient, token_admin: str
+    api: TestClient, admin_token: str
 ) -> None:
     """el borde de la página 10000 sigue respondiendo @REV-01-S4 @assumption:REV-01-ASM-02"""
-    r = api.get("/bookings/all", headers=_con(token_admin), params={"page": 10_000})
+    r = api.get("/bookings/all", headers=_con(admin_token), params={"page": 10_000})
 
     assert r.status_code == 200
     assert r.json()["bookings"] == []
@@ -362,7 +362,7 @@ def test_una_ruta_con_saltos_de_linea_no_falsifica_el_log(
 
 
 def test_los_secretos_no_llegan_al_log_ni_a_las_respuestas(
-    api: TestClient, token_usuario: str, caplog: pytest.LogCaptureFixture
+    api: TestClient, user_token: str, caplog: pytest.LogCaptureFixture
 ) -> None:
     """contraseñas, tokens y códigos de recuperación no llegan al log @REV-01-S14"""
     with caplog.at_level(logging.DEBUG):
@@ -375,7 +375,7 @@ def test_los_secretos_no_llegan_al_log_ni_a_las_respuestas(
             ),
             api.put(
                 "/me/password",
-                headers=_con(token_usuario),
+                headers=_con(user_token),
                 json={"current_password": ["Clave9Secreta"], "new_password": ["Clave9Secreta"]},
             ),
         ]
@@ -407,8 +407,8 @@ def test_la_api_arranca_con_el_emulador_y_un_proyecto_de_demo(
     assert isinstance(create_app(), FastAPI)
 
 
-def _duenio(motor: Engine, token: str) -> str:
-    with motor.connect() as conn:
+def _duenio(engine: Engine, token: str) -> str:
+    with engine.connect() as conn:
         return str(
             conn.execute(
                 text(
@@ -422,16 +422,16 @@ def _duenio(motor: Engine, token: str) -> str:
 
 def test_el_token_de_otra_persona_no_cambia_de_duenio(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """registrar el token de dispositivo de otra persona no se lo quita
     @REV-01-S19 @assumption:REV-01-ASM-04
     """
-    duenia, correo_duenia = _alta_socio(api, iniciar_sesion, unico)
-    intruso, _ = _alta_socio(api, iniciar_sesion, unico)
-    token = f"fcm-{unico()}"
+    duenia, correo_duenia = _alta_socio(api, sign_in, unique)
+    intruso, _ = _alta_socio(api, sign_in, unique)
+    token = f"fcm-{unique()}"
     pedido = {"token": token, "platform": "android", "permission_granted": True}
 
     assert api.put("/devices", headers=duenia, json=pedido).status_code == 204
@@ -440,25 +440,25 @@ def test_el_token_de_otra_persona_no_cambia_de_duenio(
 
     assert intento.status_code == 204
     assert baja.status_code == 204
-    assert _duenio(motor, token) == correo_duenia
+    assert _duenio(engine, token) == correo_duenia
 
 
 def test_un_token_dado_de_baja_pasa_a_quien_lo_registra(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """un teléfono que cerró sesión pasa a la siguiente persona
     @REV-01-S19 @assumption:REV-01-ASM-04
     """
-    primera, _ = _alta_socio(api, iniciar_sesion, unico)
-    segunda, correo_segunda = _alta_socio(api, iniciar_sesion, unico)
-    token = f"fcm-{unico()}"
+    primera, _ = _alta_socio(api, sign_in, unique)
+    segunda, correo_segunda = _alta_socio(api, sign_in, unique)
+    token = f"fcm-{unique()}"
     pedido = {"token": token, "platform": "android", "permission_granted": True}
 
     assert api.put("/devices", headers=primera, json=pedido).status_code == 204
     assert api.post("/devices/unregister", headers=primera, json={"token": token}).status_code == 204
     assert api.put("/devices", headers=segunda, json=pedido).status_code == 204
 
-    assert _duenio(motor, token) == correo_segunda
+    assert _duenio(engine, token) == correo_segunda

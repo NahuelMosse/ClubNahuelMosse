@@ -17,11 +17,11 @@ from app.modules.notifications.use_cases import (
     send_reminders,
 )
 from tests.integration.test_notifications_api import (
-    _espacio,
-    _manana_a_las,
-    _registrar,
-    _reservar,
-    _yo,
+    _book,
+    _me,
+    _register,
+    _space,
+    _tomorrow_at,
 )
 
 
@@ -34,13 +34,13 @@ class _Canal:
         return DeliveryResult(sent=len(tokens))
 
 
-def _barrer(motor: Engine, usuario: UUID, canal: _Canal, ahora: datetime) -> int:
-    with motor.connect() as conn:
+def _barrer(engine: Engine, usuario: UUID, canal: _Canal, ahora: datetime) -> int:
+    with engine.connect() as conn:
         return send_reminders(NotificationsSql(conn), canal, ahora, usuario)
 
 
-def _cinco(motor: Engine, usuario: UUID) -> list[tuple[str, str]]:
-    with motor.connect() as conn:
+def _cinco(engine: Engine, usuario: UUID) -> list[tuple[str, str]]:
+    with engine.connect() as conn:
         filas = conn.execute(
             text(
                 "SELECT title, delivery FROM notification WHERE user_id = :u"
@@ -52,47 +52,47 @@ def _cinco(motor: Engine, usuario: UUID) -> list[tuple[str, str]]:
 
 
 def _montar(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> tuple[UUID, UUID, datetime]:
-    assert _registrar(api, token_usuario, f"fcm-{sede[0]}") == 204
-    espacio = _espacio(api, token_admin, sede[0])
-    reserva = _reservar(api, token_usuario, espacio)
-    return _yo(api, motor, token_usuario), UUID(reserva["id"]), _manana_a_las(21)
+    assert _register(api, user_token, f"fcm-{venue[0]}") == 204
+    espacio = _space(api, admin_token, venue[0])
+    reserva = _book(api, user_token, espacio)
+    return _me(api, engine, user_token), UUID(reserva["id"]), _tomorrow_at(21)
 
 
 def test_la_base_acepta_el_tipo_recordatorio_cinco_y_no_deja_dos_para_la_misma_reserva_y_horario(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
     """la base acepta el tipo recordatorio_cinco y no deja dos para la misma reserva y horario @assumption:NOT-05-ASM-01"""
-    usuario, reserva, inicio = _montar(api, motor, token_admin, token_usuario, sede)
+    usuario, reserva, inicio = _montar(api, engine, admin_token, user_token, venue)
     insertar = text(
         "INSERT INTO notification (user_id, kind, title, body, booking_id, booking_starts_at,"
         " delivery) VALUES (:u, :t, 'x', 'y', :r, :i, 'pending')"
     )
     datos = {"u": usuario, "t": "five_minute_reminder", "r": reserva, "i": inicio}
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(insertar, datos)
         conn.execute(insertar, datos | {"t": "reminder"})
-    with pytest.raises(IntegrityError), motor.begin() as conn:
+    with pytest.raises(IntegrityError), engine.begin() as conn:
         conn.execute(insertar, datos)
-    with pytest.raises(IntegrityError), motor.begin() as conn:
+    with pytest.raises(IntegrityError), engine.begin() as conn:
         conn.execute(insertar, datos | {"r": None})
 
 
 def test_un_aviso_de_5_minutos_de_una_reserva_cancelada_antes_de_despacharlo_no_sale_y_queda_fallida(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
     """un aviso de 5 minutos de una reserva cancelada antes de despacharlo no sale y queda fallida @assumption:NOT-05-ASM-03"""
-    usuario, reserva, inicio = _montar(api, motor, token_admin, token_usuario, sede)
-    with motor.begin() as conn:
+    usuario, reserva, inicio = _montar(api, engine, admin_token, user_token, venue)
+    with engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO notification (user_id, kind, title, body, booking_id,"
@@ -103,24 +103,24 @@ def test_un_aviso_de_5_minutos_de_una_reserva_cancelada_antes_de_despacharlo_no_
         )
         conn.execute(text("UPDATE booking SET status = 'canceled' WHERE id = :r"), {"r": reserva})
     canal = _Canal()
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         dispatch_pending(NotificationsSql(conn), canal, usuario)
     assert canal.avisos == []
-    assert [e for _, e in _cinco(motor, usuario)] == ["failed"]
+    assert [e for _, e in _cinco(engine, usuario)] == ["failed"]
 
 
 def test_una_reserva_que_ya_empezo_o_creada_dentro_de_los_5_minutos_no_recibe_el_aviso_de_5_minutos(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
     """una reserva que ya empezó, o creada dentro de los 5 minutos, no recibe el aviso de 5 minutos @assumption:NOT-05-ASM-02"""
-    usuario, reserva, inicio = _montar(api, motor, token_admin, token_usuario, sede)
+    usuario, reserva, inicio = _montar(api, engine, admin_token, user_token, venue)
     canal = _Canal()
-    assert _barrer(motor, usuario, canal, inicio + timedelta(minutes=1)) == 0
-    with motor.begin() as conn:
+    assert _barrer(engine, usuario, canal, inicio + timedelta(minutes=1)) == 0
+    with engine.begin() as conn:
         # El disparador de auditoría pisa las fechas: se apaga sólo para fingir la reserva tardía.
         conn.execute(text("ALTER TABLE booking DISABLE TRIGGER booking_updated"))
         conn.execute(
@@ -128,9 +128,9 @@ def test_una_reserva_que_ya_empezo_o_creada_dentro_de_los_5_minutos_no_recibe_el
             {"c": inicio - timedelta(minutes=2), "r": reserva},
         )
         conn.execute(text("ALTER TABLE booking ENABLE TRIGGER booking_updated"))
-    assert _barrer(motor, usuario, canal, inicio - timedelta(minutes=1)) == 0
-    assert _cinco(motor, usuario) == []
-    with motor.begin() as conn:
+    assert _barrer(engine, usuario, canal, inicio - timedelta(minutes=1)) == 0
+    assert _cinco(engine, usuario) == []
+    with engine.begin() as conn:
         conn.execute(text("ALTER TABLE booking DISABLE TRIGGER booking_updated"))
         conn.execute(
             text("UPDATE booking SET created_at = now(), updated_at = now() WHERE id = :r"),
@@ -138,6 +138,6 @@ def test_una_reserva_que_ya_empezo_o_creada_dentro_de_los_5_minutos_no_recibe_el
         )
         conn.execute(text("ALTER TABLE booking ENABLE TRIGGER booking_updated"))
     # Con tiempo de sobra salen los dos avisos, el de una hora y el de 5 minutos, y ninguno repite.
-    assert _barrer(motor, usuario, canal, inicio - timedelta(minutes=4)) == 2
-    assert _barrer(motor, usuario, canal, inicio - timedelta(minutes=3)) == 0
-    assert [t for t, _ in _cinco(motor, usuario)] == ["Your booking starts in 5 minutes"]
+    assert _barrer(engine, usuario, canal, inicio - timedelta(minutes=4)) == 2
+    assert _barrer(engine, usuario, canal, inicio - timedelta(minutes=3)) == 0
+    assert [t for t, _ in _cinco(engine, usuario)] == ["Your booking starts in 5 minutes"]

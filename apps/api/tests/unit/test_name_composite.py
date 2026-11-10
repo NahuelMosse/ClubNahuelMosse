@@ -4,7 +4,7 @@ from app.modules.spaces.rules import composite_name
 
 
 @pytest.mark.parametrize(
-    ("sede", "calle", "altura", "deporte", "tipo", "numero", "esperado"),
+    ("venue", "calle", "altura", "deporte", "tipo", "numero", "esperado"),
     [
         (
             "Sede Castelar",
@@ -46,9 +46,9 @@ from app.modules.spaces.rules import composite_name
     ],
 )
 def test_nombre_compuesto(
-    sede: str, calle: str, altura: int, deporte: str, tipo: str, numero: int, esperado: str
+    venue: str, calle: str, altura: int, deporte: str, tipo: str, numero: int, esperado: str
 ) -> None:
-    assert composite_name(sede, calle, altura, deporte, tipo, numero) == esperado
+    assert composite_name(venue, calle, altura, deporte, tipo, numero) == esperado
 
 
 @pytest.mark.parametrize(("altura", "numero"), [(0, 1), (19850, 0), (-1, 1), (True, 1), (1, True)])

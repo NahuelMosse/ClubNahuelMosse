@@ -20,9 +20,9 @@ def _pedido(s: str, **cambios: str) -> dict[str, str]:
 
 
 def test_datos_invalidos_devuelven_los_errores_por_campo(
-    api: TestClient, unico: Callable[[], str]
+    api: TestClient, unique: Callable[[], str]
 ) -> None:
-    r = api.post("/register", json=_pedido(unico(), dni="123", password="corta"))
+    r = api.post("/register", json=_pedido(unique(), dni="123", password="corta"))
     assert r.status_code == 422
     assert r.json() == {
         "errors": {"dni": "The DNI has 7 or 8 digits", "password": "At least 8 characters"}
@@ -30,11 +30,11 @@ def test_datos_invalidos_devuelven_los_errores_por_campo(
 
 
 def test_correo_repetido_sin_distinguir_mayusculas(
-    api: TestClient, unico: Callable[[], str]
+    api: TestClient, unique: Callable[[], str]
 ) -> None:
-    s = unico()
+    s = unique()
     assert api.post("/register", json=_pedido(s)).status_code == 201
-    r = api.post("/register", json=_pedido(unico(), email=f"  ANA.{s}@Correo.com "))
+    r = api.post("/register", json=_pedido(unique(), email=f"  ANA.{s}@Correo.com "))
     assert r.status_code == 409
     assert r.json() == {
         "message": "The user is already registered. Change the email or the DNI.",
@@ -44,19 +44,19 @@ def test_correo_repetido_sin_distinguir_mayusculas(
 
 
 def test_dni_repetido_aunque_se_escriba_con_puntos(
-    api: TestClient, unico: Callable[[], str]
+    api: TestClient, unique: Callable[[], str]
 ) -> None:
-    s = unico()
+    s = unique()
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
     assert api.post("/register", json=_pedido(s, dni=dni)).status_code == 201
     con_puntos = f"{dni[:2]}.{dni[2:5]}.{dni[5:]}"
-    r = api.post("/register", json=_pedido(unico(), dni=con_puntos))
+    r = api.post("/register", json=_pedido(unique(), dni=con_puntos))
     assert r.status_code == 409
     assert r.json()["fields"] == ["dni"]
 
 
-def test_correo_y_dni_repetidos_a_la_vez(api: TestClient, unico: Callable[[], str]) -> None:
-    s = unico()
+def test_correo_y_dni_repetidos_a_la_vez(api: TestClient, unique: Callable[[], str]) -> None:
+    s = unique()
     assert api.post("/register", json=_pedido(s)).status_code == 201
     r = api.post("/register", json=_pedido(s))
     assert r.status_code == 409
@@ -64,10 +64,10 @@ def test_correo_y_dni_repetidos_a_la_vez(api: TestClient, unico: Callable[[], st
 
 
 def test_dos_registros_simultaneos_el_segundo_es_409(
-    api: TestClient, unico: Callable[[], str]
+    api: TestClient, unique: Callable[[], str]
 ) -> None:
-    s = unico()
-    pedidos = [_pedido(s), _pedido(unico(), dni=_pedido(s)["dni"])]
+    s = unique()
+    pedidos = [_pedido(s), _pedido(unique(), dni=_pedido(s)["dni"])]
     with ThreadPoolExecutor(max_workers=2) as pool:
         codigos = sorted(
             r.status_code for r in pool.map(lambda p: api.post("/register", json=p), pedidos)
@@ -83,18 +83,18 @@ def test_la_documentacion_openapi_describe_el_registro(api: TestClient) -> None:
 
 def test_una_cuenta_de_firebase_sin_perfil_no_bloquea_el_registro(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     from firebase_admin import auth
 
     from app.shared.identity import _firebase_app
 
-    s = unico()
+    s = unique()
     correo = f"huerfana.{s}@correo.com"
     auth.create_user(email=correo, password="OtraClave9", app=_firebase_app())
 
     r = api.post("/register", json=_pedido(s, email=correo))
     assert r.status_code == 201, r.text
-    assert iniciar_sesion(correo, "ClubNahuel1") is not None
-    assert iniciar_sesion(correo, "OtraClave9") is None
+    assert sign_in(correo, "ClubNahuel1") is not None
+    assert sign_in(correo, "OtraClave9") is None

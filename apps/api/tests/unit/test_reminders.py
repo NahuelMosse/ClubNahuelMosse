@@ -91,12 +91,12 @@ class CanalQueFalla:
 
 
 class CanalQueRechaza:
-    def __init__(self, invalidos: tuple[str, ...], enviados: int) -> None:
+    def __init__(self, invalidos: tuple[str, ...], sent: int) -> None:
         self.invalidos = invalidos
-        self.enviados = enviados
+        self.sent = sent
 
     def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
-        return DeliveryResult(sent=self.enviados, invalid=self.invalidos)
+        return DeliveryResult(sent=self.sent, invalid=self.invalidos)
 
 
 def test_el_mensaje_lleva_deporte_sede_y_horario_del_club() -> None:
@@ -136,7 +136,7 @@ def test_un_token_que_el_servicio_rechaza_se_da_de_baja() -> None:
     """un token inválido se da de baja @supuesto:CU-24.1-SUP-02"""
     repo = RepositorioEnMemoria([_recordatorio()], ["bueno", "viejo"])
 
-    send_reminders(repo, CanalQueRechaza(("viejo",), enviados=1), AHORA)
+    send_reminders(repo, CanalQueRechaza(("viejo",), sent=1), AHORA)
 
     assert repo.bajas == ["viejo"]
     assert repo.envios == {_id(1): "sent"}
@@ -145,7 +145,7 @@ def test_un_token_que_el_servicio_rechaza_se_da_de_baja() -> None:
 def test_si_el_servicio_no_acepta_ningun_dispositivo_el_envio_es_fallido() -> None:
     repo = RepositorioEnMemoria([_recordatorio()], ["viejo"])
 
-    send_reminders(repo, CanalQueRechaza(("viejo",), enviados=0), AHORA)
+    send_reminders(repo, CanalQueRechaza(("viejo",), sent=0), AHORA)
 
     assert repo.envios == {_id(1): "failed"}
 

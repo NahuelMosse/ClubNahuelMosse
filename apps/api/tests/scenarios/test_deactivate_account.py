@@ -16,12 +16,12 @@ def _proxima_hora(dias: int) -> datetime:
 
 def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_disponible(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """al eliminar la cuenta, el horario de su reserva vigente vuelve a estar disponible @CU-07-H01-02"""
-    s = unico()
+    s = unique()
     correo = f"socia.{s}@correo.com"
     assert (
         api.post(
@@ -38,11 +38,11 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
         == 201
     )
     inicio = _proxima_hora(dias=2)
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         usuario: Any = conn.execute(
             text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
         ).scalar_one()
-        sede: Any = conn.execute(
+        venue: Any = conn.execute(
             text(
                 "INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Rivadavia', 19850, '08:00', '00:00', ARRAY[1,2,3,4,5,6,7])"
@@ -56,7 +56,7 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
                 " covered, lit) VALUES (:venue, 'Futbol', 'F5', 1, :name, 38000, false,"
                 " true) RETURNING id"
             ),
-            {"venue": sede, "name": f"Moron_Rivadavia_19850_Futbol_F5_1_{s}"},
+            {"venue": venue, "name": f"Moron_Rivadavia_19850_Futbol_F5_1_{s}"},
         ).scalar_one()
         reserva: Any = conn.execute(
             text(
@@ -66,10 +66,10 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
             {"u": usuario, "e": espacio, "i": inicio, "f": inicio + timedelta(hours=1)},
         ).scalar_one()
 
-    token = iniciar_sesion(correo, "ClubNahuel1")
+    token = sign_in(correo, "ClubNahuel1")
     assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 204
 
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         estado, cancelada_por = conn.execute(
             text("SELECT status, canceled_by FROM booking WHERE id = :r"), {"r": reserva}
         ).one()

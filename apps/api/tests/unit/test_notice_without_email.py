@@ -11,10 +11,10 @@ from app.modules.notifications import use_cases
 from app.modules.notifications.rules import Recipient
 from app.modules.notifications.use_cases import deliver
 from app.shared.message import Message
-from tests.unit.test_notice_by_email import AVISO, USUARIO, _Canal, _Repositorio
+from tests.unit.test_notice_by_email import NOTICE, USER, _Channel, _Repository
 
 
-class _SinCorreo(_Repositorio):
+class _SinCorreo(_Repository):
     def recipient(self, user_id: UUID) -> Recipient | None:
         return Recipient(email="", name="Ana")
 
@@ -26,10 +26,10 @@ def test_un_aviso_a_una_persona_sin_correo_no_manda_correo_y_sale_por_push(
     enviados: list[Message] = []
     monkeypatch.setattr(use_cases, "send", enviados.append)
     repo = _SinCorreo(tokens=["t1"])
-    canal = _Canal()
+    canal = _Channel()
 
-    deliver(cast(Any, repo), canal, UUID(int=1), USUARIO, AVISO)
+    deliver(cast(Any, repo), canal, UUID(int=1), USER, NOTICE)
 
     assert enviados == []
-    assert canal.avisos == [AVISO]
+    assert canal.avisos == [NOTICE]
     assert repo.envios == ["sent"]

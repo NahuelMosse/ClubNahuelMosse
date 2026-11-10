@@ -5,7 +5,7 @@ from pathlib import Path
 
 API = Path(__file__).resolve().parents[2]
 APP = API / "app"
-MODULOS = APP / "modules"
+MODULES = APP / "modules"
 SHARED = APP / "shared"
 RAIZ = API.parents[1]
 
@@ -36,7 +36,7 @@ def _modulos(archivo: Path) -> set[str]:
     return nombres
 
 
-def _textos(archivo: Path) -> list[str]:
+def _texts(archivo: Path) -> list[str]:
     arbol = ast.parse(archivo.read_text(encoding="utf-8"))
     return [
         n.value for n in ast.walk(arbol) if isinstance(n, ast.Constant) and isinstance(n.value, str)
@@ -54,10 +54,10 @@ def _nombre(archivo: Path) -> str:
 def test_ninguna_funcionalidad_importa_el_repositorio_de_otra() -> None:
     """el repositorio de una funcionalidad sólo lo importa ella misma: las demás lo piden por su índice
     @REV-06-S1 @assumption:REV-06-ASM-01"""
-    archivos = _fuentes(MODULOS)
+    archivos = _fuentes(MODULES)
     assert archivos
     for archivo in archivos:
-        propia = archivo.relative_to(MODULOS).parts[0]
+        propia = archivo.relative_to(MODULES).parts[0]
         for nombre in _modulos(archivo):
             partes = nombre.split(".")
             if (
@@ -81,11 +81,11 @@ def test_shared_no_importa_funcionalidades_ni_rutas() -> None:
 
 def test_cada_repositorio_escribe_solo_su_tabla() -> None:
     """cada repositorio escribe sólo su tabla @REV-06-S6 @assumption:REV-06-ASM-05"""
-    archivos = [*_fuentes(SHARED), *_fuentes(MODULOS)]
+    archivos = [*_fuentes(SHARED), *_fuentes(MODULES)]
     assert archivos
     for archivo in archivos:
         propias = TABLAS_PROPIAS.get(_nombre(archivo), set())
-        for texto in _textos(archivo):
+        for texto in _texts(archivo):
             for tabla in ESCRITURA.findall(texto):
                 assert tabla.lower() in propias, f"{_nombre(archivo)} escribe la tabla {tabla}"
 
@@ -110,14 +110,14 @@ def test_la_zona_del_club_se_define_una_sola_vez_en_la_api() -> None:
     con_zona = sorted(
         a.relative_to(APP).as_posix()
         for a in _fuentes(APP)
-        if any(ZONA_LITERAL in t for t in _textos(a))
+        if any(ZONA_LITERAL in t for t in _texts(a))
     )
     assert con_zona == ["shared/club_timezone.py"]
 
 
 def test_las_rutas_de_mis_reservas_y_de_cancelar_entran_por_los_casos_de_uso() -> None:
     """las rutas de mis reservas y de cancelar entran por los casos de uso @REV-06-S11 @assumption:REV-06-ASM-09"""
-    arbol = ast.parse((MODULOS / "bookings" / "routes.py").read_text(encoding="utf-8"))
+    arbol = ast.parse((MODULES / "bookings" / "routes.py").read_text(encoding="utf-8"))
     traidos = {
         a.name
         for n in ast.walk(arbol)

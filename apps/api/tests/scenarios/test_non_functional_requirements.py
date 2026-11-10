@@ -143,9 +143,9 @@ def test_la_api_publica_openapi_con_todos_los_endpoints_que_usa_la_app(api: Test
     assert "swagger" in docs.text.lower()
 
 
-def test_la_api_guarda_los_datos_en_postgresql(motor: Engine) -> None:
+def test_la_api_guarda_los_datos_en_postgresql(engine: Engine) -> None:
     """la API guarda los datos en una base PostgreSQL @RNF-01-H05-01"""
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         version: Any = conn.execute(text("SELECT version()")).scalar_one()
         tablas: Any = conn.execute(
             text("SELECT count(*) FROM information_schema.tables WHERE table_name = 'booking'")
@@ -198,15 +198,15 @@ def test_toda_operacion_de_la_api_sin_usuario_autenticado_se_rechaza(api: TestCl
 
 def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pedido(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """una operación sobre reservas actúa sobre el usuario autenticado y no sobre otro indicado en el pedido @RNF-01-H06-03"""
     ids: list[Any] = []
     sesiones: list[dict[str, str]] = []
     for nombre in ("Ana", "Beto"):
-        s = unico()
+        s = unique()
         correo = f"{nombre.lower()}.{s}@correo.com"
         alta = api.post(
             "/register",
@@ -220,10 +220,10 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
             },
         )
         assert alta.status_code == 201
-        token = iniciar_sesion(correo, "ClubNahuel1")
+        token = sign_in(correo, "ClubNahuel1")
         assert token is not None
         sesiones.append({"Authorization": f"Bearer {token}"})
-        with motor.connect() as conn:
+        with engine.connect() as conn:
             ids.append(
                 conn.execute(
                     text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
@@ -231,8 +231,8 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
             )
     ana, beto = sesiones
     id_ana, id_beto = ids
-    s = unico()
-    with motor.begin() as conn:
+    s = unique()
+    with engine.begin() as conn:
         espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
@@ -266,7 +266,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     intento = api.post(f"/bookings/{de_beto.json()['id']}/cancel", headers=ana)
 
     assert (de_beto.status_code, de_ana.status_code) == (201, 201)
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         dueno = {
             str(r.id): r.user_id
             for r in conn.execute(

@@ -15,12 +15,12 @@ CONTRASENA = "ClubNahuel1"
 
 
 @pytest.fixture
-def token_admin(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+def admin_token(
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[str]:
-    s = unico()
+    s = unique()
     correo = f"admin.{s}@club.com"
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
@@ -28,18 +28,18 @@ def token_admin(
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(correo, CONTRASENA)
+    token = sign_in(correo, CONTRASENA)
     assert token is not None
     yield token
 
 
 @pytest.fixture
-def token_usuario(
+def user_token(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> str:
-    s = unico()
+    s = unique()
     correo = f"socio.{s}@correo.com"
     pedido = {
         "first_name": "Martín",
@@ -50,7 +50,7 @@ def token_usuario(
         "password": CONTRASENA,
     }
     assert api.post("/register", json=pedido).status_code == 201
-    token = iniciar_sesion(correo, CONTRASENA)
+    token = sign_in(correo, CONTRASENA)
     assert token is not None
     return token
 
@@ -70,10 +70,10 @@ def _con(token: str) -> dict[str, str]:
 
 
 def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
-    api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Haedo {unico()}"
-    r = api.post("/venues", headers=_con(token_admin), json=_sede(nombre))
+    nombre = f"Sede Haedo {unique()}"
+    r = api.post("/venues", headers=_con(admin_token), json=_sede(nombre))
     assert r.status_code == 201
     assert r.json() | {"id": ""} == {
         "id": "",
@@ -85,7 +85,7 @@ def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
         "space_count": 0,
         "sports": [],
     }
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(
             text(
                 "SELECT s.street, s.street_number, s.active, s.created_at IS NOT NULL AS con_fecha,"
@@ -99,15 +99,15 @@ def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
 
 def test_los_usuarios_ven_las_sedes_por_nombre_con_sus_canchas(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    unique: Callable[[], str],
 ) -> None:
-    s = unico()
-    zeta = api.post("/venues", headers=_con(token_admin), json=_sede(f"zz Sede {s}")).json()
-    api.post("/venues", headers=_con(token_admin), json=_sede(f"ZY Sede {s}"))
-    with motor.begin() as conn:
+    s = unique()
+    zeta = api.post("/venues", headers=_con(admin_token), json=_sede(f"zz Sede {s}")).json()
+    api.post("/venues", headers=_con(admin_token), json=_sede(f"ZY Sede {s}"))
+    with engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO space (venue_id, sport, kind, number, name, price_per_hour,"
@@ -116,7 +116,7 @@ def test_los_usuarios_ven_las_sedes_por_nombre_con_sus_canchas(
             {"venue": zeta["id"], "n": f"Zz_Vergara_1850_Padel_PAD_1_{s}"},
         )
 
-    r = api.get("/venues", headers=_con(token_usuario))
+    r = api.get("/venues", headers=_con(user_token))
 
     assert r.status_code == 200
     propias = [x for x in r.json()["venues"] if x["name"].endswith(s)]
@@ -127,30 +127,30 @@ def test_los_usuarios_ven_las_sedes_por_nombre_con_sus_canchas(
 
 
 def test_no_hay_dos_sedes_activas_con_el_mismo_nombre(
-    api: TestClient, token_admin: str, unico: Callable[[], str]
+    api: TestClient, admin_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Haedo {unico()}"
-    assert api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
-    r = api.post("/venues", headers=_con(token_admin), json=_sede(nombre.upper(), address="Otra 1"))
+    nombre = f"Sede Haedo {unique()}"
+    assert api.post("/venues", headers=_con(admin_token), json=_sede(nombre)).status_code == 201
+    r = api.post("/venues", headers=_con(admin_token), json=_sede(nombre.upper(), address="Otra 1"))
     assert r.status_code == 409
     assert r.json() == {"errors": {"name": "A venue with that name already exists"}}
 
 
 def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
-    api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Haedo {unico()}"
+    nombre = f"Sede Haedo {unique()}"
     with ThreadPoolExecutor(max_workers=2) as pool:
         codigos = sorted(
             pool.map(
                 lambda _: (
-                    api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code
+                    api.post("/venues", headers=_con(admin_token), json=_sede(nombre)).status_code
                 ),
                 range(2),
             )
         )
     assert codigos == [201, 409]
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         n: Any = conn.execute(
             text("SELECT count(*) FROM venue WHERE name = :n"), {"n": nombre}
         ).scalar_one()
@@ -158,12 +158,12 @@ def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
 
 
 def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
-    api: TestClient, token_admin: str, unico: Callable[[], str]
+    api: TestClient, admin_token: str, unique: Callable[[], str]
 ) -> None:
     r = api.post(
         "/venues",
-        headers=_con(token_admin),
-        json=_sede(f"Sede {unico()}", address="Vergara", opens_at="22:00", closes_at="21:00"),
+        headers=_con(admin_token),
+        json=_sede(f"Sede {unique()}", address="Vergara", opens_at="22:00", closes_at="21:00"),
     )
     assert r.status_code == 422
     assert r.json() == {
@@ -172,7 +172,7 @@ def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
             "closes_at": "The closing must be after the opening",
         }
     }
-    r = api.post("/venues", headers=_con(token_admin), json={})
+    r = api.post("/venues", headers=_con(admin_token), json={})
     assert r.status_code == 422
     assert set(r.json()["errors"]) == {"name", "address", "opens_at", "closes_at", "open_days"}
 
@@ -184,33 +184,33 @@ def test_sin_sesion_no_hay_sedes(api: TestClient) -> None:
 
 @pytest.mark.parametrize("hora", ["23:00+00:00", "00:00Z", "08", "0800", "T08:00", "8:00"])
 def test_una_hora_que_no_es_hh_mm_es_un_error_del_campo(
-    api: TestClient, token_admin: str, unico: Callable[[], str], hora: str
+    api: TestClient, admin_token: str, unique: Callable[[], str], hora: str
 ) -> None:
     r = api.post(
-        "/venues", headers=_con(token_admin), json=_sede(f"Sede {unico()}", closes_at=hora)
+        "/venues", headers=_con(admin_token), json=_sede(f"Sede {unique()}", closes_at=hora)
     )
     assert r.status_code == 422
     assert r.json() == {"errors": {"closes_at": "The closing time is required"}}
 
 
-def _alta(api: TestClient, token_admin: str, nombre: str) -> str:
+def _alta(api: TestClient, admin_token: str, nombre: str) -> str:
     r = api.post(
-        "/venues", headers=_con(token_admin), json=_sede(nombre, open_days=[1, 2, 3, 4, 5, 6, 7])
+        "/venues", headers=_con(admin_token), json=_sede(nombre, open_days=[1, 2, 3, 4, 5, 6, 7])
     )
     assert r.status_code == 201
     return str(r.json()["id"])
 
 
 def test_editar_guarda_los_datos_nuevos_con_su_rastro(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Haedo {unico()}"
-    sede = _alta(api, token_admin, nombre)
+    nombre = f"Sede Haedo {unique()}"
+    venue = _alta(api, admin_token, nombre)
     cambios = _sede(
         f"{nombre} Norte", address="Av. Vergara 1900", closes_at="00:00", open_days=[1, 2]
     )
 
-    r = api.put(f"/venues/{sede}", headers=_con(token_admin), json=cambios)
+    r = api.put(f"/venues/{venue}", headers=_con(admin_token), json=cambios)
 
     assert r.status_code == 200
     assert (
@@ -224,47 +224,48 @@ def test_editar_guarda_los_datos_nuevos_con_su_rastro(
         "00:00",
         [1, 2],
     )
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(
             text(
                 "SELECT s.updated_at > s.created_at AS despues, u.email LIKE 'admin.%' AS admin"
                 " FROM venue s JOIN app_user u ON u.id = s.updated_by WHERE s.id = :id"
             ),
-            {"id": sede},
+            {"id": venue},
         ).one()
     assert tuple(fila) == (True, True)
     # La misma sede puede quedarse con su nombre.
-    assert api.put(f"/venues/{sede}", headers=_con(token_admin), json=cambios).status_code == 200
-    assert api.put(f"/venues/{sede}", headers=_con(token_usuario), json=cambios).status_code == 403
-    assert api.put(f"/venues/{sede}", json=cambios).status_code == 401
+    assert api.put(f"/venues/{venue}", headers=_con(admin_token), json=cambios).status_code == 200
+    assert api.put(f"/venues/{venue}", headers=_con(user_token), json=cambios).status_code == 403
+    assert api.put(f"/venues/{venue}", json=cambios).status_code == 401
 
 
 def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_baja(
-    api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Haedo {unico()}"
-    otra = f"Sede Morón {unico()}"
-    sede = _alta(api, token_admin, nombre)
-    _alta(api, token_admin, otra)
+    nombre = f"Sede Haedo {unique()}"
+    otra = f"Sede Morón {unique()}"
+    venue = _alta(api, admin_token, nombre)
+    _alta(api, admin_token, otra)
 
-    repetido = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(otra.upper()))
+    repetido = api.put(f"/venues/{venue}", headers=_con(admin_token), json=_sede(otra.upper()))
     assert repetido.status_code == 409
     assert repetido.json() == {"errors": {"name": "A venue with that name already exists"}}
-    vacio = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre, address=""))
+    vacio = api.put(f"/venues/{venue}", headers=_con(admin_token), json=_sede(nombre, address=""))
     assert vacio.status_code == 422
     assert vacio.json()["errors"]["address"] == "The address is required"
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
-            {"id": sede},
+            {"id": venue},
         )
     assert (
-        api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre)).status_code == 404
+        api.put(f"/venues/{venue}", headers=_con(admin_token), json=_sede(nombre)).status_code
+        == 404
     )
     assert (
         api.put(
             "/venues/00000000-0000-7000-8000-0000000000ff",
-            headers=_con(token_admin),
+            headers=_con(admin_token),
             json=_sede(nombre),
         ).status_code
         == 404
@@ -272,15 +273,15 @@ def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_ba
 
 
 def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_mantiene(
-    api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Morón {unico()}"
-    sede = _alta(api, token_admin, nombre)
+    nombre = f"Sede Morón {unique()}"
+    venue = _alta(api, admin_token, nombre)
     espacio = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
-            "venue_id": sede,
+            "venue_id": venue,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -288,7 +289,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
             "price_per_hour": 38000,
         },
     ).json()["id"]
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         manana: Any = conn.execute(
             text("SELECT (now() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date + 1")
@@ -318,7 +319,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
             )
 
     def editar(**cambios: object) -> tuple[int, object]:
-        r = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre, **cambios))
+        r = api.put(f"/venues/{venue}", headers=_con(admin_token), json=_sede(nombre, **cambios))
         return r.status_code, r.json()
 
     todos = [1, 2, 3, 4, 5, 6, 7]
@@ -333,7 +334,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
     assert editar(opens_at="09:00", open_days=todos, confirm=True)[0] == 200
     # Lo que ya estaba afuera no se vuelve a preguntar.
     assert editar(opens_at="09:00", open_days=todos, address="Av. Rivadavia 19850")[0] == 200
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         activas: Any = conn.execute(
             text("SELECT count(*) FROM booking WHERE space_id = :e AND status = 'active'"),
             {"e": espacio},
@@ -342,15 +343,15 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
 
 
 def test_la_baja_deja_la_sede_y_sus_espacios_inactivos_con_su_rastro(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, unique: Callable[[], str]
 ) -> None:
-    nombre = f"Sede Haedo {unico()}"
-    sede = _alta(api, token_admin, nombre)
+    nombre = f"Sede Haedo {unique()}"
+    venue = _alta(api, admin_token, nombre)
     espacio = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
-            "venue_id": sede,
+            "venue_id": venue,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -358,39 +359,39 @@ def test_la_baja_deja_la_sede_y_sus_espacios_inactivos_con_su_rastro(
             "price_per_hour": 38000,
         },
     ).json()["id"]
-    assert api.delete(f"/venues/{sede}", headers=_con(token_usuario)).status_code == 403
-    assert api.delete(f"/venues/{sede}").status_code == 401
+    assert api.delete(f"/venues/{venue}", headers=_con(user_token)).status_code == 403
+    assert api.delete(f"/venues/{venue}").status_code == 401
 
-    assert api.delete(f"/venues/{sede}", headers=_con(token_admin)).status_code == 204
+    assert api.delete(f"/venues/{venue}", headers=_con(admin_token)).status_code == 204
 
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(
             text(
                 "SELECT s.active, s.deactivated_at IS NOT NULL, e.active,"
                 " e.deactivated_by = s.deactivated_by"
                 " FROM venue s JOIN space e ON e.venue_id = s.id WHERE s.id = :id"
             ),
-            {"id": sede},
+            {"id": venue},
         ).one()
     assert tuple(fila) == (False, True, False, True)
-    sedes = api.get("/venues", headers=_con(token_usuario)).json()["venues"]
+    sedes = api.get("/venues", headers=_con(user_token)).json()["venues"]
     assert nombre not in [s["name"] for s in sedes]
-    espacios = api.get("/spaces", headers=_con(token_usuario)).json()["spaces"]
+    espacios = api.get("/spaces", headers=_con(user_token)).json()["spaces"]
     assert espacio not in [e["id"] for e in espacios]
     # Ya dada de baja: 404, y su nombre queda libre para una sede nueva.
-    assert api.delete(f"/venues/{sede}", headers=_con(token_admin)).status_code == 404
-    assert api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
+    assert api.delete(f"/venues/{venue}", headers=_con(admin_token)).status_code == 404
+    assert api.post("/venues", headers=_con(admin_token), json=_sede(nombre)).status_code == 201
 
 
 def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
-    api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
+    api: TestClient, engine: Engine, admin_token: str, unique: Callable[[], str]
 ) -> None:
-    sede = _alta(api, token_admin, f"Sede Morón {unico()}")
+    venue = _alta(api, admin_token, f"Sede Morón {unique()}")
     espacio = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
-            "venue_id": sede,
+            "venue_id": venue,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -398,7 +399,7 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
             "price_per_hour": 38000,
         },
     ).json()["id"]
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
@@ -410,7 +411,7 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
             {"u": dueno, "e": espacio},
         )
 
-    r = api.delete(f"/venues/{sede}", headers=_con(token_admin))
+    r = api.delete(f"/venues/{venue}", headers=_con(admin_token))
 
     assert r.status_code == 409
     assert r.json() == {
@@ -418,7 +419,7 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
             "venue": "The venue cannot be deleted because it has future bookings."
         }
     }
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         assert conn.execute(
-            text("SELECT active FROM venue WHERE id = :id"), {"id": sede}
+            text("SELECT active FROM venue WHERE id = :id"), {"id": venue}
         ).scalar_one()

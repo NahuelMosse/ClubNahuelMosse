@@ -2,17 +2,17 @@
 
 from alembic import command
 from sqlalchemy import text
-from test_data_migrations import base_propia  # noqa: F401  (fixture)
+from test_data_migrations import own_db  # noqa: F401  (fixture)
 from test_english_schema import _english_tally, _seed_spanish, _stored
 
 Base = tuple
 
 
 def test_the_migration_translates_the_rows_of_0011_without_touching_them_otherwise(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """the migration translates the rows of 0011 without touching them otherwise and goes back to 0011 @ENG-17-S1 @assumption:ENG-17-ASM-05 @assumption:ENG-17-ASM-06"""
-    base, alembic = base_propia
+    base, alembic = own_db
     command.upgrade(alembic, "0011")
     _seed_spanish(base)
     before = _stored(base, spanish=True)

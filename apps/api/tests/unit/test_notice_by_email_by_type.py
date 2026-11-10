@@ -10,10 +10,10 @@ from app.modules.notifications import use_cases
 from app.modules.notifications.rules import Notice, PendingNotice, notice_data
 from app.modules.notifications.use_cases import dispatch_pending, send_reminders
 from app.shared.message import Message
-from tests.unit.test_notice_by_email import DIRECCION, USUARIO, _Canal, _Repositorio
+from tests.unit.test_notice_by_email import ADDRESS, USER, _Channel, _Repository
 
 
-class _ConPendientes(_Repositorio):
+class _ConPendientes(_Repository):
     def __init__(self, pendientes: list[PendingNotice]) -> None:
         super().__init__([])
         self.pendientes = pendientes
@@ -27,7 +27,7 @@ class _ConPendientes(_Repositorio):
 
 def _pendiente(numero: int, tipo: Any, titulo: str, reserva: UUID | None) -> PendingNotice:
     aviso = Notice(title=titulo, body="cuerpo " + titulo, data=notice_data(tipo, reserva))
-    return PendingNotice(notification_id=UUID(int=numero), user_id=USUARIO, notice=aviso)
+    return PendingNotice(notification_id=UUID(int=numero), user_id=USER, notice=aviso)
 
 
 def test_el_recordatorio_la_cancelacion_del_club_la_agrupada_y_la_propia_salen_por_correo(
@@ -39,13 +39,13 @@ def test_el_recordatorio_la_cancelacion_del_club_la_agrupada_y_la_propia_salen_p
     monkeypatch.setattr(use_cases, "send", enviados.append)
 
     ahora = datetime(2026, 10, 1, 20, 30, tzinfo=UTC)
-    send_reminders(cast(Any, _ConPendientes([])), _Canal(), ahora)
+    send_reminders(cast(Any, _ConPendientes([])), _Channel(), ahora)
     pendientes = [
         _pendiente(1, "cancelacion_forzosa", "The club voided your booking", UUID(int=3)),
         _pendiente(2, "cancelacion_forzosa", "El club anuló 3 reservas", None),
         _pendiente(3, "cancelacion_usuario", "Cancelaste tu reserva", UUID(int=4)),
     ]
-    despachados = dispatch_pending(cast(Any, _ConPendientes(pendientes)), _Canal())
+    despachados = dispatch_pending(cast(Any, _ConPendientes(pendientes)), _Channel())
 
     assert despachados == 3
     assert [m.subject for m in enviados] == [
@@ -54,4 +54,4 @@ def test_el_recordatorio_la_cancelacion_del_club_la_agrupada_y_la_propia_salen_p
         "El club anuló 3 reservas",
         "Cancelaste tu reserva",
     ]
-    assert {m.recipient for m in enviados} == {DIRECCION}
+    assert {m.recipient for m in enviados} == {ADDRESS}

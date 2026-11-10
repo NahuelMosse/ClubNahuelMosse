@@ -5,9 +5,9 @@ import subprocess
 from pathlib import Path
 
 from tests.scenarios.test_documentation_current import (
-    _requisitos,
-    _seccion,
-    _texto,
+    _requirements,
+    _section,
+    _text,
 )
 
 RAIZ = Path(__file__).resolve().parents[4]
@@ -37,7 +37,7 @@ DOCUMENTOS = (
 
 
 def _ids_registrados() -> set[str]:
-    textos = "".join(_texto(a) for a in (RAIZ / "specs").rglob("*.md"))
+    textos = "".join(_text(a) for a in (RAIZ / "specs").rglob("*.md"))
     return set(re.findall(r"\b[A-Z]+-[\d.]+[a-z]?-(?:SUP|ASM)-\d+\b", textos))
 
 
@@ -49,9 +49,9 @@ def test_el_diseno_del_sistema_dice_lo_que_hoy_falta_y_lo_escribe_como_meta_sin_
     """el diseño del sistema dice lo que hoy falta y lo escribe como meta sin medir
     @REV-07-S2 @assumption:REV-07-ASM-01
     """
-    diseno = _texto(DISENO)
+    diseno = _text(DISENO)
 
-    assert re.search(r"unmeasured", _seccion(diseno, "Performance and capacity budget"))
+    assert re.search(r"unmeasured", _section(diseno, "Performance and capacity budget"))
     assert re.search(r"no automatic backups|no backups", diseno, re.I)
     assert re.search(r"SLO[^\n]*(unmeasured|target|objective)", diseno, re.I)
 
@@ -60,7 +60,7 @@ def test_el_diseno_del_sistema_trata_las_seis_categorias_stride() -> None:
     """el diseño del sistema trata las seis categorías STRIDE
     @REV-07-S2 @assumption:REV-07-ASM-09
     """
-    amenazas = _seccion(_texto(DISENO), "Threat model")
+    amenazas = _section(_text(DISENO), "Threat model")
     categorias = ("Spoofing", "Tampering", "Repudiation", "Information disclosure",
                   "Denial of service", "Elevation of privilege")  # fmt: skip
 
@@ -74,7 +74,7 @@ def test_el_diseno_del_sistema_trae_el_inventario_de_datos_personales() -> None:
     """el diseño del sistema trae el inventario de datos personales
     @REV-07-S2 @assumption:REV-07-ASM-15
     """
-    personales = _seccion(_texto(DISENO), "Personal data")
+    personales = _section(_text(DISENO), "Personal data")
 
     for dato in ("national ID", "email", "birth date", "device token"):
         assert dato in personales, dato
@@ -88,8 +88,8 @@ def test_cada_adr_compara_dos_alternativas_o_mas() -> None:
 
     assert registros
     for registro in registros:
-        assert len(re.findall(r"^### Alternative \w", _texto(registro), re.M)) >= 2, registro.name
-        assert _seccion(_texto(registro), "Decision and why").strip(), registro.name
+        assert len(re.findall(r"^### Alternative \w", _text(registro), re.M)) >= 2, registro.name
+        assert _section(_text(registro), "Decision and why").strip(), registro.name
 
 
 def test_los_documentos_del_grado_production_existen_aunque_el_modulo_docs_este_apagado() -> None:
@@ -98,20 +98,20 @@ def test_los_documentos_del_grado_production_existen_aunque_el_modulo_docs_este_
     """
     for documento in DOCUMENTOS:
         assert documento.is_file(), documento
-        assert len(_texto(documento).split()) > 100, documento
+        assert len(_text(documento).split()) > 100, documento
 
 
 def test_los_documentos_dicen_que_describen_la_rama_kit_3() -> None:
     """los documentos dicen que describen la rama kit-3 @REV-07-S1 @assumption:REV-07-ASM-05"""
     for documento in (ASVS, DISENO, RUNBOOK, COSTOS, ACCESIBILIDAD):
-        assert "kit-3" in _texto(documento), documento
+        assert "kit-3" in _text(documento), documento
 
 
 def test_las_filas_asvs_que_fallan_quedan_fails_con_su_hallazgo_y_su_card() -> None:
     """las filas ASVS que fallan quedan fails con su hallazgo y su card, y V15.1.1 queda fails
     hasta que decida una persona @REV-07-S1 @assumption:REV-07-ASM-06
     """
-    filas = {m.group(1): m.group(0) for m in FILA_ASVS.finditer(_texto(ASVS))}
+    filas = {m.group(1): m.group(0) for m in FILA_ASVS.finditer(_text(ASVS))}
     fallan = [f for f in filas.values() if "| `fails` |" in f]
 
     assert fallan
@@ -130,7 +130,7 @@ def test_cada_ruta_de_evidencia_de_la_matriz_asvs_existe_en_el_repo() -> None:
         ["git", "ls-files"], cwd=RAIZ, capture_output=True, text=True, check=True
     ).stdout.splitlines()
     rutas = set()
-    for fila in FILA_ASVS.finditer(_texto(ASVS)):
+    for fila in FILA_ASVS.finditer(_text(ASVS)):
         rutas |= set(
             re.findall(r"`([\w.\-]+(?:/[\w.\-]+)+\.[a-z]{2,5})(?::[\d,:\-]+)?`", fila.group(3))
         )
@@ -144,7 +144,7 @@ def test_cada_ruta_de_evidencia_de_la_matriz_asvs_existe_en_el_repo() -> None:
 
 def test_la_matriz_asvs_declara_el_nivel_2_elegido() -> None:
     """la matriz ASVS declara el nivel 2 elegido @REV-07-S1 @assumption:REV-07-ASM-15"""
-    cabecera = _texto(ASVS)[:2500]
+    cabecera = _text(ASVS)[:2500]
 
     assert "nivel 2" in cabecera
     assert "elige" in cabecera
@@ -154,10 +154,10 @@ def test_la_matriz_es_asvs_5_con_los_253_requisitos_de_los_niveles_1_y_2() -> No
     """la matriz es ASVS 5.0 con los 253 requisitos de los niveles 1 y 2, como V15.1.1
     @REV-07-S1 @assumption:REV-07-ASM-16
     """
-    esperados = _requisitos("asvs-level-1.md") | _requisitos("asvs-level-2.md")
-    filas = {m.group(1) for m in FILA_ASVS.finditer(_texto(ASVS))}
+    esperados = _requirements("asvs-level-1.md") | _requirements("asvs-level-2.md")
+    filas = {m.group(1) for m in FILA_ASVS.finditer(_text(ASVS))}
 
-    assert "ASVS 5.0" in _texto(ASVS)[:200]
+    assert "ASVS 5.0" in _text(ASVS)[:200]
     assert len(esperados) == 253
     assert filas == esperados
     assert "V15.1.1" in filas
@@ -169,7 +169,7 @@ def test_los_precios_citan_la_pagina_de_render_y_que_no_dice_si_la_base_free_tie
     """los precios citan https://render.com/pricing.md consultado el 2026-10-20 y que no dice si
     la base free tiene backups @REV-07-S5 @assumption:REV-07-ASM-08
     """
-    costos = _texto(COSTOS)
+    costos = _text(COSTOS)
 
     assert "https://render.com/pricing.md" in costos
     assert "2026-10-20" in costos
@@ -182,7 +182,7 @@ def test_el_registro_de_accesibilidad_nombra_cada_pantalla_con_lector_navegador_
     """el registro de accesibilidad nombra cada pantalla con lector, navegador y resultado, o no se
     pudo correr @REV-07-S7 @assumption:REV-07-ASM-12
     """
-    registro = _seccion(_texto(ACCESIBILIDAD), "Per-screen register").splitlines()
+    registro = _section(_text(ACCESIBILIDAD), "Per-screen register").splitlines()
     pantallas = sorted(p.stem for p in (MOVIL / "lib").rglob("*_screen.dart"))
 
     assert pantallas
@@ -211,13 +211,13 @@ def test_ningun_documento_lleva_secretos_cadenas_de_conexion_con_contrasena_toke
 
     for documento in DOCUMENTOS:
         for nombre, patron in patrones.items():
-            assert not re.search(patron, _texto(documento)), (documento.name, nombre)
+            assert not re.search(patron, _text(documento)), (documento.name, nombre)
 
 
 def test_el_runbook_nombra_cada_secreto_sin_su_valor() -> None:
     """el runbook nombra cada secreto sin su valor @REV-07-S6 @assumption:REV-07-ASM-14"""
-    rotacion = _seccion(_texto(RUNBOOK), "Secret rotation and revocation")
-    inventario = _seccion(_texto(DISENO), "Secrets inventory")
+    rotacion = _section(_text(RUNBOOK), "Secret rotation and revocation")
+    inventario = _section(_text(DISENO), "Secrets inventory")
     secretos = re.findall(r"^\| `([A-Z][A-Z_]+)`", inventario, re.M)
 
     assert {"DATABASE_URL", "FIREBASE_CREDENTIALS_JSON", "SMTP_PASSWORD"} <= set(secretos)
@@ -231,8 +231,8 @@ def test_los_readme_listan_con_su_id_los_supuestos_que_cambian_lo_que_se_ve_u_op
     """los README listan con su ID los supuestos que cambian lo que se ve u opera, no los 545
     @REV-07-S10 @assumption:REV-07-ASM-02
     """
-    api = _supuestos(_texto(API / "README.md"))
-    movil = _supuestos(_texto(MOVIL / "README.md"))
+    api = _supuestos(_text(API / "README.md"))
+    movil = _supuestos(_text(MOVIL / "README.md"))
 
     assert 5 <= len(api) <= 60
     assert 3 <= len(movil) <= 60
@@ -247,8 +247,8 @@ def test_los_readme_listan_los_supuestos_de_1_a_4_h_y_7_dias_admin_no_reserva_ca
     """los README listan los supuestos de 1 a 4 h y hasta 7 días de anticipación, el admin no
     reserva, catálogo fijo y sin pagos @REV-07-S10 @assumption:REV-07-ASM-17
     """
-    api = _texto(API / "README.md")
-    movil = _texto(MOVIL / "README.md")
+    api = _text(API / "README.md")
+    movil = _text(MOVIL / "README.md")
 
     assert re.search(r"1 to 4 hours", api)
     assert re.search(r"up to 7 days ahead", api)

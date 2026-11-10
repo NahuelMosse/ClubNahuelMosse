@@ -23,18 +23,18 @@ def _con(token: str) -> dict[str, str]:
 class Canal:
     def __init__(self, falla: bool = False) -> None:
         self.falla = falla
-        self.enviados: list[tuple[list[str], Notice]] = []
+        self.sent: list[tuple[list[str], Notice]] = []
 
     def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         if self.falla:
             raise ConnectionError("el servicio no contesta")
-        self.enviados.append((list(tokens), aviso))
+        self.sent.append((list(tokens), aviso))
         return DeliveryResult(sent=len(tokens))
 
 
-def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
+def _me(api: TestClient, engine: Engine, token: str) -> UUID:
     correo = api.get("/me", headers=_con(token)).json()["email"]
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         return UUID(
             str(
                 conn.execute(
@@ -44,10 +44,10 @@ def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
         )
 
 
-def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
+def _space(api: TestClient, admin_token: str, sede_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
             "venue_id": sede_id,
             "sport": "Futbol",
@@ -61,17 +61,17 @@ def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _barrer(motor: Engine, usuario: UUID, canal: Canal, ahora: datetime) -> int:
-    with motor.connect() as conn:
+def _barrer(engine: Engine, usuario: UUID, canal: Canal, ahora: datetime) -> int:
+    with engine.connect() as conn:
         return send_reminders(NotificationsSql(conn), canal, ahora, usuario)
 
 
-def _manana_a_las(hora: int) -> datetime:
+def _tomorrow_at(hora: int) -> datetime:
     dia = datetime.now(ZONA).date() + timedelta(days=1)
     return datetime.combine(dia, datetime.min.time(), ZONA).replace(hour=hora)
 
 
-def _registrar(api: TestClient, token: str, dispositivo: str, permiso: bool = True) -> int:
+def _register(api: TestClient, token: str, dispositivo: str, permiso: bool = True) -> int:
     return api.put(
         "/devices",
         headers=_con(token),
@@ -79,13 +79,13 @@ def _registrar(api: TestClient, token: str, dispositivo: str, permiso: bool = Tr
     ).status_code
 
 
-def _reservar(api: TestClient, token: str, espacio: str, desde: str = "21:00") -> dict[str, Any]:
+def _book(api: TestClient, token: str, espacio: str, desde: str = "21:00") -> dict[str, Any]:
     r = api.post(
         "/bookings",
         headers=_con(token),
         json={
             "space_id": espacio,
-            "date": _manana_a_las(0).date().isoformat(),
+            "date": _tomorrow_at(0).date().isoformat(),
             "start_hour": desde,
             "hours": 1,
         },
@@ -96,27 +96,27 @@ def _reservar(api: TestClient, token: str, espacio: str, desde: str = "21:00") -
 
 
 def test_registrar_un_dispositivo_exige_sesion_de_usuario_y_datos_validos(
-    api: TestClient, token_admin: str, token_usuario: str, unico: Callable[[], str]
+    api: TestClient, admin_token: str, user_token: str, unique: Callable[[], str]
 ) -> None:
-    dispositivo = f"fcm-{unico()}"
+    dispositivo = f"fcm-{unique()}"
     cuerpo = {"token": dispositivo, "platform": "android", "permission_granted": True}
 
     assert api.put("/devices", json=cuerpo).status_code == 401
-    assert api.put("/devices", headers=_con(token_admin), json=cuerpo).status_code == 403
-    vacio = api.put("/devices", headers=_con(token_usuario), json=cuerpo | {"token": "  "})
+    assert api.put("/devices", headers=_con(admin_token), json=cuerpo).status_code == 403
+    vacio = api.put("/devices", headers=_con(user_token), json=cuerpo | {"token": "  "})
     assert vacio.status_code == 422
     assert vacio.json()["errors"]["token"] == "This field is required"
     assert (
         api.put(
-            "/devices", headers=_con(token_usuario), json=cuerpo | {"platform": "web"}
+            "/devices", headers=_con(user_token), json=cuerpo | {"platform": "web"}
         ).status_code
         == 422
     )
-    assert api.put("/devices", headers=_con(token_usuario), json=cuerpo).status_code == 204
+    assert api.put("/devices", headers=_con(user_token), json=cuerpo).status_code == 204
     # Registrarlo de nuevo con otro permiso lo actualiza, no lo duplica.
     assert (
         api.put(
-            "/devices", headers=_con(token_usuario), json=cuerpo | {"permission_granted": False}
+            "/devices", headers=_con(user_token), json=cuerpo | {"permission_granted": False}
         ).status_code
         == 204
     )
@@ -124,14 +124,14 @@ def test_registrar_un_dispositivo_exige_sesion_de_usuario_y_datos_validos(
 
 def test_un_token_registrado_por_otra_cuenta_no_cambia_de_dueno(
     api: TestClient,
-    motor: Engine,
-    token_usuario: str,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    user_token: str,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
-    s = unico()
+    s = unique()
     dispositivo = f"fcm-{s}"
-    assert _registrar(api, token_usuario, dispositivo) == 204
+    assert _register(api, user_token, dispositivo) == 204
     otro = api.post(
         "/register",
         json={
@@ -144,65 +144,65 @@ def test_un_token_registrado_por_otra_cuenta_no_cambia_de_dueno(
         },
     )
     assert otro.status_code == 201
-    token_otra = iniciar_sesion(f"otra.{s}@correo.com", "ClubNahuel1")
+    token_otra = sign_in(f"otra.{s}@correo.com", "ClubNahuel1")
     assert token_otra is not None
 
-    assert _registrar(api, token_otra, dispositivo) == 204
+    assert _register(api, token_otra, dispositivo) == 204
 
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         duenos = conn.execute(
             text("SELECT user_id FROM device WHERE token = :t AND active"),
             {"t": dispositivo},
         ).all()
-    assert [d.user_id for d in duenos] == [_yo(api, motor, token_usuario)]
+    assert [d.user_id for d in duenos] == [_me(api, engine, user_token)]
 
 
 def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_recibir(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
     """varias sesiones a la vez y al cerrar una deja de recibir push (decisión 14)"""
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    s = unico()
-    assert _registrar(api, token_usuario, f"a-{s}") == 204
-    assert _registrar(api, token_usuario, f"b-{s}") == 204
-    _reservar(api, token_usuario, espacio)
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    s = unique()
+    assert _register(api, user_token, f"a-{s}") == 204
+    assert _register(api, user_token, f"b-{s}") == 204
+    _book(api, user_token, espacio)
     primero = Canal()
 
-    assert _barrer(motor, usuario, primero, _manana_a_las(20)) == 1
-    assert [t for t, _ in primero.enviados] == [[f"a-{s}", f"b-{s}"]]
+    assert _barrer(engine, usuario, primero, _tomorrow_at(20)) == 1
+    assert [t for t, _ in primero.sent] == [[f"a-{s}", f"b-{s}"]]
 
-    baja = api.post("/devices/unregister", headers=_con(token_usuario), json={"token": f"a-{s}"})
+    baja = api.post("/devices/unregister", headers=_con(user_token), json={"token": f"a-{s}"})
     assert baja.status_code == 204
-    otra_reserva = _reservar(api, token_usuario, espacio, "22:00")
+    otra_reserva = _book(api, user_token, espacio, "22:00")
     segundo = Canal()
-    assert _barrer(motor, usuario, segundo, _manana_a_las(21)) == 1
-    assert [t for t, _ in segundo.enviados] == [[f"b-{s}"]]
-    assert segundo.enviados[0][1].data["booking_id"] == str(otra_reserva["id"])
+    assert _barrer(engine, usuario, segundo, _tomorrow_at(21)) == 1
+    assert [t for t, _ in segundo.sent] == [[f"b-{s}"]]
+    assert segundo.sent[0][1].data["booking_id"] == str(otra_reserva["id"])
     # Dar de baja uno que ya no está responde igual.
     repetida = api.post(
-        "/devices/unregister", headers=_con(token_usuario), json={"token": f"a-{s}"}
+        "/devices/unregister", headers=_con(user_token), json={"token": f"a-{s}"}
     )
     assert repetida.status_code == 204
 
 
 def test_una_reserva_hecha_con_menos_de_una_hora_de_anticipacion_no_recibe_recordatorio(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
     """una reserva hecha con menos de una hora de anticipación no avisa (decisión 10)"""
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    inicio = _manana_a_las(21)
-    with motor.begin() as conn:
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    inicio = _tomorrow_at(21)
+    with engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total,"
@@ -218,104 +218,104 @@ def test_una_reserva_hecha_con_menos_de_una_hora_de_anticipacion_no_recibe_recor
         )
     canal = Canal()
 
-    assert _barrer(motor, usuario, canal, inicio - timedelta(minutes=20)) == 0
-    assert canal.enviados == []
+    assert _barrer(engine, usuario, canal, inicio - timedelta(minutes=20)) == 0
+    assert canal.sent == []
 
 
 def test_si_el_barrido_llega_tarde_el_recordatorio_sale_mientras_la_reserva_no_empezo(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
     """si el servidor estuvo caído el aviso sale tarde, antes del inicio @supuesto:CU-24.1-SUP-07"""
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _registrar(api, token_usuario, f"fcm-{unico()}")
-    _reservar(api, token_usuario, espacio)
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _register(api, user_token, f"fcm-{unique()}")
+    _book(api, user_token, espacio)
     canal = Canal()
 
-    assert _barrer(motor, usuario, canal, _manana_a_las(21)) == 0
-    assert _barrer(motor, usuario, canal, _manana_a_las(20) + timedelta(minutes=50)) == 1
-    assert len(canal.enviados) == 1
+    assert _barrer(engine, usuario, canal, _tomorrow_at(21)) == 0
+    assert _barrer(engine, usuario, canal, _tomorrow_at(20) + timedelta(minutes=50)) == 1
+    assert len(canal.sent) == 1
 
 
 def test_una_reserva_modificada_despues_del_aviso_recibe_otro_para_el_horario_nuevo(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
     """una reserva modificada recibe un aviso nuevo y el anterior queda @supuesto:CU-24.1-SUP-12"""
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    reserva = _reservar(api, token_usuario, espacio)
-    assert _barrer(motor, usuario, Canal(), _manana_a_las(20)) == 1
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    reserva = _book(api, user_token, espacio)
+    assert _barrer(engine, usuario, Canal(), _tomorrow_at(20)) == 1
     cambio = api.post(
         f"/bookings/{reserva['id']}/modify",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         json={
             "space_id": espacio,
-            "date": _manana_a_las(0).date().isoformat(),
+            "date": _tomorrow_at(0).date().isoformat(),
             "start_hour": "22:00",
         },
     )
     assert cambio.status_code == 200
 
-    assert _barrer(motor, usuario, Canal(), _manana_a_las(21)) == 1
+    assert _barrer(engine, usuario, Canal(), _tomorrow_at(21)) == 1
 
     cuerpos = [
         n["body"]
-        for n in api.get("/notifications", headers=_con(token_usuario)).json()["notifications"]
+        for n in api.get("/notifications", headers=_con(user_token)).json()["notifications"]
     ]
     assert [c.rsplit(" · ", 1)[1] for c in cuerpos] == ["22:00 – 23:00", "21:00 – 22:00"]
 
 
 def test_un_envio_fallido_deja_el_aviso_en_el_centro_marcado_como_fallido(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
     """el envío fallido queda en el centro, sin reintento @supuesto:CU-24.1-SUP-02"""
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _registrar(api, token_usuario, f"fcm-{unico()}")
-    _reservar(api, token_usuario, espacio)
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _register(api, user_token, f"fcm-{unique()}")
+    _book(api, user_token, espacio)
 
-    assert _barrer(motor, usuario, Canal(falla=True), _manana_a_las(20)) == 1
-    assert _barrer(motor, usuario, Canal(), _manana_a_las(20)) == 0
+    assert _barrer(engine, usuario, Canal(falla=True), _tomorrow_at(20)) == 1
+    assert _barrer(engine, usuario, Canal(), _tomorrow_at(20)) == 0
 
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         envio: Any = conn.execute(
             text("SELECT delivery FROM notification WHERE user_id = :u"), {"u": usuario}
         ).scalar_one()
     assert envio == "failed"
-    assert api.get("/notifications", headers=_con(token_usuario)).json()["unread"] == 1
+    assert api.get("/notifications", headers=_con(user_token)).json()["unread"] == 1
 
 
 def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
     """se estampan la creación, el envío y la lectura @supuesto:CU-24.1-SUP-05"""
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _registrar(api, token_usuario, f"fcm-{unico()}")
-    _reservar(api, token_usuario, espacio)
-    _barrer(motor, usuario, Canal(), _manana_a_las(20))
-    aviso = api.get("/notifications", headers=_con(token_usuario)).json()["notifications"][0]
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _register(api, user_token, f"fcm-{unique()}")
+    _book(api, user_token, espacio)
+    _barrer(engine, usuario, Canal(), _tomorrow_at(20))
+    aviso = api.get("/notifications", headers=_con(user_token)).json()["notifications"][0]
 
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         antes = conn.execute(
             text(
                 "SELECT created_at AS creada_en, sent_at, read_at FROM notification WHERE id = :i"
@@ -326,16 +326,16 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     assert antes.sent_at is not None
     assert antes.read_at is None
 
-    leida = api.post(f"/notifications/{aviso['id']}/read", headers=_con(token_usuario))
+    leida = api.post(f"/notifications/{aviso['id']}/read", headers=_con(user_token))
     assert leida.status_code == 204
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         despues: Any = conn.execute(
             text("SELECT read_at FROM notification WHERE id = :i"), {"i": aviso["id"]}
         ).scalar_one()
     assert despues is not None
     # Leerla de nuevo responde igual y no cambia cuándo se leyó.
-    api.post(f"/notifications/{aviso['id']}/read", headers=_con(token_usuario))
-    with motor.connect() as conn:
+    api.post(f"/notifications/{aviso['id']}/read", headers=_con(user_token))
+    with engine.connect() as conn:
         igual: Any = conn.execute(
             text("SELECT read_at FROM notification WHERE id = :i"), {"i": aviso["id"]}
         ).scalar_one()
@@ -344,19 +344,19 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
 
 def test_las_notificaciones_son_de_quien_las_recibe(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _reservar(api, token_usuario, espacio)
-    _barrer(motor, usuario, Canal(), _manana_a_las(20))
-    ajena = api.get("/notifications", headers=_con(token_usuario)).json()["notifications"][0]
-    s = unico()
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _book(api, user_token, espacio)
+    _barrer(engine, usuario, Canal(), _tomorrow_at(20))
+    ajena = api.get("/notifications", headers=_con(user_token)).json()["notifications"][0]
+    s = unique()
     api.post(
         "/register",
         json={
@@ -368,7 +368,7 @@ def test_las_notificaciones_son_de_quien_las_recibe(
             "password": "ClubNahuel1",
         },
     )
-    token_otra = iniciar_sesion(f"otra.{s}@correo.com", "ClubNahuel1")
+    token_otra = sign_in(f"otra.{s}@correo.com", "ClubNahuel1")
     assert token_otra is not None
 
     assert api.get("/notifications").status_code == 401
@@ -380,13 +380,13 @@ def test_las_notificaciones_son_de_quien_las_recibe(
         api.post(f"/notifications/{ajena['id']}/read", headers=_con(token_otra)).status_code == 404
     )
     api.post("/notifications/read-all", headers=_con(token_otra))
-    assert api.get("/notifications", headers=_con(token_usuario)).json()["unread"] == 1
+    assert api.get("/notifications", headers=_con(user_token)).json()["unread"] == 1
 
 
 def test_el_borde_de_dispositivos_y_notificaciones_responde_con_un_codigo(
-    api: TestClient, token_usuario: str
+    api: TestClient, user_token: str
 ) -> None:
-    sesion = _con(token_usuario)
+    sesion = _con(user_token)
     base = {"token": "fcm-x", "platform": "android", "permission_granted": True}
 
     assert (
@@ -406,9 +406,9 @@ def test_el_borde_de_dispositivos_y_notificaciones_responde_con_un_codigo(
 
 
 def test_las_respuestas_del_centro_no_traen_campos_de_mas_ni_se_cachean(
-    api: TestClient, token_usuario: str
+    api: TestClient, user_token: str
 ) -> None:
-    r = api.get("/notifications", headers=_con(token_usuario))
+    r = api.get("/notifications", headers=_con(user_token))
 
     assert r.status_code == 200
     assert set(r.json()) == {"notifications", "unread"}
@@ -429,14 +429,14 @@ class EntreLaFotoYElRegistro(NotificationsSql):
 
 
 def _barrer_con(
-    motor: Engine, usuario: UUID, canal: Canal, ahora: datetime, alguien: Callable[[], None]
+    engine: Engine, usuario: UUID, canal: Canal, ahora: datetime, alguien: Callable[[], None]
 ) -> int:
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         return send_reminders(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
 
 
-def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:
-    with motor.connect() as conn:
+def _sin_recordatorios(engine: Engine, usuario: UUID) -> bool:
+    with engine.connect() as conn:
         return (
             conn.execute(
                 text("SELECT count(*) FROM notification WHERE user_id = :u AND kind = 'reminder'"),
@@ -448,78 +448,78 @@ def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:
 
 def test_una_reserva_cancelada_entre_la_lectura_y_el_registro_no_recibe_aviso(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _registrar(api, token_usuario, f"fcm-{unico()}")
-    reserva = _reservar(api, token_usuario, espacio)
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _register(api, user_token, f"fcm-{unique()}")
+    reserva = _book(api, user_token, espacio)
     canal = Canal()
 
     def cancelar() -> None:
-        r = api.post(f"/bookings/{reserva['id']}/cancel", headers=_con(token_usuario))
+        r = api.post(f"/bookings/{reserva['id']}/cancel", headers=_con(user_token))
         assert r.status_code == 200
 
-    assert _barrer_con(motor, usuario, canal, _manana_a_las(20), cancelar) == 0
-    assert canal.enviados == []
-    assert _sin_recordatorios(motor, usuario)
+    assert _barrer_con(engine, usuario, canal, _tomorrow_at(20), cancelar) == 0
+    assert canal.sent == []
+    assert _sin_recordatorios(engine, usuario)
 
 
 def test_una_reserva_movida_entre_la_lectura_y_el_registro_no_avisa_el_horario_viejo(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _registrar(api, token_usuario, f"fcm-{unico()}")
-    reserva = _reservar(api, token_usuario, espacio)
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _register(api, user_token, f"fcm-{unique()}")
+    reserva = _book(api, user_token, espacio)
     canal = Canal()
 
     def mover() -> None:
         r = api.post(
             f"/bookings/{reserva['id']}/modify",
-            headers=_con(token_usuario),
+            headers=_con(user_token),
             json={
                 "space_id": espacio,
-                "date": _manana_a_las(0).date().isoformat(),
+                "date": _tomorrow_at(0).date().isoformat(),
                 "start_hour": "22:00",
             },
         )
         assert r.status_code == 200
 
-    assert _barrer_con(motor, usuario, canal, _manana_a_las(20), mover) == 0
-    assert canal.enviados == []
-    assert _sin_recordatorios(motor, usuario)
+    assert _barrer_con(engine, usuario, canal, _tomorrow_at(20), mover) == 0
+    assert canal.sent == []
+    assert _sin_recordatorios(engine, usuario)
 
 
 def test_una_cuenta_dada_de_baja_entre_la_lectura_y_el_registro_no_recibe_aviso(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
-    espacio = _espacio(api, token_admin, sede[0])
-    usuario = _yo(api, motor, token_usuario)
-    _registrar(api, token_usuario, f"fcm-{unico()}")
-    _reservar(api, token_usuario, espacio)
+    espacio = _space(api, admin_token, venue[0])
+    usuario = _me(api, engine, user_token)
+    _register(api, user_token, f"fcm-{unique()}")
+    _book(api, user_token, espacio)
     canal = Canal()
 
     def dar_de_baja() -> None:
-        with motor.begin() as conn:
+        with engine.begin() as conn:
             conn.execute(
                 text("UPDATE app_user SET active = false, deactivated_at = now() WHERE id = :u"),
                 {"u": usuario},
             )
 
-    assert _barrer_con(motor, usuario, canal, _manana_a_las(20), dar_de_baja) == 0
-    assert canal.enviados == []
+    assert _barrer_con(engine, usuario, canal, _tomorrow_at(20), dar_de_baja) == 0
+    assert canal.sent == []

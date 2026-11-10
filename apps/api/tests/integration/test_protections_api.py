@@ -25,9 +25,9 @@ def test_tipos_equivocados_dan_422(api: TestClient, cuerpo: bytes) -> None:
 
 
 def test_un_campo_desconocido_no_llega_a_ningun_lado(
-    api: TestClient, unico: Callable[[], str]
+    api: TestClient, unique: Callable[[], str]
 ) -> None:
-    s = unico()
+    s = unique()
     r = api.post(
         "/register",
         json={
@@ -42,12 +42,12 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
     )
     assert r.status_code == 201
     # El rol no se toma del pedido: la cuenta nueva siempre es de usuario.
-    motor = create_engine(config.database_url)
-    with motor.connect() as conn:
+    engine = create_engine(config.database_url)
+    with engine.connect() as conn:
         rol: Any = conn.execute(
             text("SELECT role FROM app_user WHERE email = :c"), {"c": f"rol.{s}@correo.com"}
         ).scalar_one()
-    motor.dispose()
+    engine.dispose()
     assert rol == "user"
 
 

@@ -17,44 +17,44 @@ from tests.integration.test_contract_in_english import PASSWORD, _auth, _book, _
 
 def test_every_hand_built_409_body_names_its_fields_in_english(
     api: TestClient,
-    token_admin: str,
-    token_usuario: str,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
-    sede: tuple[str, str],
+    admin_token: str,
+    user_token: str,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
+    venue: tuple[str, str],
 ) -> None:
     """every hand-built 409 body names its fields in English: space name, venue bookings_outside, dni and duplicate user @ENG-18-S2"""
-    space = _space(api, token_admin, sede[0], number=1)
+    space = _space(api, admin_token, venue[0], number=1)
     taken = api.post(
         "/spaces",
-        headers=_auth(token_admin),
-        json={"venue_id": sede[0], "sport": "Futbol", "kind": "F5", "covered": True, "lit": True,
+        headers=_auth(admin_token),
+        json={"venue_id": venue[0], "sport": "Futbol", "kind": "F5", "covered": True, "lit": True,
               "price_per_hour": 38000, "number": 1},
     )  # fmt: skip
     assert (taken.status_code, set(taken.json())) == (409, {"errors", "name", "number"})
     assert set(taken.json()["errors"]) == {"name"}
 
-    assert _book(api, token_usuario, space["id"]).status_code == 201
+    assert _book(api, user_token, space["id"]).status_code == 201
     outside = api.put(
-        f"/venues/{sede[0]}",
-        headers=_auth(token_admin),
+        f"/venues/{venue[0]}",
+        headers=_auth(admin_token),
         json={"name": "Sede Haedo", "address": "Av. Vergara 1850", "opens_at": "08:00", "closes_at": "20:00",
               "open_days": [1, 2, 3, 4, 5, 6, 7]},
     )  # fmt: skip
     assert (outside.status_code, outside.json()) == (409, {"bookings_outside": 1})
-    not_removable = api.delete(f"/venues/{sede[0]}", headers=_auth(token_admin))
+    not_removable = api.delete(f"/venues/{venue[0]}", headers=_auth(admin_token))
     assert (not_removable.status_code, set(not_removable.json()["errors"])) == (409, {"venue"})
-    space_kept = api.delete(f"/spaces/{space['id']}", headers=_auth(token_admin))
+    space_kept = api.delete(f"/spaces/{space['id']}", headers=_auth(admin_token))
     assert (space_kept.status_code, set(space_kept.json()["errors"])) == (409, {"space"})
 
-    first = _register(api, unico())
+    first = _register(api, unique())
     again = api.post("/register", json=first)
     assert again.status_code == 409
     assert set(again.json()) == {"message", "fields", "errors"}
     assert set(again.json()["fields"]) == {"email", "dni"} == set(again.json()["errors"])
 
-    second = _register(api, unico())
-    token = iniciar_sesion(second["email"], PASSWORD)
+    second = _register(api, unique())
+    token = sign_in(second["email"], PASSWORD)
     assert token is not None
     own_dni = api.put(
         "/me",
@@ -94,7 +94,7 @@ def test_every_operation_id_is_fastapis_default_over_the_english_handler() -> No
 
 
 def test_the_testing_support_lives_under_testing_with_english_names(
-    motor: Engine, token_admin: str, token_usuario: str, unico: Callable[[], str], sede: tuple[str, str]
+    engine: Engine, admin_token: str, user_token: str, unique: Callable[[], str], venue: tuple[str, str]
 ) -> None:
     """the testing support lives under /_testing with English names @assumption:ENG-18-ASM-09"""
     from app import e2e_support

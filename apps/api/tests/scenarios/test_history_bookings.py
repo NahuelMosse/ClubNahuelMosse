@@ -5,11 +5,11 @@ from fastapi.testclient import TestClient
 
 def test_la_api_rechaza_la_consulta_global_de_reservas_a_un_usuario_sin_rol_de_administrador(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """la API rechaza la consulta global de reservas a un usuario sin rol de administrador @CU-14-H05-02"""
-    s = unico()
+    s = unique()
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
@@ -25,7 +25,7 @@ def test_la_api_rechaza_la_consulta_global_de_reservas_a_un_usuario_sin_rol_de_a
         ).status_code
         == 201
     )
-    token = iniciar_sesion(correo, "ClubNahuel1")
+    token = sign_in(correo, "ClubNahuel1")
 
     r = api.get(
         "/bookings/all",

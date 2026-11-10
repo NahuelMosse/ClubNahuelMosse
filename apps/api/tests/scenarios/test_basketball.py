@@ -10,17 +10,17 @@ from app.modules.users.seed_admin import main as sembrar
 CONTRASENA = "ClubNahuel1"
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-def token_usuario(
+def user_token(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> str:
-    s = unico()
+    s = unique()
     alta = api.post(
         "/register",
         json={
@@ -33,36 +33,36 @@ def token_usuario(
         },
     )
     assert alta.status_code == 201
-    token = iniciar_sesion(f"socio.{s}@correo.com", CONTRASENA)
+    token = sign_in(f"socio.{s}@correo.com", CONTRASENA)
     assert token is not None
     return token
 
 
 @pytest.fixture
-def token_admin(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+def admin_token(
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
-    s = unico()
+    s = unique()
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(f"admin.{s}@club.com", CONTRASENA)
+    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
     assert token is not None
     return token
 
 
 @pytest.fixture
-def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> str:
+def venue(api: TestClient, admin_token: str, unique: Callable[[], str]) -> str:
     r = api.post(
         "/venues",
-        headers=_con(token_admin),
+        headers=_bearer(admin_token),
         json={
-            "name": f"Sede Castelar {unico()}",
+            "name": f"Sede Castelar {unique()}",
             "address": "Av. Santa Rosa 1200",
             "opens_at": "08:00",
             "closes_at": "23:00",
@@ -73,9 +73,9 @@ def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> str:
     return str(r.json()["id"])
 
 
-def _cancha(sede: str, deporte: str, tipo: str) -> dict[str, object]:
+def _court(venue: str, deporte: str, tipo: str) -> dict[str, object]:
     return {
-        "venue_id": sede,
+        "venue_id": venue,
         "sport": deporte,
         "kind": tipo,
         "covered": True,
@@ -84,11 +84,11 @@ def _cancha(sede: str, deporte: str, tipo: str) -> dict[str, object]:
     }
 
 
-def test_el_catalogo_ofrece_basquet_con_su_tipo(api: TestClient, token_usuario: str) -> None:
+def test_el_catalogo_ofrece_basquet_con_su_tipo(api: TestClient, user_token: str) -> None:
     """el catálogo de deportes ofrece Básquet con su tipo de cancha
     @REV-05-S1 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03
     """
-    catalogo = api.get("/spaces/catalog", headers=_con(token_usuario)).json()
+    catalogo = api.get("/spaces/catalog", headers=_bearer(user_token)).json()
     claves = [d["key"] for d in catalogo["sports"]]
 
     assert claves.index("Basquet") == claves.index("Voley") + 1
@@ -105,10 +105,10 @@ def test_el_catalogo_ofrece_basquet_con_su_tipo(api: TestClient, token_usuario: 
 
 
 def test_el_administrador_da_de_alta_una_cancha_de_basquet(
-    api: TestClient, token_admin: str, sede: str
+    api: TestClient, admin_token: str, venue: str
 ) -> None:
     """el administrador da de alta una cancha de Básquet @REV-05-S2"""
-    r = api.post("/spaces", headers=_con(token_admin), json=_cancha(sede, "Basquet", "B5"))
+    r = api.post("/spaces", headers=_bearer(admin_token), json=_court(venue, "Basquet", "B5"))
 
     assert r.status_code == 201
     assert r.json()["sport"] == "Basquet"
@@ -116,28 +116,28 @@ def test_el_administrador_da_de_alta_una_cancha_de_basquet(
 
 
 def test_un_tipo_de_otro_deporte_no_sirve_para_basquet(
-    api: TestClient, token_admin: str, sede: str
+    api: TestClient, admin_token: str, venue: str
 ) -> None:
     """un tipo que no es de Básquet se rechaza @REV-05-S2"""
-    r = api.post("/spaces", headers=_con(token_admin), json=_cancha(sede, "Basquet", "F5"))
+    r = api.post("/spaces", headers=_bearer(admin_token), json=_court(venue, "Basquet", "F5"))
 
     assert r.status_code == 422
     assert r.json()["errors"]["kind"] == "Choose a kind from the list"
 
 
 def test_el_socio_filtra_los_espacios_por_basquet(
-    api: TestClient, token_admin: str, token_usuario: str, sede: str
+    api: TestClient, admin_token: str, user_token: str, venue: str
 ) -> None:
     """el socio filtra los espacios por Básquet @REV-05-S3"""
     basquet = api.post(
-        "/spaces", headers=_con(token_admin), json=_cancha(sede, "Basquet", "3X3")
+        "/spaces", headers=_bearer(admin_token), json=_court(venue, "Basquet", "3X3")
     ).json()
     futbol = api.post(
-        "/spaces", headers=_con(token_admin), json=_cancha(sede, "Futbol", "F5")
+        "/spaces", headers=_bearer(admin_token), json=_court(venue, "Futbol", "F5")
     ).json()
 
     r = api.get(
-        "/spaces", headers=_con(token_usuario), params={"venue_id": sede, "sport": "Basquet"}
+        "/spaces", headers=_bearer(user_token), params={"venue_id": venue, "sport": "Basquet"}
     )
 
     ids = [e["id"] for e in r.json()["spaces"]]

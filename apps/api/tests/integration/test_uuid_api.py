@@ -26,8 +26,8 @@ def _espacio(sede_id: str) -> dict[str, object]:
 
 
 @pytest.fixture
-def espacio_id(api: TestClient, token_admin: str, sede: tuple[str, str]) -> str:
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede[0]))
+def espacio_id(api: TestClient, admin_token: str, venue: tuple[str, str]) -> str:
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(venue[0]))
     assert r.status_code == 201, r.text
     id_ = r.json()["id"]
     assert isinstance(id_, str)
@@ -35,25 +35,25 @@ def espacio_id(api: TestClient, token_admin: str, sede: tuple[str, str]) -> str:
 
 
 def test_la_api_devuelve_y_recibe_los_ids_como_texto_uuid(
-    api: TestClient, token_admin: str, sede: tuple[str, str], espacio_id: str
+    api: TestClient, admin_token: str, venue: tuple[str, str], espacio_id: str
 ) -> None:
     """la API devuelve y recibe los ids como texto UUID en rutas, cuerpos y consultas @DAT-01-S3"""
-    sede_id = sede[0]
+    sede_id = venue[0]
 
     assert UUID_V7.match(sede_id)
     assert UUID_V7.match(espacio_id)
-    listado = api.get("/spaces", headers=_con(token_admin), params={"venue_id": sede_id})
+    listado = api.get("/spaces", headers=_con(admin_token), params={"venue_id": sede_id})
     assert listado.status_code == 200
     assert espacio_id in [e["id"] for e in listado.json()["spaces"]]
-    horarios = api.get(f"/spaces/{espacio_id}/slots", headers=_con(token_admin))
+    horarios = api.get(f"/spaces/{espacio_id}/slots", headers=_con(admin_token))
     assert horarios.status_code == 200, horarios.text
 
 
 def test_un_id_mal_formado_responde_422_y_uno_que_no_existe_404(
-    api: TestClient, token_admin: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
     """un id mal formado en la ruta, en el cuerpo o en la consulta responde 422 y un UUID que no existe responde 404 @DAT-01-S3"""
-    admin = _con(token_admin)
+    admin = _con(admin_token)
     inexistente = str(uuid.uuid4())
 
     assert api.put("/venues/no-es-un-uuid", headers=admin, json={}).status_code == 422
@@ -66,10 +66,10 @@ def test_un_id_mal_formado_responde_422_y_uno_que_no_existe_404(
 
 
 def test_un_uuid_en_mayusculas_o_sin_guiones_se_acepta(
-    api: TestClient, token_admin: str, espacio_id: str
+    api: TestClient, admin_token: str, espacio_id: str
 ) -> None:
     """un UUID en mayúsculas o sin guiones se acepta y la respuesta lo trae en minúsculas con guiones @assumption:DAT-01-ASM-06"""
-    admin = _con(token_admin)
+    admin = _con(admin_token)
 
     for escrito in (espacio_id.upper(), espacio_id.replace("-", "")):
         r = api.put(f"/spaces/{escrito}", headers=admin, json={"price_per_hour": 40000})
@@ -78,7 +78,7 @@ def test_un_uuid_en_mayusculas_o_sin_guiones_se_acepta(
 
 
 def test_un_metodo_no_admitido_responde_405_aunque_el_id_este_mal_formado(
-    api: TestClient, token_admin: str
+    api: TestClient, admin_token: str
 ) -> None:
     """un método no admitido responde 405 aunque el id esté mal formado @assumption:DAT-01-ASM-08"""
-    assert api.patch("/venues/no-es-un-uuid", headers=_con(token_admin)).status_code == 405
+    assert api.patch("/venues/no-es-un-uuid", headers=_con(admin_token)).status_code == 405

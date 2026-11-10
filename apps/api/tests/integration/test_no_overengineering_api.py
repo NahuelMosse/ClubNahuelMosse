@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 
 from app.modules.notifications.rules import Notice, DeliveryResult
-from tests.integration.test_uuid_and_audit import base_nueva  # noqa: F401  (fixture)
+from tests.integration.test_uuid_and_audit import new_db  # noqa: F401  (fixture)
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 URL_PRUEBAS = os.environ["DATABASE_URL"]
@@ -23,10 +23,10 @@ def _con(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
+def _espacio(api: TestClient, admin_token: str, sede_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
             "venue_id": sede_id,
             "sport": "Futbol",
@@ -56,33 +56,33 @@ def _reservar(api: TestClient, token: str, espacio: str, dia: int, hora: int) ->
 
 
 def test_el_historial_propio_es_el_listado_entero_y_sin_marcador(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """el historial propio es el listado ordenadas por fecha, entero y sin marcador @SIM-01-S1 @assumption:SIM-01-ASM-01"""
-    espacio = _espacio(api, token_admin, sede[0])
+    espacio = _espacio(api, admin_token, venue[0])
     creadas = [
-        _reservar(api, token_usuario, espacio, d, h)["id"] for d in (1, 2) for h in range(8, 19)
+        _reservar(api, user_token, espacio, d, h)["id"] for d in (1, 2) for h in range(8, 19)
     ]
 
-    r = api.get("/bookings", headers=_con(token_usuario), params={"cuando": "upcoming"})
+    r = api.get("/bookings", headers=_con(user_token), params={"cuando": "upcoming"})
 
     assert r.status_code == 200
     assert "siguiente" not in r.json()
     assert [x["id"] for x in r.json()["bookings"]] == creadas
-    assert api.get("/bookings?despues=x", headers=_con(token_usuario)).status_code == 200
+    assert api.get("/bookings?despues=x", headers=_con(user_token)).status_code == 200
 
 
 def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """el historial del administrador sigue paginando por número de página @SIM-01-S2 @assumption:SIM-01-ASM-01"""
-    espacio = _espacio(api, token_admin, sede[0])
+    espacio = _espacio(api, admin_token, venue[0])
     for h in range(8, 8 + 22):
-        _reservar(api, token_usuario, espacio, 1 + (h - 8) // 11, 8 + (h - 8) % 11)
-    q = {"q": sede[1]}
+        _reservar(api, user_token, espacio, 1 + (h - 8) // 11, 8 + (h - 8) % 11)
+    q = {"q": venue[1]}
 
-    primera = api.get("/bookings/all", headers=_con(token_admin), params={**q, "page": 1})
-    segunda = api.get("/bookings/all", headers=_con(token_admin), params={**q, "page": 2})
+    primera = api.get("/bookings/all", headers=_con(admin_token), params={**q, "page": 1})
+    segunda = api.get("/bookings/all", headers=_con(admin_token), params={**q, "page": 2})
 
     assert primera.status_code == segunda.status_code == 200
     assert len(primera.json()["bookings"]) == 20 and len(segunda.json()["bookings"]) == 2
@@ -90,16 +90,16 @@ def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
 
 
 def test_una_reserva_sobrevive_a_reiniciar_la_api(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """una reserva sobrevive a reiniciar la API sobre la misma base @SIM-01-S2"""
     from app.main import create_app
 
-    espacio = _espacio(api, token_admin, sede[0])
-    creada = _reservar(api, token_usuario, espacio, 1, 10)["id"]
+    espacio = _espacio(api, admin_token, venue[0])
+    creada = _reservar(api, user_token, espacio, 1, 10)["id"]
 
     with TestClient(create_app()) as otra:
-        r = otra.get("/bookings", headers=_con(token_usuario))
+        r = otra.get("/bookings", headers=_con(user_token))
     assert creada in [x["id"] for x in r.json()["bookings"]]
 
 
@@ -111,12 +111,12 @@ class _CanalQueFalla:
         raise ConnectionError("FCM no responde")
 
 
-def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> None:
+def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(engine: Engine) -> None:
     """un aviso que falla queda fallido y no se vuelve a intentar @SIM-01-S1 @assumption:SIM-01-ASM-02"""
     from app.modules.notifications.use_cases import dispatch_pending
     from app.modules.notifications.repository import NotificationsSql
 
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         id_: UUID = conn.execute(
             text(
                 "INSERT INTO notification (user_id, kind, title, body, delivery)"
@@ -133,11 +133,11 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
             {"id": id_},
         )
     canal = _CanalQueFalla()
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         dispatch_pending(NotificationsSql(conn), canal)
         tras_el_primero = _CanalQueFalla.llamadas
         dispatch_pending(NotificationsSql(conn), canal)
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         envio: str = conn.execute(
             text("SELECT delivery FROM notification WHERE id = :id"), {"id": id_}
         ).scalar_one()
@@ -145,9 +145,9 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
     assert tras_el_primero >= 1 and _CanalQueFalla.llamadas == tras_el_primero
 
 
-def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(motor: Engine) -> None:
+def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(engine: Engine) -> None:
     """la base ya no tiene intentos ni tomada_en en notificacion @assumption:SIM-01-ASM-02"""
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         columnas = {
             f[0]
             for f in conn.execute(
@@ -161,16 +161,16 @@ def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(motor: Engine) -> None:
 
 
 def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(
-    base_nueva: tuple[AlembicConfig, str],  # noqa: F811  (la fixture importada)
+    new_db: tuple[AlembicConfig, str],  # noqa: F811  (la fixture importada)
 ) -> None:
     """la migración 0009 pasa a fallida un aviso que estaba enviando @assumption:SIM-01-ASM-07"""
     # En una base propia: la base compartida no puede volver a 0008 una vez que la 0010
     # creó filas con ids nuevos (DAT-01-ASM-02).
-    alembic, url = base_nueva
+    alembic, url = new_db
     command.upgrade(alembic, "0008")
-    motor = create_engine(url)
+    engine = create_engine(url)
     try:
-        with motor.begin() as conn:
+        with engine.begin() as conn:
             conn.execute(
                 text(
                     "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
@@ -186,10 +186,10 @@ def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(
                 )
             ).scalar_one()
         command.upgrade(alembic, "0009")
-        with motor.connect() as conn:
+        with engine.connect() as conn:
             envio: str = conn.execute(
                 text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
             ).scalar_one()
     finally:
-        motor.dispose()
+        engine.dispose()
     assert envio == "fallida"

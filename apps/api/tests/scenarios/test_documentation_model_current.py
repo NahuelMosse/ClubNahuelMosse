@@ -3,15 +3,15 @@
 import re
 from pathlib import Path
 
-from tests.scenarios.test_documentation_current import _columnas_por_tabla, _texto
+from tests.scenarios.test_documentation_current import _columns_by_table, _text
 
-MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "data-model.md"
+MODEL = Path(__file__).resolve().parents[4] / "docs" / "technical" / "data-model.md"
 
 
 def test_el_modelo_de_datos_documenta_todas_las_tablas() -> None:
     """el modelo de datos documenta las nueve tablas con sus columnas @REV-07-S8"""
-    datos = _texto(MODELO)
-    tablas = _columnas_por_tabla()
+    datos = _text(MODEL)
+    tablas = _columns_by_table()
 
     assert len(tablas) >= 9
     comunes = {"id", "created_at", "updated_at"}
@@ -28,13 +28,13 @@ def test_el_modelo_de_datos_lleva_columnas_claves_indices_y_triggers_de_cada_tab
     """el modelo de datos lleva columnas, claves, índices y triggers de cada tabla
     @REV-07-S8 @assumption:REV-07-ASM-03
     """
-    datos = _texto(MODELO)
+    datos = _text(MODEL)
 
     assert re.search(r"PRIMARY KEY|clave primaria", datos, re.I)
     assert re.search(r"FOREIGN KEY|clave foránea|REFERENCES", datos, re.I)
     assert re.search(r"índice|INDEX", datos, re.I)
     assert re.search(r"trigger", datos, re.I)
-    for tabla in _columnas_por_tabla():
+    for tabla in _columns_by_table():
         assert f"`{tabla}`" in datos or f"### {tabla}" in datos, tabla
 
 
@@ -42,8 +42,8 @@ def test_cada_tabla_del_esquema_migrado_figura_en_el_modelo_de_datos_con_sus_col
     """cada tabla del esquema migrado figura en el modelo de datos con sus columnas
     @REV-07-S8 @assumption:REV-07-ASM-10
     """
-    datos = _texto(MODELO)
-    tablas = _columnas_por_tabla()
+    datos = _text(MODEL)
+    tablas = _columns_by_table()
 
     assert len(tablas) == 9
     for tabla, columnas in tablas.items():

@@ -113,10 +113,10 @@ def test_every_json_field_of_the_published_contract_is_named_as_the_glossary_say
 
 
 def test_an_error_body_names_its_fields_in_english_and_keeps_mains_message(
-    api: TestClient, token_admin: str
+    api: TestClient, admin_token: str
 ) -> None:
     """an error body names its fields in English and keeps main's message @ENG-18-S2 @ENG-18-S9"""
-    venue = api.post("/venues", headers=_auth(token_admin), json={})
+    venue = api.post("/venues", headers=_auth(admin_token), json={})
     assert venue.status_code == 422
     assert venue.json() == {
         "errors": {
@@ -136,89 +136,89 @@ def test_an_error_body_names_its_fields_in_english_and_keeps_mains_message(
 
 
 def test_a_booking_error_names_date_space_id_start_hour_hours_until_and_dates_in_english(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """a booking error names date, space_id, start_hour, hours, until and dates in English @ENG-18-S2 @assumption:ENG-18-ASM-01"""
-    space = _space(api, token_admin, sede[0])["id"]
+    space = _space(api, admin_token, venue[0])["id"]
     tomorrow = (date.today() + timedelta(days=1)).isoformat()
     long_stay = api.post(
         "/bookings",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"space_id": space, "date": tomorrow, "start_hour": "21:00", "hours": 9},
     )
     assert long_stay.status_code == 422
     assert set(long_stay.json()["errors"]) == {"hours", "until"}
     unreadable = api.post(
         "/bookings",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"space_id": space, "date": tomorrow, "start_hour": "9", "hours": 1},
     )
     assert set(unreadable.json()["errors"]) == {"start_hour"}
     far = api.post(
         "/bookings",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"space_id": space, "date": "2999-01-01", "start_hour": "21:00", "hours": 1},
     )
     assert set(far.json()["errors"]) == {"date"}
-    other = _space(api, token_admin, sede[0])["id"]
-    booking = _book(api, token_usuario, space).json()
+    other = _space(api, admin_token, venue[0])["id"]
+    booking = _book(api, user_token, space).json()
     kind_mismatch = api.post(
         f"/bookings/{booking['id']}/modify",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"space_id": str(uuid.uuid4()), "date": tomorrow, "start_hour": "21:00"},
     )
     assert set(kind_mismatch.json()["errors"]) == {"space_id"}
     assert other
     reversed_range = api.get(
-        "/bookings/all", headers=_auth(token_admin), params={"since": "2030-01-02", "until": "2030-01-01"}
+        "/bookings/all", headers=_auth(admin_token), params={"since": "2030-01-02", "until": "2030-01-01"}
     )
     assert set(reversed_range.json()["errors"]) == {"dates"}
 
 
-def test_a_void_error_names_reason_in_english(api: TestClient, token_admin: str) -> None:
+def test_a_void_error_names_reason_in_english(api: TestClient, admin_token: str) -> None:
     """a void error names reason in English @ENG-18-S2"""
     r = api.post(
         f"/bookings/{uuid.uuid4()}/void",
-        headers=_auth(token_admin),
+        headers=_auth(admin_token),
         json={"reason": " ", "space_id": str(uuid.uuid4()), "starts_at": "2030-01-01T10:00:00-03:00"},
     )
     assert (r.status_code, r.json()) == (422, {"errors": {"reason": "El motivo es obligatorio para anular"}})
 
 
 def test_a_password_change_error_names_current_password_and_new_password(
-    api: TestClient, token_usuario: str
+    api: TestClient, user_token: str
 ) -> None:
     """a password change error names current_password and new_password @ENG-18-S2"""
     wrong = api.put(
         "/me/password",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"current_password": "Equivocada1", "new_password": "ClubNahuel2"},
     )
     assert (wrong.status_code, set(wrong.json()["errors"])) == (422, {"current_password"})
     weak = api.put(
-        "/me/password", headers=_auth(token_usuario), json={"current_password": PASSWORD, "new_password": "x"}
+        "/me/password", headers=_auth(user_token), json={"current_password": PASSWORD, "new_password": "x"}
     )
     assert set(weak.json()["errors"]) == {"new_password"}
 
 
-def test_a_space_error_names_kind_in_english(api: TestClient, token_admin: str, sede: tuple[str, str]) -> None:
+def test_a_space_error_names_kind_in_english(api: TestClient, admin_token: str, venue: tuple[str, str]) -> None:
     """a space error names kind in English @ENG-18-S2"""
     r = api.get(
         "/spaces/name",
-        headers=_auth(token_admin),
-        params={"venue_id": sede[0], "sport": "Futbol", "kind": "no-existe"},
+        headers=_auth(admin_token),
+        params={"venue_id": venue[0], "sport": "Futbol", "kind": "no-existe"},
     )
     assert (r.status_code, set(r.json()["errors"])) == (422, {"kind"})
-    empty = api.post("/spaces", headers=_auth(token_admin), json={})
+    empty = api.post("/spaces", headers=_auth(admin_token), json={})
     assert set(empty.json()["errors"]) == {"venue_id", "sport", "kind", "covered", "lit", "price_per_hour"}
-    nothing = api.put(f"/spaces/{uuid.uuid4()}", headers=_auth(token_admin), json={})
+    nothing = api.put(f"/spaces/{uuid.uuid4()}", headers=_auth(admin_token), json={})
     assert set(nothing.json()["errors"]) == {"change"}
 
 
-def test_an_unreadable_body_answers_errors_body(api: TestClient, token_usuario: str) -> None:
+def test_an_unreadable_body_answers_errors_body(api: TestClient, user_token: str) -> None:
     """an unreadable body answers errors.body @ENG-18-S2 @assumption:ENG-18-ASM-01"""
     r = api.post(
-        "/bookings", headers=_auth(token_usuario) | {"Content-Type": "application/json"}, content=b"{no"
+        "/bookings", headers=_auth(user_token) | {"Content-Type": "application/json"}, content=b"{no"
     )
     assert (r.status_code, set(r.json()["errors"])) == (400, {"body"})
 
@@ -230,27 +230,27 @@ def test_the_health_body_is_status_ok(api: TestClient) -> None:
 
 
 def test_every_enum_value_travels_as_the_database_stores_it_and_nothing_translates_it(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """every enum value travels as the database stores it and nothing translates it @ENG-18-S3 @ENG-18-S12 @assumption:ENG-18-ASM-02"""
-    space = _space(api, token_admin, sede[0])["id"]
-    active = _book(api, token_usuario, space, 1).json()
-    to_cancel = _book(api, token_usuario, space, 2).json()
+    space = _space(api, admin_token, venue[0])["id"]
+    active = _book(api, user_token, space, 1).json()
+    to_cancel = _book(api, user_token, space, 2).json()
     assert active["status"] == "active"
-    cancel = api.post(f"/bookings/{to_cancel['id']}/cancel", headers=_auth(token_usuario))
+    cancel = api.post(f"/bookings/{to_cancel['id']}/cancel", headers=_auth(user_token))
     assert cancel.json()["status"] == "canceled"
-    stored = {r.id: r.status for r in motor.connect().execute(text("SELECT id, status FROM booking"))}
+    stored = {r.id: r.status for r in engine.connect().execute(text("SELECT id, status FROM booking"))}
     assert stored[uuid.UUID(active["id"])] == "active"
-    assert api.get("/me", headers=_auth(token_usuario)).json()["role"] == "user"
-    assert api.get("/me", headers=_auth(token_admin)).json()["role"] == "admin"
-    upcoming = api.get("/bookings", headers=_auth(token_usuario), params={"when": "upcoming"}).json()
+    assert api.get("/me", headers=_auth(user_token)).json()["role"] == "user"
+    assert api.get("/me", headers=_auth(admin_token)).json()["role"] == "admin"
+    upcoming = api.get("/bookings", headers=_auth(user_token), params={"when": "upcoming"}).json()
     assert [b["id"] for b in upcoming["bookings"]] == [active["id"]]
-    history = api.get("/bookings", headers=_auth(token_usuario), params={"when": "history"}).json()
+    history = api.get("/bookings", headers=_auth(user_token), params={"when": "history"}).json()
     assert [b["status"] for b in history["bookings"]] == ["canceled"]
-    assert api.get("/bookings", headers=_auth(token_usuario), params={"when": "proximas"}).status_code == 422
-    filtered = api.get("/bookings/all", headers=_auth(token_admin), params={"status": "active"})
+    assert api.get("/bookings", headers=_auth(user_token), params={"when": "proximas"}).status_code == 422
+    filtered = api.get("/bookings/all", headers=_auth(admin_token), params={"status": "active"})
     assert filtered.status_code == 200
-    assert api.get("/bookings/all", headers=_auth(token_admin), params={"status": "activa"}).status_code == 422
+    assert api.get("/bookings/all", headers=_auth(admin_token), params={"status": "activa"}).status_code == 422
     app_dir = ROOT / "apps" / "api" / "app"
     assert not (app_dir / "shared" / "stored_values.py").exists()
     assert not [p for p in app_dir.rglob("*.py") if "stored_values" in p.read_text(encoding="utf-8")]
@@ -276,7 +276,7 @@ def test_the_push_data_carries_kind_and_booking_id_with_the_english_kind_and_mai
 
 
 def test_every_query_parameter_is_named_as_the_glossary_says(
-    api: TestClient, token_usuario: str, token_admin: str, sede: tuple[str, str]
+    api: TestClient, user_token: str, admin_token: str, venue: tuple[str, str]
 ) -> None:
     """every query parameter is named as the glossary says @ENG-18-S6"""
     published = api.get("/openapi.json").json()["paths"]
@@ -285,10 +285,10 @@ def test_every_query_parameter_is_named_as_the_glossary_says(
         if p["in"] == "query"
     }  # fmt: skip
     assert names == {"venue_id", "sport", "kind", "date", "hours", "booking_id", "since", "until", "when", "status", "page", "q"}
-    _space(api, token_admin, sede[0])
-    found = api.get("/spaces", headers=_auth(token_usuario), params={"venue_id": sede[0], "sport": "Futbol"})
-    assert [s["venue_id"] for s in found.json()["spaces"]] == [sede[0]]
-    assert api.get("/spaces", headers=_auth(token_usuario), params={"sede_id": sede[0]}).json()["spaces"] != []
+    _space(api, admin_token, venue[0])
+    found = api.get("/spaces", headers=_auth(user_token), params={"venue_id": venue[0], "sport": "Futbol"})
+    assert [s["venue_id"] for s in found.json()["spaces"]] == [venue[0]]
+    assert api.get("/spaces", headers=_auth(user_token), params={"sede_id": venue[0]}).json()["spaces"] != []
 
 
 def test_an_old_spanish_route_also_the_old_recovery_link_answers_404(api: TestClient) -> None:
@@ -304,31 +304,31 @@ def test_an_old_spanish_route_also_the_old_recovery_link_answers_404(api: TestCl
 
 
 def test_an_old_spanish_body_answers_422_where_fields_are_required_and_changes_nothing_where_all_are_optional(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """an old Spanish body answers 422 where fields are required and changes nothing where all are optional @ENG-18-S8 @assumption:ENG-18-ASM-05"""
-    space = _space(api, token_admin, sede[0])
+    space = _space(api, admin_token, venue[0])
     old_booking = api.post(
         "/bookings",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"espacio_id": space["id"], "fecha": "2030-01-01", "desde": "21:00", "horas": 1},
     )
     assert (old_booking.status_code, set(old_booking.json()["errors"])) == (
         422, {"space_id", "date", "start_hour", "hours"}
     )  # fmt: skip
-    old_edit = api.put(f"/spaces/{space['id']}", headers=_auth(token_admin), json={"precio_por_hora": 1})
+    old_edit = api.put(f"/spaces/{space['id']}", headers=_auth(admin_token), json={"precio_por_hora": 1})
     assert old_edit.status_code == 422
-    after = api.get("/spaces", headers=_auth(token_admin), params={"venue_id": sede[0]}).json()["spaces"]
+    after = api.get("/spaces", headers=_auth(admin_token), params={"venue_id": venue[0]}).json()["spaces"]
     assert [s["price_per_hour"] for s in after] == [38000]
 
 
 def test_the_recovery_email_links_to_link_recover_with_code_and_the_page_opens_the_same_app_route(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
     """the recovery email links to /link/recover with #code and the page opens the same app route @assumption:ENG-18-ASM-06"""
-    account = _register(api, unico())
+    account = _register(api, unique())
     assert api.post("/password-recovery", json={"email": account["email"]}).status_code == 202
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         subject, body = conn.execute(
             text("SELECT subject, body FROM outgoing_email WHERE recipient = :p ORDER BY id DESC LIMIT 1"),
             {"p": account["email"]},
@@ -344,7 +344,7 @@ def test_the_recovery_email_links_to_link_recover_with_code_and_the_page_opens_t
 
 
 def test_the_email_the_catalog_names_and_the_seeds_stay_as_in_main(
-    api: TestClient, token_usuario: str
+    api: TestClient, user_token: str
 ) -> None:
     """the email, the catalog names and the seeds stay as in main @ENG-18-S9"""
     main_source = subprocess.run(
@@ -352,7 +352,7 @@ def test_the_email_the_catalog_names_and_the_seeds_stay_as_in_main(
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True,
     ).stdout  # fmt: skip
     pairs = re.findall(r'(?:Sport\(\s*|Kind\()"([^"]+)",\s*"([^"]+)"', main_source)
-    catalog = api.get("/spaces/catalog", headers=_auth(token_usuario)).json()["sports"]
+    catalog = api.get("/spaces/catalog", headers=_auth(user_token)).json()["sports"]
     shown = [(s["key"], s["name"]) for s in catalog]
     shown += [(k["key"], k["name"]) for s in catalog for k in s["kinds"]]
     assert sorted(shown) == sorted(pairs)

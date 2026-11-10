@@ -20,10 +20,10 @@ CONTRASENA = "ClubNahuel1"
 
 def _socio(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> dict[str, str]:
-    s = unico()
+    s = unique()
     correo_socio = f"socio.{s}@correo.com"
     alta = api.post(
         "/register",
@@ -37,7 +37,7 @@ def _socio(
         },
     )
     assert alta.status_code == 201
-    token = iniciar_sesion(correo_socio, CONTRASENA)
+    token = sign_in(correo_socio, CONTRASENA)
     assert token is not None
     return {"Authorization": f"Bearer {token}"}
 
@@ -56,22 +56,22 @@ def _registro(**cambios: str) -> dict[str, str]:
 
 def test_la_baja_de_un_token_ajeno_no_hace_nada_y_responde_204(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """dar de baja un token ajeno no hace nada y responde 204
     @REV-01-S19 @assumption:REV-01-ASM-04
     """
-    duenia = _socio(api, iniciar_sesion, unico)
-    intruso = _socio(api, iniciar_sesion, unico)
-    token = f"fcm-{unico()}"
+    duenia = _socio(api, sign_in, unique)
+    intruso = _socio(api, sign_in, unique)
+    token = f"fcm-{unique()}"
     pedido = {"token": token, "platform": "android", "permission_granted": True}
     assert api.put("/devices", headers=duenia, json=pedido).status_code == 204
 
     baja = api.post("/devices/unregister", headers=intruso, json={"token": token})
 
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         activo = conn.execute(
             text("SELECT active FROM device WHERE token = :t"), {"t": token}
         ).scalar_one()

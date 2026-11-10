@@ -35,24 +35,24 @@ def _cambiar(api: TestClient, token: str | None, actual: str, nueva: str) -> tup
 
 def test_cambia_la_contrasena_deja_rastro_e_invalida_las_sesiones(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
-    correo = _registrar(api, unico())
-    token = iniciar_sesion(correo, ACTUAL)
+    correo = _registrar(api, unique())
+    token = sign_in(correo, ACTUAL)
     # La revocación de Firebase cuenta por segundos: el token tiene que ser de antes.
     time.sleep(1.1)
 
     assert _cambiar(api, token, ACTUAL, NUEVA) == (204, "")
 
-    assert iniciar_sesion(correo, ACTUAL) is None
-    nuevo = iniciar_sesion(correo, NUEVA)
+    assert sign_in(correo, ACTUAL) is None
+    nuevo = sign_in(correo, NUEVA)
     assert nuevo is not None
     # La sesión que cambió la contraseña también quedó vencida; con la nueva se entra.
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
     assert api.get("/me", headers={"Authorization": f"Bearer {nuevo}"}).status_code == 200
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         cambiada = conn.execute(
             text("SELECT password_changed_at FROM app_user WHERE email = :c"), {"c": correo}
         ).scalar()
@@ -60,25 +60,25 @@ def test_cambia_la_contrasena_deja_rastro_e_invalida_las_sesiones(
 
 
 def test_la_actual_equivocada_no_cambia_nada(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unico())
-    token = iniciar_sesion(correo, ACTUAL)
+    correo = _registrar(api, unique())
+    token = sign_in(correo, ACTUAL)
     codigo, cuerpo = _cambiar(api, token, "OtraClave9", NUEVA)
     assert codigo == 422
     assert '"current_password":"The current password does not match"' in cuerpo
-    assert iniciar_sesion(correo, ACTUAL) is not None
+    assert sign_in(correo, ACTUAL) is not None
 
 
 def test_una_nueva_debil_se_rechaza_con_la_regla_que_falta(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], unico: Callable[[], str]
+    api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unico())
-    token = iniciar_sesion(correo, ACTUAL)
+    correo = _registrar(api, unique())
+    token = sign_in(correo, ACTUAL)
     codigo, cuerpo = _cambiar(api, token, ACTUAL, "ClubNahuel")
     assert codigo == 422
     assert '"new_password":"At least one number"' in cuerpo
-    assert iniciar_sesion(correo, ACTUAL) is not None
+    assert sign_in(correo, ACTUAL) is not None
 
 
 def test_sin_sesion_no_se_puede_cambiar(api: TestClient) -> None:

@@ -77,7 +77,7 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
     api: TestClient,
-    unico: Callable[[], str],
+    unique: Callable[[], str],
     failure: Exception,
 ) -> None:
     """si Brevo falla o no responde el error queda en el log sin la dirección y el pedido
@@ -95,7 +95,7 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
     assert "lucia" not in caplog.text
     assert "clave-secreta" not in caplog.text
 
-    s = unico()
+    s = unique()
     payload = {
         "first_name": "Lucía",
         "last_name": "Gómez",

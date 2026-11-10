@@ -5,7 +5,7 @@ import pytest
 import test_forced_cancellation as base
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine
-from test_reminder import CanalDePrueba, app_de, un_socio
+from test_reminder import FakeChannel, app_of, a_member
 
 from app.modules.notifications.rules import Notice, DeliveryResult
 from app.modules.notifications.push import push_channel
@@ -13,7 +13,7 @@ from app.modules.notifications.push import push_channel
 admin = base.admin
 
 
-class CanalQueRetieneElPrimero(CanalDePrueba):
+class CanalQueRetieneElPrimero(FakeChannel):
     """El primer envío queda en curso hasta que se lo suelta, como un push lento."""
 
     def __init__(self) -> None:
@@ -22,7 +22,7 @@ class CanalQueRetieneElPrimero(CanalDePrueba):
         self.soltar = threading.Event()
 
     def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        primero = not self.enviados
+        primero = not self.sent
         resultado = super().send(tokens, aviso)
         if primero:
             self.saliendo.set()
@@ -32,38 +32,38 @@ class CanalQueRetieneElPrimero(CanalDePrueba):
 
 @pytest.fixture
 def canal_lento(api: TestClient) -> Iterator[CanalQueRetieneElPrimero]:
-    canal = CanalQueRetieneElPrimero()
-    app_de(api).dependency_overrides[push_channel] = lambda: canal
-    yield canal
-    canal.soltar.set()
-    app_de(api).dependency_overrides.pop(push_channel, None)
+    channel = CanalQueRetieneElPrimero()
+    app_of(api).dependency_overrides[push_channel] = lambda: channel
+    yield channel
+    channel.soltar.set()
+    app_of(api).dependency_overrides.pop(push_channel, None)
 
 
 def test_la_anulacion_que_llega_con_el_aviso_anterior_saliendo_se_agrupa_igual(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     canal_lento: CanalQueRetieneElPrimero,
     admin: dict[str, str],
 ) -> None:
     """el despacho del primer aviso va lento y la segunda anulación igual llega en un solo
     aviso con la cantidad @supuesto:CU-24.2-SUP-02"""
-    socio = un_socio(api, motor, iniciar_sesion, unico)
-    primera = socio.reservar("20:00")
-    segunda = socio.reservar("21:00")
+    socio = a_member(api, engine, sign_in, unique)
+    primera = socio.book("20:00")
+    segunda = socio.book("21:00")
     estados: list[int] = []
-    hilo = threading.Thread(target=lambda: estados.append(base.anular(socio, admin, primera)))
+    hilo = threading.Thread(target=lambda: estados.append(base.force_cancel(socio, admin, primera)))
     hilo.start()
     try:
         assert canal_lento.saliendo.wait(timeout=30)
 
-        estados.append(base.anular(socio, admin, segunda))
+        estados.append(base.force_cancel(socio, admin, segunda))
     finally:
         canal_lento.soltar.set()
         hilo.join(timeout=30)
 
     assert estados == [200, 200]
-    centro = socio.centro()
-    assert centro["unread"] == 1
-    assert [e["title"] for e in centro["notifications"]] == ["The club voided 2 of your bookings"]
+    center = socio.center()
+    assert center["unread"] == 1
+    assert [e["title"] for e in center["notifications"]] == ["The club voided 2 of your bookings"]

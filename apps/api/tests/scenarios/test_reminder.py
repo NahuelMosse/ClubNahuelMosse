@@ -15,85 +15,85 @@ ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 CONTRASENA = "ClubNahuel1"
 
 
-def app_de(api: TestClient) -> FastAPI:
+def app_of(api: TestClient) -> FastAPI:
     """La aplicación FastAPI detrás del cliente, para sustituir dependencias."""
     return cast(FastAPI, api.app)
 
 
-class CanalDePrueba:
+class FakeChannel:
     """El servicio de notificaciones del teléfono, que anota lo que se le pide enviar."""
 
     def __init__(self) -> None:
-        self.enviados: list[tuple[list[str], Notice]] = []
+        self.sent: list[tuple[list[str], Notice]] = []
 
     def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        self.enviados.append((list(tokens), aviso))
+        self.sent.append((list(tokens), aviso))
         return DeliveryResult(sent=len(tokens), invalid=())
 
 
 @dataclass
-class Socio:
+class Member:
     api: TestClient
-    motor: Engine
-    correo: str
-    sesion: dict[str, str]
-    usuario_id: UUID
-    espacio_id: UUID
-    sede: str
-    dispositivo: str
-    reservas: list[dict[str, Any]] = field(default_factory=list)
+    engine: Engine
+    email: str
+    session: dict[str, str]
+    user_id: UUID
+    space_id: UUID
+    venue: str
+    device: str
+    bookings: list[dict[str, Any]] = field(default_factory=list)
 
-    def reservar(self, desde: str) -> dict[str, Any]:
+    def book(self, desde: str) -> dict[str, Any]:
         r = self.api.post(
             "/bookings",
-            headers=self.sesion,
+            headers=self.session,
             json={
-                "space_id": str(self.espacio_id),
-                "date": manana().isoformat(),
+                "space_id": str(self.space_id),
+                "date": tomorrow().isoformat(),
                 "start_hour": desde,
                 "hours": 1,
             },
         )
         assert r.status_code == 201
         reserva: dict[str, Any] = r.json()
-        self.reservas.append(reserva)
+        self.bookings.append(reserva)
         return reserva
 
-    def barrer(self, canal: CanalDePrueba, ahora: datetime) -> int:
+    def sweep(self, canal: FakeChannel, ahora: datetime) -> int:
         """El barrido de recordatorios corriendo a la hora [ahora] del club, para este socio."""
         from app.modules.notifications.use_cases import send_reminders
         from app.modules.notifications.repository import NotificationsSql
 
-        with self.motor.connect() as conn:
-            return send_reminders(NotificationsSql(conn), canal, ahora, self.usuario_id)
+        with self.engine.connect() as conn:
+            return send_reminders(NotificationsSql(conn), canal, ahora, self.user_id)
 
-    def centro(self) -> dict[str, Any]:
-        r = self.api.get("/notifications", headers=self.sesion)
+    def center(self) -> dict[str, Any]:
+        r = self.api.get("/notifications", headers=self.session)
         assert r.status_code == 200
-        centro: dict[str, Any] = r.json()
-        return centro
+        center: dict[str, Any] = r.json()
+        return center
 
 
-def manana() -> Any:
+def tomorrow() -> Any:
     return datetime.now(ZONA).date() + timedelta(days=1)
 
 
-def a_las(hora: int, minuto: int = 0) -> datetime:
+def at_time(hora: int, minuto: int = 0) -> datetime:
     """La hora [hora]:[minuto] de mañana en el club."""
-    return datetime.combine(manana(), datetime.min.time(), ZONA).replace(hour=hora, minute=minuto)
+    return datetime.combine(tomorrow(), datetime.min.time(), ZONA).replace(hour=hora, minute=minuto)
 
 
-def un_socio(
+def a_member(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     *,
-    permiso: bool = True,
-) -> Socio:
+    permission: bool = True,
+) -> Member:
     """Una cuenta nueva con un dispositivo registrado, en una sede con una cancha de Fútbol 5."""
-    s = unico()
-    correo = f"socio.{s}@correo.com"
+    s = unique()
+    email = f"socio.{s}@correo.com"
     alta = api.post(
         "/register",
         json={
@@ -101,13 +101,13 @@ def un_socio(
             "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             "birth_date": "1994-07-21",
-            "email": correo,
+            "email": email,
             "password": CONTRASENA,
         },
     )
     assert alta.status_code == 201
-    sede = f"Sede Morón {s}"
-    with motor.begin() as conn:
+    venue = f"Sede Morón {s}"
+    with engine.begin() as conn:
         espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
@@ -117,166 +117,166 @@ def un_socio(
                 " lit, price_per_hour) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
                 " 38000 FROM s RETURNING id"
             ),
-            {"n": sede, "e": f"Moron{s}_Rivadavia_19850_Futbol_F5_1"},
+            {"n": venue, "e": f"Moron{s}_Rivadavia_19850_Futbol_F5_1"},
         ).scalar_one()
         usuario: Any = conn.execute(
-            text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
+            text("SELECT id FROM app_user WHERE email = :c"), {"c": email}
         ).scalar_one()
-    token = iniciar_sesion(correo, CONTRASENA)
+    token = sign_in(email, CONTRASENA)
     assert token is not None
-    sesion = {"Authorization": f"Bearer {token}"}
-    dispositivo = f"fcm-{s}"
+    session = {"Authorization": f"Bearer {token}"}
+    device = f"fcm-{s}"
     registro = api.put(
         "/devices",
-        headers=sesion,
-        json={"token": dispositivo, "platform": "android", "permission_granted": permiso},
+        headers=session,
+        json={"token": device, "platform": "android", "permission_granted": permission},
     )
     assert registro.status_code == 204
-    return Socio(api, motor, correo, sesion, usuario, espacio, sede, dispositivo)
+    return Member(api, engine, email, session, usuario, espacio, venue, device)
 
 
 def test_una_hora_antes_del_inicio_se_envia_una_sola_vez_el_recordatorio_con_deporte_sede_y_horario(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """una hora antes del inicio recibe el recordatorio con deporte, sede y horario @CU-24.1-H01-01"""
-    socio = un_socio(api, motor, iniciar_sesion, unico)
-    reserva = socio.reservar("21:00")
-    canal = CanalDePrueba()
+    socio = a_member(api, engine, sign_in, unique)
+    reserva = socio.book("21:00")
+    canal = FakeChannel()
 
     # Verifica: con más de una hora por delante todavía no se envía nada.
-    assert socio.barrer(canal, a_las(19, 59)) == 0
-    assert canal.enviados == []
+    assert socio.sweep(canal, at_time(19, 59)) == 0
+    assert canal.sent == []
 
     # Verifica: a la hora exacta sale al dispositivo del socio, con lo que dice el CU.
-    assert socio.barrer(canal, a_las(20, 0)) == 1
-    assert len(canal.enviados) == 1
-    tokens, aviso = canal.enviados[0]
-    assert tokens == [socio.dispositivo]
+    assert socio.sweep(canal, at_time(20, 0)) == 1
+    assert len(canal.sent) == 1
+    tokens, aviso = canal.sent[0]
+    assert tokens == [socio.device]
     assert aviso.title == "Your booking is in 1 hour"
-    assert aviso.body == f"Football 5 · {socio.sede} · 21:00 – 22:00"
+    assert aviso.body == f"Football 5 · {socio.venue} · 21:00 – 22:00"
     assert aviso.data["booking_id"] == str(reserva["id"])
 
     # Verifica: se envía una sola vez, aunque el barrido vuelva a pasar antes del turno.
-    assert socio.barrer(canal, a_las(20, 30)) == 0
-    assert len(canal.enviados) == 1
+    assert socio.sweep(canal, at_time(20, 30)) == 0
+    assert len(canal.sent) == 1
 
 
 def test_sin_permiso_de_notificaciones_no_se_envia_pero_el_aviso_queda_en_el_centro(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """sin permiso de notificaciones no se envía y el aviso queda registrado @CU-24.1-H03-01"""
-    socio = un_socio(api, motor, iniciar_sesion, unico, permiso=False)
-    socio.reservar("21:00")
-    canal = CanalDePrueba()
+    socio = a_member(api, engine, sign_in, unique, permission=False)
+    socio.book("21:00")
+    canal = FakeChannel()
 
-    registrados = socio.barrer(canal, a_las(20, 0))
+    registrados = socio.sweep(canal, at_time(20, 0))
 
     # Verifica: nada sale hacia el teléfono, y el aviso está en el centro sin leer.
     assert registrados == 1
-    assert canal.enviados == []
-    centro = socio.centro()
-    assert [n["title"] for n in centro["notifications"]] == ["Your booking is in 1 hour"]
-    assert centro["unread"] == 1
+    assert canal.sent == []
+    center = socio.center()
+    assert [n["title"] for n in center["notifications"]] == ["Your booking is in 1 hour"]
+    assert center["unread"] == 1
 
 
 def test_un_recordatorio_que_no_se_tocó_queda_como_no_leído(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """un recordatorio que no se tocó queda como no leído @CU-24.1-H04-01"""
-    socio = un_socio(api, motor, iniciar_sesion, unico)
-    reserva = socio.reservar("21:00")
-    assert socio.centro() == {"notifications": [], "unread": 0}
+    socio = a_member(api, engine, sign_in, unique)
+    reserva = socio.book("21:00")
+    assert socio.center() == {"notifications": [], "unread": 0}
 
-    socio.barrer(CanalDePrueba(), a_las(20, 0))
+    socio.sweep(FakeChannel(), at_time(20, 0))
 
     # Verifica: el aviso figura en el centro, sin leer, con su reserva y su cuerpo.
-    centro = socio.centro()
-    assert centro["unread"] == 1
-    [aviso] = centro["notifications"]
+    center = socio.center()
+    assert center["unread"] == 1
+    [aviso] = center["notifications"]
     assert aviso["kind"] == "reminder"
     assert aviso["read"] is False
     assert aviso["booking_id"] == reserva["id"]
-    assert aviso["body"] == f"Football 5 · {socio.sede} · 21:00 – 22:00"
+    assert aviso["body"] == f"Football 5 · {socio.venue} · 21:00 – 22:00"
 
 
 def test_marcar_todas_deja_todas_las_notificaciones_como_leidas(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """«Marcar todas» deja todas las notificaciones como leídas @CU-24.1-H04-02"""
-    socio = un_socio(api, motor, iniciar_sesion, unico)
-    socio.reservar("21:00")
-    socio.reservar("22:00")
-    canal = CanalDePrueba()
-    socio.barrer(canal, a_las(20, 30))
-    socio.barrer(canal, a_las(21, 30))
-    assert socio.centro()["unread"] == 2
+    socio = a_member(api, engine, sign_in, unique)
+    socio.book("21:00")
+    socio.book("22:00")
+    canal = FakeChannel()
+    socio.sweep(canal, at_time(20, 30))
+    socio.sweep(canal, at_time(21, 30))
+    assert socio.center()["unread"] == 2
 
-    r = socio.api.post("/notifications/read-all", headers=socio.sesion)
+    r = socio.api.post("/notifications/read-all", headers=socio.session)
 
     # Verifica: ninguna queda sin leer, y cada una guarda que fue leída.
     assert r.status_code == 204
-    centro = socio.centro()
-    assert centro["unread"] == 0
-    assert [n["read"] for n in centro["notifications"]] == [True, True]
+    center = socio.center()
+    assert center["unread"] == 0
+    assert [n["read"] for n in center["notifications"]] == [True, True]
 
 
 def test_una_reserva_cancelada_antes_no_recibe_recordatorio(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """la reserva se canceló antes y el recordatorio no llega @CU-24.1-H05-01"""
-    socio = un_socio(api, motor, iniciar_sesion, unico)
-    reserva = socio.reservar("21:00")
-    cancelada = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
+    socio = a_member(api, engine, sign_in, unique)
+    reserva = socio.book("21:00")
+    cancelada = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.session)
     assert cancelada.status_code == 200
-    canal = CanalDePrueba()
+    canal = FakeChannel()
 
-    registrados = socio.barrer(canal, a_las(20, 0))
+    registrados = socio.sweep(canal, at_time(20, 0))
 
     # Verifica: no se envía ni se registra nada, ni a esa hora ni después.
     assert registrados == 0
-    assert socio.barrer(canal, a_las(20, 45)) == 0
-    assert canal.enviados == []
-    assert [n for n in socio.centro()["notifications"] if n["kind"] == "reminder"] == []
+    assert socio.sweep(canal, at_time(20, 45)) == 0
+    assert canal.sent == []
+    assert [n for n in socio.center()["notifications"] if n["kind"] == "reminder"] == []
 
 
 def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horario_nuevo(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """la reserva se modificó y el recordatorio llega una hora antes del horario nuevo @CU-24.1-H05-02"""
-    socio = un_socio(api, motor, iniciar_sesion, unico)
-    reserva = socio.reservar("21:00")
+    socio = a_member(api, engine, sign_in, unique)
+    reserva = socio.book("21:00")
     cambio = socio.api.post(
         f"/bookings/{reserva['id']}/modify",
-        headers=socio.sesion,
-        json={"space_id": str(socio.espacio_id), "date": manana().isoformat(), "start_hour": "22:00"},
+        headers=socio.session,
+        json={"space_id": str(socio.space_id), "date": tomorrow().isoformat(), "start_hour": "22:00"},
     )
     assert cambio.status_code == 200
-    canal = CanalDePrueba()
+    canal = FakeChannel()
 
     # Verifica: una hora antes del horario viejo no llega nada.
-    assert socio.barrer(canal, a_las(20, 0)) == 0
-    assert canal.enviados == []
+    assert socio.sweep(canal, at_time(20, 0)) == 0
+    assert canal.sent == []
 
     # Verifica: una hora antes del nuevo llega, con el horario nuevo.
-    assert socio.barrer(canal, a_las(21, 0)) == 1
-    [(tokens, aviso)] = canal.enviados
-    assert tokens == [socio.dispositivo]
-    assert aviso.body == f"Football 5 · {socio.sede} · 22:00 – 23:00"
+    assert socio.sweep(canal, at_time(21, 0)) == 1
+    [(tokens, aviso)] = canal.sent
+    assert tokens == [socio.device]
+    assert aviso.body == f"Football 5 · {socio.venue} · 22:00 – 23:00"

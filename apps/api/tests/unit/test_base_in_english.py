@@ -10,7 +10,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from tests.unit.test_glossary_english import GLOSARIO, _traducciones
+from tests.unit.test_glossary_english import GLOSSARY, _translations
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 APP = RAIZ_API / "app"
@@ -57,31 +57,31 @@ EXTRA_CASTELLANO = {
     "cambiada", "futuras", "fields", "siguiente", "cantidad", "mensajes", "generico",
     "origenes", "responder", "ingreso", "rechazo", "bookings", "space", "venue",
 }  # fmt: skip
-PALABRAS_COMUNES = re.compile(
+COMMON_WORDS = re.compile(
     r"\b(de|la|el|los|las|que|por|para|con|una|del|sin|cuando|si)\b", re.I
 )
 
 
-def _castellano() -> set[str]:
+def _spanish() -> set[str]:
     glosario = {
-        p for p in _traducciones(GLOSARIO.read_text(encoding="utf-8")) if re.fullmatch(r"[a-z]+", p)
+        p for p in _translations(GLOSSARY.read_text(encoding="utf-8")) if re.fullmatch(r"[a-z]+", p)
     }
     # Una palabra que el glosario da como traducción ya es inglés, aunque otra fila la liste como origen.
     traducidas = {
         w
-        for destinos in _traducciones(GLOSARIO.read_text(encoding="utf-8")).values()
+        for destinos in _translations(GLOSSARY.read_text(encoding="utf-8")).values()
         for d in destinos
         for w in re.findall(r"[a-z]+", d)
     }
     return (glosario | EXTRA_CASTELLANO) - INGLES - traducidas
 
 
-def _palabras(nombre: str) -> list[str]:
+def _words(nombre: str) -> list[str]:
     partes = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", nombre).lower().split("_")
     return [p for p in partes if p]
 
 
-def _nombres_definidos(arbol: ast.AST) -> set[str]:
+def _defined_names(arbol: ast.AST) -> set[str]:
     nombres: set[str] = set()
     for nodo in ast.walk(arbol):
         if isinstance(nodo, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
@@ -97,7 +97,7 @@ def _nombres_definidos(arbol: ast.AST) -> set[str]:
     return nombres
 
 
-def _textos_de_prosa(fuente: str, arbol: ast.AST) -> list[str]:
+def _prose_texts(fuente: str, arbol: ast.AST) -> list[str]:
     textos = [
         t.string
         for t in tokenize.generate_tokens(io.StringIO(fuente).readline)
@@ -122,7 +122,7 @@ def test_los_archivos_de_la_base_de_la_api_se_llaman_como_dice_el_glosario() -> 
 
 def test_los_nombres_comentarios_y_docstrings_de_la_base_de_la_api_estan_en_ingles() -> None:
     """los nombres, comentarios y docstrings de la base de la API están en inglés @ENG-01-S2 @assumption:ENG-01-ASM-04"""
-    castellano = _castellano()
+    castellano = _spanish()
     problemas: list[str] = []
     for ruta in NUEVOS:
         if not ruta.exists():
@@ -130,11 +130,11 @@ def test_los_nombres_comentarios_y_docstrings_de_la_base_de_la_api_estan_en_ingl
             continue
         fuente = ruta.read_text(encoding="utf-8")
         arbol = ast.parse(fuente)
-        for nombre in sorted(_nombres_definidos(arbol)):
-            if castellano & set(_palabras(nombre)):
+        for nombre in sorted(_defined_names(arbol)):
+            if castellano & set(_words(nombre)):
                 problemas.append(f"{ruta.name}: nombre {nombre}")
-        for texto in _textos_de_prosa(fuente, arbol):
-            if PALABRAS_COMUNES.search(texto):
+        for texto in _prose_texts(fuente, arbol):
+            if COMMON_WORDS.search(texto):
                 problemas.append(f"{ruta.name}: {texto.strip().splitlines()[0][:60]}")
 
     assert not problemas, problemas

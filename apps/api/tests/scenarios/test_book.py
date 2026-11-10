@@ -13,12 +13,12 @@ ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 @pytest.fixture
 def cancha(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> tuple[dict[str, str], str]:
     """Una cuenta de usuario y un Fútbol 5 en una sede de 08:00 a 23:00 todos los días."""
-    s = unico()
+    s = unique()
     correo = f"socio.{s}@correo.com"
     alta = api.post(
         "/register",
@@ -32,7 +32,7 @@ def cancha(
         },
     )
     assert alta.status_code == 201
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
@@ -44,7 +44,7 @@ def cancha(
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
         ).scalar_one()
-    token = iniciar_sesion(correo, "ClubNahuel1")
+    token = sign_in(correo, "ClubNahuel1")
     assert token is not None
     return {"Authorization": f"Bearer {token}"}, str(espacio)
 
@@ -53,8 +53,8 @@ def _manana() -> date:
     return datetime.now(ZONA).date() + timedelta(days=1)
 
 
-def _reservas(motor: Engine, espacio: str) -> int:
-    with motor.connect() as conn:
+def _reservas(engine: Engine, espacio: str) -> int:
+    with engine.connect() as conn:
         return int(
             conn.execute(
                 text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": espacio}
@@ -63,7 +63,7 @@ def _reservas(motor: Engine, espacio: str) -> int:
 
 
 def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
+    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva en un horario pasado @CU-09-H01-04"""
     sesion, espacio = cancha
@@ -78,11 +78,11 @@ def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
     # Verifica: la rechaza por la fecha y no guarda nada.
     assert r.status_code == 422
     assert r.json()["errors"]["date"] == "The date must be in the future"
-    assert _reservas(motor, espacio) == 0
+    assert _reservas(engine, espacio) == 0
 
 
 def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sede(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
+    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva que termina después del cierre de la sede @CU-09-H01-05"""
     sesion, espacio = cancha
@@ -101,11 +101,11 @@ def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sed
     # Verifica: la rechaza por el cierre y no guarda nada.
     assert r.status_code == 422
     assert r.json()["errors"]["until"] == "The venue closes at 23:00"
-    assert _reservas(motor, espacio) == 0
+    assert _reservas(engine, espacio) == 0
 
 
 def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_completa(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
+    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva que no empieza o no termina en hora completa @CU-09-H01-06"""
     sesion, espacio = cancha
@@ -124,11 +124,11 @@ def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_comp
     # Verifica: la rechaza por la hora y no guarda nada.
     assert r.status_code == 422
     assert r.json()["errors"]["start_hour"] == "Choose an on-the-hour time"
-    assert _reservas(motor, espacio) == 0
+    assert _reservas(engine, espacio) == 0
 
 
 def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
+    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva de menos de una hora @CU-09-H01-08"""
     sesion, espacio = cancha
@@ -147,11 +147,11 @@ def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
     # Verifica: la rechaza por la duración y no guarda nada.
     assert r.status_code == 422
     assert r.json()["errors"]["until"] == "The minimum duration is one hour"
-    assert _reservas(motor, espacio) == 0
+    assert _reservas(engine, espacio) == 0
 
 
 def test_el_backend_rechaza_una_reserva_que_se_superpone_en_parte_con_otra_del_mismo_espacio(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
+    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva que se superpone en parte con otra del mismo espacio @CU-09-H02-02"""
     sesion, espacio = cancha
@@ -172,4 +172,4 @@ def test_el_backend_rechaza_una_reserva_que_se_superpone_en_parte_con_otra_del_m
     # Verifica: la segunda choca con la primera y sólo queda una.
     assert r.status_code == 409
     assert r.json()["errors"]["slot"] == "That slot was taken"
-    assert _reservas(motor, espacio) == 1
+    assert _reservas(engine, espacio) == 1

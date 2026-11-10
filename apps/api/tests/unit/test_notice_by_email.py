@@ -12,16 +12,16 @@ from app.modules.notifications.use_cases import DeliveryResult, deliver, send_re
 from app.shared.config import config
 from app.shared.message import Message
 
-DIRECCION = "ana@correo.com"
-USUARIO = UUID(int=7)
-AVISO = Notice(
+ADDRESS = "ana@correo.com"
+USER = UUID(int=7)
+NOTICE = Notice(
     title="El club canceló tu reserva",
     body="Football 5 · Sede Morón · Wed 11, 20:00",
     data={"kind": "forced_cancellation"},
 )
 
 
-class _Repositorio:
+class _Repository:
     def __init__(self, tokens: list[str], dispositivos: bool = False, nuevo: bool = True) -> None:
         self.tokens = tokens
         self.dispositivos = dispositivos
@@ -29,7 +29,7 @@ class _Repositorio:
         self.envios: list[str] = []
 
     def recipient(self, user_id: UUID) -> Recipient | None:
-        return Recipient(email=DIRECCION, name="Ana")
+        return Recipient(email=ADDRESS, name="Ana")
 
     def tokens_with_permission(self, user_id: UUID) -> list[str]:
         return self.tokens
@@ -47,13 +47,13 @@ class _Repositorio:
         return [
             Reminder(
                 booking_id=UUID(int=3),
-                user_id=USUARIO,
+                user_id=USER,
                 starts_at=inicio,
                 ends_at=inicio.replace(hour=22),
                 sport="Futbol",
                 kind="F5",
                 venue="Sede Morón",
-                email=DIRECCION,
+                email=ADDRESS,
                 name="Ana",
             )
         ]
@@ -62,7 +62,7 @@ class _Repositorio:
         return UUID(int=50) if self.nuevo else None
 
 
-class _Canal:
+class _Channel:
     """Un canal que acepta todos los tokens y guarda lo que le mandaron."""
 
     def __init__(self) -> None:
@@ -73,8 +73,8 @@ class _Canal:
         return DeliveryResult(sent=len(tokens))
 
 
-def _entregar(repo: _Repositorio, canal: _Canal) -> None:
-    deliver(cast(Any, repo), canal, UUID(int=1), USUARIO, AVISO)
+def _entregar(repo: _Repository, canal: _Channel) -> None:
+    deliver(cast(Any, repo), canal, UUID(int=1), USER, NOTICE)
 
 
 def test_cada_notificacion_registrada_sale_tambien_por_correo_con_titulo_cuerpo_y_plantilla(
@@ -85,22 +85,22 @@ def test_cada_notificacion_registrada_sale_tambien_por_correo_con_titulo_cuerpo_
     enviados: list[Message] = []
     monkeypatch.setattr(use_cases, "send", enviados.append)
     monkeypatch.setattr(config, "public_url", "https://club.example")
-    canal = _Canal()
+    canal = _Channel()
 
-    _entregar(_Repositorio(["token"]), canal)
+    _entregar(_Repository(["token"]), canal)
 
     assert len(canal.avisos) == 1
     assert len(enviados) == 1
-    assert enviados[0].recipient == DIRECCION
-    assert enviados[0].subject == AVISO.title
+    assert enviados[0].recipient == ADDRESS
+    assert enviados[0].subject == NOTICE.title
     assert enviados[0].html is not None
-    for texto in (AVISO.title, "Football 5", "Open the app", 'href="https://club.example"'):
+    for texto in (NOTICE.title, "Football 5", "Open the app", 'href="https://club.example"'):
         assert texto in enviados[0].html
-    assert AVISO.body in enviados[0].body
+    assert NOTICE.body in enviados[0].body
 
     enviados.clear()
     monkeypatch.setattr(config, "public_url", "")
-    _entregar(_Repositorio(["token"]), canal)
+    _entregar(_Repository(["token"]), canal)
     assert enviados[0].html is not None
     assert "Open the app" not in enviados[0].html
 
@@ -112,8 +112,8 @@ def test_el_correo_sale_aunque_no_haya_push_y_si_falla_el_aviso_queda_como_estab
     @MAIL-03-S2"""
     enviados: list[Message] = []
     monkeypatch.setattr(use_cases, "send", enviados.append)
-    repo = _Repositorio([])
-    _entregar(repo, _Canal())
+    repo = _Repository([])
+    _entregar(repo, _Channel())
     assert len(enviados) == 1
     assert repo.envios == ["no_channel"]
 
@@ -121,13 +121,13 @@ def test_el_correo_sale_aunque_no_haya_push_y_si_falla_el_aviso_queda_como_estab
         raise RuntimeError(f"no se pudo enviar a {mensaje.recipient}")
 
     monkeypatch.setattr(use_cases, "send", roto)
-    repo, canal = _Repositorio(["token"]), _Canal()
+    repo, canal = _Repository(["token"]), _Channel()
     with caplog.at_level(logging.WARNING):
         _entregar(repo, canal)
     assert repo.envios == ["sent"]
     assert len(canal.avisos) == 1
     assert "RuntimeError" in caplog.text
-    assert DIRECCION not in caplog.text
+    assert ADDRESS not in caplog.text
 
 
 def test_el_recordatorio_manda_un_solo_correo(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -137,7 +137,7 @@ def test_el_recordatorio_manda_un_solo_correo(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(use_cases, "send", enviados.append)
 
     registrados = send_reminders(
-        cast(Any, _Repositorio(["token"])), _Canal(), datetime(2026, 10, 1, 20, 30, tzinfo=UTC)
+        cast(Any, _Repository(["token"])), _Channel(), datetime(2026, 10, 1, 20, 30, tzinfo=UTC)
     )
 
     assert registrados == 1
@@ -152,8 +152,8 @@ def test_un_aviso_que_no_se_registra_no_manda_correo(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(use_cases, "send", enviados.append)
 
     registrados = send_reminders(
-        cast(Any, _Repositorio(["token"], nuevo=False)),
-        _Canal(),
+        cast(Any, _Repository(["token"], nuevo=False)),
+        _Channel(),
         datetime(2026, 10, 1, 20, 30, tzinfo=UTC),
     )
 

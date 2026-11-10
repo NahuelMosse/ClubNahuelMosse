@@ -12,13 +12,13 @@ class _CanalQueFalla:
 
 
 def test_un_aviso_que_no_salio_queda_a_la_vista(
-    motor: Engine, caplog: pytest.LogCaptureFixture
+    engine: Engine, caplog: pytest.LogCaptureFixture
 ) -> None:
     """un recordatorio que no salió queda a la vista de quien opera @REV-02-S4"""
     from app.modules.notifications.use_cases import dispatch_pending
     from app.modules.notifications.repository import NotificationsSql
 
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO notification (user_id, kind, title, body, delivery)"
@@ -34,7 +34,7 @@ def test_un_aviso_que_no_salio_queda_a_la_vista(
             )
         )
 
-    with caplog.at_level(logging.INFO), motor.connect() as conn:
+    with caplog.at_level(logging.INFO), engine.connect() as conn:
         dispatch_pending(NotificationsSql(conn), _CanalQueFalla())
 
     errores = [r for r in caplog.records if r.levelno >= logging.ERROR]

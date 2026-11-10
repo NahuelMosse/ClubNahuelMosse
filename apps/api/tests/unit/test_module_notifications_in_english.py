@@ -6,11 +6,11 @@ import re
 from pathlib import Path
 
 from tests.unit.test_base_in_english import (
-    PALABRAS_COMUNES,
-    _castellano,
-    _nombres_definidos,
-    _palabras,
-    _textos_de_prosa,
+    COMMON_WORDS,
+    _defined_names,
+    _prose_texts,
+    _spanish,
+    _words,
 )
 
 APP = Path(__file__).resolve().parents[2] / "app"
@@ -78,7 +78,7 @@ def test_el_modulo_de_notificaciones_se_llama_como_dice_el_glosario() -> None:
 
 def test_los_nombres_comentarios_y_docstrings_de_notificaciones_estan_en_ingles() -> None:
     """los nombres, comentarios y docstrings de notificaciones están en inglés @ENG-04-S2 @assumption:ENG-04-ASM-04"""
-    castellano = (_castellano() | EXTRA_CASTELLANO) - INGLES
+    castellano = (_spanish() | EXTRA_CASTELLANO) - INGLES
     problemas: list[str] = []
     archivos = [MODULO / "__init__.py", *(MODULO / f"{n}.py" for n in ARCHIVOS)]
     for ruta in archivos:
@@ -87,11 +87,11 @@ def test_los_nombres_comentarios_y_docstrings_de_notificaciones_estan_en_ingles(
             continue
         fuente = ruta.read_text(encoding="utf-8")
         arbol = ast.parse(fuente)
-        for nombre in sorted(_nombres_definidos(arbol) - _campos_json(arbol)):
-            if castellano & set(_palabras(nombre)):
+        for nombre in sorted(_defined_names(arbol) - _campos_json(arbol)):
+            if castellano & set(_words(nombre)):
                 problemas.append(f"{ruta.name}: nombre {nombre}")
-        for texto in _textos_de_prosa(fuente, arbol):
-            if PALABRAS_COMUNES.search(texto):
+        for texto in _prose_texts(fuente, arbol):
+            if COMMON_WORDS.search(texto):
                 problemas.append(f"{ruta.name}: {texto.strip().splitlines()[0][:60]}")
 
     assert not problemas, problemas

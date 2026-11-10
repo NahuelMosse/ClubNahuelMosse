@@ -5,11 +5,11 @@ from fastapi.testclient import TestClient
 
 def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administrador(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """la API rechaza la anulación pedida por un usuario sin rol de administrador @CU-15-H01-04"""
-    s = unico()
+    s = unique()
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
@@ -25,7 +25,7 @@ def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administra
         ).status_code
         == 201
     )
-    token = iniciar_sesion(correo, "ClubNahuel1")
+    token = sign_in(correo, "ClubNahuel1")
 
     r = api.post(
         "/bookings/00000000-0000-7000-8000-000000000001/void",

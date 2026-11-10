@@ -5,12 +5,12 @@ import re
 from tests.current_schema import column, table as current_table
 from tests.scenarios.test_documentation_current import (
     API,
-    DISENO,
-    _columnas_por_tabla,
-    _seccion,
-    _texto,
+    DESIGN,
+    _columns_by_table,
+    _section,
+    _text,
 )
-from tests.scenarios.test_documentation_model_current import MODELO
+from tests.scenarios.test_documentation_model_current import MODEL
 
 COMUNES = {"id", "created_at", "updated_at"}
 RENOMBRES = re.compile(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)")
@@ -18,9 +18,9 @@ RENOMBRES = re.compile(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)")
 
 def _columnas_vigentes() -> dict[str, set[str]]:
     """Las columnas de cada tabla tras los RENAME COLUMN de `upgrade()` de la 0010."""
-    tablas = _columnas_por_tabla()
+    tablas = _columns_by_table()
     migracion = next((API / "migrations" / "versions").glob("0010_*.py"))
-    subida = _texto(migracion).split("def _auditoria_abajo")[0]
+    subida = _text(migracion).split("def _auditoria_abajo")[0]
     for tabla, viejo, nuevo in RENOMBRES.findall(subida):
         tablas[current_table(tabla)].discard(column(tabla, viejo))
         tablas[current_table(tabla)].add(column(tabla, nuevo))
@@ -31,7 +31,7 @@ def test_el_modelo_de_datos_documenta_cada_columna_del_esquema_vigente() -> None
     """el modelo de datos documenta las nueve tablas con sus columnas vigentes
     @REV-07-S8 @DAT-01-S2
     """
-    datos = _texto(MODELO)
+    datos = _text(MODEL)
     tablas = _columnas_vigentes()
 
     assert len(tablas) == 9
@@ -48,7 +48,7 @@ def test_cada_seccion_de_tabla_nombra_sus_columnas_vigentes() -> None:
     """cada sección de tabla del modelo nombra sus columnas vigentes
     @REV-07-S8 @DAT-01-S1
     """
-    datos = _texto(MODELO)
+    datos = _text(MODEL)
 
     for tabla, columnas in _columnas_vigentes().items():
         trozos = re.split(rf"^### {tabla}$", datos, flags=re.M)
@@ -60,7 +60,7 @@ def test_cada_seccion_de_tabla_nombra_sus_columnas_vigentes() -> None:
 
 def test_la_seccion_de_datos_del_diseno_remite_al_modelo_de_datos() -> None:
     """la sección Data del diseño de sistema remite al modelo de datos @REV-07-S8"""
-    datos = _seccion(_texto(DISENO), "Data")
+    datos = _section(_text(DESIGN), "Data")
 
     assert "data-model.md" in datos
     assert "nine tables" in datos

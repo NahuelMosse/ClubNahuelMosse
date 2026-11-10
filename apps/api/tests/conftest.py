@@ -11,11 +11,11 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, create_engine, text
 
-URL_PRUEBAS = os.environ.get(
+TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://club:club@127.0.0.1:8703/club_test"
 )
 # La API bajo test usa la misma base de pruebas y el emulador de Firebase Auth.
-os.environ["DATABASE_URL"] = URL_PRUEBAS
+os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ.setdefault("FIREBASE_PROJECT_ID", "demo-clubnahuelmosse")
 os.environ.setdefault("CORREO_MODO", "buzon")
 # El barrido de recordatorios no corre solo en los tests: cada uno lo dispara con su reloj.
@@ -51,28 +51,28 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
 
 @pytest.fixture(scope="session")
-def motor() -> Iterator[Engine]:
-    motor = create_engine(URL_PRUEBAS)
-    if not (motor.url.database or "").endswith("_test"):
-        pytest.exit(f"la base de pruebas tiene que terminar en _test: {motor.url.database}", 2)
+def engine() -> Iterator[Engine]:
+    engine = create_engine(TEST_DATABASE_URL)
+    if not (engine.url.database or "").endswith("_test"):
+        pytest.exit(f"la base de pruebas tiene que terminar en _test: {engine.url.database}", 2)
     # Dos corridas a la vez sobre la misma base se esperan: la sesión borra el esquema entero.
-    candado = motor.connect()
+    candado = engine.connect()
     candado.execute(text("SELECT pg_advisory_lock(hashtext('club_test'))"))
     candado.commit()
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public"))
     alembic = AlembicConfig(str(RAIZ_API / "alembic.ini"))
-    alembic.set_main_option("sqlalchemy.url", URL_PRUEBAS.replace("%", "%%"))
+    alembic.set_main_option("sqlalchemy.url", TEST_DATABASE_URL.replace("%", "%%"))
     command.upgrade(alembic, "head")
-    yield motor
+    yield engine
     candado.close()
-    motor.dispose()
+    engine.dispose()
 
 
 @pytest.fixture
-def db(motor: Engine) -> Iterator[Connection]:
+def db(engine: Engine) -> Iterator[Connection]:
     """Cada test corre en su propia transacción y la deshace al terminar."""
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         tx = conn.begin()
         yield conn
         tx.rollback()
@@ -105,7 +105,7 @@ def api(request: pytest.FixtureRequest) -> Iterator[TestClient]:
     No hay transacción envolvente: cada test usa datos propios y únicos.
     """
     _host_emulador(request.config)
-    request.getfixturevalue("motor")
+    request.getfixturevalue("engine")
     from app.main import create_app
 
     with TestClient(create_app()) as cliente:
@@ -113,7 +113,7 @@ def api(request: pytest.FixtureRequest) -> Iterator[TestClient]:
 
 
 @pytest.fixture
-def iniciar_sesion(request: pytest.FixtureRequest) -> Callable[[str, str], str | None]:
+def sign_in(request: pytest.FixtureRequest) -> Callable[[str, str], str | None]:
     """Inicia sesión contra el emulador como lo haría la app: devuelve el token o None."""
     host = _host_emulador(request.config)
 
@@ -130,5 +130,5 @@ def iniciar_sesion(request: pytest.FixtureRequest) -> Callable[[str, str], str |
 
 
 @pytest.fixture
-def unico() -> Callable[[], str]:
+def unique() -> Callable[[], str]:
     return lambda: uuid.uuid4().hex[:8]

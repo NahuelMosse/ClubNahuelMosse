@@ -8,13 +8,13 @@ import tokenize
 from pathlib import Path
 
 from tests.unit.test_api_in_english_contract_current import (
-    operaciones_distintas_en,
+    operations_differing_in,
 )
 from tests.unit.test_base_in_english import (
-    PALABRAS_COMUNES,
-    _castellano,
-    _nombres_definidos,
-    _palabras,
+    COMMON_WORDS,
+    _defined_names,
+    _spanish,
+    _words,
 )
 
 RAIZ_API = Path(__file__).resolve().parents[2]
@@ -99,7 +99,7 @@ def test_el_modulo_de_reservas_se_llama_como_dice_el_glosario() -> None:
 
 def test_los_nombres_comentarios_y_docstrings_de_reservas_estan_en_ingles() -> None:
     """los nombres, comentarios y docstrings de reservas están en inglés @ENG-05-S2 @assumption:ENG-05-ASM-04"""
-    castellano = _castellano() | EXTRA_CASTELLANO
+    castellano = _spanish() | EXTRA_CASTELLANO
     problemas: list[str] = []
     for nombre_archivo in ARCHIVOS:
         ruta = MODULO / nombre_archivo
@@ -108,11 +108,11 @@ def test_los_nombres_comentarios_y_docstrings_de_reservas_estan_en_ingles() -> N
             continue
         fuente = ruta.read_text(encoding="utf-8")
         arbol = ast.parse(fuente)
-        for nombre in sorted(_nombres_definidos(arbol) - _nombres_exentos(arbol)):
-            if castellano & set(_palabras(nombre)):
+        for nombre in sorted(_defined_names(arbol) - _nombres_exentos(arbol)):
+            if castellano & set(_words(nombre)):
                 problemas.append(f"{nombre_archivo}: nombre {nombre}")
         for texto in _prosa(fuente, arbol):
-            if PALABRAS_COMUNES.search(texto):
+            if COMMON_WORDS.search(texto):
                 problemas.append(f"{nombre_archivo}: {texto.strip().splitlines()[0][:60]}")
 
     assert not problemas, problemas
@@ -122,4 +122,4 @@ def test_el_contrato_de_reservas_tiene_las_mismas_rutas_metodos_codigos_campos_y
     None
 ):
     """el contrato de reservas tiene las mismas rutas, métodos, códigos, campos y operationId que main @ENG-05-S3 @assumption:ENG-05-ASM-01"""
-    assert operaciones_distintas_en("/bookings") == []
+    assert operations_differing_in("/bookings") == []

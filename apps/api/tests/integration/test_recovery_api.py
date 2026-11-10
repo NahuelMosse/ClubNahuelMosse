@@ -26,8 +26,8 @@ def _registrar(api: TestClient, s: str) -> str:
     return correo
 
 
-def _codigos(motor: Engine, correo: str) -> list[str]:
-    with motor.connect() as conn:
+def _codigos(engine: Engine, correo: str) -> list[str]:
+    with engine.connect() as conn:
         cuerpos: Any = conn.execute(
             text("SELECT body FROM outgoing_email WHERE recipient = :p ORDER BY id"), {"p": correo}
         ).scalars()
@@ -36,15 +36,15 @@ def _codigos(motor: Engine, correo: str) -> list[str]:
 
 def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
-    correo = _registrar(api, unico())
-    token = iniciar_sesion(correo, VIEJA)
+    correo = _registrar(api, unique())
+    token = sign_in(correo, VIEJA)
     time.sleep(1.1)
     assert api.post("/password-recovery", json={"email": correo.upper()}).status_code == 202
-    (codigo,) = _codigos(motor, correo)
+    (codigo,) = _codigos(engine, correo)
 
     assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 204
     assert (
@@ -52,8 +52,8 @@ def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
         == 204
     )
 
-    assert iniciar_sesion(correo, VIEJA) is None
-    assert iniciar_sesion(correo, NUEVA) is not None
+    assert sign_in(correo, VIEJA) is None
+    assert sign_in(correo, NUEVA) is not None
     # Las sesiones abiertas antes quedaron vencidas.
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
     assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 410
@@ -66,35 +66,35 @@ def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
 
 
 def test_un_correo_sin_cuenta_recibe_la_misma_respuesta_y_ningun_mail(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = f"nadie.{unico()}@correo.com"
+    correo = f"nadie.{unique()}@correo.com"
     r = api.post("/password-recovery", json={"email": correo})
     assert (r.status_code, r.content) == (202, b"")
-    assert _codigos(motor, correo) == []
+    assert _codigos(engine, correo) == []
 
 
 def test_una_cuenta_dada_de_baja_no_recibe_enlace(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
     """Verifica CU-04b-SUP-01."""
-    correo = _registrar(api, unico())
-    with motor.begin() as conn:
+    correo = _registrar(api, unique())
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE app_user SET active = false, deactivated_at = now() WHERE email = :c"),
             {"c": correo},
         )
     assert api.post("/password-recovery", json={"email": correo}).status_code == 202
-    assert _codigos(motor, correo) == []
+    assert _codigos(engine, correo) == []
 
 
 def test_reenviar_invalida_el_enlace_anterior_y_hay_tope_por_hora(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     for _ in range(4):
         assert api.post("/password-recovery", json={"email": correo}).status_code == 202
-    codigos = _codigos(motor, correo)
+    codigos = _codigos(engine, correo)
     assert len(codigos) == 3
     assert [
         api.post("/password-recovery/check", json={"code": c}).status_code for c in codigos
@@ -103,15 +103,15 @@ def test_reenviar_invalida_el_enlace_anterior_y_hay_tope_por_hora(
 
 def test_cambiar_la_contrasena_por_otra_via_invalida_los_enlaces(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """Verifica CU-04b-SUP-03."""
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     api.post("/password-recovery", json={"email": correo})
-    (codigo,) = _codigos(motor, correo)
-    token = iniciar_sesion(correo, VIEJA)
+    (codigo,) = _codigos(engine, correo)
+    token = sign_in(correo, VIEJA)
     r = api.put(
         "/me/password",
         headers={"Authorization": f"Bearer {token}"},
@@ -122,11 +122,11 @@ def test_cambiar_la_contrasena_por_otra_via_invalida_los_enlaces(
 
 
 def test_una_contrasena_debil_se_rechaza_y_el_enlace_sigue_sirviendo(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     api.post("/password-recovery", json={"email": correo})
-    (codigo,) = _codigos(motor, correo)
+    (codigo,) = _codigos(engine, correo)
     r = api.put("/password-recovery", json={"code": codigo, "new_password": "ClubNahuel"})
     assert r.status_code == 422
     assert r.json() == {"errors": {"new_password": "At least one number"}}
@@ -153,11 +153,11 @@ def test_sin_modo_pruebas_no_existe_el_buzon(api: TestClient) -> None:
 
 
 def test_el_enlace_del_correo_es_https_y_el_codigo_no_llega_al_servidor(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     api.post("/password-recovery", json={"email": correo})
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         cuerpo: Any = conn.execute(
             text("SELECT body FROM outgoing_email WHERE recipient = :p"), {"p": correo}
         ).scalar_one()
@@ -171,11 +171,11 @@ def test_el_enlace_del_correo_es_https_y_el_codigo_no_llega_al_servidor(
 
 
 def test_pedidos_simultaneos_no_dejan_dos_enlaces_vigentes(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
     from concurrent.futures import ThreadPoolExecutor
 
-    correo = _registrar(api, unico())
+    correo = _registrar(api, unique())
     with ThreadPoolExecutor(max_workers=6) as pool:
         codigos_http = list(
             pool.map(
@@ -184,7 +184,7 @@ def test_pedidos_simultaneos_no_dejan_dos_enlaces_vigentes(
             )
         )
     assert codigos_http == [202] * 6
-    codigos = _codigos(motor, correo)
+    codigos = _codigos(engine, correo)
     assert len(codigos) == 3
     vigentes = [
         c

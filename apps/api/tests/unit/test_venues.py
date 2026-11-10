@@ -32,15 +32,15 @@ _CAMPOS = {
 
 
 def _errores(**cambios: Any) -> dict[str, str]:
-    sede, errores = validar_sede(replace(VALIDOS, **{_CAMPOS[k]: v for k, v in cambios.items()}))
-    assert sede is None
+    venue, errores = validar_sede(replace(VALIDOS, **{_CAMPOS[k]: v for k, v in cambios.items()}))
+    assert venue is None
     return errores
 
 
 def test_una_sede_completa_separa_calle_y_altura() -> None:
-    sede, errores = validar_sede(replace(VALIDOS, name="  Sede   Haedo ", open_days=(7, 1, 1)))
+    venue, errores = validar_sede(replace(VALIDOS, name="  Sede   Haedo ", open_days=(7, 1, 1)))
     assert errores == {}
-    assert sede == SedeNueva(
+    assert venue == SedeNueva(
         name="Sede Haedo",
         street="Av. Vergara",
         street_number=1850,
@@ -70,8 +70,8 @@ def test_los_largos_tienen_tope() -> None:
         "name": "Use up to 60 characters",
         "address": "Use up to 80 characters",
     }
-    sede, _ = validar_sede(replace(VALIDOS, name="x" * 60, address="y" * 75 + " 1850"))
-    assert sede is not None
+    venue, _ = validar_sede(replace(VALIDOS, name="x" * 60, address="y" * 75 + " 1850"))
+    assert venue is not None
 
 
 def test_el_cierre_va_despues_de_la_apertura() -> None:
@@ -81,9 +81,9 @@ def test_el_cierre_va_despues_de_la_apertura() -> None:
 
 
 def test_cerrar_a_las_00_es_la_medianoche() -> None:
-    sede, errores = validar_sede(replace(VALIDOS, opens_at=time(18), closes_at=time(0)))
+    venue, errores = validar_sede(replace(VALIDOS, opens_at=time(18), closes_at=time(0)))
     assert errores == {}
-    assert sede is not None
+    assert venue is not None
 
 
 def test_las_horas_son_en_punto() -> None:
@@ -132,8 +132,8 @@ class _SedesEnMemoria:
 
 def test_el_alta_queda_a_nombre_del_administrador() -> None:
     sedes = _SedesEnMemoria()
-    sede = dar_de_alta_sede(_perfil("admin"), VALIDOS, sedes)
-    assert sede.name == "Sede Haedo"
+    venue = dar_de_alta_sede(_perfil("admin"), VALIDOS, sedes)
+    assert venue.name == "Sede Haedo"
     assert [autor for _, autor in sedes.guardadas] == [UUID(int=7)]
 
 

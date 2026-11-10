@@ -12,10 +12,10 @@ def _con(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
+def _espacio_nuevo(api: TestClient, admin_token: str, sede_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
             "venue_id": sede_id,
             "sport": "Futbol",
@@ -28,11 +28,11 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int) -> dict[str, Any]:
+def _reservar(api: TestClient, user_token: str, espacio: str, dia: int) -> dict[str, Any]:
     fecha = (date.today() + timedelta(days=dia)).isoformat()
     r = api.post(
         "/bookings",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         json={"space_id": espacio, "date": fecha, "start_hour": "18:00", "hours": 1},
     )
     assert r.status_code == 201
@@ -40,9 +40,9 @@ def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int) -> di
     return reserva
 
 
-def _mover_a(motor: Engine, id_: UUID, dia: str, hora: int) -> None:
+def _mover_a(engine: Engine, id_: UUID, dia: str, hora: int) -> None:
     """Deja la reserva en [dia] a las [hora] del club."""
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(
             text(
                 "UPDATE booking"
@@ -63,35 +63,35 @@ def _ids(api: TestClient, token: str, consulta: str) -> set[str]:
 
 
 def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """a las 21:00 y a las 23:00 del club la reserva cae en su día, no en el siguiente en UTC"""
-    espacio = _espacio_nuevo(api, token_admin, sede[0])
-    a_las_21 = _reservar(api, token_usuario, espacio, dia=1)["id"]
-    a_las_23 = _reservar(api, token_usuario, espacio, dia=2)["id"]
-    _mover_a(motor, UUID(a_las_21), "2031-09-10", 21)
-    _mover_a(motor, UUID(a_las_23), "2031-09-10", 23)
-    base = f"q={sede[1]}"
+    espacio = _espacio_nuevo(api, admin_token, venue[0])
+    a_las_21 = _reservar(api, user_token, espacio, dia=1)["id"]
+    a_las_23 = _reservar(api, user_token, espacio, dia=2)["id"]
+    _mover_a(engine, UUID(a_las_21), "2031-09-10", 21)
+    _mover_a(engine, UUID(a_las_23), "2031-09-10", 23)
+    base = f"q={venue[1]}"
 
-    assert _ids(api, token_admin, f"{base}&since=2031-09-10&until=2031-09-10") == {
+    assert _ids(api, admin_token, f"{base}&since=2031-09-10&until=2031-09-10") == {
         a_las_21,
         a_las_23,
     }
-    assert _ids(api, token_admin, f"{base}&since=2031-09-11&until=2031-09-11") == set()
-    assert _ids(api, token_admin, f"{base}&since=2031-09-09&until=2031-09-09") == set()
-    assert _ids(api, token_admin, f"{base}&until=2031-09-10") == {a_las_21, a_las_23}
+    assert _ids(api, admin_token, f"{base}&since=2031-09-11&until=2031-09-11") == set()
+    assert _ids(api, admin_token, f"{base}&since=2031-09-09&until=2031-09-09") == set()
+    assert _ids(api, admin_token, f"{base}&until=2031-09-10") == {a_las_21, a_las_23}
 
 
 def test_la_busqueda_toma_los_comodines_como_texto(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """% y _ no son comodines en la búsqueda @supuesto:CU-14-SUP-02"""
-    espacio = _espacio_nuevo(api, token_admin, sede[0])
-    reserva = _reservar(api, token_usuario, espacio, dia=1)["id"]
-    nombre = sede[1]
+    espacio = _espacio_nuevo(api, admin_token, venue[0])
+    reserva = _reservar(api, user_token, espacio, dia=1)["id"]
+    nombre = venue[1]
 
-    assert reserva in _ids(api, token_admin, f"q={nombre}")
-    assert _ids(api, token_admin, "q=%25") == set()
-    assert _ids(api, token_admin, f"q={nombre[:5]}%25") == set()
-    assert _ids(api, token_admin, f"q={nombre[:4]}_{nombre[5:]}") == set()
-    assert _ids(api, token_admin, "q=%5C") == set()
+    assert reserva in _ids(api, admin_token, f"q={nombre}")
+    assert _ids(api, admin_token, "q=%25") == set()
+    assert _ids(api, admin_token, f"q={nombre[:5]}%25") == set()
+    assert _ids(api, admin_token, f"q={nombre[:4]}_{nombre[5:]}") == set()
+    assert _ids(api, admin_token, "q=%5C") == set()

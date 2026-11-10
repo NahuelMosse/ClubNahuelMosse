@@ -12,35 +12,35 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, event, text
 from test_data import (  # noqa: F401 — los fixtures se importan para que pytest los vea
-    _barrer,
-    _cancelar,
-    _capturar,
-    _despachar,
-    _empate,
-    _envios,
-    _pasadas,
-    _recordatorio,
-    _varar,
-    base_de_migraciones,
-    canal,
-    socio,
-    token_admin,
+    _sweep,
+    _cancel,
+    _capture,
+    _dispatch,
+    _tie,
+    _deliveries,
+    _past,
+    _reminder,
+    _strand,
+    migrations_db,
+    channel,
+    member,
+    admin_token,
 )
-from test_reminder import Socio
+from test_reminder import Member
 
 
-def _ids_del_socio(socio: Socio) -> set[str]:
-    with socio.motor.connect() as conn:
+def _ids_del_socio(member: Member) -> set[str]:
+    with member.engine.connect() as conn:
         return {
             str(f.id)
             for f in conn.execute(
-                text("SELECT id FROM booking WHERE user_id = :u"), {"u": socio.usuario_id}
+                text("SELECT id FROM booking WHERE user_id = :u"), {"u": member.user_id}
             )
         }
 
 
-def _historial(socio: Socio, **params: str) -> dict[str, Any]:
-    r = socio.api.get("/bookings", headers=socio.sesion, params={"when": "history", **params})
+def _historial(member: Member, **params: str) -> dict[str, Any]:
+    r = member.api.get("/bookings", headers=member.session, params={"when": "history", **params})
     assert r.status_code == 200
     cuerpo: dict[str, Any] = r.json()
     return cuerpo
@@ -62,18 +62,18 @@ def _capturar_sql(accion: Callable[[], None]) -> list[tuple[str, Any]]:
 
 
 def test_el_total_y_los_contadores_siguen_exactos_en_una_sola_consulta(
-    api: TestClient, socio: Socio, token_admin: str
+    api: TestClient, member: Member, admin_token: str
 ) -> None:
     """el total y los contadores del historial global siguen exactos, como pide CU-14, en una sola
     consulta @REV-03-S3 @assumption:REV-03-ASM-10
     """
-    _pasadas(socio, 25)
-    admin = {"Authorization": f"Bearer {token_admin}"}
+    _past(member, 25)
+    admin = {"Authorization": f"Bearer {admin_token}"}
     cuerpos: list[dict[str, Any]] = []
 
     sentencias = _capturar_sql(
         lambda: cuerpos.append(
-            api.get("/bookings/all", headers=admin, params={"q": socio.sede}).json()
+            api.get("/bookings/all", headers=admin, params={"q": member.venue}).json()
         )
     )
 
@@ -84,25 +84,25 @@ def test_el_total_y_los_contadores_siguen_exactos_en_una_sola_consulta(
 
 
 def test_en_el_historial_propio_con_el_mismo_inicio_va_primero_el_id_mas_alto(
-    socio: Socio,
+    member: Member,
 ) -> None:
     """en el historial propio, con el mismo inicio va primero el id más alto y llegan todas
     @REV-03-S2
     """
-    _pasadas(socio, 20)
-    _empate(socio)
+    _past(member, 20)
+    _tie(member)
 
-    todas = _historial(socio)["bookings"]
+    todas = _historial(member)["bookings"]
 
     claves = [(r["starts_at"], r["id"]) for r in todas]
     assert claves == sorted(claves, reverse=True)
-    assert {r["id"] for r in todas} == _ids_del_socio(socio)
+    assert {r["id"] for r in todas} == _ids_del_socio(member)
     assert len(todas) == 21
 
 
-def test_las_proximas_reservas_siguen_llegando_enteras(socio: Socio) -> None:
+def test_las_proximas_reservas_siguen_llegando_enteras(member: Member) -> None:
     """las próximas reservas siguen llegando enteras @REV-03-S2 @assumption:REV-03-ASM-16"""
-    with socio.motor.begin() as conn:
+    with member.engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
@@ -110,27 +110,27 @@ def test_las_proximas_reservas_siguen_llegando_enteras(socio: Socio) -> None:
                 " + interval '1 hour', 38000, 38000 FROM generate_series(1, 25) AS n,"
                 " (SELECT date_trunc('hour', now()) AS h) AS t"
             ),
-            {"u": socio.usuario_id, "e": socio.espacio_id},
+            {"u": member.user_id, "e": member.space_id},
         )
 
-    r = socio.api.get("/bookings", headers=socio.sesion, params={"cuando": "upcoming"}).json()
+    r = member.api.get("/bookings", headers=member.session, params={"cuando": "upcoming"}).json()
 
     assert len(r["bookings"]) == 25
 
 
 def test_la_migracion_0008_corta_por_lock_timeout_y_se_puede_volver_a_correr(
-    base_de_migraciones: tuple[Engine, AlembicConfig],
+    migrations_db: tuple[Engine, AlembicConfig],
 ) -> None:
     """la migración 0008 corta por lock_timeout si una transacción larga tiene la tabla
     @REV-03-S7 @assumption:REV-03-ASM-15
     """
-    base, alembic = base_de_migraciones
+    base, alembic = migrations_db
     command.upgrade(alembic, "0007")
     bloqueo = base.connect()
     bloqueo.execute(text("LOCK TABLE notificacion IN ACCESS EXCLUSIVE MODE"))
     resultado: list[BaseException] = []
     hilo = threading.Thread(
-        target=lambda: _capturar(resultado, lambda: command.upgrade(alembic, "0008"))
+        target=lambda: _capture(resultado, lambda: command.upgrade(alembic, "0008"))
     )
 
     hilo.start()

@@ -36,10 +36,10 @@ class _Channel:
         return DeliveryResult(sent=len(tokens))
 
 
-def _new_space(api: TestClient, token_admin: str, venue_id: str) -> str:
+def _new_space(api: TestClient, admin_token: str, venue_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_auth(token_admin),
+        headers=_auth(admin_token),
         json={
             "venue_id": venue_id,
             "sport": "Futbol",
@@ -69,59 +69,59 @@ def _book(api: TestClient, token: str, space: str, day: int, since: str = "21:00
     return booking
 
 
-def _stored(motor: Engine, sql: str, **binds: object) -> Any:
-    with motor.connect() as conn:
+def _stored(engine: Engine, sql: str, **binds: object) -> Any:
+    with engine.connect() as conn:
         return conn.execute(text(sql), binds).scalar_one()
 
 
 def test_the_api_answers_with_the_contract_values_of_main_while_the_database_stores_english_ones(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
     """the API answers with the contract values of main while the database stores English ones @ENG-17-S5 @assumption:ENG-17-ASM-01"""
-    space = _new_space(api, token_admin, sede[0])
-    active = _book(api, token_usuario, space, 1)
-    to_cancel = _book(api, token_usuario, space, 2)
-    to_void = _book(api, token_usuario, space, 3)
+    space = _new_space(api, admin_token, venue[0])
+    active = _book(api, user_token, space, 1)
+    to_cancel = _book(api, user_token, space, 2)
+    to_void = _book(api, user_token, space, 3)
 
     assert active["status"] == "active"
-    assert _stored(motor, "SELECT status FROM booking WHERE id = :i", i=active["id"]) == "active"
-    cancel = api.post(f"/bookings/{to_cancel['id']}/cancel", headers=_auth(token_usuario))
+    assert _stored(engine, "SELECT status FROM booking WHERE id = :i", i=active["id"]) == "active"
+    cancel = api.post(f"/bookings/{to_cancel['id']}/cancel", headers=_auth(user_token))
     assert cancel.json()["status"] == "canceled"
-    assert _stored(motor, "SELECT status FROM booking WHERE id = :i", i=to_cancel["id"]) == "canceled"
+    assert _stored(engine, "SELECT status FROM booking WHERE id = :i", i=to_cancel["id"]) == "canceled"
     void = api.post(
         f"/bookings/{to_void['id']}/void",
-        headers=_auth(token_admin),
+        headers=_auth(admin_token),
         json={"reason": "mantenimiento", "space_id": space, "starts_at": to_void["starts_at"]},
     )
     assert void.status_code == 200
     assert void.json()["status"] == "voided"
-    assert _stored(motor, "SELECT status FROM booking WHERE id = :i", i=to_void["id"]) == "voided"
+    assert _stored(engine, "SELECT status FROM booking WHERE id = :i", i=to_void["id"]) == "voided"
 
-    me = api.get("/me", headers=_auth(token_usuario)).json()
+    me = api.get("/me", headers=_auth(user_token)).json()
     assert me["role"] == "user"
-    assert _stored(motor, "SELECT role FROM app_user WHERE email = :e", e=me["email"]) == "user"
+    assert _stored(engine, "SELECT role FROM app_user WHERE email = :e", e=me["email"]) == "user"
 
     api.put(
         "/devices",
-        headers=_auth(token_usuario),
+        headers=_auth(user_token),
         json={"token": f"fcm-{to_void['id']}", "platform": "android", "permission_granted": True},
     )
-    user_id = UUID(str(_stored(motor, "SELECT id FROM app_user WHERE email = :e", e=me["email"])))
+    user_id = UUID(str(_stored(engine, "SELECT id FROM app_user WHERE email = :e", e=me["email"])))
     sweep = datetime.combine(date.today() + timedelta(days=1), datetime.min.time(), ZONE)
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         send_reminders(NotificationsSql(conn), _Channel(), sweep.replace(hour=20), user_id)
-    notifications = api.get("/notifications", headers=_auth(token_usuario)).json()["notifications"]
+    notifications = api.get("/notifications", headers=_auth(user_token)).json()["notifications"]
     assert {"reminder", "forced_cancellation"} <= {n["kind"] for n in notifications}
     stored_kinds = {
-        k for (k,) in motor.connect().execute(text("SELECT kind FROM notification WHERE user_id = :u"), {"u": user_id})
+        k for (k,) in engine.connect().execute(text("SELECT kind FROM notification WHERE user_id = :u"), {"u": user_id})
     }
     assert {"reminder", "forced_cancellation"} <= stored_kinds
-    assert _stored(motor, "SELECT count(*) FROM notification WHERE user_id = :u AND delivery = 'sent'", u=user_id) >= 1
-    listed = api.get("/bookings/all?q=" + sede[1], headers=_auth(token_admin)).json()
+    assert _stored(engine, "SELECT count(*) FROM notification WHERE user_id = :u AND delivery = 'sent'", u=user_id) >= 1
+    listed = api.get("/bookings/all?q=" + venue[1], headers=_auth(admin_token)).json()
     assert {b["notice_delivery"] for b in listed["bookings"]} <= {None, "sent", "no_channel", "no_permission", "failed"}
 
 
@@ -135,29 +135,29 @@ def test_the_published_contract_is_the_same_as_mains() -> None:
 
 
 def test_a_booking_survives_restarting_the_app_on_the_migrated_database(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
     """a booking survives restarting the app on the migrated database @ENG-17-S4"""
     from app.main import create_app
 
-    booking = _book(api, token_usuario, _new_space(api, token_admin, sede[0]), 1)
+    booking = _book(api, user_token, _new_space(api, admin_token, venue[0]), 1)
 
     with TestClient(create_app()) as restarted:
-        listed = restarted.get("/bookings", headers=_auth(token_usuario)).json()
+        listed = restarted.get("/bookings", headers=_auth(user_token)).json()
 
     assert booking["id"] in json.dumps(listed)
 
 
 def test_every_constraint_name_the_api_compares_exists_in_the_migrated_schema_and_a_duplicate_that_reaches_it_answers_409(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
     """every constraint name the API compares exists in the migrated schema and a duplicate that reaches it answers 409 @assumption:ENG-17-ASM-10"""
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         existing = {
             n for (n,) in conn.execute(text("SELECT conname FROM pg_constraint UNION SELECT indexname FROM pg_indexes"))
         }
@@ -167,8 +167,8 @@ def test_every_constraint_name_the_api_compares_exists_in_the_migrated_schema_an
             assert name in existing, name
             assert name in source, (module, name)
 
-    me = api.get("/me", headers=_auth(token_usuario)).json()
-    s = unico()
+    me = api.get("/me", headers=_auth(user_token)).json()
+    s = unique()
     same_email = {
         "first_name": "Ana", "last_name": "Gil", "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
         "birth_date": "1994-07-21", "email": me["email"], "password": PASSWORD,
@@ -177,10 +177,10 @@ def test_every_constraint_name_the_api_compares_exists_in_the_migrated_schema_an
     assert api.post("/register", json=same_email).status_code == 409
     assert api.post("/register", json=same_dni).status_code == 409
 
-    venue_name = _stored(motor, "SELECT name FROM venue WHERE id = :i", i=sede[0])
+    venue_name = _stored(engine, "SELECT name FROM venue WHERE id = :i", i=venue[0])
     again = api.post(
         "/venues",
-        headers=_auth(token_admin),
+        headers=_auth(admin_token),
         json={"name": venue_name, "address": "Av. Vergara 1850", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1]},
     )
     assert again.status_code == 409

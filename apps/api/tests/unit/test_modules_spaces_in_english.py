@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from tests.unit.test_api_in_english_contract_current import operaciones_distintas_en
+from tests.unit.test_api_in_english_contract_current import operations_differing_in
 from tests.unit.test_base_in_english import (
-    PALABRAS_COMUNES,
-    _castellano,
-    _nombres_definidos,
-    _palabras,
-    _textos_de_prosa,
+    COMMON_WORDS,
+    _defined_names,
+    _prose_texts,
+    _spanish,
+    _words,
 )
 
 RAIZ_API = Path(__file__).resolve().parents[2]
@@ -81,7 +81,7 @@ def _campos_pydantic(arbol: ast.AST) -> set[str]:
 
 def test_los_nombres_comentarios_y_docstrings_de_espacios_y_horarios_estan_en_ingles() -> None:
     """los nombres, comentarios y docstrings de espacios y horarios están en inglés @ENG-03-S2 @assumption:ENG-03-ASM-04 @assumption:ENG-03-ASM-05"""
-    castellano = _castellano() | EXTRA_CASTELLANO
+    castellano = _spanish() | EXTRA_CASTELLANO
     problemas: list[str] = []
     for ruta in NUEVOS:
         if not ruta.exists():
@@ -90,11 +90,11 @@ def test_los_nombres_comentarios_y_docstrings_de_espacios_y_horarios_estan_en_in
         fuente = ruta.read_text(encoding="utf-8")
         arbol = ast.parse(fuente)
         propios = _campos_pydantic(arbol)
-        for nombre in sorted(_nombres_definidos(arbol) - propios):
-            if castellano & set(_palabras(nombre)):
+        for nombre in sorted(_defined_names(arbol) - propios):
+            if castellano & set(_words(nombre)):
                 problemas.append(f"{ruta.parent.name}/{ruta.name}: nombre {nombre}")
-        for texto in _textos_de_prosa(fuente, arbol):
-            if PALABRAS_COMUNES.search(texto):
+        for texto in _prose_texts(fuente, arbol):
+            if COMMON_WORDS.search(texto):
                 problemas.append(
                     f"{ruta.parent.name}/{ruta.name}: {texto.strip().splitlines()[0][:60]}"
                 )
@@ -112,5 +112,5 @@ def test_el_contrato_de_espacios_y_horarios_tiene_lo_mismo_que_main(
     contrato = create_app().openapi()
     publicado = (RAIZ_API / "openapi.json").read_text(encoding="utf-8")
 
-    assert operaciones_distintas_en("/spaces") == []
+    assert operations_differing_in("/spaces") == []
     assert json.dumps(contrato, indent=2, ensure_ascii=False) + "\n" == publicado

@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
-GLOSARIO = RAIZ / "docs" / "technical" / "glossary.md"
+GLOSSARY = RAIZ / "docs" / "technical" / "glossary.md"
 MODULOS = RAIZ / "apps" / "api" / "app" / "modules"
 CONTRATO = RAIZ / "apps" / "api" / "openapi.json"
 TABLAS = (
@@ -23,7 +23,7 @@ TABLAS = (
 )
 
 
-def _traducciones(texto: str) -> dict[str, set[str]]:
+def _translations(texto: str) -> dict[str, set[str]]:
     """Cada `castellano`→`inglés` del glosario, agrupado por el término castellano."""
     pares: dict[str, set[str]] = defaultdict(set)
     for origen, destino in re.findall(r"`([^`]+)`→`([^`]+)`", texto):
@@ -34,7 +34,7 @@ def _traducciones(texto: str) -> dict[str, set[str]]:
 def _por_seccion(texto: str) -> dict[str, dict[str, set[str]]]:
     """Las traducciones de cada sección: un término puede cambiar según sea tabla, columna, rol o campo."""
     partes = re.split(r"^## (.+)$", texto, flags=re.M)
-    return {partes[i]: _traducciones(partes[i + 1]) for i in range(1, len(partes) - 1, 2)}
+    return {partes[i]: _translations(partes[i + 1]) for i in range(1, len(partes) - 1, 2)}
 
 
 def _por_renglon(texto: str) -> dict[tuple[str, str], dict[str, set[str]]]:
@@ -43,7 +43,7 @@ def _por_renglon(texto: str) -> dict[tuple[str, str], dict[str, set[str]]]:
     for seccion, cuerpo in _secciones(texto).items():
         for renglon in re.split(r"^- ", cuerpo, flags=re.M):
             etiqueta = renglon.split(":", 1)[0].strip() if renglon.strip() else ""
-            grupos[(seccion, etiqueta)] = _traducciones(renglon)
+            grupos[(seccion, etiqueta)] = _translations(renglon)
     return grupos
 
 
@@ -54,8 +54,8 @@ def _secciones(texto: str) -> dict[str, str]:
 
 def test_el_glosario_traduce_cada_modulo_tabla_y_ruta_una_sola_vez() -> None:
     """el glosario traduce cada módulo, tabla y ruta de la API de hoy, una sola vez @ENG-00-S1"""
-    texto = GLOSARIO.read_text(encoding="utf-8")
-    pares = _traducciones(texto)
+    texto = GLOSSARY.read_text(encoding="utf-8")
+    pares = _translations(texto)
 
     modulos = sorted(p.name for p in MODULOS.iterdir() if p.is_dir() and not p.name.startswith("_"))
     for modulo in modulos:
@@ -77,7 +77,7 @@ def test_el_glosario_traduce_cada_modulo_tabla_y_ruta_una_sola_vez() -> None:
 
 def test_el_glosario_fija_los_nombres_del_dominio_y_lo_que_queda_en_castellano() -> None:
     """el glosario fija booking, venue, space, kind y app_user, deja en castellano los títulos de test y lo que ve el usuario @assumption:ENG-00-ASM-01 @assumption:ENG-00-ASM-02 @assumption:ENG-00-ASM-03"""
-    texto = GLOSARIO.read_text(encoding="utf-8")
+    texto = GLOSSARY.read_text(encoding="utf-8")
     tablas = _por_seccion(texto)["Tables, view, functions, triggers"]
 
     assert tablas["reserva"] == {"booking"}

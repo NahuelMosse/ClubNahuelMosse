@@ -5,13 +5,13 @@ import ast
 from pathlib import Path
 
 from tests.unit import test_modules_account_in_english as anterior
-from tests.unit.test_api_in_english_contract_current import operaciones_distintas_en
-from tests.unit.test_base_in_english import PALABRAS_COMUNES, _castellano, _palabras
+from tests.unit.test_api_in_english_contract_current import operations_differing_in
+from tests.unit.test_base_in_english import COMMON_WORDS, _spanish, _words
 
-ARCHIVOS = {
-    modulo: [a for a in archivos if a != "email"] for modulo, archivos in anterior.ARCHIVOS.items()
+FILES = {
+    modulo: [a for a in archivos if a != "email"] for modulo, archivos in anterior.FILES.items()
 }
-NUEVOS = [anterior.MODULOS / m / f"{a}.py" for m, archivos in ARCHIVOS.items() for a in archivos]
+NUEVOS = [anterior.MODULES / m / f"{a}.py" for m, archivos in FILES.items() for a in archivos]
 
 
 def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice_el_glosario() -> (
@@ -19,18 +19,18 @@ def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice
 ):
     """los módulos de sedes, usuarios, sesión y recuperación se llaman como dice el glosario @ENG-02-S1 @assumption:ENG-02-ASM-02 @assumption:ENG-02-ASM-03"""
     faltan = [str(p.relative_to(anterior.APP)) for p in NUEVOS if not p.exists()]
-    sobran = [v for v in anterior.VIEJOS if (anterior.MODULOS / v).exists()]
+    sobran = [v for v in anterior.OLD_NAMES if (anterior.MODULES / v).exists()]
     importes = [
-        str(p.relative_to(anterior.RAIZ_API))
+        str(p.relative_to(anterior.API_ROOT))
         for carpeta in (
             anterior.APP,
-            anterior.RAIZ_API / "tests",
-            anterior.RAIZ_API / "migrations",
+            anterior.API_ROOT / "tests",
+            anterior.API_ROOT / "migrations",
         )
         for p in carpeta.rglob("*.py")
         if p.resolve() != Path(anterior.__file__).resolve()
         and ".venv" not in p.parts
-        and anterior.IMPORTE_VIEJO.search(p.read_text(encoding="utf-8"))
+        and anterior.OLD_IMPORT.search(p.read_text(encoding="utf-8"))
     ]
 
     assert not faltan, faltan
@@ -40,7 +40,7 @@ def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice
 
 def test_los_nombres_comentarios_y_docstrings_de_esos_modulos_estan_en_ingles() -> None:
     """los nombres, comentarios y docstrings de esos módulos están en inglés @ENG-02-S2 @assumption:ENG-02-ASM-04"""
-    castellano = _castellano() | {"sede", "sedes", "usuario", "usuarios", "sesion", "recuperacion"}
+    castellano = _spanish() | {"sede", "sedes", "usuario", "usuarios", "sesion", "recuperacion"}
     problemas: list[str] = []
     for ruta in NUEVOS:
         if not ruta.exists():
@@ -48,12 +48,12 @@ def test_los_nombres_comentarios_y_docstrings_de_esos_modulos_estan_en_ingles() 
             continue
         fuente = ruta.read_text(encoding="utf-8")
         arbol = ast.parse(fuente)
-        exentos = anterior._parametros_de_ruta(fuente) | anterior._campos_de_modelo(arbol)
-        for nombre in sorted(anterior._nombres_definidos(arbol) - exentos):
-            if castellano & set(_palabras(nombre)):
+        exentos = anterior._route_params(fuente) | anterior._model_fields(arbol)
+        for nombre in sorted(anterior._defined_names(arbol) - exentos):
+            if castellano & set(_words(nombre)):
                 problemas.append(f"{ruta.parent.name}/{ruta.name}: nombre {nombre}")
-        for texto in anterior._prosa(fuente, arbol):
-            if PALABRAS_COMUNES.search(texto):
+        for texto in anterior._prose(fuente, arbol):
+            if COMMON_WORDS.search(texto):
                 problemas.append(
                     f"{ruta.parent.name}/{ruta.name}: {texto.strip().splitlines()[0][:60]}"
                 )
@@ -65,4 +65,4 @@ def test_el_contrato_tiene_las_mismas_rutas_metodos_codigos_campos_y_operation_i
     None
 ):
     """el contrato tiene las mismas rutas, métodos, códigos, campos y operationId que main @ENG-02-S3 @assumption:ENG-02-ASM-01"""
-    assert operaciones_distintas_en("/register", "/me", "/password-recovery", "/link", "/venues") == []
+    assert operations_differing_in("/register", "/me", "/password-recovery", "/link", "/venues") == []

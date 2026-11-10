@@ -13,8 +13,8 @@ from sqlalchemy import Engine, text
 RAIZ_API = Path(__file__).resolve().parents[2]
 
 
-def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> UUID:
-    with motor.begin() as conn:
+def _reserva_en_la_proxima_hora(engine: Engine, correo: str, s: str) -> UUID:
+    with engine.begin() as conn:
         return conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
@@ -36,12 +36,12 @@ def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> UUID:
 
 
 def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
     """los recordatorios salen aunque el servicio web esté dormido @REV-02-S3
     @assumption:REV-02-ASM-02
     """
-    s = unico()
+    s = unique()
     api.post(
         "/register",
         json={
@@ -53,7 +53,7 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
             "password": "ClubNahuel1",
         },
     )
-    reserva = _reserva_en_la_proxima_hora(motor, f"socio.{s}@correo.com", s)
+    reserva = _reserva_en_la_proxima_hora(engine, f"socio.{s}@correo.com", s)
 
     corrida = subprocess.run(
         [sys.executable, "-m", "app.modules.notifications.sweep", "--una-vez"],
@@ -62,7 +62,7 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
     )  # fmt: skip
 
     assert corrida.returncode == 0, corrida.stdout + corrida.stderr
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         avisos = conn.execute(
             text(
                 "SELECT count(*) FROM notification WHERE kind = 'reminder' AND booking_id = :r"

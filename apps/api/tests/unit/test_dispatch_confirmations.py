@@ -100,10 +100,10 @@ class CanalQueFalla:
 class CanalQueAcepta:
     def __init__(self, invalidos: tuple[str, ...] = ()) -> None:
         self.invalidos = invalidos
-        self.enviados: list[Notice] = []
+        self.sent: list[Notice] = []
 
     def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
-        self.enviados.append(notice)
+        self.sent.append(notice)
         return DeliveryResult(sent=len(tokens) - len(self.invalidos), invalid=self.invalidos)
 
 
@@ -131,7 +131,7 @@ def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
     assert dispatch_pending(repo, canal) == 1
 
     assert repo.envios == {_id(1): "no_permission"}
-    assert canal.enviados == []
+    assert canal.sent == []
 
 
 def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
@@ -170,7 +170,7 @@ def test_un_despacho_no_repite_lo_que_otro_ya_tomó() -> None:
     assert dispatch_pending(repo, canal) == 1
     assert dispatch_pending(repo, canal) == 0
 
-    assert len(canal.enviados) == 1
+    assert len(canal.sent) == 1
 
 
 def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> None:
@@ -189,7 +189,7 @@ def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> No
     assert dispatch_pending(repo, canal) == 3
 
     assert repo.envios == {_id(1): "failed", _id(2): "sent", _id(3): "sent"}
-    assert len(canal.enviados) == 2
+    assert len(canal.sent) == 2
 
 
 def test_cada_aviso_dado_por_fallido_queda_en_el_log_con_su_numero_y_su_tipo(

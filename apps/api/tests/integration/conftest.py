@@ -15,30 +15,30 @@ def _con(token: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def token_admin(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+def admin_token(
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[str]:
-    s = unico()
+    s = unique()
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(f"admin.{s}@club.com", CONTRASENA)
+    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
     assert token is not None
     yield token
 
 
 @pytest.fixture
-def token_usuario(
+def user_token(
     api: TestClient,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> str:
-    s = unico()
+    s = unique()
     pedido = {
         "first_name": "Martín",
         "last_name": "Ferreyra",
@@ -48,17 +48,17 @@ def token_usuario(
         "password": CONTRASENA,
     }
     assert api.post("/register", json=pedido).status_code == 201
-    token = iniciar_sesion(f"socio.{s}@correo.com", CONTRASENA)
+    token = sign_in(f"socio.{s}@correo.com", CONTRASENA)
     assert token is not None
     return token
 
 
 @pytest.fixture
-def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> tuple[str, str]:
-    s = unico()
+def venue(api: TestClient, admin_token: str, unique: Callable[[], str]) -> tuple[str, str]:
+    s = unique()
     r = api.post(
         "/venues",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
             "name": f"Sede Haedo {s}",
             "address": "Av. Vergara 1850",

@@ -10,8 +10,8 @@ from alembic import command
 from alembic.config import Config as AlembicConfig
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import IntegrityError, OperationalError
-from test_data import _capturar
-from test_data_migrations import base_propia  # noqa: F401  (fixture)
+from test_data import _capture
+from test_data_migrations import own_db  # noqa: F401  (fixture)
 
 Base = tuple[Engine, AlembicConfig]
 
@@ -111,8 +111,8 @@ TRIGGERS = {
 }  # fmt: skip
 
 
-def _at_head(base_propia: Base) -> Engine:  # noqa: F811
-    base, alembic = base_propia
+def _at_head(own_db: Base) -> Engine:  # noqa: F811
+    base, alembic = own_db
     command.upgrade(alembic, "head")
     return base
 
@@ -122,9 +122,9 @@ def _names(base: Engine, sql: str) -> set[str]:
         return {row[0] for row in conn.execute(text(sql))}
 
 
-def test_every_table_is_named_in_english(base_propia: Base) -> None:  # noqa: F811
+def test_every_table_is_named_in_english(own_db: Base) -> None:  # noqa: F811
     """every table is named in English after the migration @ENG-17-S1"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
 
     tables = _names(
         base,
@@ -135,9 +135,9 @@ def test_every_table_is_named_in_english(base_propia: Base) -> None:  # noqa: F8
     assert tables == TABLES
 
 
-def test_every_column_is_named_in_english(base_propia: Base) -> None:  # noqa: F811
+def test_every_column_is_named_in_english(own_db: Base) -> None:  # noqa: F811
     """every column is named in English after the migration @ENG-17-S1"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
 
     with base.connect() as conn:
         rows = conn.execute(
@@ -200,10 +200,10 @@ def _rejected(base: Engine, sql: str, params: dict[str, Any] | None = None) -> s
 
 
 def test_every_stored_value_is_in_english_and_the_old_ones_are_rejected(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """every stored text value is in English and the old ones are rejected @ENG-17-S1 @assumption:ENG-17-ASM-02"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
     with base.begin() as conn:
         ids = _seed_english(conn)
         _book(conn, ids, 1)
@@ -233,9 +233,9 @@ def test_every_stored_value_is_in_english_and_the_old_ones_are_rejected(
             conn.execute(text("UPDATE notification SET delivery = :d"), {"d": delivery})
 
 
-def test_every_named_constraint_is_in_english(base_propia: Base) -> None:  # noqa: F811
+def test_every_named_constraint_is_in_english(own_db: Base) -> None:  # noqa: F811
     """every named constraint is in English @ENG-17-S1 @assumption:ENG-17-ASM-03"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
 
     # PostgreSQL 18 records each NOT NULL as a constraint named after its column: those are not named by a migration.
     names = _names(
@@ -248,10 +248,10 @@ def test_every_named_constraint_is_in_english(base_propia: Base) -> None:  # noq
 
 
 def test_every_partial_index_is_in_english_and_filters_on_the_english_value(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """every partial index is in English and filters on the English value @ENG-17-S1"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
 
     with base.connect() as conn:
         found = dict(
@@ -269,10 +269,10 @@ def test_every_partial_index_is_in_english_and_filters_on_the_english_value(
 
 
 def test_every_function_and_trigger_is_in_english_and_keeps_its_behavior(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """every function and trigger is in English and keeps its behavior @ENG-17-S1 @assumption:ENG-17-ASM-04"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
     assert _names(
         base,
         "SELECT proname FROM pg_proc p JOIN pg_language l ON l.oid = p.prolang"
@@ -296,10 +296,10 @@ def test_every_function_and_trigger_is_in_english_and_keeps_its_behavior(
 
 
 def test_the_view_is_booking_with_status_and_computes_completed(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """the view is booking_with_status and computes completed @ENG-17-S1"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
     with base.begin() as conn:
         ids = _seed_english(conn)
         _book(conn, ids, -3)
@@ -328,10 +328,10 @@ def test_the_view_is_booking_with_status_and_computes_completed(
 
 
 def test_the_double_booking_exclusion_rejects_two_overlapping_active_bookings(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """the double-booking exclusion rejects two overlapping active bookings after the migration @ENG-17-S2"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
     with base.begin() as conn:
         ids = _seed_english(conn)
         _book(conn, ids, 1)
@@ -344,10 +344,10 @@ def test_the_double_booking_exclusion_rejects_two_overlapping_active_bookings(
 
 
 def test_a_canceled_booking_overlapping_an_active_one_is_accepted(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """a canceled booking overlapping an active one is accepted after the migration @ENG-17-S2"""
-    base = _at_head(base_propia)
+    base = _at_head(own_db)
     with base.begin() as conn:
         ids = _seed_english(conn)
         _book(conn, ids, 1)
@@ -474,10 +474,10 @@ def _english_tally(rows: list[Any]) -> list[Any]:
 
 
 def test_the_migration_translates_the_rows_of_0011_without_touching_them_otherwise(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """the migration translates the rows of 0011 without touching them otherwise and goes back to 0011 @ENG-17-S1 @assumption:ENG-17-ASM-05 @assumption:ENG-17-ASM-06"""
-    base, alembic = base_propia
+    base, alembic = own_db
     command.upgrade(alembic, "0011")
     _seed_spanish(base)
     before = _stored(base, spanish=True)
@@ -618,10 +618,10 @@ def _translated(old: dict[str, set[tuple[str, ...]]]) -> dict[str, set[tuple[str
 
 
 def test_the_schema_of_0012_keeps_every_constraint_index_trigger_and_function_of_0011(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """the schema of 0012 keeps every constraint, index, trigger and function of 0011 @ENG-17-S7"""
-    base, alembic = base_propia
+    base, alembic = own_db
     command.upgrade(alembic, "0011")
     old = _catalog(base)
     command.upgrade(alembic, "head")
@@ -636,15 +636,15 @@ def test_the_schema_of_0012_keeps_every_constraint_index_trigger_and_function_of
 
 
 def test_the_migration_gives_up_on_a_held_lock_and_can_run_again(
-    base_propia: Base,  # noqa: F811
+    own_db: Base,  # noqa: F811
 ) -> None:
     """the migration gives up on a held lock and can run again @assumption:ENG-17-ASM-07"""
-    base, alembic = base_propia
+    base, alembic = own_db
     command.upgrade(alembic, "0011")
     holder = base.connect()
     holder.execute(text("LOCK TABLE reserva IN ACCESS EXCLUSIVE MODE"))
     result: list[BaseException] = []
-    runner: Callable[[], None] = lambda: _capturar(  # noqa: E731
+    runner: Callable[[], None] = lambda: _capture(  # noqa: E731
         result, lambda: command.upgrade(alembic, "head")
     )
     thread = threading.Thread(target=runner)

@@ -12,60 +12,60 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import OperationalError
-from test_reminder import CanalDePrueba, Socio, a_las, un_socio
+from test_reminder import FakeChannel, Member, at_time, a_member
 
 from app.modules.notifications.use_cases import dispatch_pending, send_reminders
 from app.modules.notifications.repository import NotificationsSql
 from app.modules.notifications.push import push_channel
 from app.modules.users.seed_admin import main as sembrar
 
-RAIZ_API = Path(__file__).resolve().parents[2]
+API_ROOT = Path(__file__).resolve().parents[2]
 # conftest.py deja acá la base de pruebas antes de importar los tests.
-URL_PRUEBAS = os.environ["DATABASE_URL"]
+TEST_DATABASE_URL = os.environ["DATABASE_URL"]
 CONTRASENA = "ClubNahuel1"
-URL_MIGRACIONES = URL_PRUEBAS.rsplit("/", 1)[0] + "/club_rev03_migraciones_test"
-REVISIONES = ["0002", "0003", "0004", "0005", "0006", "0007", "0008"]
+URL_MIGRACIONES = TEST_DATABASE_URL.rsplit("/", 1)[0] + "/club_rev03_migraciones_test"
+REVISIONS = ["0002", "0003", "0004", "0005", "0006", "0007", "0008"]
 
 
 @pytest.fixture
-def canal(api: TestClient) -> Iterator[CanalDePrueba]:
-    canal = CanalDePrueba()
-    api.app.dependency_overrides[push_channel] = lambda: canal
-    yield canal
+def channel(api: TestClient) -> Iterator[FakeChannel]:
+    channel = FakeChannel()
+    api.app.dependency_overrides[push_channel] = lambda: channel
+    yield channel
     api.app.dependency_overrides.pop(push_channel, None)
 
 
 @pytest.fixture
-def socio(
+def member(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
-) -> Socio:
-    return un_socio(api, motor, iniciar_sesion, unico)
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
+) -> Member:
+    return a_member(api, engine, sign_in, unique)
 
 
 @pytest.fixture
-def token_admin(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+def admin_token(
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
-    s = unico()
+    s = unique()
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(f"admin.{s}@club.com", CONTRASENA)
+    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
     assert token is not None
     return token
 
 
-def _pasadas(socio: Socio, cantidad: int) -> None:
+def _past(member: Member, cantidad: int) -> None:
     """[cantidad] reservas ya jugadas del socio, una por día hacia atrás."""
-    with socio.motor.begin() as conn:
+    with member.engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
@@ -74,12 +74,12 @@ def _pasadas(socio: Socio, cantidad: int) -> None:
                 " FROM generate_series(1, :c) AS n,"
                 " (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires') AS h) AS t"
             ),
-            {"u": socio.usuario_id, "e": socio.espacio_id, "c": cantidad},
+            {"u": member.user_id, "e": member.space_id, "c": cantidad},
         )
 
 
-def _indices(motor: Engine, tabla: str) -> list[str]:
-    with motor.connect() as conn:
+def _indices(engine: Engine, tabla: str) -> list[str]:
+    with engine.connect() as conn:
         return [
             str(f.indexdef)
             for f in conn.execute(
@@ -88,16 +88,16 @@ def _indices(motor: Engine, tabla: str) -> list[str]:
         ]
 
 
-def test_el_historial_propio_tiene_un_indice_por_socio(motor: Engine) -> None:
+def test_el_historial_propio_tiene_un_indice_por_socio(engine: Engine) -> None:
     """el historial propio se resuelve con un índice por socio @REV-03-S1"""
-    indices = _indices(motor, "booking")
+    indices = _indices(engine, "booking")
 
     assert any("(user_id" in i for i in indices)
 
 
-def _empate(socio: Socio) -> None:
+def _tie(member: Member) -> None:
     """Una reserva más, en otra cancha de la misma sede, con el mismo inicio que la vigésima."""
-    with socio.motor.begin() as conn:
+    with member.engine.begin() as conn:
         conn.execute(
             text(
                 "WITH e AS (INSERT INTO space (venue_id, sport, kind, number, name, covered,"
@@ -109,70 +109,70 @@ def _empate(socio: Socio) -> None:
                 " + interval '1 hour', 38000, 38000 FROM e,"
                 " (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires') AS h) AS t"
             ),
-            {"u": socio.usuario_id, "e": socio.espacio_id},
+            {"u": member.user_id, "e": member.space_id},
         )
 
 
 MARCADORES_INVALIDOS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDowMDowMHxhYmM"]
 
 
-def test_el_historial_global_tiene_un_indice_por_fecha(motor: Engine) -> None:
+def test_el_historial_global_tiene_un_indice_por_fecha(engine: Engine) -> None:
     """el historial global se ordena por un índice de inicio @REV-03-S3"""
-    indices = _indices(motor, "booking")
+    indices = _indices(engine, "booking")
 
     assert any("(starts_at DESC, id DESC)" in i for i in indices)
 
 
-def test_quien_cancelo_y_que_aviso_reemplazo_tienen_indice(motor: Engine) -> None:
+def test_quien_cancelo_y_que_aviso_reemplazo_tienen_indice(engine: Engine) -> None:
     """quién canceló y qué aviso reemplazó a otro se consultan por índice @REV-03-S4"""
-    assert any("(canceled_by" in i for i in _indices(motor, "booking"))
-    assert any("(replaced_by" in i for i in _indices(motor, "notification"))
+    assert any("(canceled_by" in i for i in _indices(engine, "booking"))
+    assert any("(replaced_by" in i for i in _indices(engine, "notification"))
 
 
-def _envios(socio: Socio) -> list[str]:
-    with socio.motor.connect() as conn:
+def _deliveries(member: Member) -> list[str]:
+    with member.engine.connect() as conn:
         return [
             str(f.delivery)
             for f in conn.execute(
                 text("SELECT delivery FROM notification WHERE user_id = :u ORDER BY id"),
-                {"u": socio.usuario_id},
+                {"u": member.user_id},
             )
         ]
 
 
-def _varar(socio: Socio, hace: str, intentos: int = 1) -> None:
-    with socio.motor.begin() as conn:
+def _strand(member: Member, hace: str, intentos: int = 1) -> None:
+    with member.engine.begin() as conn:
         conn.execute(
             text(
                 "UPDATE notificacion SET envio = 'enviando', enviada_en = NULL,"
                 " tomada_en = now() - CAST(:hace AS interval), intentos = :i"
                 " WHERE usuario_id = :u"
             ),
-            {"u": socio.usuario_id, "hace": hace, "i": intentos},
+            {"u": member.user_id, "hace": hace, "i": intentos},
         )
 
 
-def _cancelar(socio: Socio, desde: str) -> None:
-    reserva = socio.reservar(desde)
-    r = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
+def _cancel(member: Member, desde: str) -> None:
+    reserva = member.book(desde)
+    r = member.api.post(f"/bookings/{reserva['id']}/cancel", headers=member.session)
     assert r.status_code == 200
 
 
-def _despachar(socio: Socio, canal: CanalDePrueba) -> None:
-    with socio.motor.connect() as conn:
-        dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
+def _dispatch(member: Member, channel: FakeChannel) -> None:
+    with member.engine.connect() as conn:
+        dispatch_pending(NotificationsSql(conn), channel, member.user_id)
 
 
-class _CanalQueSeCae(CanalDePrueba):
+class _CanalQueSeCae(FakeChannel):
     """El proceso muere justo después de tomar el aviso, antes de saber si salió."""
 
     def send(self, tokens: list[str], aviso: Any) -> Any:
         raise SystemExit("el proceso se cayó")
 
 
-def _recordatorio(socio: Socio, envio: str, hace: str) -> None:
-    reserva: dict[str, Any] = socio.reservar("20:00")
-    with socio.motor.begin() as conn:
+def _reminder(member: Member, envio: str, hace: str) -> None:
+    reserva: dict[str, Any] = member.book("20:00")
+    with member.engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
@@ -183,32 +183,32 @@ def _recordatorio(socio: Socio, envio: str, hace: str) -> None:
                 " CASE WHEN :envio = 'enviando' THEN 1 ELSE 0 END"
                 " FROM reserva WHERE id = :r"
             ),
-            {"u": socio.usuario_id, "r": reserva["id"], "envio": envio, "hace": hace},
+            {"u": member.user_id, "r": reserva["id"], "envio": envio, "hace": hace},
         )
 
 
-def _barrer(socio: Socio, canal: CanalDePrueba) -> None:
-    with socio.motor.connect() as conn:
-        dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
-        send_reminders(NotificationsSql(conn), canal, a_las(19, 10), socio.usuario_id)
+def _sweep(member: Member, channel: FakeChannel) -> None:
+    with member.engine.connect() as conn:
+        dispatch_pending(NotificationsSql(conn), channel, member.user_id)
+        send_reminders(NotificationsSql(conn), channel, at_time(19, 10), member.user_id)
 
 
 @pytest.fixture
-def base_de_migraciones(motor: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
+def migrations_db(engine: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
     """Una base aparte, vacía, para subir y bajar migraciones sin tocar la de la suite."""
-    admin = create_engine(URL_PRUEBAS.rsplit("/", 1)[0] + "/postgres", isolation_level="AUTOCOMMIT")
+    admin = create_engine(TEST_DATABASE_URL.rsplit("/", 1)[0] + "/postgres", isolation_level="AUTOCOMMIT")
     with admin.connect() as conn:
         conn.execute(text("DROP DATABASE IF EXISTS club_rev03_migraciones_test WITH (FORCE)"))
         conn.execute(text("CREATE DATABASE club_rev03_migraciones_test"))
     admin.dispose()
     base = create_engine(URL_MIGRACIONES)
-    alembic = AlembicConfig(str(RAIZ_API / "alembic.ini"))
+    alembic = AlembicConfig(str(API_ROOT / "alembic.ini"))
     alembic.set_main_option("sqlalchemy.url", URL_MIGRACIONES.replace("%", "%%"))
     yield base, alembic
     base.dispose()
 
 
-def _sembrar(base: Engine) -> None:
+def _seed(base: Engine) -> None:
     with base.begin() as conn:
         conn.execute(
             text(
@@ -229,23 +229,23 @@ def _sembrar(base: Engine) -> None:
         )
 
 
-def _reservas(base: Engine) -> int:
+def _bookings(base: Engine) -> int:
     with base.connect() as conn:
         return int(conn.execute(text("SELECT count(*) FROM reserva")).scalar_one())
 
 
 def test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo(
-    base_de_migraciones: tuple[Engine, AlembicConfig],
+    migrations_db: tuple[Engine, AlembicConfig],
 ) -> None:
     """la migración nueva no bloquea las tablas mientras la versión anterior atiende @REV-03-S7"""
-    base, alembic = base_de_migraciones
+    base, alembic = migrations_db
     command.upgrade(alembic, "0007")
-    _sembrar(base)
+    _seed(base)
     bloqueo = base.connect()
     bloqueo.execute(text("LOCK TABLE reserva IN ACCESS EXCLUSIVE MODE"))
     resultado: list[BaseException] = []
     hilo = threading.Thread(
-        target=lambda: _capturar(resultado, lambda: command.upgrade(alembic, "0008"))
+        target=lambda: _capture(resultado, lambda: command.upgrade(alembic, "0008"))
     )
 
     hilo.start()
@@ -262,17 +262,17 @@ def test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo(
             text("SELECT count(*) FROM pg_index WHERE NOT indisvalid")
         ).scalar_one()
     assert invalidos == 0
-    assert _reservas(base) == 1
+    assert _bookings(base) == 1
 
 
-def _capturar(resultado: list[BaseException], accion: Callable[[], None]) -> None:
+def _capture(resultado: list[BaseException], accion: Callable[[], None]) -> None:
     try:
         accion()
     except BaseException as e:  # noqa: BLE001 — el test afirma sobre el error que se guarda
         resultado.append(e)
 
 
-def _esquema(base: Engine) -> set[tuple[str, ...]]:
+def _schema(base: Engine) -> set[tuple[str, ...]]:
     with base.connect() as conn:
         columnas = conn.execute(
             text(
@@ -287,26 +287,26 @@ def _esquema(base: Engine) -> set[tuple[str, ...]]:
 
 
 @pytest.mark.parametrize(
-    ("anterior", "revision"), list(zip(["0001", *REVISIONES], REVISIONES, strict=False))
+    ("anterior", "revision"), list(zip(["0001", *REVISIONS], REVISIONS, strict=False))
 )
 def test_cada_migracion_va_y_vuelve_con_datos(
-    base_de_migraciones: tuple[Engine, AlembicConfig], anterior: str, revision: str
+    migrations_db: tuple[Engine, AlembicConfig], anterior: str, revision: str
 ) -> None:
     """la suite vigila la ida y vuelta de las migraciones con datos
     @REV-03-S8 @assumption:REV-03-ASM-06
     """
-    base, alembic = base_de_migraciones
+    base, alembic = migrations_db
     command.upgrade(alembic, "0001")
-    _sembrar(base)
+    _seed(base)
     command.upgrade(alembic, anterior)
-    antes = _esquema(base)
+    antes = _schema(base)
 
     command.upgrade(alembic, revision)
-    despues = _esquema(base)
+    despues = _schema(base)
     command.downgrade(alembic, "-1")
-    vuelta = _esquema(base)
+    vuelta = _schema(base)
     command.upgrade(alembic, revision)
 
     assert vuelta == antes
-    assert _esquema(base) == despues
-    assert _reservas(base) == 1
+    assert _schema(base) == despues
+    assert _bookings(base) == 1

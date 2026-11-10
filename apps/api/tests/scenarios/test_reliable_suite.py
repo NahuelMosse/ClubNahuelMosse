@@ -104,10 +104,10 @@ def _reserva(conn: Connection, usuario: UUID, espacio: UUID, horas: int) -> None
 
 @pytest.mark.parametrize("horas", [1, 4])
 def test_la_base_acepta_reservas_de_una_a_cuatro_horas(
-    db: Connection, unico: Callable[[], str], horas: int
+    db: Connection, unique: Callable[[], str], horas: int
 ) -> None:
     """el test de duración prueba los bordes que se aceptan @REV-08-S2"""
-    s = unico()
+    s = unique()
     usuario = _usuario(db, f"borde.{s}@correo.com", str(int(s, 16) % 90_000_000 + 10_000_000))
 
     _reserva(db, usuario, _espacio(db, s), horas)
@@ -122,10 +122,10 @@ def test_la_base_acepta_reservas_de_una_a_cuatro_horas(
 
 @pytest.mark.parametrize("horas", [0, 5])
 def test_la_base_rechaza_reservas_de_menos_de_una_o_mas_de_cuatro_horas(
-    db: Connection, unico: Callable[[], str], horas: int
+    db: Connection, unique: Callable[[], str], horas: int
 ) -> None:
     """el test de duración prueba los bordes que se rechazan @REV-08-S2"""
-    s = unico()
+    s = unique()
     usuario = _usuario(db, f"borde.{s}@correo.com", str(int(s, 16) % 90_000_000 + 10_000_000))
     espacio = _espacio(db, s)
 
@@ -134,10 +134,10 @@ def test_la_base_rechaza_reservas_de_menos_de_una_o_mas_de_cuatro_horas(
 
 
 def test_la_baja_libera_el_dni_que_antes_estaba_bloqueado(
-    db: Connection, unico: Callable[[], str]
+    db: Connection, unique: Callable[[], str]
 ) -> None:
     """el test de baja muestra el DNI bloqueado antes y liberado después @REV-08-S3"""
-    s = unico()
+    s = unique()
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
     usuario = _usuario(db, f"vuelve.{s}@correo.com", dni)
 
@@ -153,10 +153,10 @@ def test_la_baja_libera_el_dni_que_antes_estaba_bloqueado(
 
 
 def test_la_baja_libera_el_correo_que_antes_estaba_bloqueado(
-    db: Connection, unico: Callable[[], str]
+    db: Connection, unique: Callable[[], str]
 ) -> None:
     """la baja libera el correo que antes estaba bloqueado @REV-08-S3"""
-    s = unico()
+    s = unique()
     correo = f"Vuelve.{s}@correo.com"
     usuario = _usuario(db, correo, str(int(s, 16) % 90_000_000 + 10_000_000))
 
@@ -264,7 +264,7 @@ def consultas() -> Iterator[list[str]]:
 
 
 def _socio(
-    api: TestClient, iniciar_sesion: Callable[[str, str], str | None], s: str
+    api: TestClient, sign_in: Callable[[str, str], str | None], s: str
 ) -> dict[str, str]:
     correo = f"socio.{s}@correo.com"
     alta = api.post(
@@ -279,13 +279,13 @@ def _socio(
         },
     )
     assert alta.status_code == 201
-    token = iniciar_sesion(correo, CONTRASENA)
+    token = sign_in(correo, CONTRASENA)
     assert token is not None
     return {"Authorization": f"Bearer {token}"}
 
 
-def _proximas(motor: Engine, correo: str, espacio: UUID, cantidad: int) -> None:
-    with motor.begin() as conn:
+def _proximas(engine: Engine, correo: str, espacio: UUID, cantidad: int) -> None:
+    with engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
@@ -308,24 +308,24 @@ def _contar(consultas: list[str], pedido: Callable[[], object]) -> int:
 
 def test_mis_reservas_hace_las_mismas_consultas_con_pocas_o_muchas(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     consultas: list[str],
 ) -> None:
     """las próximas reservas se leen con una cantidad fija de consultas
     @REV-08-S6 @assumption:REV-08-ASM-05
     """
-    s = unico()
-    sesion = _socio(api, iniciar_sesion, s)
-    with motor.begin() as conn:
+    s = unique()
+    sesion = _socio(api, sign_in, s)
+    with engine.begin() as conn:
         espacio = _espacio(conn, s)
     correo = f"socio.{s}@correo.com"
-    _proximas(motor, correo, espacio, 2)
+    _proximas(engine, correo, espacio, 2)
     pocas = _contar(consultas, lambda: api.get("/bookings", headers=sesion))
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         otro = _espacio(conn, f"{s}b")
-    _proximas(motor, correo, otro, 13)
+    _proximas(engine, correo, otro, 13)
 
     muchas = _contar(consultas, lambda: api.get("/bookings", headers=sesion))
 
@@ -334,43 +334,43 @@ def test_mis_reservas_hace_las_mismas_consultas_con_pocas_o_muchas(
 
 @pytest.fixture
 def admin(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, str]:
-    s = unico()
+    s = unique()
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(f"admin.{s}@club.com", CONTRASENA)
+    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
     assert token is not None
     return {"Authorization": f"Bearer {token}"}
 
 
 def test_las_sedes_y_el_historial_global_hacen_consultas_fijas(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     admin: dict[str, str],
     consultas: list[str],
 ) -> None:
     """sedes e historial global se leen con una cantidad fija de consultas
     @REV-08-S6 @assumption:REV-08-ASM-05
     """
-    s = unico()
-    _socio(api, iniciar_sesion, s)
-    with motor.begin() as conn:
+    s = unique()
+    _socio(api, sign_in, s)
+    with engine.begin() as conn:
         espacio = _espacio(conn, s)
-    _proximas(motor, f"socio.{s}@correo.com", espacio, 2)
+    _proximas(engine, f"socio.{s}@correo.com", espacio, 2)
     sedes_antes = _contar(consultas, lambda: api.get("/venues", headers=admin))
     historial_antes = _contar(consultas, lambda: api.get("/bookings/all", headers=admin))
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         otros = [_espacio(conn, f"{s}{n}") for n in range(5)]
-    _proximas(motor, f"socio.{s}@correo.com", otros[0], 13)
+    _proximas(engine, f"socio.{s}@correo.com", otros[0], 13)
 
     sedes_despues = _contar(consultas, lambda: api.get("/venues", headers=admin))
     historial_despues = _contar(consultas, lambda: api.get("/bookings/all", headers=admin))

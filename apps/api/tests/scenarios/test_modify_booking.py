@@ -11,12 +11,12 @@ ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 
 def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_del_cierre(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """el backend rechaza un horario nuevo en el pasado o que termina después del cierre @CU-11-H01-03"""
-    s = unico()
+    s = unique()
     correo = f"socio.{s}@correo.com"
     alta = api.post(
         "/register",
@@ -30,7 +30,7 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
         },
     )
     assert alta.status_code == 201
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
@@ -42,7 +42,7 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
         ).scalar_one()
-    token = iniciar_sesion(correo, "ClubNahuel1")
+    token = sign_in(correo, "ClubNahuel1")
     sesion = {"Authorization": f"Bearer {token}"}
     manana = datetime.now(ZONA).date() + timedelta(days=1)
     reserva = api.post(
@@ -77,7 +77,7 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     assert tarde.status_code == 422
     assert tarde.json()["errors"]["until"] == "The venue closes at 23:00"
     # Verifica: la reserva sigue en su horario.
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         inicio: Any = conn.execute(
             text("SELECT starts_at FROM booking WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()

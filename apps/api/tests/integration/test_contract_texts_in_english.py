@@ -35,10 +35,10 @@ def _register(api: TestClient, unique: str) -> dict[str, str]:
 
 
 def test_an_error_body_names_its_fields_in_english_and_says_its_message_in_english(
-    api: TestClient, token_admin: str
+    api: TestClient, admin_token: str
 ) -> None:
     """an error body names its fields in English and says its message in English @ENG-18-S2 @ENG-18-S9 @ENG-20-S1"""
-    venue = api.post("/venues", headers=_auth(token_admin), json={})
+    venue = api.post("/venues", headers=_auth(admin_token), json={})
     assert venue.status_code == 422
     assert venue.json() == {
         "errors": {
@@ -58,12 +58,12 @@ def test_an_error_body_names_its_fields_in_english_and_says_its_message_in_engli
 
 
 def test_a_void_error_names_reason_and_says_it_in_english(
-    api: TestClient, token_admin: str
+    api: TestClient, admin_token: str
 ) -> None:
     """a void error names reason and says it in English @ENG-18-S2 @ENG-20-S1"""
     r = api.post(
         f"/bookings/{uuid.uuid4()}/void",
-        headers=_auth(token_admin),
+        headers=_auth(admin_token),
         json={
             "reason": " ",
             "space_id": str(uuid.uuid4()),
@@ -101,12 +101,12 @@ def test_the_push_data_carries_kind_and_booking_id_with_the_english_kind_and_an_
 
 
 def test_the_english_recovery_email_links_to_link_recover_with_code_and_the_page_opens_the_same_app_route(
-    api: TestClient, motor: Engine, unico: Callable[[], str]
+    api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
     """the English recovery email links to /link/recover with #code and the page opens the same app route @assumption:ENG-18-ASM-06 @ENG-20-S2"""
-    account = _register(api, unico())
+    account = _register(api, unique())
     assert api.post("/password-recovery", json={"email": account["email"]}).status_code == 202
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         subject, body = conn.execute(
             text(
                 "SELECT subject, body FROM outgoing_email WHERE recipient = :p ORDER BY id DESC LIMIT 1"
@@ -124,7 +124,7 @@ def test_the_english_recovery_email_links_to_link_recover_with_code_and_the_page
 
 
 def test_the_catalog_keeps_mains_keys_with_english_names_and_the_seed_keeps_its_options(
-    api: TestClient, token_usuario: str
+    api: TestClient, user_token: str
 ) -> None:
     """the catalog keeps main's keys with English names and the seed keeps its options @ENG-18-S9 @ENG-20-S4"""
     main_source = subprocess.run(
@@ -134,7 +134,7 @@ def test_the_catalog_keeps_mains_keys_with_english_names_and_the_seed_keeps_its_
     main_keys = sorted(
         k for k, _ in re.findall(r'(?:Sport\(\s*|Kind\()"([^"]+)",\s*"([^"]+)"', main_source)
     )
-    catalog: list[dict[str, Any]] = api.get("/spaces/catalog", headers=_auth(token_usuario)).json()[
+    catalog: list[dict[str, Any]] = api.get("/spaces/catalog", headers=_auth(user_token)).json()[
         "sports"
     ]
     shown = [(s["key"], s["name"]) for s in catalog]

@@ -12,20 +12,20 @@ import pytest
 from alembic import command
 from alembic.config import Config as AlembicConfig
 from sqlalchemy import Engine, create_engine, text
-from test_data import RAIZ_API, URL_PRUEBAS, _capturar
+from test_data import API_ROOT, TEST_DATABASE_URL, _capture
 
 
 @pytest.fixture
-def base_propia(motor: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
+def own_db(engine: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
     """Una base vacía con nombre único, para que otra corrida no la pise."""
     nombre = f"club_rev03_l{uuid.uuid4().hex[:10]}_test"
-    servidor = URL_PRUEBAS.rsplit("/", 1)[0]
+    servidor = TEST_DATABASE_URL.rsplit("/", 1)[0]
     admin = create_engine(servidor + "/postgres", isolation_level="AUTOCOMMIT")
     with admin.connect() as conn:
         conn.execute(text(f'CREATE DATABASE "{nombre}"'))
     url = f"{servidor}/{nombre}"
     base = create_engine(url)
-    alembic = AlembicConfig(str(RAIZ_API / "alembic.ini"))
+    alembic = AlembicConfig(str(API_ROOT / "alembic.ini"))
     alembic.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
     try:
         yield base, alembic
@@ -37,18 +37,18 @@ def base_propia(motor: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
 
 
 def test_la_migracion_0008_corta_por_lock_timeout_y_se_puede_volver_a_correr(
-    base_propia: tuple[Engine, AlembicConfig],
+    own_db: tuple[Engine, AlembicConfig],
 ) -> None:
     """la migración 0008 corta por lock_timeout si una transacción larga tiene la tabla
     @REV-03-S7 @assumption:REV-03-ASM-15
     """
-    base, alembic = base_propia
+    base, alembic = own_db
     command.upgrade(alembic, "0007")
     bloqueo = base.connect()
     bloqueo.execute(text("LOCK TABLE notificacion IN ACCESS EXCLUSIVE MODE"))
     resultado: list[BaseException] = []
     hilo = threading.Thread(
-        target=lambda: _capturar(resultado, lambda: command.upgrade(alembic, "0008"))
+        target=lambda: _capture(resultado, lambda: command.upgrade(alembic, "0008"))
     )
 
     hilo.start()

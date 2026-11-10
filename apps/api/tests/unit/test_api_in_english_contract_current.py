@@ -6,7 +6,7 @@ import subprocess
 from typing import Any
 
 from tests import contract_renames as renames
-from tests.unit.test_api_in_english import RAIZ
+from tests.unit.test_api_in_english import ROOT
 
 MAIN_ACTUAL = "88d1a9c7161b62c2476822f15f045daa935e367a"
 TIPOS_SIN_CINCO = ["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
@@ -28,13 +28,13 @@ def _con_aviso_de_cinco_minutos(nodo: Any) -> Any:
     return nodo
 
 
-def contrato_distinto_del_de_main() -> dict[str, Any]:
+def contract_differs_from_main() -> dict[str, Any]:
     """Las formas del contrato actual que difieren de las de main; vacío si coinciden en rutas y formas."""
     from app.main import app
 
     de_main = subprocess.run(
         ["git", "show", f"{MAIN_ACTUAL}:apps/api/openapi.json"],
-        cwd=RAIZ, capture_output=True, check=True, encoding="utf-8",
+        cwd=ROOT, capture_output=True, check=True, encoding="utf-8",
     ).stdout  # fmt: skip
     esperado = renames.comparable(_con_aviso_de_cinco_minutos(json.loads(de_main)), renamed=True)
     actual = renames.comparable(app.openapi(), renamed=False)
@@ -43,13 +43,13 @@ def contrato_distinto_del_de_main() -> dict[str, Any]:
     return {k: v for k, v in actual.items() if v != esperado[k]}
 
 
-def operaciones_distintas_en(*prefijos: str) -> list[tuple[str, str]]:
+def operations_differing_in(*prefijos: str) -> list[tuple[str, str]]:
     """Las operaciones bajo esas rutas cuya forma difiere de la de main."""
-    return [clave for clave in contrato_distinto_del_de_main() if clave[1].startswith(prefijos)]
+    return [clave for clave in contract_differs_from_main() if clave[1].startswith(prefijos)]
 
 
 def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
     None
 ):
     """el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
-    assert contrato_distinto_del_de_main() == {}
+    assert contract_differs_from_main() == {}

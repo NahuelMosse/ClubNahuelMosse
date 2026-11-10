@@ -8,11 +8,11 @@ from sqlalchemy import Engine, text
 
 
 def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
     """el alta de un espacio espera la baja en curso de su sede y la rechaza
     @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
-    sede_id, _ = sede
+    sede_id, _ = venue
     espacio = {
         "venue_id": sede_id,
         "sport": "Futbol",
@@ -21,13 +21,13 @@ def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
         "lit": True,
         "price_per_hour": 38000,
     }
-    with motor.connect() as baja, ThreadPoolExecutor(max_workers=1) as pool:
+    with engine.connect() as baja, ThreadPoolExecutor(max_workers=1) as pool:
         baja.execute(
             text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede_id},
         )
         alta = pool.submit(
-            api.post, "/spaces", headers={"Authorization": f"Bearer {token_admin}"}, json=espacio
+            api.post, "/spaces", headers={"Authorization": f"Bearer {admin_token}"}, json=espacio
         )
         time.sleep(1.5)
         esperaba = not alta.done()

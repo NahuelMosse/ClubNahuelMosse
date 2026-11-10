@@ -9,8 +9,8 @@ import pytest
 
 from app.shared.config import Settings
 
-RAIZ = Path(__file__).resolve().parents[4]
-APP = RAIZ / "apps" / "api" / "app"
+ROOT = Path(__file__).resolve().parents[4]
+APP = ROOT / "apps" / "api" / "app"
 MAIN_DE_REFERENCIA = "1ee70de"
 
 MODULOS = {
@@ -183,7 +183,7 @@ def test_la_contrasena_del_administrador_se_lee_de_admin_password_y_de_admin_con
 def test_la_rama_contiene_main_en_1ee70de() -> None:
     """la rama contiene main en 1ee70de @ENG-13-S4"""
     contiene = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", MAIN_DE_REFERENCIA, "HEAD"], cwd=RAIZ
+        ["git", "merge-base", "--is-ancestor", MAIN_DE_REFERENCIA, "HEAD"], cwd=ROOT
     ).returncode
     assert contiene == 0
 
@@ -192,7 +192,7 @@ def test_scripts_e2e_sh_siembra_el_admin_con_el_modulo_users_seed_admin_y_las_mi
     None
 ):
     """scripts/e2e.sh siembra el admin con el módulo users.seed_admin y las mismas opciones @assumption:ENG-13-ASM-04"""
-    guion = (RAIZ / "scripts" / "e2e.sh").read_text(encoding="utf-8")
+    guion = (ROOT / "scripts" / "e2e.sh").read_text(encoding="utf-8")
 
     assert "python -m app.modules.users.seed_admin" in guion
     assert "sembrar_admin" not in guion

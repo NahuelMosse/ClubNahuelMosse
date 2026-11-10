@@ -31,21 +31,21 @@ def _espacio(sede_id: str, **cambios: object) -> dict[str, object]:
 
 
 def test_el_alta_arma_el_nombre_y_guarda_el_rastro(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
+    sede_id, prefijo = venue
     sugerido = api.get(
         "/spaces/name",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         params={"venue_id": sede_id, "sport": "Futbol", "kind": "F5"},
     )
     assert sugerido.json() == {"name": f"{prefijo}_Futbol_F5_1", "number": 1}
 
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, number=1))
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, number=1))
 
     assert r.status_code == 201
     assert r.json()["name"] == f"{prefijo}_Futbol_F5_1"
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(
             text(
                 "SELECT e.active, e.created_by IS NOT NULL, e.price_per_hour"
@@ -57,30 +57,30 @@ def test_el_alta_arma_el_nombre_y_guarda_el_rastro(
 
 
 def test_los_numeros_no_se_reutilizan_despues_de_una_baja(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
-    primero = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
-    with motor.begin() as conn:
+    sede_id, prefijo = venue
+    primero = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": primero["id"]},
         )
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id))
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id))
     assert r.json()["name"] == f"{prefijo}_Futbol_F5_2"
     # Otro tipo tiene su propia numeración.
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, kind="F7"))
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, kind="F7"))
     assert r.json()["name"] == f"{prefijo}_Futbol_F7_1"
 
 
 def test_si_otro_alta_tomo_el_numero_vuelve_con_el_siguiente(
-    api: TestClient, token_admin: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
-    assert api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).is_success
+    sede_id, prefijo = venue
+    assert api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).is_success
     r = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json=_espacio(sede_id, number=1, covered=True),
     )
     assert r.status_code == 409
@@ -92,13 +92,13 @@ def test_si_otro_alta_tomo_el_numero_vuelve_con_el_siguiente(
 
 
 def test_dos_altas_a_la_vez_toman_numeros_distintos(
-    api: TestClient, token_admin: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
+    sede_id, prefijo = venue
     with ThreadPoolExecutor(max_workers=3) as pool:
         respuestas = list(
             pool.map(
-                lambda _: api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)),
+                lambda _: api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)),
                 range(3),
             )
         )
@@ -108,12 +108,12 @@ def test_dos_altas_a_la_vez_toman_numeros_distintos(
 
 
 def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
-    api: TestClient, token_admin: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
+    sede_id, _ = venue
     r = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json=_espacio(sede_id, kind="PDL", price_per_hour=0),
     )
     assert r.status_code == 422
@@ -126,52 +126,52 @@ def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
 
 
 def test_una_sede_dada_de_baja_no_recibe_espacios(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    with motor.begin() as conn:
+    sede_id, _ = venue
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede_id},
         )
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id))
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id))
     assert r.status_code == 422
     assert r.json() == {"errors": {"venue_id": "The venue is no longer available"}}
 
 
 def test_los_usuarios_ven_los_espacios_activos_y_el_catalogo(
     api: TestClient,
-    motor: Engine,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
 ) -> None:
-    sede_id, prefijo = sede
-    f7 = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, kind="F7"))
-    api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id))
-    with motor.begin() as conn:
+    sede_id, prefijo = venue
+    f7 = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, kind="F7"))
+    api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id))
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": f7.json()["id"]},
         )
 
-    r = api.get("/spaces", headers=_con(token_usuario))
+    r = api.get("/spaces", headers=_con(user_token))
 
     assert r.status_code == 200
     propios = [e["name"] for e in r.json()["spaces"] if e["name"].startswith(prefijo)]
     assert propios == [f"{prefijo}_Futbol_F5_1"]
-    catalogo = api.get("/spaces/catalog", headers=_con(token_usuario)).json()
+    catalogo = api.get("/spaces/catalog", headers=_con(user_token)).json()
     futbol = next(d for d in catalogo["sports"] if d["key"] == "Futbol")
     assert {"key": "F5", "name": "Football 5"} in futbol["kinds"]
 
 
 def test_un_usuario_no_pide_nombres_de_espacios(
-    api: TestClient, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, user_token: str, venue: tuple[str, str]
 ) -> None:
     r = api.get(
         "/spaces/name",
-        headers=_con(token_usuario),
-        params={"venue_id": sede[0], "sport": "Futbol", "kind": "F5"},
+        headers=_con(user_token),
+        params={"venue_id": venue[0], "sport": "Futbol", "kind": "F5"},
     )
     assert r.status_code == 403
 
@@ -183,11 +183,11 @@ def test_sin_sesion_no_hay_espacios(api: TestClient) -> None:
 
 
 def test_el_numero_saltea_un_nombre_que_ya_uso_otra_sede(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
-    assert api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).is_success
-    with motor.begin() as conn:
+    sede_id, prefijo = venue
+    assert api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).is_success
+    with engine.begin() as conn:
         nombre, calle, altura = conn.execute(
             text("SELECT name, street, street_number FROM venue WHERE id = :id"), {"id": sede_id}
         ).one()
@@ -199,7 +199,7 @@ def test_el_numero_saltea_un_nombre_que_ya_uso_otra_sede(
     # de la dada de baja.
     otra = api.post(
         "/venues",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
             "name": nombre,
             "address": f"{calle} {altura}",
@@ -210,27 +210,27 @@ def test_el_numero_saltea_un_nombre_que_ya_uso_otra_sede(
     ).json()["id"]
     sugerido = api.get(
         "/spaces/name",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         params={"venue_id": otra, "sport": "Futbol", "kind": "F5"},
     ).json()
     assert sugerido == {"name": f"{prefijo}_Futbol_F5_2", "number": 2}
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(otra, number=2))
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(otra, number=2))
     assert r.status_code == 201
     assert r.json()["name"] == f"{prefijo}_Futbol_F5_2"
 
 
 def test_el_mismo_pedido_repetido_despues_de_un_corte_devuelve_el_espacio_ya_guardado(
-    api: TestClient, token_admin: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    primero = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, number=1))
-    repetido = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, number=1))
+    sede_id, _ = venue
+    primero = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, number=1))
+    repetido = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, number=1))
     assert repetido.status_code == 201
     assert repetido.json() == primero.json()
     # Con otros datos no es el mismo pedido: el número está ocupado.
     distinto = api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json=_espacio(sede_id, number=1, price_per_hour=40000),
     )
     assert distinto.status_code == 409
@@ -239,77 +239,77 @@ def test_el_mismo_pedido_repetido_despues_de_un_corte_devuelve_el_espacio_ya_gua
 
 def test_el_pedido_de_otro_administrador_no_se_toma_como_propio(
     api: TestClient,
-    token_admin: str,
-    sede: tuple[str, str],
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    admin_token: str,
+    venue: tuple[str, str],
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    sede_id, _ = sede
-    s = unico()
+    sede_id, _ = venue
+    s = unique()
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     argumentos = [
         "--correo", f"otro.{s}@club.com", "--nombre", "Luis", "--apellido", "Paz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1980-02-02",
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
-    otro = iniciar_sesion(f"otro.{s}@club.com", CONTRASENA)
+    otro = sign_in(f"otro.{s}@club.com", CONTRASENA)
     assert otro is not None
     assert api.post("/spaces", headers=_con(otro), json=_espacio(sede_id, number=1)).is_success
-    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, number=1))
+    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, number=1))
     assert r.status_code == 409
 
 
 def test_se_filtran_los_espacios_de_una_sede_y_la_sede_dice_sus_deportes(
     api: TestClient,
-    token_admin: str,
-    token_usuario: str,
-    sede: tuple[str, str],
-    unico: Callable[[], str],
+    admin_token: str,
+    user_token: str,
+    venue: tuple[str, str],
+    unique: Callable[[], str],
 ) -> None:
-    sede_id, prefijo = sede
+    sede_id, prefijo = venue
     otra = api.post(
         "/venues",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json={
-            "name": f"Sede Castelar {unico()}",
+            "name": f"Sede Castelar {unique()}",
             "address": "Av. Rivadavia 23500",
             "opens_at": "08:00",
             "closes_at": "22:00",
             "open_days": [1, 2, 3, 4, 5, 6, 7],
         },
     ).json()["id"]
-    api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, kind="F7"))
-    api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id))
+    api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, kind="F7"))
+    api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id))
     api.post(
         "/spaces",
-        headers=_con(token_admin),
+        headers=_con(admin_token),
         json=_espacio(sede_id, sport="Tenis", kind="PDL"),
     )
-    api.post("/spaces", headers=_con(token_admin), json=_espacio(otra))
+    api.post("/spaces", headers=_con(admin_token), json=_espacio(otra))
 
-    r = api.get("/spaces", headers=_con(token_usuario), params={"venue_id": sede_id})
+    r = api.get("/spaces", headers=_con(user_token), params={"venue_id": sede_id})
 
     assert [e["name"] for e in r.json()["spaces"]] == [
         f"{prefijo}_Futbol_F5_1",
         f"{prefijo}_Futbol_F7_1",
         f"{prefijo}_Tenis_PDL_1",
     ]
-    sedes = {s["id"]: s for s in api.get("/venues", headers=_con(token_usuario)).json()["venues"]}
+    sedes = {s["id"]: s for s in api.get("/venues", headers=_con(user_token)).json()["venues"]}
     assert (sedes[sede_id]["space_count"], sedes[sede_id]["sports"]) == (3, ["Futbol", "Tenis"])
     assert sedes[otra]["sports"] == ["Futbol"]
 
 
 def test_se_filtran_los_espacios_por_deporte_y_tipo(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
+    sede_id, prefijo = venue
     for cambios in ({}, {"kind": "F7"}, {"sport": "Hockey", "kind": "H7"}):
-        api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, **cambios))
+        api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, **cambios))
 
     def nombres(**filtro: str) -> list[str]:
         params: dict[str, str | int] = {"venue_id": sede_id, **filtro}
-        r = api.get("/spaces", headers=_con(token_usuario), params=params)
+        r = api.get("/spaces", headers=_con(user_token), params=params)
         return [e["name"] for e in r.json()["spaces"]]
 
     assert nombres(sport="Futbol") == [f"{prefijo}_Futbol_F5_1", f"{prefijo}_Futbol_F7_1"]
@@ -318,18 +318,18 @@ def test_se_filtran_los_espacios_por_deporte_y_tipo(
     assert nombres(kind="F7") == [f"{prefijo}_Futbol_F7_1"]
     for malo in ({"sport": ""}, {"kind": ""}):
         params: dict[str, str | int] = {"venue_id": sede_id, **malo}
-        r = api.get("/spaces", headers=_con(token_usuario), params=params)
+        r = api.get("/spaces", headers=_con(user_token), params=params)
         assert r.status_code == 422
 
 
 def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    espacio = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
-    hoy = api.get(f"/spaces/{espacio['id']}/slots", headers=_con(token_usuario)).json()
+    sede_id, _ = venue
+    espacio = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
+    hoy = api.get(f"/spaces/{espacio['id']}/slots", headers=_con(user_token)).json()
     manana = date.fromisoformat(hoy["today"]) + timedelta(days=1)
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         for hora, estado in ((10, "active"), (12, "canceled")):
             conn.execute(
                 text(
@@ -346,7 +346,7 @@ def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
 
     r = api.get(
         f"/spaces/{espacio['id']}/slots",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         params={"date": manana.isoformat()},
     )
 
@@ -358,34 +358,34 @@ def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
 
 
 def test_los_horarios_se_piden_con_sesion_y_dentro_de_la_semana(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    espacio = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    sede_id, _ = venue
+    espacio = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
     ruta = f"/spaces/{espacio['id']}/slots"
-    hoy = date.fromisoformat(api.get(ruta, headers=_con(token_usuario)).json()["today"])
+    hoy = date.fromisoformat(api.get(ruta, headers=_con(user_token)).json()["today"])
 
     assert api.get(ruta).status_code == 401
     lejos = {"date": (hoy + timedelta(days=7)).isoformat()}
-    assert api.get(ruta, headers=_con(token_usuario), params=lejos).status_code == 422
-    assert api.get(ruta, headers=_con(token_usuario), params={"hours": 5}).status_code == 422
+    assert api.get(ruta, headers=_con(user_token), params=lejos).status_code == 422
+    assert api.get(ruta, headers=_con(user_token), params={"hours": 5}).status_code == 422
     inexistente = "/spaces/00000000-0000-7000-8000-0000000000ff/slots"
-    assert api.get(inexistente, headers=_con(token_usuario)).status_code == 404
+    assert api.get(inexistente, headers=_con(user_token)).status_code == 404
 
 
 def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = sede
+    sede_id, prefijo = venue
     ids = [
-        api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id, **c)).json()["id"]
+        api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id, **c)).json()["id"]
         for c in ({}, {}, {"kind": "F7"})
     ]
     hoy = date.fromisoformat(
-        api.get(f"/spaces/{ids[0]}/slots", headers=_con(token_usuario)).json()["today"]
+        api.get(f"/spaces/{ids[0]}/slots", headers=_con(user_token)).json()["today"]
     )
     manana = hoy + timedelta(days=1)
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         for espacio, hora in ((ids[0], 9), (ids[1], 11)):
             conn.execute(
                 text(
@@ -406,7 +406,7 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
     def nombres(**cambios: str) -> list[str]:
         r = api.get(
             "/spaces/available",
-            headers=_con(token_usuario),
+            headers=_con(user_token),
             params={**consulta, "since": "10:00", "until": "12:00", **cambios},
         )
         assert r.status_code == 200, r.text
@@ -419,14 +419,14 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
 
 
 def test_las_canchas_disponibles_rechazan_un_rango_invalido(
-    api: TestClient, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
+    sede_id, _ = venue
     base: dict[str, str | int] = {"venue_id": sede_id, "sport": "Futbol", "date": "2020-01-01"}
 
     r = api.get(
         "/spaces/available",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         params=base | {"since": "10:00", "until": "10:00"},
     )
     assert r.status_code == 422
@@ -436,13 +436,13 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
     }
     r = api.get(
         "/spaces/available",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         params=base | {"since": "10", "until": "11:00"},
     )
     assert r.json()["errors"] == {"start_hour": "Choose an on-the-hour time"}
     r = api.get(
         "/spaces/available",
-        headers=_con(token_usuario),
+        headers=_con(user_token),
         params=base
         | {"venue_id": "00000000-0000-7000-8000-000000000000", "since": "10:00", "until": "11:00"},
     )
@@ -451,11 +451,11 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
 
 
 def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las_reservas(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    alta = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
-    with motor.begin() as conn:
+    sede_id, _ = venue
+    alta = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
+    with engine.begin() as conn:
         dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         conn.execute(
             text(
@@ -467,11 +467,11 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
         )
     cambio = {"covered": not alta["covered"], "lit": False, "price_per_hour": 45000}
 
-    r = api.put(f"/spaces/{alta['id']}", headers=_con(token_admin), json=cambio)
+    r = api.put(f"/spaces/{alta['id']}", headers=_con(admin_token), json=cambio)
 
     assert r.status_code == 200
     assert r.json() == alta | cambio
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(
             text(
                 "SELECT e.updated_by IS NOT NULL, r.total FROM space e"
@@ -481,16 +481,16 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
         ).one()
     assert tuple(fila) == (True, alta["price_per_hour"])
     assert (
-        api.put(f"/spaces/{alta['id']}", headers=_con(token_usuario), json=cambio).status_code
+        api.put(f"/spaces/{alta['id']}", headers=_con(user_token), json=cambio).status_code
         == 403
     )
 
 
 def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    alta = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    sede_id, _ = venue
+    alta = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
     ruta = f"/spaces/{alta['id']}"
 
     for precio, mensaje in [
@@ -500,52 +500,52 @@ def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
     ]:
         r = api.put(
             ruta,
-            headers=_con(token_admin),
+            headers=_con(admin_token),
             json={"covered": True, "lit": True, "price_per_hour": precio},
         )
         assert r.status_code == 422
         assert r.json()["errors"] == {"price_per_hour": mensaje}
-    with motor.begin() as conn:
+    with engine.begin() as conn:
         conn.execute(
             text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": alta["id"]},
         )
     valido = {"covered": True, "lit": True, "price_per_hour": 45000}
-    assert api.put(ruta, headers=_con(token_admin), json=valido).status_code == 404
+    assert api.put(ruta, headers=_con(admin_token), json=valido).status_code == 404
 
 
 def test_editar_sin_un_campo_lo_deja_como_estaba(
-    api: TestClient, token_admin: str, sede: tuple[str, str]
+    api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    alta = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    sede_id, _ = venue
+    alta = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
     ruta = f"/spaces/{alta['id']}"
 
     # Otro administrador cambió el precio; éste sólo cambia la condición.
     assert (
-        api.put(ruta, headers=_con(token_admin), json={"price_per_hour": 50000}).status_code == 200
+        api.put(ruta, headers=_con(admin_token), json={"price_per_hour": 50000}).status_code == 200
     )
-    r = api.put(ruta, headers=_con(token_admin), json={"covered": not alta["covered"]})
+    r = api.put(ruta, headers=_con(admin_token), json={"covered": not alta["covered"]})
 
     assert r.status_code == 200
     assert (r.json()["price_per_hour"], r.json()["covered"]) == (50000, not alta["covered"])
-    vacio = api.put(ruta, headers=_con(token_admin), json={})
+    vacio = api.put(ruta, headers=_con(admin_token), json={})
     assert vacio.status_code == 422
     assert vacio.json()["errors"] == {"change": "There is nothing to change"}
 
 
 def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    uno = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    sede_id, _ = venue
+    uno = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
     ruta = f"/spaces/{uno['id']}"
-    assert api.delete(ruta, headers=_con(token_usuario)).status_code == 403
+    assert api.delete(ruta, headers=_con(user_token)).status_code == 403
     assert api.delete(ruta).status_code == 401
 
-    assert api.delete(ruta, headers=_con(token_admin)).status_code == 204
+    assert api.delete(ruta, headers=_con(admin_token)).status_code == 204
 
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         fila = conn.execute(
             text(
                 "SELECT active, deactivated_at IS NOT NULL, deactivated_by IS NOT NULL"
@@ -554,17 +554,17 @@ def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(
             {"id": uno["id"]},
         ).one()
     assert tuple(fila) == (False, True, True)
-    espacios = api.get("/spaces", headers=_con(token_usuario)).json()["spaces"]
+    espacios = api.get("/spaces", headers=_con(user_token)).json()["spaces"]
     assert uno["id"] not in [e["id"] for e in espacios]
-    assert api.delete(ruta, headers=_con(token_admin)).status_code == 404
+    assert api.delete(ruta, headers=_con(admin_token)).status_code == 404
 
 
 def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
-    uno = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
-    with motor.begin() as conn:
+    sede_id, _ = venue
+    uno = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
+    with engine.begin() as conn:
         dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
@@ -576,26 +576,26 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
             {"u": dueno, "e": uno["id"]},
         )
 
-    r = api.delete(f"/spaces/{uno['id']}", headers=_con(token_admin))
+    r = api.delete(f"/spaces/{uno['id']}", headers=_con(admin_token))
 
     assert r.status_code == 409
     assert r.json() == {
         "errors": {"space": "The space cannot be deleted because it has future bookings."}
     }
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         assert conn.execute(
             text("SELECT active FROM space WHERE id = :id"), {"id": uno["id"]}
         ).scalar_one()
 
 
 def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
+    api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = sede
+    sede_id, _ = venue
 
     def con_reserva(desde: str, estado: str) -> str:
-        espacio = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id)).json()
-        with motor.begin() as conn:
+        espacio = api.post("/spaces", headers=_con(admin_token), json=_espacio(sede_id)).json()
+        with engine.begin() as conn:
             dueno: Any = conn.execute(
                 text("SELECT id FROM app_user ORDER BY id LIMIT 1")
             ).scalar_one()
@@ -615,6 +615,6 @@ def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
     terminada = con_reserva("-1 day", "active")
     cancelada = con_reserva("1 day", "canceled")
 
-    assert api.delete(f"/spaces/{futura}", headers=_con(token_admin)).status_code == 409
-    assert api.delete(f"/spaces/{terminada}", headers=_con(token_admin)).status_code == 204
-    assert api.delete(f"/spaces/{cancelada}", headers=_con(token_admin)).status_code == 204
+    assert api.delete(f"/spaces/{futura}", headers=_con(admin_token)).status_code == 409
+    assert api.delete(f"/spaces/{terminada}", headers=_con(admin_token)).status_code == 204
+    assert api.delete(f"/spaces/{cancelada}", headers=_con(admin_token)).status_code == 204

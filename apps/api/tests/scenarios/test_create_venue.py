@@ -6,12 +6,12 @@ from sqlalchemy import Engine, text
 
 def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_una_sede(
     api: TestClient,
-    motor: Engine,
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
+    engine: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
 ) -> None:
     """un usuario sin rol de administrador no puede dar de alta una sede @CU-17-H01-03"""
-    s = unico()
+    s = unique()
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
@@ -27,7 +27,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_una_sede(
         ).status_code
         == 201
     )
-    token = iniciar_sesion(correo, "ClubNahuel1")
+    token = sign_in(correo, "ClubNahuel1")
     nombre = f"Sede Haedo {s}"
 
     r = api.post(
@@ -45,7 +45,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_una_sede(
     # Verifica: la API lo rechaza por falta de permisos.
     assert r.status_code == 403
     # Verifica: la sede no quedó guardada.
-    with motor.connect() as conn:
+    with engine.connect() as conn:
         assert (
             conn.execute(
                 text("SELECT count(*) FROM venue WHERE name = :n"), {"n": nombre}

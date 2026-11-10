@@ -13,22 +13,22 @@ CONTRASENA = "ClubNahuel1"
 
 
 def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
-    iniciar_sesion: Callable[[str, str], str | None],
-    unico: Callable[[], str],
-    motor: Engine,
+    sign_in: Callable[[str, str], str | None],
+    unique: Callable[[], str],
+    engine: Engine,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """una sede dada de alta sobrevive a reiniciar la API sobre la misma base @ARQ-02-S2"""
-    s = unico()
+    s = unique()
     correo = f"admin.{s}@club.com"
     monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
     argumentos = ["--correo", correo, "--nombre", "Ana", "--apellido", "Díaz",
                   "--dni", dni, "--nacimiento", "1985-06-01"]  # fmt: skip
     assert sembrar(argumentos) == 0
-    token = iniciar_sesion(correo, CONTRASENA)
+    token = sign_in(correo, CONTRASENA)
     assert token is not None
-    sede = {
+    venue = {
         "name": f"Sede {s}",
         "address": "Calle 1",
         "opens_at": "08:00",
@@ -37,15 +37,15 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
     }
 
     alta = TestClient(create_app(), base_url="http://localhost").post(
-        "/venues", json=sede, headers={"Authorization": f"Bearer {token}"}
+        "/venues", json=venue, headers={"Authorization": f"Bearer {token}"}
     )
     assert alta.status_code == 201
 
-    with motor.connect() as otra:
+    with engine.connect() as otra:
         guardada = otra.execute(
             text("SELECT name FROM venue WHERE id = :id"), {"id": alta.json()["id"]}
         ).scalar_one()
-    assert guardada == sede["name"]
+    assert guardada == venue["name"]
     otra_api = TestClient(create_app(), base_url="http://localhost")
     listado = otra_api.get("/venues", headers={"Authorization": f"Bearer {token}"}).json()
-    assert sede["name"] in [x["name"] for x in listado["venues"]]
+    assert venue["name"] in [x["name"] for x in listado["venues"]]
