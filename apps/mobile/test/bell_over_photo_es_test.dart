@@ -13,7 +13,7 @@ Future<void> _mountBell(
   int unread = 0,
 }) async {
   final api = FakeApi()
-    ..avisos = []
+    ..notices = []
     ..unread = unread;
   final center = centerOf(api, FakeSession(userProfile));
   await mountScreen(

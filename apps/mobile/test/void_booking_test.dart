@@ -19,16 +19,16 @@ import 'support/mount.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-String bookingJson({bool anulable = true, String estado = 'active'}) =>
+String bookingJson({bool voidable = true, String status = 'active'}) =>
     '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
     ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
     ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "status": "$estado", "reason": ${estado == 'voided' ? '"lluvia"' : 'null'},'
+    ' "status": "$status", "reason": ${status == 'voided' ? '"lluvia"' : 'null'},'
     ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
     ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
     ' "canceled_by_name": null, "space_deactivated": false,'
-    ' "voidable": $anulable}';
+    ' "voidable": $voidable}';
 
 String listing(String reserva) =>
     '{"bookings": [$reserva], "total": 1, "page": 1, "per_page": 20,'
@@ -46,10 +46,10 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     final api = apiRoutes({
-      'GET /bookings/all': (200, listing(bookingJson(anulable: anulable))),
+      'GET /bookings/all': (200, listing(bookingJson(voidable: anulable))),
       'GET /spaces/catalog': (200, catalogJson),
       'POST /bookings/00000000-0000-7000-8000-000000000001/void':
-          alAnular ?? (200, bookingJson(anulable: false, estado: 'voided')),
+          alAnular ?? (200, bookingJson(voidable: false, status: 'voided')),
     }, requests: pedidos);
     final sesion = FakeSession(adminProfile);
     await mountScreen(
@@ -210,7 +210,7 @@ void main() {
       final api = apiRoutes({
         'POST /bookings/00000000-0000-7000-8000-000000000001/void': (
           200,
-          bookingJson(anulable: false, estado: 'voided'),
+          bookingJson(voidable: false, status: 'voided'),
         ),
       }, requests: pedidos);
       final sesion = FakeSession(adminProfile);

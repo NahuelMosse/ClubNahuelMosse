@@ -19,11 +19,11 @@ void main() {
   const modes = {'dark': true, 'light': false};
   final upcoming =
       '[${bookingJson()}, '
-      '${bookingJson(id: '00000000-0000-7000-8000-000000000002', inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]';
+      '${bookingJson(id: '00000000-0000-7000-8000-000000000002', start: '2026-11-15T13:00:00+00:00', end: '2026-11-15T14:00:00+00:00')}]';
   final history =
-      '[${bookingJson(estado: 'canceled', inicio: '2026-11-11T23:00:00+00:00', fin: '2026-11-12T00:00:00+00:00')}, '
-      '${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed', inicio: '2026-11-04T23:00:00+00:00', fin: '2026-11-05T00:00:00+00:00')}, '
-      '${bookingJson(id: '00000000-0000-7000-8000-000000000003', estado: 'voided', motivo: 'mantenimiento de la cancha', inicio: '2026-10-30T22:00:00+00:00', fin: '2026-10-30T23:00:00+00:00')}]';
+      '[${bookingJson(status: 'canceled', start: '2026-11-11T23:00:00+00:00', end: '2026-11-12T00:00:00+00:00')}, '
+      '${bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'completed', start: '2026-11-04T23:00:00+00:00', end: '2026-11-05T00:00:00+00:00')}, '
+      '${bookingJson(id: '00000000-0000-7000-8000-000000000003', status: 'voided', reason: 'mantenimiento de la cancha', start: '2026-10-30T22:00:00+00:00', end: '2026-10-30T23:00:00+00:00')}]';
 
   Future<void> capture(WidgetTester tester, String file) async {
     await tester.runAsync(() async {

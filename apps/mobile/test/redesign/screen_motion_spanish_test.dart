@@ -239,7 +239,7 @@ ApiClient _myBookingsApi(Completer<void>? historyPending) {
       final (code, body) = request.url.path == '/bookings'
           ? (
               200,
-              '{"bookings": [${historial ? bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed') : bookingJson()}]}',
+              '{"bookings": [${historial ? bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'completed') : bookingJson()}]}',
             )
           : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
@@ -967,7 +967,7 @@ void main() {
       theme: darkTheme,
     );
     api
-      ..avisos = [reminderNotice]
+      ..notices = [reminderNotice]
       ..unread = 1;
     await tester.runAsync(center.load);
     await tester.pump();

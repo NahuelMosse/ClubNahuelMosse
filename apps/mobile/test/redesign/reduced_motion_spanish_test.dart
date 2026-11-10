@@ -129,7 +129,7 @@ void main() {
         ),
       );
       api
-        ..avisos = [reminderNotice]
+        ..notices = [reminderNotice]
         ..unread = 1;
       await tester.runAsync(center.load);
       await tester.pump();

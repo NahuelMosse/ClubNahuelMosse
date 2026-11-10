@@ -10,7 +10,7 @@ import 'support/mount.dart';
 
 /// A system that starts without having asked and answers whatever is set when asked.
 class UnaskedSystem extends FakeSystem {
-  UnaskedSystem({this.answer = true}) : super(concedido: false);
+  UnaskedSystem({this.answer = true}) : super(granted: false);
 
   final bool answer;
   bool alreadyAsked = false;
@@ -20,9 +20,9 @@ class UnaskedSystem extends FakeSystem {
 
   @override
   Future<bool> requestPermission() async {
-    solicitudes++;
+    requests++;
     alreadyAsked = true;
-    concedido = answer;
+    granted = answer;
     return answer;
   }
 }
@@ -33,11 +33,11 @@ void main() {
     (tester) async {
       final api = FakeApi();
       final system = UnaskedSystem();
-      centerOf(api, FakeSession(userProfile), sistema: system);
+      centerOf(api, FakeSession(userProfile), system: system);
       await tester.pumpAndSettle();
 
-      expect(system.solicitudes, 1);
-      final request = bodyOf(api.de('PUT', '/devices').last);
+      expect(system.requests, 1);
+      final request = bodyOf(api.of('PUT', '/devices').last);
       expect(request['permission_granted'], isTrue);
     },
   );
@@ -46,20 +46,20 @@ void main() {
     tester,
   ) async {
     final system = UnaskedSystem()..alreadyAsked = true;
-    centerOf(FakeApi(), FakeSession(userProfile), sistema: system);
+    centerOf(FakeApi(), FakeSession(userProfile), system: system);
     await tester.pumpAndSettle();
 
-    expect(system.solicitudes, 0);
+    expect(system.requests, 0);
   });
 
   testWidgets(
     'an admin does not get the question on entry @assumption:NOT-01-ASM-01',
     (tester) async {
       final system = UnaskedSystem();
-      centerOf(FakeApi(), FakeSession(adminProfile), sistema: system);
+      centerOf(FakeApi(), FakeSession(adminProfile), system: system);
       await tester.pumpAndSettle();
 
-      expect(system.solicitudes, 0);
+      expect(system.requests, 0);
     },
   );
 
@@ -68,13 +68,13 @@ void main() {
     final center = centerOf(
       FakeApi(),
       FakeSession(userProfile),
-      sistema: system,
+      system: system,
     );
     await tester.pumpAndSettle();
 
     await center.enable();
 
-    expect(system.solicitudes, 1);
+    expect(system.requests, 1);
   });
 
   testWidgets(
@@ -83,16 +83,16 @@ void main() {
       final api = FakeApi();
       final system = UnaskedSystem(answer: false);
       final session = FakeSession(userProfile);
-      centerOf(api, session, sistema: system);
+      centerOf(api, session, system: system);
       await tester.pumpAndSettle();
 
-      expect(system.solicitudes, 1);
-      final request = bodyOf(api.de('PUT', '/devices').last);
+      expect(system.requests, 1);
+      final request = bodyOf(api.of('PUT', '/devices').last);
       expect(request['permission_granted'], isFalse);
 
-      centerOf(api, session, sistema: system);
+      centerOf(api, session, system: system);
       await tester.pumpAndSettle();
-      expect(system.solicitudes, 1);
+      expect(system.requests, 1);
       expect(jsonEncode(request), contains('token-del-telefono'));
     },
   );

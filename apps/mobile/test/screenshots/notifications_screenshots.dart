@@ -39,7 +39,7 @@ void main() {
         double scale = 1,
       }) async {
         final api = FakeApi()
-          ..avisos = notices
+          ..notices = notices
           ..unread = unread;
         final session = FakeSession(userProfile);
         await mountScreen(
@@ -48,7 +48,7 @@ void main() {
             center: centerOf(
               api,
               session,
-              sistema: FakeSystem(concedido: permission),
+              system: FakeSystem(granted: permission),
             ),
             session: session,
             now: () => noticesNow,
@@ -104,14 +104,14 @@ void main() {
 
       testWidgets('home with the bell $width $mode', (tester) async {
         final api = FakeApi()
-          ..avisos = [reminderNotice, confirmationNotice]
+          ..notices = [reminderNotice, confirmationNotice]
           ..unread = 2;
         await mountUser(
           tester,
           dark: dark,
           size: size,
           start: '/inicio',
-          api: api.cliente,
+          api: api.client,
           center: (session) => centerOf(api, session),
         );
         await capture(tester, 'notifications/home_${width}_$mode.png');
@@ -136,7 +136,7 @@ void main() {
           size: size,
         );
         api
-          ..avisos = [
+          ..notices = [
             reminderNotice,
             confirmationNotice.replaceFirst('"read": true', '"read": false'),
             alertNotice.replaceFirst('"read": true', '"read": false'),

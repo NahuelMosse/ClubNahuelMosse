@@ -12,18 +12,18 @@ import 'support/user.dart';
 
 String bookingJson({
   String id = '00000000-0000-7000-8000-000000000001',
-  String inicio = '2026-11-13T00:00:00+00:00',
-  String fin = '2026-11-13T01:00:00+00:00',
-  String estado = 'active',
-  String? motivo,
+  String start = '2026-11-13T00:00:00+00:00',
+  String end = '2026-11-13T01:00:00+00:00',
+  String status = 'active',
+  String? reason,
   bool? cancelable,
 }) =>
     '{"id": "$id", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space": "Moron_Rivadavia_19850_Futbol_F5_1", '
     '"sport": "Futbol", "kind": "F5", "venue": "Sede Morón", '
-    '"address": "Av. Rivadavia 19850", "starts_at": "$inicio", "ends_at": "$fin", '
-    '"price_per_hour": 38000, "total": 38000, "status": "$estado", '
-    '"reason": ${motivo == null ? 'null' : '"$motivo"'}, '
-    '"cancelable": ${cancelable ?? estado == 'active'}}';
+    '"address": "Av. Rivadavia 19850", "starts_at": "$start", "ends_at": "$end", '
+    '"price_per_hour": 38000, "total": 38000, "status": "$status", '
+    '"reason": ${reason == null ? 'null' : '"$reason"'}, '
+    '"cancelable": ${cancelable ?? status == 'active'}}';
 
 void main() {
   const upcomingMalformed = '[{"id": "00000000-0000-7000-8000-000000000001"}]';
@@ -83,9 +83,9 @@ void main() {
       final requests = await open(
         tester,
         history:
-            '[${bookingJson(estado: 'canceled')}, '
-            '${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'lluvia')}, '
-            '${bookingJson(id: '00000000-0000-7000-8000-000000000003', estado: 'completed')}]',
+            '[${bookingJson(status: 'canceled')}, '
+            '${bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'voided', reason: 'lluvia')}, '
+            '${bookingJson(id: '00000000-0000-7000-8000-000000000003', status: 'completed')}]',
       );
 
       await tester.tap(find.text('Historial'));
@@ -132,7 +132,7 @@ void main() {
     await open(
       tester,
       size: const Size(360, 800),
-      upcoming: '[${bookingJson(estado: 'active')}]',
+      upcoming: '[${bookingJson(status: 'active')}]',
     );
     expect(tester.takeException(), isNull);
   });
@@ -144,7 +144,7 @@ void main() {
         tester,
         upcoming: '[${bookingJson()}]',
         history:
-            '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'Lluvia')}]',
+            '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'voided', reason: 'Lluvia')}]',
       );
       expect(find.text('ACTIVA'), findsOneWidget);
 

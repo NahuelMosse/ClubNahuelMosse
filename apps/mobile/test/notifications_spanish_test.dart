@@ -32,16 +32,16 @@ final noticesNow = DateTime.utc(2026, 11, 12, 20);
 String noticeJson({
   required String id,
   required DateTime club,
-  String tipo = 'reminder',
-  String titulo = 'Tu reserva es en 1 hora',
-  String cuerpo = 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
-  String? reservaId = '00000000-0000-7000-8000-000000000001',
-  bool leida = false,
+  String kind = 'reminder',
+  String title = 'Tu reserva es en 1 hora',
+  String body = 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
+  String? bookingId = '00000000-0000-7000-8000-000000000001',
+  bool read = false,
 }) =>
-    '{"id": "$id", "kind": "$tipo", "title": "$titulo", "body": "$cuerpo", '
-    '"booking_id": ${reservaId == null ? 'null' : '"$reservaId"'}, '
+    '{"id": "$id", "kind": "$kind", "title": "$title", "body": "$body", '
+    '"booking_id": ${bookingId == null ? 'null' : '"$bookingId"'}, '
     '"created_at": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
-    '"read": $leida}';
+    '"read": $read}';
 
 final reminderNotice = noticeJson(
   id: '00000000-0000-7000-8000-000000000003',
@@ -50,44 +50,44 @@ final reminderNotice = noticeJson(
 final confirmationNotice = noticeJson(
   id: '00000000-0000-7000-8000-000000000002',
   club: DateTime.utc(2026, 11, 12, 17),
-  tipo: 'user_cancellation',
-  titulo: 'Reserva cancelada',
-  cuerpo:
+  kind: 'user_cancellation',
+  title: 'Reserva cancelada',
+  body:
       'Vóley · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado.',
-  leida: true,
+  read: true,
 );
 final alertNotice = noticeJson(
   id: '00000000-0000-7000-8000-000000000001',
   club: DateTime.utc(2026, 11, 11, 15),
-  tipo: 'forced_cancellation',
-  titulo: 'El club anuló tu reserva',
-  cuerpo: 'Hockey 7 · Sede Ramos Mejía · Vie 30, 19:00. Motivo: mantenimiento.',
-  leida: true,
+  kind: 'forced_cancellation',
+  title: 'El club anuló tu reserva',
+  body: 'Hockey 7 · Sede Ramos Mejía · Vie 30, 19:00. Motivo: mantenimiento.',
+  read: true,
 );
 
 Map<String, Object?> bodyOf(http.Request request) =>
     jsonDecode(request.body) as Map<String, Object?>;
 
 class FakeSystem implements NotificationSystem {
-  FakeSystem({this.concedido = true});
+  FakeSystem({this.granted = true});
 
-  bool concedido;
-  int solicitudes = 0;
+  bool granted;
+  int requests = 0;
   int olvidos = 0;
 
   @override
   String get platform => 'android';
 
   @override
-  Future<bool> isAllowed() async => concedido;
+  Future<bool> isAllowed() async => granted;
 
   @override
   Future<bool> wasAsked() async => true;
 
   @override
   Future<bool> requestPermission() async {
-    solicitudes++;
-    concedido = true;
+    requests++;
+    granted = true;
     return true;
   }
 
@@ -137,28 +137,28 @@ class SlowCredentials extends FakeCredentials {
 
 /// La API de notificaciones, con lo que devuelve el centro y cada pedido anotado.
 class FakeApi {
-  List<String> avisos = [];
+  List<String> notices = [];
   int unread = 0;
-  bool caida = false;
+  bool down = false;
   final requests = <http.Request>[];
   void Function(http.Request)? onRequest;
 
-  ApiClient get cliente => ApiClient(
+  ApiClient get client => ApiClient(
     'http://api.falsa',
     cliente: MockClient((request) async {
       requests.add(request);
       onRequest?.call(request);
-      if (caida) throw http.ClientException('sin red');
+      if (down) throw http.ClientException('sin red');
       final (codigo, cuerpo) = switch ((request.method, request.url.path)) {
         ('GET', '/notifications') => (
           200,
-          '{"notifications": [${avisos.join(', ')}], "unread": $unread}',
+          '{"notifications": [${notices.join(', ')}], "unread": $unread}',
         ),
         ('GET', '/me') => (200, profileJson()),
         ('DELETE', '/me') => (204, ''),
         ('GET', '/bookings') => (
           200,
-          '{"bookings": [${bookingJson()}, ${bookingJson(id: '00000000-0000-7000-8000-000000000002', inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
+          '{"bookings": [${bookingJson()}, ${bookingJson(id: '00000000-0000-7000-8000-000000000002', start: '2026-11-15T13:00:00+00:00', end: '2026-11-15T14:00:00+00:00')}]}',
         ),
         ('GET', '/spaces/catalog') => (200, catalogJson),
         ('GET', '/venues') => (200, '{"venues": []}'),
@@ -176,7 +176,7 @@ class FakeApi {
     }),
   );
 
-  Iterable<http.Request> de(String metodo, String ruta) =>
+  Iterable<http.Request> of(String metodo, String ruta) =>
       requests.where((p) => p.method == metodo && p.url.path == ruta);
 }
 
@@ -185,14 +185,14 @@ class FakeApi {
 NotificationCenter centerOf(
   FakeApi api,
   Session session, {
-  NotificationSystem? sistema,
-  DateTime Function()? ahora,
+  NotificationSystem? system,
+  DateTime Function()? now,
 }) => NotificationCenter(
-  notifications: NotificationsRepository(api: api.cliente, session: session),
+  notifications: NotificationsRepository(api: api.client, session: session),
   session: session,
-  system: sistema ?? FakeSystem(),
+  system: system ?? FakeSystem(),
   every: Duration.zero,
-  now: ahora ?? () => DateTime.utc(2026, 11, 13),
+  now: now ?? () => DateTime.utc(2026, 11, 13),
 );
 
 final _es = lookupAppLocalizations(const Locale('es'));
@@ -272,7 +272,7 @@ void main() {
             noticeJson(
               id: '00000000-0000-7000-8000-000000000009',
               club: hoy,
-              tipo: 'otra',
+              kind: 'otra',
             ),
           ),
         ),
@@ -284,7 +284,7 @@ void main() {
   group('el centro', () {
     Future<(FakeApi, NotificationCenter)> abrir(
       WidgetTester tester, {
-      List<String> avisos = const [],
+      List<String> notices = const [],
       int unread = 0,
       bool permiso = true,
       Size tamano = const Size(393, 852),
@@ -293,13 +293,13 @@ void main() {
       void Function(AppNotification)? alAbrir,
     }) async {
       final api = FakeApi()
-        ..avisos = [...avisos]
+        ..notices = [...notices]
         ..unread = unread;
       final session = FakeSession(userProfile);
       final centro = centerOf(
         api,
         session,
-        sistema: FakeSystem(concedido: permiso),
+        system: FakeSystem(granted: permiso),
       );
       await mountScreen(
         tester,
@@ -322,7 +322,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await abrir(
         tester,
-        avisos: [reminderNotice, confirmationNotice, alertNotice],
+        notices: [reminderNotice, confirmationNotice, alertNotice],
         unread: 1,
       );
 
@@ -376,7 +376,7 @@ void main() {
           ),
           findsOneWidget,
         );
-        final antes = bodyOf(api.de('PUT', '/devices').last);
+        final antes = bodyOf(api.of('PUT', '/devices').last);
         expect(antes['permission_granted'], isFalse);
 
         await tester.tap(find.text('ACTIVAR NOTIFICACIONES'));
@@ -384,7 +384,7 @@ void main() {
 
         expect(find.text('Notificaciones desactivadas'), findsNothing);
         expect(find.text('Todavía no tenés notificaciones'), findsOneWidget);
-        final despues = bodyOf(api.de('PUT', '/devices').last);
+        final despues = bodyOf(api.of('PUT', '/devices').last);
         expect(despues, {
           'token': 'token-del-telefono',
           'platform': 'android',
@@ -398,7 +398,7 @@ void main() {
       (tester) async {
         await abrir(
           tester,
-          avisos: [reminderNotice],
+          notices: [reminderNotice],
           unread: 1,
           permiso: false,
         );
@@ -414,7 +414,7 @@ void main() {
       AppNotification? abierta;
       final (api, _) = await abrir(
         tester,
-        avisos: [reminderNotice],
+        notices: [reminderNotice],
         unread: 1,
         alAbrir: (n) => abierta = n,
       );
@@ -424,7 +424,7 @@ void main() {
 
       expect(abierta?.bookingId, '00000000-0000-7000-8000-000000000001');
       expect(
-        api.de(
+        api.of(
           'POST',
           '/notifications/00000000-0000-7000-8000-000000000003/read',
         ),
@@ -436,9 +436,9 @@ void main() {
       'sin conexión avisa del error y al reintentar muestra la lista',
       (tester) async {
         final api = FakeApi()
-          ..avisos = [reminderNotice]
+          ..notices = [reminderNotice]
           ..unread = 1
-          ..caida = true;
+          ..down = true;
         final session = FakeSession(userProfile);
         await mountScreen(
           tester,
@@ -453,7 +453,7 @@ void main() {
 
         expect(find.text('Error de conexión'), findsOneWidget);
         expect(find.text('Todavía no tenés notificaciones'), findsNothing);
-        api.caida = false;
+        api.down = false;
         await tester.tap(find.text('REINTENTAR'));
         await tester.pumpAndSettle();
 
@@ -468,7 +468,7 @@ void main() {
         final session = FakeSession(userProfile);
         final centro = centerOf(api, session);
         await tester.runAsync(centro.load);
-        api.caida = true;
+        api.down = true;
         await mountScreen(
           tester,
           NotificationsScreen(
@@ -491,7 +491,7 @@ void main() {
         (tester) async {
           await abrir(
             tester,
-            avisos: [reminderNotice, confirmationNotice, alertNotice],
+            notices: [reminderNotice, confirmationNotice, alertNotice],
             unread: 1,
             tamano: const Size(360, 800),
             escala: 2,
@@ -538,7 +538,7 @@ void main() {
       final centro = centerOf(
         api,
         session,
-        sistema: FakeSystem(concedido: permiso),
+        system: FakeSystem(granted: permiso),
       );
       final abiertas = <AppNotification>[];
       await mountScreen(
@@ -564,11 +564,11 @@ void main() {
       WidgetTester tester,
       FakeApi api,
       NotificationCenter centro,
-      List<String> avisos,
+      List<String> notices,
     ) async {
       api
-        ..avisos = avisos
-        ..unread = avisos.length;
+        ..notices = notices
+        ..unread = notices.length;
       await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
     }
@@ -577,7 +577,7 @@ void main() {
       tester,
     ) async {
       final api = FakeApi()
-        ..avisos = [reminderNotice]
+        ..notices = [reminderNotice]
         ..unread = 1;
       final session = FakeSession(userProfile);
       final centro = centerOf(api, session);
@@ -613,7 +613,7 @@ void main() {
 
       expect(find.text('MARCAR TODAS'), findsNothing);
       expect(centro.unread, 0);
-      expect(api.de('POST', '/notifications/read-all'), hasLength(1));
+      expect(api.of('POST', '/notifications/read-all'), hasLength(1));
     });
 
     testWidgets('tocar afuera cierra el panel sin marcar nada', (tester) async {
@@ -628,7 +628,7 @@ void main() {
 
       expect(find.text('MARCAR TODAS'), findsNothing);
       expect(centro.unread, 1);
-      expect(api.de('POST', '/notifications/read-all'), isEmpty);
+      expect(api.of('POST', '/notifications/read-all'), isEmpty);
     });
 
     testWidgets('tocar un aviso lo abre', (tester) async {
@@ -729,15 +729,15 @@ void main() {
   group('cuándo abre el panel', () {
     Future<(FakeApi, NotificationCenter)> montarPanel(
       WidgetTester tester,
-      List<String> avisos,
+      List<String> notices,
     ) async {
       final api = FakeApi()
-        ..avisos = avisos
-        ..unread = avisos.length;
+        ..notices = notices
+        ..unread = notices.length;
       final centro = centerOf(
         api,
         FakeSession(userProfile),
-        ahora: DateTime.now,
+        now: DateTime.now,
       );
       await mountScreen(
         tester,
@@ -756,11 +756,11 @@ void main() {
       WidgetTester tester,
       FakeApi api,
       NotificationCenter centro,
-      List<String> avisos,
+      List<String> notices,
     ) async {
       api
-        ..avisos = avisos
-        ..unread = avisos.length;
+        ..notices = notices
+        ..unread = notices.length;
       await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
     }
@@ -827,10 +827,10 @@ void main() {
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
-          api: api.cliente,
+          api: api.client,
         ),
       );
-      centerOf(api, session, sistema: sistema);
+      centerOf(api, session, system: sistema);
       await tester.runAsync(() async {
         await session.signIn('nahuel@correo.com', 'ClubNahuel1');
         await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -850,10 +850,10 @@ void main() {
       final session = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: api.cliente,
+          api: api.client,
         ),
       );
-      centerOf(api, session, sistema: sistema);
+      centerOf(api, session, system: sistema);
 
       final perfil = await tester.runAsync(session.resume);
 
@@ -876,7 +876,7 @@ void main() {
           ),
         ),
       );
-      centerOf(api, session, sistema: sistema);
+      centerOf(api, session, system: sistema);
 
       await tester.runAsync(() async {
         await expectLater(
@@ -894,10 +894,10 @@ void main() {
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
-          api: api.cliente,
+          api: api.client,
         ),
       );
-      centerOf(api, session, sistema: sistema);
+      centerOf(api, session, system: sistema);
       await tester.runAsync(() async {
         await session.signIn('nahuel@correo.com', 'ClubNahuel1');
         await session.deactivate();
@@ -913,7 +913,7 @@ void main() {
       final session = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: FakeApi().cliente,
+          api: FakeApi().client,
         ),
       );
       await tester.runAsync(
@@ -933,7 +933,7 @@ void main() {
         final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
-            api: FakeApi().cliente,
+            api: FakeApi().client,
           ),
         );
         session.onClose.add((_) async => fail('no había token que dar'));
@@ -961,7 +961,7 @@ void main() {
         final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
-            api: FakeApi().cliente,
+            api: FakeApi().client,
           ),
         );
         session.onClose.add(
@@ -981,7 +981,7 @@ void main() {
   });
 
   group('la consulta periódica', () {
-    int lecturas(FakeApi api) => api.de('GET', '/notifications').length;
+    int lecturas(FakeApi api) => api.of('GET', '/notifications').length;
 
     testWidgets('un centro liberado mientras arrancaba no deja un reloj vivo', (
       tester,
@@ -990,7 +990,7 @@ void main() {
       final sistema = SlowSystem();
       final centro = NotificationCenter(
         notifications: NotificationsRepository(
-          api: api.cliente,
+          api: api.client,
           session: FakeSession(userProfile),
         ),
         session: FakeSession(userProfile),
@@ -1014,7 +1014,7 @@ void main() {
       final api = FakeApi();
       final centro = NotificationCenter(
         notifications: NotificationsRepository(
-          api: api.cliente,
+          api: api.client,
           session: FakeSession(userProfile),
         ),
         session: FakeSession(userProfile),
@@ -1049,11 +1049,11 @@ void main() {
       centerOf(
         api,
         FakeSession(userProfile),
-        sistema: FakeSystem(concedido: false),
+        system: FakeSystem(granted: false),
       );
       await tester.pumpAndSettle();
 
-      final request = bodyOf(api.de('PUT', '/devices').single);
+      final request = bodyOf(api.of('PUT', '/devices').single);
       expect(request['permission_granted'], isFalse);
       expect(request['token'], 'token-del-telefono');
     });
@@ -1092,7 +1092,7 @@ void main() {
         final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
-            api: api.cliente,
+            api: api.client,
           ),
         );
         String? autorizacionDeLaBaja;
@@ -1107,13 +1107,13 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
         await tester.pumpAndSettle();
-        expect(api.de('PUT', '/devices'), hasLength(1));
+        expect(api.of('PUT', '/devices'), hasLength(1));
 
         await tester.runAsync(session.close);
         await tester.pumpAndSettle();
 
-        expect(api.de('POST', '/devices/unregister'), hasLength(1));
-        expect(bodyOf(api.de('POST', '/devices/unregister').single), {
+        expect(api.of('POST', '/devices/unregister'), hasLength(1));
+        expect(bodyOf(api.of('POST', '/devices/unregister').single), {
           'token': 'token-del-telefono',
         });
         // La baja va con la sesión que se cerró, tomada antes de cerrarla.
@@ -1131,7 +1131,7 @@ void main() {
         final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
-            api: api.cliente,
+            api: api.client,
           ),
         );
         centerOf(api, session);
@@ -1141,7 +1141,7 @@ void main() {
         });
         await tester.pumpAndSettle();
 
-        api.caida = true;
+        api.down = true;
         await tester.runAsync(session.close);
 
         expect(credenciales.signOuts, 1);
@@ -1156,12 +1156,12 @@ void main() {
       (tester) async {
         final semantica = tester.ensureSemantics();
         final api = FakeApi()
-          ..avisos = [reminderNotice, confirmationNotice]
+          ..notices = [reminderNotice, confirmationNotice]
           ..unread = 2;
         await mountUser(
           tester,
           start: '/inicio',
-          api: api.cliente,
+          api: api.client,
           center: (session) => centerOf(api, session),
         );
 
@@ -1187,7 +1187,7 @@ void main() {
       await mountUser(
         tester,
         start: '/inicio',
-        api: api.cliente,
+        api: api.client,
         center: (session) => centerOf(api, session),
       );
 
@@ -1197,7 +1197,7 @@ void main() {
 
     testWidgets('sin centro el Home no tiene campana', (tester) async {
       final semantica = tester.ensureSemantics();
-      await mountUser(tester, start: '/inicio', api: FakeApi().cliente);
+      await mountUser(tester, start: '/inicio', api: FakeApi().client);
 
       expect(find.bySemanticsLabel(RegExp('^Notificaciones')), findsNothing);
       semantica.dispose();
@@ -1209,7 +1209,7 @@ void main() {
         await mountAdmin(
           tester,
           start: '/notificaciones',
-          api: FakeApi().cliente,
+          api: FakeApi().client,
         );
 
         expect(find.text('Notificaciones'), findsNothing);
@@ -1222,7 +1222,7 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       final api = FakeApi()
-        ..avisos = [
+        ..notices = [
           reminderNotice.replaceFirst(
             '"booking_id": "00000000-0000-7000-8000-000000000001"',
             '"booking_id": "00000000-0000-7000-8000-000000000002"',
@@ -1232,7 +1232,7 @@ void main() {
       await mountUser(
         tester,
         start: '/notificaciones',
-        api: api.cliente,
+        api: api.client,
         center: (session) => centerOf(api, session),
       );
 
@@ -1256,20 +1256,20 @@ void main() {
       (tester) async {
         final semantica = tester.ensureSemantics();
         final api = FakeApi()
-          ..avisos = [
+          ..notices = [
             noticeJson(
               id: '00000000-0000-7000-8000-000000000004',
               club: DateTime.utc(2026, 11, 12, 19, 58),
-              tipo: 'user_cancellation',
-              titulo: 'Reserva cancelada',
-              reservaId: '00000000-0000-7000-8000-000000000002',
+              kind: 'user_cancellation',
+              title: 'Reserva cancelada',
+              bookingId: '00000000-0000-7000-8000-000000000002',
             ),
           ]
           ..unread = 1;
         await mountUser(
           tester,
           start: '/notificaciones',
-          api: api.cliente,
+          api: api.client,
           center: (session) => centerOf(api, session),
         );
 
@@ -1304,7 +1304,7 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       final api = FakeApi();
-      await mountUser(tester, start: '/reservas', api: api.cliente);
+      await mountUser(tester, start: '/reservas', api: api.client);
 
       expect(
         tester

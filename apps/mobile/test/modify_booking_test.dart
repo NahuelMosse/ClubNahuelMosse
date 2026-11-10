@@ -37,8 +37,8 @@ void main() {
                     (
                       200,
                       bookingJson(
-                        inicio: '2026-11-12T22:00:00+00:00',
-                        fin: '2026-11-12T23:00:00+00:00',
+                        start: '2026-11-12T22:00:00+00:00',
+                        end: '2026-11-12T23:00:00+00:00',
                       ),
                     );
                 modified = r.$1 == 200;
@@ -46,7 +46,7 @@ void main() {
               }(),
             ('GET', '/bookings') => (
               200,
-              '{"bookings": [${modified ? bookingJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : bookingJson()}]}',
+              '{"bookings": [${modified ? bookingJson(start: '2026-11-12T22:00:00+00:00', end: '2026-11-12T23:00:00+00:00') : bookingJson()}]}',
             ),
             _ => routes['${request.method} ${request.url.path}'] ?? (404, '{}'),
           };

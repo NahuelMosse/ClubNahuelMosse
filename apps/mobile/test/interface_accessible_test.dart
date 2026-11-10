@@ -272,8 +272,8 @@ void main() {
       final futura = DateTime.now().toUtc().add(const Duration(days: 2));
       final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
       final proxima = bookingJson(
-        inicio: inicio.toIso8601String(),
-        fin: inicio.add(const Duration(hours: 1)).toIso8601String(),
+        start: inicio.toIso8601String(),
+        end: inicio.add(const Duration(hours: 1)).toIso8601String(),
       );
       await mountUser(
         tester,

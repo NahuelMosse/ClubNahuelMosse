@@ -35,7 +35,7 @@ void main() {
       bool permission = true,
     }) async {
       final api = FakeApi()
-        ..avisos = notices
+        ..notices = notices
         ..unread = notices.length;
       final session = FakeSession(userProfile);
       await mountScreen(
@@ -44,7 +44,7 @@ void main() {
           center: centerOf(
             api,
             session,
-            sistema: FakeSystem(concedido: permission),
+            system: FakeSystem(granted: permission),
           ),
           session: session,
           now: () => noticesNow,
@@ -106,7 +106,7 @@ void main() {
           theme: theme,
         );
         api
-          ..avisos = [reminderNotice]
+          ..notices = [reminderNotice]
           ..unread = 1;
         await tester.runAsync(notices.load);
         await tester.pumpAndSettle();
@@ -120,13 +120,13 @@ void main() {
     ) async {
       final semantics = tester.ensureSemantics();
       final api = FakeApi()
-        ..avisos = [confirmationNotice, alertNotice]
+        ..notices = [confirmationNotice, alertNotice]
         ..unread = 2;
       await mountUser(
         tester,
         dark: dark,
         start: '/inicio',
-        api: api.cliente,
+        api: api.client,
         center: (session) => centerOf(api, session),
       );
       await meetsGuidelines(tester);

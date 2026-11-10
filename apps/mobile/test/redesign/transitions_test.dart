@@ -218,7 +218,7 @@ Future<void> _userWithCenter(WidgetTester tester, String startRoute) {
   final api = FakeApi();
   return mountUser(
     tester,
-    api: api.cliente,
+    api: api.client,
     start: startRoute,
     size: _tallPhone,
     center: (session) => centerOf(api, session),

@@ -59,8 +59,8 @@ void main() {
     final future = DateTime.now().toUtc().add(const Duration(days: 2));
     final start = DateTime.utc(future.year, future.month, future.day, 21);
     final upcoming = bookingJson(
-      inicio: start.toIso8601String(),
-      fin: start.add(const Duration(hours: 1)).toIso8601String(),
+      start: start.toIso8601String(),
+      end: start.add(const Duration(hours: 1)).toIso8601String(),
     );
     final routes = venueRoutes();
     var canceled = false;

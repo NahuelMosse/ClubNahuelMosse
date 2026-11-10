@@ -49,7 +49,7 @@ class _Servidor {
   Future<(int, String)> _cancelar() async {
     await frenar;
     _activa = false;
-    return (200, bookingJson(estado: 'canceled'));
+    return (200, bookingJson(status: 'canceled'));
   }
 }
 

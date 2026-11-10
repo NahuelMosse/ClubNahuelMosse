@@ -12,10 +12,10 @@ import 'support/user.dart';
 final canceled = noticeJson(
   id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 59),
-  tipo: 'user_cancellation',
-  titulo: 'Reserva cancelada',
-  cuerpo: 'Fútbol 5 · Sede Morón · Mié 11, 20:00. El horario quedó liberado.',
-  reservaId: '00000000-0000-7000-8000-000000000002',
+  kind: 'user_cancellation',
+  title: 'Reserva cancelada',
+  body: 'Fútbol 5 · Sede Morón · Mié 11, 20:00. El horario quedó liberado.',
+  bookingId: '00000000-0000-7000-8000-000000000002',
 );
 
 void main() {
@@ -53,7 +53,7 @@ void main() {
       List<String> notices,
     ) async {
       api
-        ..avisos = notices
+        ..notices = notices
         ..unread = notices.length;
       await tester.runAsync(center.load);
       await tester.pumpAndSettle();
@@ -138,22 +138,22 @@ void main() {
       'it opens «Mis reservas» on the history @assumption:CU-24.3-SUP-06',
       (tester) async {
         final api = FakeApi()
-          ..avisos = [canceled]
+          ..notices = [canceled]
           ..unread = 1;
         await mountUser(
           tester,
           start: '/notificaciones',
-          api: api.cliente,
+          api: api.client,
           center: (session) => centerOf(api, session),
         );
-        api.pedidos.clear();
+        api.requests.clear();
 
         await tester.tap(find.text('Reserva cancelada'));
         await tester.pumpAndSettle();
 
         expect(find.text('Mis reservas'), findsOneWidget);
         expect(
-          api.de('GET', '/bookings').map((p) => p.url.queryParameters['when']),
+          api.of('GET', '/bookings').map((p) => p.url.queryParameters['when']),
           ['history'],
         );
       },
@@ -161,21 +161,21 @@ void main() {
 
     testWidgets('a reminder still opens the upcoming ones', (tester) async {
       final api = FakeApi()
-        ..avisos = [reminderNotice]
+        ..notices = [reminderNotice]
         ..unread = 1;
       await mountUser(
         tester,
         start: '/notificaciones',
-        api: api.cliente,
+        api: api.client,
         center: (session) => centerOf(api, session),
       );
-      api.pedidos.clear();
+      api.requests.clear();
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
       expect(
-        api.de('GET', '/bookings').map((p) => p.url.queryParameters['when']),
+        api.of('GET', '/bookings').map((p) => p.url.queryParameters['when']),
         ['upcoming'],
       );
     });

@@ -14,8 +14,8 @@ void main() {
   final future = DateTime.now().toUtc().add(const Duration(days: 2));
   final start = DateTime.utc(future.year, future.month, future.day, 21);
   final upcoming = bookingJson(
-    inicio: start.toIso8601String(),
-    fin: start.add(const Duration(hours: 1)).toIso8601String(),
+    start: start.toIso8601String(),
+    end: start.add(const Duration(hours: 1)).toIso8601String(),
   );
 
   Future<List<http.Request>> open(
@@ -37,7 +37,7 @@ void main() {
             ('POST', '/bookings/00000000-0000-7000-8000-000000000001/cancel') =>
               () {
                 final response =
-                    onCancel ?? (200, bookingJson(estado: 'canceled'));
+                    onCancel ?? (200, bookingJson(status: 'canceled'));
                 // A 409 also leaves the list without that booking: it was no longer active.
                 canceled = response.$1 == 200 || response.$1 == 409;
                 return response;
@@ -133,8 +133,8 @@ void main() {
     (tester) async {
       final now = DateTime.now().toUtc();
       final started = bookingJson(
-        inicio: now.subtract(const Duration(minutes: 10)).toIso8601String(),
-        fin: now.add(const Duration(minutes: 50)).toIso8601String(),
+        start: now.subtract(const Duration(minutes: 10)).toIso8601String(),
+        end: now.add(const Duration(minutes: 50)).toIso8601String(),
         cancelable: false,
       );
       await mountUser(

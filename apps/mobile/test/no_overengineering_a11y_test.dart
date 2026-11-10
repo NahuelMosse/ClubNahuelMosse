@@ -35,7 +35,7 @@ void main() {
           final (code, body) = request.url.path == '/bookings'
               ? (
                   200,
-                  '{"bookings": ${request.url.queryParameters['when'] == 'history' ? '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', estado: 'canceled', motivo: 'Lluvia')}]' : '[${bookingJson()}]'}}',
+                  '{"bookings": ${request.url.queryParameters['when'] == 'history' ? '[${bookingJson(id: '00000000-0000-7000-8000-000000000002', status: 'canceled', reason: 'Lluvia')}]' : '[${bookingJson()}]'}}',
                 )
               : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
           return http.Response.bytes(

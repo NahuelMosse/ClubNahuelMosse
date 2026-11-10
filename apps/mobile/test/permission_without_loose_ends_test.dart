@@ -11,7 +11,7 @@ import 'support/mount.dart';
 
 /// A system that has not answered the permission question until the test decides.
 class StallingSystem extends FakeSystem {
-  StallingSystem() : super(concedido: false);
+  StallingSystem() : super(granted: false);
 
   final answer = Completer<bool>();
 
@@ -20,7 +20,7 @@ class StallingSystem extends FakeSystem {
 
   @override
   Future<bool> requestPermission() {
-    solicitudes++;
+    requests++;
     return answer.future;
   }
 }
@@ -93,15 +93,15 @@ void main() {
     (tester) async {
       final api = FakeApi();
       final system = StallingSystem();
-      final center = centerOf(api, FakeSession(userProfile), sistema: system);
+      final center = centerOf(api, FakeSession(userProfile), system: system);
       await tester.pump();
-      expect(system.solicitudes, 1);
+      expect(system.requests, 1);
 
       center.dispose();
       system.answer.complete(true);
       await tester.pumpAndSettle();
 
-      expect(api.de('PUT', '/devices'), isEmpty);
+      expect(api.of('PUT', '/devices'), isEmpty);
     },
   );
 }

@@ -30,7 +30,7 @@ Future<(FakeApi, NotificationCenter)> _openCenter(
   required List<String> notices,
 }) async {
   final api = FakeApi()
-    ..avisos = notices
+    ..notices = notices
     ..unread = notices.length;
   final session = FakeSession(userProfile);
   final center = centerOf(api, session);
@@ -53,7 +53,7 @@ Future<(FakeApi, SystemWithTaps, NotificationCenter)> _mountApp(
   List<String> notices,
 ) async {
   final api = FakeApi()
-    ..avisos = notices
+    ..notices = notices
     ..unread = notices.length;
   final system = SystemWithTaps();
   addTearDown(system.taps.close);
@@ -61,8 +61,8 @@ Future<(FakeApi, SystemWithTaps, NotificationCenter)> _mountApp(
   await mountUser(
     tester,
     start: '/inicio',
-    api: api.cliente,
-    center: (session) => center = centerOf(api, session, sistema: system),
+    api: api.client,
+    center: (session) => center = centerOf(api, session, system: system),
   );
   return (api, system, center);
 }
@@ -87,7 +87,7 @@ void main() {
 
         await _leave(tester);
 
-        expect(api.de('POST', '/notifications/read-all'), hasLength(1));
+        expect(api.of('POST', '/notifications/read-all'), hasLength(1));
         expect(center.unread, 0);
         expect(center.list.every((n) => n.read), isTrue);
       },
@@ -104,7 +104,7 @@ void main() {
 
         expect(find.bySemanticsLabel(RegExp('sin leer')), findsOneWidget);
         expect(center.unread, 1);
-        expect(api.de('POST', '/notifications/read-all'), isEmpty);
+        expect(api.of('POST', '/notifications/read-all'), isEmpty);
         semantics.dispose();
       },
     );
@@ -116,14 +116,14 @@ void main() {
           tester,
           notices: [reminderNotice],
         );
-        api.caida = true;
+        api.down = true;
 
         await _leave(tester);
 
         expect(center.unread, 0);
         expect(center.list.every((n) => n.read), isTrue);
 
-        api.caida = false;
+        api.down = false;
         await tester.runAsync(center.load);
         expect(center.unread, 1);
       },
@@ -137,13 +137,13 @@ void main() {
         final otherBooking = noticeJson(
           id: '00000000-0000-7000-8000-000000000005',
           club: DateTime.utc(2026, 11, 12, 19, 50),
-          reservaId: _booking2,
+          bookingId: _booking2,
         );
         final otherKind = noticeJson(
           id: '00000000-0000-7000-8000-000000000006',
           club: DateTime.utc(2026, 11, 12, 19, 40),
-          tipo: 'user_cancellation',
-          titulo: 'Reserva cancelada',
+          kind: 'user_cancellation',
+          title: 'Reserva cancelada',
         );
         final (api, system, center) = await _mountApp(tester, [
           reminderNotice,
@@ -156,7 +156,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final read = api.pedidos
+        final read = api.requests
             .where((p) => p.method == 'POST' && p.url.path.endsWith('/read'))
             .map((p) => p.url.path)
             .toList();
@@ -172,8 +172,8 @@ void main() {
         final (api, _, center) = await _mountApp(tester, [reminderNotice]);
 
         expect(center.unread, 1);
-        expect(api.de('POST', '/notifications/$_reminderId/read'), isEmpty);
-        expect(api.de('POST', '/notifications/read-all'), isEmpty);
+        expect(api.of('POST', '/notifications/$_reminderId/read'), isEmpty);
+        expect(api.of('POST', '/notifications/read-all'), isEmpty);
       },
     );
   });
