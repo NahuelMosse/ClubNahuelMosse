@@ -51,3 +51,4 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.42.0 a
 - L12 · 2026-11-10 · L9 es la primera corrida de install.mjs --update sin --from: reinstaló la fuente guardada (6.42.0) y no cambió nada; L10 es la actualización real desde el clon del tag kit-v6.44.1
 - L13 · 2026-11-10 · kit: install.mjs --update sin --from reinstala la fuente guardada en kit.json en silencio de efecto (0 archivos) en vez de pedir --from cuando el pedido nombra otra versión
 - L14 · 2026-11-10 · kit: time-cap mide reloj de pared desde el commit de card.md, incluida una pausa pedida por el usuario; dejó la suite del kit sin correr
+- L15 · 2026-11-10 · closing: could not run · la suite propia del kit (.claude/tests, con KIT_PLAYWRIGHT_ROOT): el time-cap ya estaba vencido cuando se pudo instalar y pasado el cap el hook no arranca suites fuera del cierre (L11); el CI del repo no la corre
