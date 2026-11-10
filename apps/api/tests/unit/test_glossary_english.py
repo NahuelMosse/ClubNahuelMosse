@@ -38,7 +38,7 @@ def _by_section(text: str) -> dict[str, dict[str, set[str]]]:
 
 
 def _by_line(text: str) -> dict[tuple[str, str], dict[str, set[str]]]:
-    """The translations of each section and each `- <table>:` line: a column is translated according to its table."""
+    """The translations of each section and each `- {table}:` line: a column is translated according to its table."""
     groups: dict[tuple[str, str], dict[str, set[str]]] = {}
     for section, body in _sections(text).items():
         for line in re.split(r"^- ", body, flags=re.M):
