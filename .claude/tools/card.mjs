@@ -279,7 +279,18 @@ export const delegateToRepo = async (hookUrl, rawStdin, input) => {
     feedStdin(rawStdin);
     process.env.SDD_HOOK_DELEGATED = '1';
     process.env.CLAUDE_PROJECT_DIR = target;
-    await import(pathToFileURL(hook).href);
+    try {
+      await import(pathToFileURL(hook).href);
+    } catch (e) {
+      // A worktree whose checkout is still writing its files misses a module for a moment (measured: the first call in a
+      // new worktree, `Cannot find module …/card.mjs`). Wait for that file up to 15 s and import once more.
+      const missing = e?.code === 'ERR_MODULE_NOT_FOUND' && /Cannot find module '([^']+)'/.exec(e.message)?.[1];
+      if (!missing) throw e;
+      const until = Date.now() + 15_000;
+      while (!existsSync(missing) && Date.now() < until) await new Promise((r) => setTimeout(r, 250));
+      if (!existsSync(missing)) throw new Error(`${e.message}; the repo's kit is incomplete — if a checkout is still writing it, retry once it ends`);
+      await import(`${pathToFileURL(hook).href}?retry=${Date.now()}`);
+    }
     process.exit(0);
   } catch (e) {
     if (environment.delegated === undefined) delete process.env.SDD_HOOK_DELEGATED; else process.env.SDD_HOOK_DELEGATED = environment.delegated;

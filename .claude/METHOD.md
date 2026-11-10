@@ -41,7 +41,7 @@
 
 - **The requirement is frozen and verbatim,** also as text. Never code from a summary.
 - **Never resolve an ambiguity on your own:** AMB asked once, else ASM with a test. *Silently filling a gap is the worst failure.*
-- **Tagged tests are frozen once committed (from mvp).** A wrong one is replaced, never edited: the fix goes in a new file with the same tag; the Log gets `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate says `passed with replaced` and the close sends it to «Needs a person» (under `refactor-tests:`, same tags is a rename: one decision line). A new behavior is a new test.
+- **Tagged tests are frozen once committed (from mvp).** A wrong one is replaced, never edited: the fix goes in a new file with the same tag; the Log gets `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate says `passed with replaced` and the close sends it to «Needs a person» (under `refactor-tests:`, kept tags is a rename: one decision line). A new behavior is a new test.
 - **Three states: passed · failed · could not run.** What did not run is never "passed"; a check that stops you is not turned off; an uncorrected finding stops the close.
 - **Nothing waits for a person.** Their call goes in `## Needs a person`, not yours (`.claude/AUTONOMY.md`).
 - **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). `poc` is a facade: cap, Specs and Look only, presentation with mock data (logic is blocked), one capture round, close ends at the push. **Modules** add lenses and gate lines, not steps; a **profile** (`web`, `backend`, `flutter`) brings screen or API instruments.

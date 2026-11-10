@@ -89,9 +89,9 @@ try {
     const skips = (t) => new Set(t.split('\n').map((l) => l.trim()).filter((l) => /^public-skip\s*:/i.test(l)));
     const before = skips(current);
     if ([...skips(next)].some((l) => !before.has(l))) {
-      const { lastUserText } = await import('../tools/transcript.mjs');
+      const { currentOrder } = await import('../tools/transcript.mjs');
       const { ordersSkip } = await import('../tools/public-bar.mjs');
-      if (!ordersSkip(lastUserText(input.transcript_path))) {
+      if (!ordersSkip(currentOrder(input))) {
         reject('card.md: `public-skip:` turns off the public bar for the whole card, and only the user does that. Their last message has to order it ' +
           '("salteá la barra pública", "skip the public bar"), with no question. A line a public repo does carry is declared instead: ' +
           '`public-allow: <file> [<kind>] · <why>` in ## Gate.');

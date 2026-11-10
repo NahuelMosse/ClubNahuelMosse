@@ -82,10 +82,15 @@ export const onlyCommit = (command) => {
 // The user's last message in the session: a typed prompt or one sent while the agent worked; tool results,
 // reminders, background-task notices (stored as user messages that start with `<`), the summary a compaction writes
 // as a user message and subagents are not theirs.
-const userTextOf = (line) => {
-  if (!line.includes('"user"') && !line.includes('queued_command')) return '';
+const userEntryOf = (line) => {
+  const none = { text: '', at: null };
+  if (!line.includes('"user"') && !line.includes('queued_command')) return none;
   let e;
-  try { e = JSON.parse(line); } catch { return ''; }
+  try { e = JSON.parse(line); } catch { return none; }
+  const text = userTextIn(e);
+  return text ? { text, at: e.timestamp ? Date.parse(e.timestamp) : null } : none;
+};
+const userTextIn = (e) => {
   const own = e.type === 'user' && !e.isMeta && !e.isSidechain && !e.isCompactSummary && !e.isVisibleInTranscriptOnly;
   if (own && typeof e.message?.content === 'string') return e.message.content.startsWith('<') ? '' : e.message.content;
   if (own && Array.isArray(e.message?.content) && e.message.content.length && e.message.content.every((c) => c.type === 'text')) {
@@ -96,8 +101,18 @@ const userTextOf = (line) => {
 };
 // Read from the end in blocks: a long session's transcript passes the largest string Node can hold.
 const TAIL_BLOCK = 1 << 22;
-export const lastUserText = (path) => {
-  if (!path || !existsSync(path)) return '';
+export const lastUserText = (path) => lastUser(path).text;
+// The person's last message read as an order for a hook call: it holds for ORDER_TTL_MS after it was given, and never for a
+// subagent's call (`agent_id`), whose transcript is the parent's, so that message was about something else.
+export const ORDER_TTL_MS = 30 * 60_000;
+export const currentOrder = (input, now = Date.now()) => {
+  if (input?.agent_id) return '';
+  const { text, at } = lastUser(String(input?.transcript_path ?? ''));
+  return at !== null && now - at > ORDER_TTL_MS ? '' : text;
+};
+// The last message the person typed, with its time (`at`, in ms; null when the line has none).
+export const lastUser = (path) => {
+  if (!path || !existsSync(path)) return { text: '', at: null };
   const fd = openSync(path, 'r');
   try {
     let end = fstatSync(fd).size;
@@ -114,11 +129,11 @@ export const lastUserText = (path) => {
       rest = cut === -1 ? Buffer.alloc(0) : buf.subarray(0, cut);
       const lines = buf.subarray(cut + 1).toString('utf8').split('\n');
       for (let i = lines.length - 1; i >= 0; i--) {
-        const text = userTextOf(lines[i]);
-        if (text) return text;
+        const entry = userEntryOf(lines[i]);
+        if (entry.text) return entry;
       }
     }
-    return '';
+    return { text: '', at: null };
   } finally { closeSync(fd); }
 };
 
