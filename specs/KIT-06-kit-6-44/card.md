@@ -36,3 +36,6 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.42.0 a
 ## Log
 
 - L1 · update this repo's kit from 6.42.0 to 6.44.0. The kit maintainer session announced 6.44.0 in main of dev-kit `D:/projects/SDD-implementation` on 2026-11-09. It brings: require-at-close lets through a push that first `cd`s into another repo with no card; fewer disk writes; probe measures `role=status`. Its message said to update with `node D:/projects/SDD-implementation/.claude/tools/install.mjs --target . --update`.
+- L2 · 2026-11-10 · declared · fault-db · la card no toca la base
+- L3 · 2026-11-10 · declared · attacks · la card no toca la API
+- L4 · 2026-11-10 · replaces: tests/kit.test.mjs "el kit instalado es el 6.42.0 @KIT-05-S1" · el kit pasa a 6.44.0 · by: tests/kit.test.mjs "the installed kit is 6.44.0 @KIT-06-S1"
