@@ -32,7 +32,7 @@ def _blob_hash(path: Path) -> str:
 def test_the_migrations_live_in_migrations_and_0001_to_0011_are_unchanged() -> None:
     """the migrations live in migrations/ and 0001 to 0011 are unchanged @ENG-17-S3 @assumption:ENG-17-ASM-08"""
     versions = API_ROOT / "migrations" / "versions"
-    ini = configparser.ConfigParser()
+    ini = configparser.ConfigParser(interpolation=None)
     ini.read(API_ROOT / "alembic.ini")
 
     numbers = sorted(f.name[:4] for f in versions.glob("0*.py"))
@@ -46,6 +46,8 @@ def test_the_migrations_live_in_migrations_and_0001_to_0011_are_unchanged() -> N
     assert "def run_migrations" not in (API_ROOT / "migrations" / "env.py").read_text()
     for translated in ("env.py", "script.py.mako"):
         text = (API_ROOT / "migrations" / translated).read_text()
-        assert "motor" not in text and "correr" not in text and "Revises" in (
-            text if translated.endswith("mako") else "Revises"
+        assert (
+            "motor" not in text
+            and "correr" not in text
+            and "Revises" in (text if translated.endswith("mako") else "Revises")
         )

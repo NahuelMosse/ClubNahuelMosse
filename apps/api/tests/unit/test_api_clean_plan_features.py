@@ -3,66 +3,66 @@ import re
 from pathlib import Path
 
 API = Path(__file__).resolve().parents[2]
-RAIZ = API.parents[1]
-MODULOS = API / "app" / "modules"
+ROOT = API.parents[1]
+MODULES = API / "app" / "modules"
 SHARED = API / "app" / "shared"
 
 
-def _metodo(archivo: str, nombre: str) -> str:
-    arbol = ast.parse((MODULOS / archivo).read_text(encoding="utf-8"))
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.FunctionDef) and nodo.name == nombre:
-            return ast.unparse(nodo)
-    raise AssertionError(f"{archivo} no tiene {nombre}")
+def _method(file: str, name: str) -> str:
+    tree = ast.parse((MODULES / file).read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            return ast.unparse(node)
+    raise AssertionError(f"{file} has no {name}")
 
 
-def _codigo(archivos: list[Path]) -> dict[str, str]:
-    return {a.parent.name + "/" + a.name: a.read_text(encoding="utf-8") for a in archivos}
+def _code(files: list[Path]) -> dict[str, str]:
+    return {a.parent.name + "/" + a.name: a.read_text(encoding="utf-8") for a in files}
 
 
-def test_el_mapa_del_codigo_sigue_al_dia() -> None:
-    """el mapa del código sigue al día @ARQ-02-S3"""
-    mapa = (RAIZ / "docs" / "technical" / "code-map.md").read_text(encoding="utf-8")
+def test_the_code_map_is_still_up_to_date() -> None:
+    """the code map is still up to date @ARQ-02-S3"""
+    code_map = (ROOT / "docs" / "technical" / "code-map.md").read_text(encoding="utf-8")
 
-    assert "`http_errors.py`" in mapa
+    assert "`http_errors.py`" in code_map
 
 
-def test_la_agenda_de_una_sede_se_arma_en_una_sola_funcion_y_con_los_dias_en_tupla() -> None:
-    """la agenda de una sede se arma en una sola función y con los días en tupla
+def test_a_venue_schedule_is_built_in_a_single_function_and_with_the_days_in_a_tuple() -> None:
+    """a venue schedule is built in a single function and with the days in a tuple
     @ARQ-02-S2 @assumption:ARQ-02-ASM-06"""
-    codigo = _codigo([a for a in MODULOS.rglob("*.py") if "__pycache__" not in a.parts])
-    armados = {n: len(re.findall(r"\bOpeningHours\(", t)) for n, t in codigo.items()}
+    code = _code([a for a in MODULES.rglob("*.py") if "__pycache__" not in a.parts])
+    built = {n: len(re.findall(r"\bOpeningHours\(", t)) for n, t in code.items()}
 
-    assert sum(armados.values()) == 1
-    (archivo,) = [n for n, c in armados.items() if c]
-    assert re.search(r"OpeningHours\([^)]*tuple\(", codigo[archivo], flags=re.DOTALL)
+    assert sum(built.values()) == 1
+    (file,) = [n for n, c in built.items() if c]
+    assert re.search(r"OpeningHours\([^)]*tuple\(", code[file], flags=re.DOTALL)
 
 
-def test_los_repositorios_confirman_con_en_transaccion() -> None:
-    """los repositorios confirman con en_transaccion y los métodos que corren dentro de otro
-    no lo usan @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
+def test_the_repositories_commit_with_in_transaction() -> None:
+    """the repositories commit with in_transaction and the methods that run inside another
+    do not use it @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
     db = (SHARED / "db.py").read_text(encoding="utf-8")
     assert "def in_transaction(" in db
-    usan = [
+    using = [
         a.parent.name
-        for a in [*MODULOS.glob("*/repositorio.py"), *MODULOS.glob("*/repository.py")]
+        for a in [*MODULES.glob("*/repositorio.py"), *MODULES.glob("*/repository.py")]
         if "in_transaction(" in a.read_text(encoding="utf-8")
     ]
-    assert len(usan) >= 6
+    assert len(using) >= 6
 
-    for archivo, metodo in [
+    for file, method in [
         ("bookings/repository.py", "cancel_future_of"),
         ("spaces/repository.py", "deactivate_venue_spaces"),
         ("notifications/repository.py", "enqueue_user_cancellation"),
     ]:
-        cuerpo = _metodo(archivo, metodo)
-        assert "in_transaction" not in cuerpo, metodo
-        assert ".commit()" not in cuerpo, metodo
+        body = _method(file, method)
+        assert "in_transaction" not in body, method
+        assert ".commit()" not in body, method
 
 
-def test_las_reservas_se_arman_con_fila_mapping() -> None:
-    """las reservas se arman con fila._mapping @ARQ-02-S1 @assumption:ARQ-02-ASM-06"""
-    reservas = (MODULOS / "bookings" / "repository.py").read_text(encoding="utf-8")
+def test_the_bookings_are_built_with_row_mapping() -> None:
+    """the bookings are built with row._mapping @ARQ-02-S1 @assumption:ARQ-02-ASM-06"""
+    bookings = (MODULES / "bookings" / "repository.py").read_text(encoding="utf-8")
 
-    assert "Booking(**" in reservas
-    assert "._mapping" in reservas
+    assert "Booking(**" in bookings
+    assert "._mapping" in bookings

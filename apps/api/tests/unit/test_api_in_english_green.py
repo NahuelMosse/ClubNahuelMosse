@@ -1,48 +1,47 @@
-"""La API en inglés queda verde sobre el main de hoy."""
+"""The API in English is green on today's main."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import re
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[4]
-TESTS = RAIZ / "apps" / "api" / "tests"
-APP = RAIZ / "apps" / "api" / "app"
-MODULOS_EN_CASTELLANO = (
+ROOT = Path(__file__).resolve().parents[4]
+TESTS = ROOT / "apps" / "api" / "tests"
+APP = ROOT / "apps" / "api" / "app"
+SPANISH_MODULES = (
     "sedes", "usuarios", "sesion", "recuperacion", "espacios", "horarios", "notificaciones",
     "reservas",
 )  # fmt: skip
-STEMS_EN_CASTELLANO = (
+SPANISH_STEMS = (
     "casos_de_uso", "reglas", "repositorio", "rutas", "rutas_cuenta", "rutas_registro",
     "almacen", "barrido", "administradores", "baja", "contrasena", "registro",
     "sembrar_admin", "usuario_actual", "salud", "cuerpo", "entradas", "errores",
     "errores_http", "identidad", "respuestas", "zona", "credencial_firebase", "correo",
 )  # fmt: skip
 IMPORT = re.compile(r"^\s*(?:from|import)\s+app\.([\w.]+)", re.MULTILINE)
-RUTA_DE_ARCHIVO = re.compile(r"apps/api/app/[\w/]+\.py")
+FILE_PATH = re.compile(r"apps/api/app/[\w/]+\.py")
 
 
-def _partes(ruta: str) -> list[str]:
-    return [p.removesuffix(".py") for p in ruta.replace("app.", "", 1).replace("/", ".").split(".")]
+def _parts(path: str) -> list[str]:
+    return [p.removesuffix(".py") for p in path.replace("app.", "", 1).replace("/", ".").split(".")]
 
 
-def test_la_api_en_ingles_no_deja_imports_ni_rutas_de_modulo_en_castellano_en_los_tests() -> None:
-    """la API en inglés no deja imports ni rutas de módulo en castellano en los tests @ENG-14-S1 @assumption:ENG-14-ASM-01"""
-    prohibidos = {*MODULOS_EN_CASTELLANO, *STEMS_EN_CASTELLANO}
-    restos: list[str] = []
-    for prueba in sorted(TESTS.rglob("*.py")):
-        if prueba.name == Path(__file__).name:
+def test_the_api_in_english_leaves_no_imports_or_module_paths_in_spanish_in_the_tests() -> None:
+    """the API in English leaves no imports or module paths in Spanish in the tests @ENG-14-S1 @assumption:ENG-14-ASM-01"""
+    forbidden = {*SPANISH_MODULES, *SPANISH_STEMS}
+    leftovers: list[str] = []
+    for test in sorted(TESTS.rglob("*.py")):
+        if test.name == Path(__file__).name:
             continue
-        texto = prueba.read_text(encoding="utf-8")
-        citados = [m for m in IMPORT.findall(texto)]
-        citados += [m.removeprefix("apps/api/") for m in RUTA_DE_ARCHIVO.findall(texto)]
-        for citado in citados:
-            if prohibidos & set(_partes(citado)):
-                restos.append(f"{prueba.relative_to(TESTS)}: {citado}")
-    existentes = [
+        text = test.read_text(encoding="utf-8")
+        cited = [m for m in IMPORT.findall(text)]
+        cited += [m.removeprefix("apps/api/") for m in FILE_PATH.findall(text)]
+        for item in cited:
+            if forbidden & set(_parts(item)):
+                leftovers.append(f"{test.relative_to(TESTS)}: {item}")
+    existing = [
         str(p.relative_to(APP))
         for p in APP.rglob("*.py")
-        if p.stem in STEMS_EN_CASTELLANO or p.parent.name in MODULOS_EN_CASTELLANO
+        if p.stem in SPANISH_STEMS or p.parent.name in SPANISH_MODULES
     ]
-    assert restos == []
-    assert existentes == []
-
+    assert leftovers == []
+    assert existing == []

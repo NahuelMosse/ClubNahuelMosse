@@ -1,19 +1,19 @@
-"""La página de navegación dice en qué archivos viven las rutas y la redirección de la app."""
+"""The navigation page says in which files the app's routes and redirect live."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tag and are not split)
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[4]
-NAVEGACION = RAIZ / "docs" / "technical" / "app-navigation.md"
-RUTAS = "apps/mobile/lib/router.dart"
-REDIRECCION = "apps/mobile/lib/redirect.dart"
+ROOT = Path(__file__).resolve().parents[4]
+NAVIGATION = ROOT / "docs" / "technical" / "app-navigation.md"
+ROUTES = "apps/mobile/lib/router.dart"
+REDIRECT = "apps/mobile/lib/redirect.dart"
 
 
-def test_la_pagina_de_navegacion_nombra_rutas_y_redireccion() -> None:
-    """la página de navegación nombra rutas.dart y redireccion.dart, donde viven las rutas y la redirección @SIM-04-S1"""
-    pagina = NAVEGACION.read_text(encoding="utf-8")
+def test_the_navigation_page_names_routes_and_redirect() -> None:
+    """the navigation page names «rutas.dart» and «redireccion.dart», where the routes and the redirect live @SIM-04-S1"""
+    page = NAVIGATION.read_text(encoding="utf-8")
 
-    assert (RAIZ / RUTAS).exists() and (RAIZ / REDIRECCION).exists()
-    assert f"`{RUTAS}`" in pagina
-    assert f"`{REDIRECCION}`" in pagina
-    assert "all routes are in `apps/mobile/lib/app.dart`" not in pagina
+    assert (ROOT / ROUTES).exists() and (ROOT / REDIRECT).exists()
+    assert f"`{ROUTES}`" in page
+    assert f"`{REDIRECT}`" in page
+    assert "all routes are in `apps/mobile/lib/app.dart`" not in page

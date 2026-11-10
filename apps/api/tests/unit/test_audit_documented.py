@@ -1,11 +1,11 @@
-"""La página del modelo de datos muestra las columnas de auditoría de cada tabla."""
+"""The data model page shows the audit columns of each table."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import re
 from pathlib import Path
 
-MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "data-model.md"
-TABLAS = (
+MODEL = Path(__file__).resolve().parents[4] / "docs" / "technical" / "data-model.md"
+TABLES = (
     "app_user",
     "venue",
     "space",
@@ -16,20 +16,20 @@ TABLAS = (
     "notification",
     "notification_booking",
 )
-AUDITORIA = ("created_at", "updated_at")
+AUDIT = ("created_at", "updated_at")
 
 
-def test_cada_tabla_del_diagrama_y_de_su_seccion_muestra_creado_en_y_modificado_en() -> None:
-    """cada tabla del diagrama y de su sección muestra creado_en y modificado_en @DOC-02-S1"""
-    texto = MODELO.read_text(encoding="utf-8")
-    diagrama = texto.split("```mermaid", 1)[1].split("```", 1)[0]
-    entidades = texto.split("## Entities", 1)[1].split("\n## ", 1)[0]
+def test_each_table_of_the_diagram_and_of_its_section_shows_created_at_and_updated_at() -> None:
+    """each table of the diagram and of its section shows created_at and updated_at @DOC-02-S1"""
+    text = MODEL.read_text(encoding="utf-8")
+    diagram = text.split("```mermaid", 1)[1].split("```", 1)[0]
+    entities = text.split("## Entities", 1)[1].split("\n## ", 1)[0]
 
-    for tabla in TABLAS:
-        bloque = re.search(rf"^\s+{tabla} \{{\n(.*?)\n\s+\}}", diagrama, re.S | re.M)
-        assert bloque is not None, tabla
-        columnas = {linea.split()[1] for linea in bloque.group(1).splitlines() if linea.strip()}
-        assert set(AUDITORIA) <= columnas, (tabla, "diagrama")
-        seccion = entidades.split(f"### {tabla}\n", 1)[1].split("\n### ", 1)[0]
-        for columna in AUDITORIA:
-            assert f"`{columna}`" in seccion, (tabla, columna)
+    for table in TABLES:
+        block = re.search(rf"^\s+{table} \{{\n(.*?)\n\s+\}}", diagram, re.S | re.M)
+        assert block is not None, table
+        columns = {line.split()[1] for line in block.group(1).splitlines() if line.strip()}
+        assert set(AUDIT) <= columns, (table, "diagram")
+        section = entities.split(f"### {table}\n", 1)[1].split("\n### ", 1)[0]
+        for column in AUDIT:
+            assert f"`{column}`" in section, (table, column)

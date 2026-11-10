@@ -20,7 +20,9 @@ PAGES = [
     ROOT / "docs" / "technical" / "app-navigation.md",
     ROOT / "docs" / "technical" / "integrations.md",
 ]
-LOGO_COUNTED_AS_A_CAPTURE = "test_el_readme_muestra_a_lo_sumo_4_capturas_en_una_fila_y_no_quedan_capturas_sin_usar("
+LOGO_COUNTED_AS_A_CAPTURE = (
+    "test_el_readme_muestra_a_lo_sumo_4_capturas_en_una_fila_y_no_quedan_capturas_sin_usar("
+)
 
 
 def test_the_documentation_tests_pass_without_deselecting_any() -> None:

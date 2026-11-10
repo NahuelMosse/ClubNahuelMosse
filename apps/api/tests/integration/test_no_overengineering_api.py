@@ -1,4 +1,4 @@
-"""SIM-01 contra la base y el emulador reales: historial sin marcador, avisos sin reintentos."""
+"""SIM-01 against the real database and emulator: history without a marker, notices without retries."""
 
 import os
 from collections.abc import Sequence
@@ -15,20 +15,20 @@ from sqlalchemy import Engine, create_engine, text
 from app.modules.notifications.rules import Notice, DeliveryResult
 from tests.integration.test_uuid_and_audit import new_db  # noqa: F401  (fixture)
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-URL_PRUEBAS = os.environ["DATABASE_URL"]
+API_ROOT = Path(__file__).resolve().parents[2]
+TEST_DATABASE_URL = os.environ["DATABASE_URL"]
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio(api: TestClient, admin_token: str, sede_id: str) -> str:
+def _space(api: TestClient, admin_token: str, venue_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -39,80 +39,78 @@ def _espacio(api: TestClient, admin_token: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, token: str, espacio: str, dia: int, hora: int) -> dict[str, Any]:
+def _book(api: TestClient, token: str, space: str, day: int, hour: int) -> dict[str, Any]:
     r = api.post(
         "/bookings",
-        headers=_con(token),
+        headers=_bearer(token),
         json={
-            "space_id": espacio,
-            "date": (date.today() + timedelta(days=dia)).isoformat(),
-            "start_hour": f"{hora:02d}:00",
+            "space_id": space,
+            "date": (date.today() + timedelta(days=day)).isoformat(),
+            "start_hour": f"{hour:02d}:00",
             "hours": 1,
         },
     )
     assert r.status_code == 201, r.text
-    cuerpo: dict[str, Any] = r.json()
-    return cuerpo
+    body: dict[str, Any] = r.json()
+    return body
 
 
-def test_el_historial_propio_es_el_listado_entero_y_sin_marcador(
+def test_the_own_history_is_the_whole_listing_and_without_a_marker(
     api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    """el historial propio es el listado ordenadas por fecha, entero y sin marcador @SIM-01-S1 @assumption:SIM-01-ASM-01"""
-    espacio = _espacio(api, admin_token, venue[0])
-    creadas = [
-        _reservar(api, user_token, espacio, d, h)["id"] for d in (1, 2) for h in range(8, 19)
-    ]
+    """the own history is the listing ordered by date, whole and without a marker @SIM-01-S1 @assumption:SIM-01-ASM-01"""
+    space = _space(api, admin_token, venue[0])
+    created = [_book(api, user_token, space, d, h)["id"] for d in (1, 2) for h in range(8, 19)]
 
-    r = api.get("/bookings", headers=_con(user_token), params={"cuando": "upcoming"})
+    r = api.get("/bookings", headers=_bearer(user_token), params={"cuando": "upcoming"})
 
     assert r.status_code == 200
     assert "siguiente" not in r.json()
-    assert [x["id"] for x in r.json()["bookings"]] == creadas
-    assert api.get("/bookings?despues=x", headers=_con(user_token)).status_code == 200
+    assert [x["id"] for x in r.json()["bookings"]] == created
+    assert api.get("/bookings?despues=x", headers=_bearer(user_token)).status_code == 200
 
 
-def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
+def test_the_admin_history_still_paginates_by_page_number(
     api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    """el historial del administrador sigue paginando por número de página @SIM-01-S2 @assumption:SIM-01-ASM-01"""
-    espacio = _espacio(api, admin_token, venue[0])
+    """the admin history still paginates by page number @SIM-01-S2 @assumption:SIM-01-ASM-01"""
+    space = _space(api, admin_token, venue[0])
     for h in range(8, 8 + 22):
-        _reservar(api, user_token, espacio, 1 + (h - 8) // 11, 8 + (h - 8) % 11)
+        _book(api, user_token, space, 1 + (h - 8) // 11, 8 + (h - 8) % 11)
     q = {"q": venue[1]}
 
-    primera = api.get("/bookings/all", headers=_con(admin_token), params={**q, "page": 1})
-    segunda = api.get("/bookings/all", headers=_con(admin_token), params={**q, "page": 2})
+    first = api.get("/bookings/all", headers=_bearer(admin_token), params={**q, "page": 1})
+    second = api.get("/bookings/all", headers=_bearer(admin_token), params={**q, "page": 2})
 
-    assert primera.status_code == segunda.status_code == 200
-    assert len(primera.json()["bookings"]) == 20 and len(segunda.json()["bookings"]) == 2
-    assert "siguiente" not in primera.json()
+    assert first.status_code == second.status_code == 200
+    assert len(first.json()["bookings"]) == 20 and len(second.json()["bookings"]) == 2
+    assert "siguiente" not in first.json()
 
 
-def test_una_reserva_sobrevive_a_reiniciar_la_api(
+def test_a_booking_survives_restarting_the_api(
     api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    """una reserva sobrevive a reiniciar la API sobre la misma base @SIM-01-S2"""
+    """a booking survives restarting the API on the same database @SIM-01-S2"""
     from app.main import create_app
 
-    espacio = _espacio(api, admin_token, venue[0])
-    creada = _reservar(api, user_token, espacio, 1, 10)["id"]
+    space = _space(api, admin_token, venue[0])
+    created = _book(api, user_token, space, 1, 10)["id"]
 
-    with TestClient(create_app()) as otra:
-        r = otra.get("/bookings", headers=_con(user_token))
-    assert creada in [x["id"] for x in r.json()["bookings"]]
+    with TestClient(create_app()) as other:
+        r = other.get("/bookings", headers=_bearer(user_token))
+    assert created in [x["id"] for x in r.json()["bookings"]]
 
 
-class _CanalQueFalla:
-    llamadas = 0
+class _FailingChannel:
+    calls = 0
 
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        type(self).llamadas += 1
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
+        type(self).calls += 1
         raise ConnectionError("FCM no responde")
 
 
-def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(engine: Engine) -> None:
-    """un aviso que falla queda fallido y no se vuelve a intentar @SIM-01-S1 @assumption:SIM-01-ASM-02"""
+def test_a_notice_that_fails_stays_failed_and_is_not_retried(engine: Engine) -> None:
+    """a notice that fails stays failed and is not tried again @SIM-01-S1 @assumption:SIM-01-ASM-02"""
     from app.modules.notifications.use_cases import dispatch_pending
     from app.modules.notifications.repository import NotificationsSql
 
@@ -132,23 +130,23 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(engine: Engine) -> N
             ),
             {"id": id_},
         )
-    canal = _CanalQueFalla()
+    channel = _FailingChannel()
     with engine.connect() as conn:
-        dispatch_pending(NotificationsSql(conn), canal)
-        tras_el_primero = _CanalQueFalla.llamadas
-        dispatch_pending(NotificationsSql(conn), canal)
+        dispatch_pending(NotificationsSql(conn), channel)
+        after_the_first = _FailingChannel.calls
+        dispatch_pending(NotificationsSql(conn), channel)
     with engine.connect() as conn:
-        envio: str = conn.execute(
+        delivery: str = conn.execute(
             text("SELECT delivery FROM notification WHERE id = :id"), {"id": id_}
         ).scalar_one()
-    assert envio == "failed"
-    assert tras_el_primero >= 1 and _CanalQueFalla.llamadas == tras_el_primero
+    assert delivery == "failed"
+    assert after_the_first >= 1 and _FailingChannel.calls == after_the_first
 
 
-def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(engine: Engine) -> None:
-    """la base ya no tiene intentos ni tomada_en en notificacion @assumption:SIM-01-ASM-02"""
+def test_notification_no_longer_has_attempts_or_taken_at(engine: Engine) -> None:
+    """the database no longer has «intentos» or «tomada_en» in «notificacion» @assumption:SIM-01-ASM-02"""
     with engine.connect() as conn:
-        columnas = {
+        columns = {
             f[0]
             for f in conn.execute(
                 text(
@@ -157,15 +155,15 @@ def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(engine: Engine) -> None:
                 )
             )
         }
-    assert columnas and not {"intentos", "tomada_en"} & columnas
+    assert columns and not {"intentos", "tomada_en"} & columns
 
 
-def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(
-    new_db: tuple[AlembicConfig, str],  # noqa: F811  (la fixture importada)
+def test_migration_0009_turns_a_sending_notice_into_failed(
+    new_db: tuple[AlembicConfig, str],  # noqa: F811  (the imported fixture)
 ) -> None:
-    """la migración 0009 pasa a fallida un aviso que estaba enviando @assumption:SIM-01-ASM-07"""
-    # En una base propia: la base compartida no puede volver a 0008 una vez que la 0010
-    # creó filas con ids nuevos (DAT-01-ASM-02).
+    """migration 0009 turns a notice that was sending into failed @assumption:SIM-01-ASM-07"""
+    # In its own database: the shared database cannot go back to 0008 once 0010
+    # created rows with new ids (DAT-01-ASM-02).
     alembic, url = new_db
     command.upgrade(alembic, "0008")
     engine = create_engine(url)
@@ -187,9 +185,9 @@ def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(
             ).scalar_one()
         command.upgrade(alembic, "0009")
         with engine.connect() as conn:
-            envio: str = conn.execute(
+            delivery: str = conn.execute(
                 text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
             ).scalar_one()
     finally:
         engine.dispose()
-    assert envio == "fallida"
+    assert delivery == "fallida"

@@ -6,40 +6,40 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.modules.session.current_user import current_user as usuario_actual
-from app.modules.session.profile import Profile as Perfil
-from app.modules.venues.repository import venue_repository as repositorio_sedes
-from app.modules.venues.rules import Venue as Sede
+from app.modules.session.current_user import current_user
+from app.modules.session.profile import Profile
+from app.modules.venues.repository import venue_repository
+from app.modules.venues.rules import Venue
 
-INTERFAZ = Path(__file__).resolve().parents[2] / "app" / "interfaz"
-# Los comandos de consola no tienen pedido HTTP: arman sus piezas ellos mismos.
-COMANDOS = {"barrido.py", "sembrar_admin.py"}
+INTERFACE = Path(__file__).resolve().parents[2] / "app" / "interfaz"
+# The console commands have no HTTP request: they build their own pieces.
+COMMANDS = {"barrido.py", "sembrar_admin.py"}
 
 
-def _construcciones(archivo: Path) -> list[str]:
-    """Lo que el archivo construye de infraestructura: `…Sql(…)` y `FirebaseProvider(…)`."""
-    arbol = ast.parse(archivo.read_text(encoding="utf-8"))
+def _constructions(file: Path) -> list[str]:
+    """What the file builds of infrastructure: `…Sql(…)` and `FirebaseProvider(…)`."""
+    tree = ast.parse(file.read_text(encoding="utf-8"))
     return [
-        f"{archivo.name}:{nodo.lineno} {nodo.func.id}"
-        for nodo in ast.walk(arbol)
-        if isinstance(nodo, ast.Call)
-        and isinstance(nodo.func, ast.Name)
-        and (nodo.func.id.endswith("Sql") or nodo.func.id == "FirebaseProvider")
+        f"{file.name}:{node.lineno} {node.func.id}"
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and (node.func.id.endswith("Sql") or node.func.id == "FirebaseProvider")
     ]
 
 
-def test_ninguna_ruta_construye_un_repositorio_ni_un_servicio_de_infraestructura() -> None:
-    """ninguna ruta construye un repositorio ni un servicio de infraestructura
+def test_no_route_builds_a_repository_or_an_infrastructure_service() -> None:
+    """no route builds a repository or an infrastructure service
     @ARQ-01-S1 @assumption:ARQ-01-ASM-01"""
-    rutas = [a for a in sorted(INTERFAZ.glob("*.py")) if a.name not in COMANDOS]
-    encontradas = [c for archivo in rutas for c in _construcciones(archivo)]
-    assert encontradas == []
+    routes = [a for a in sorted(INTERFACE.glob("*.py")) if a.name not in COMMANDS]
+    found = [c for file in routes for c in _constructions(file)]
+    assert found == []
 
 
-class _SedesDePrueba:
-    def active(self) -> list[Sede]:
+class _TestVenues:
+    def active(self) -> list[Venue]:
         return [
-            Sede(
+            Venue(
                 id=UUID(int=7),
                 name="Sede de prueba",
                 street="Calle",
@@ -53,10 +53,10 @@ class _SedesDePrueba:
         ]
 
 
-def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza() -> None:
-    """una ruta recibe su repositorio por dependencia y un test lo reemplaza @ARQ-01-S2"""
+def test_a_route_receives_its_repository_by_dependency_and_a_test_replaces_it() -> None:
+    """a route receives its repository by dependency and a test replaces it @ARQ-01-S2"""
     app = create_app()
-    app.dependency_overrides[usuario_actual] = lambda: Perfil(
+    app.dependency_overrides[current_user] = lambda: Profile(
         id=UUID(int=1),
         uid="uid-prueba",
         first_name="Ana",
@@ -66,16 +66,16 @@ def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza()
         dni="30111222",
         birth_date=date(1990, 1, 1),
     )
-    app.dependency_overrides[repositorio_sedes] = _SedesDePrueba
+    app.dependency_overrides[venue_repository] = _TestVenues
 
-    respuesta = TestClient(app, base_url="http://localhost").get("/venues")
+    response = TestClient(app, base_url="http://localhost").get("/venues")
 
-    assert respuesta.status_code == 200
-    assert [s["name"] for s in respuesta.json()["venues"]] == ["Sede de prueba"]
+    assert response.status_code == 200
+    assert [s["name"] for s in response.json()["venues"]] == ["Sede de prueba"]
 
 
-def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> None:
-    """una ruta con dos repositorios los arma sobre la misma conexión @ARQ-01-ASM-02"""
+def test_a_route_with_two_repositories_builds_them_on_the_same_connection() -> None:
+    """a route with two repositories builds them on the same connection @ARQ-01-ASM-02"""
     from typing import Annotated
 
     from fastapi import Depends, FastAPI
@@ -85,23 +85,23 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
     from app.shared.db import connection
 
     app = FastAPI()
-    conexiones: list[object] = []
+    connections: list[object] = []
 
-    def conexion_de_prueba() -> object:
-        nueva = object()
-        conexiones.append(nueva)
-        return nueva
+    def test_connection() -> object:
+        new = object()
+        connections.append(new)
+        return new
 
     @app.get("/dos")
-    def dos(
-        reservas: Annotated[BookingsSql, Depends(bookings_repository)],
-        avisos: Annotated[NotificationsSql, Depends(notifications_repository)],
+    def two(
+        bookings: Annotated[BookingsSql, Depends(bookings_repository)],
+        notices: Annotated[NotificationsSql, Depends(notifications_repository)],
     ) -> bool:
-        return reservas._conn is avisos._conn
+        return bookings._conn is notices._conn
 
-    app.dependency_overrides[connection] = conexion_de_prueba
+    app.dependency_overrides[connection] = test_connection
 
-    respuesta = TestClient(app).get("/dos")
+    response = TestClient(app).get("/dos")
 
-    assert respuesta.json() is True
-    assert len(conexiones) == 1
+    assert response.json() is True
+    assert len(connections) == 1

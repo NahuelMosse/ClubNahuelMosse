@@ -1,4 +1,4 @@
-"""SIM-02 contra la base y el emulador reales: la API legible hace lo mismo."""
+"""SIM-02 against the real database and emulator: the readable API does the same."""
 
 from datetime import date, timedelta
 from typing import Any
@@ -6,16 +6,16 @@ from typing import Any
 from fastapi.testclient import TestClient
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio(api: TestClient, admin_token: str, sede_id: str) -> str:
+def _space(api: TestClient, admin_token: str, venue_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -27,32 +27,32 @@ def _espacio(api: TestClient, admin_token: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _pedido(espacio: str, dia: int, hora: int) -> dict[str, Any]:
+def _payload(space: str, day: int, hour: int) -> dict[str, Any]:
     return {
-        "space_id": espacio,
-        "date": (date.today() + timedelta(days=dia)).isoformat(),
-        "start_hour": f"{hora:02d}:00",
+        "space_id": space,
+        "date": (date.today() + timedelta(days=day)).isoformat(),
+        "start_hour": f"{hour:02d}:00",
         "hours": 1,
     }
 
 
-def test_una_reserva_hecha_y_movida_sobrevive_a_reiniciar_la_api(
+def test_a_made_and_moved_booking_survives_restarting_the_api(
     api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    """una reserva hecha y movida sobrevive a reiniciar la API sobre la misma base @SIM-02-S1"""
+    """a made and moved booking survives restarting the API on the same database @SIM-02-S1"""
     from app.main import create_app
 
-    espacio = _espacio(api, admin_token, venue[0])
-    r = api.post("/bookings", headers=_con(user_token), json=_pedido(espacio, 1, 10))
+    space = _space(api, admin_token, venue[0])
+    r = api.post("/bookings", headers=_bearer(user_token), json=_payload(space, 1, 10))
     assert r.status_code == 201, r.text
-    creada = r.json()["id"]
-    nuevo = _pedido(espacio, 2, 11)
-    nuevo.pop("hours")
-    movida = api.post(f"/bookings/{creada}/modify", headers=_con(user_token), json=nuevo)
-    assert movida.status_code == 200, movida.text
+    created = r.json()["id"]
+    new = _payload(space, 2, 11)
+    new.pop("hours")
+    moved = api.post(f"/bookings/{created}/modify", headers=_bearer(user_token), json=new)
+    assert moved.status_code == 200, moved.text
 
-    with TestClient(create_app()) as otra:
-        r = otra.get("/bookings", headers=_con(user_token))
-    leida = next(x for x in r.json()["bookings"] if x["id"] == creada)
-    assert leida["starts_at"] == movida.json()["starts_at"]
-    assert leida["total"] == movida.json()["total"]
+    with TestClient(create_app()) as other:
+        r = other.get("/bookings", headers=_bearer(user_token))
+    read = next(x for x in r.json()["bookings"] if x["id"] == created)
+    assert read["starts_at"] == moved.json()["starts_at"]
+    assert read["total"] == moved.json()["total"]

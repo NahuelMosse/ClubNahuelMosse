@@ -1,4 +1,4 @@
-"""Datos: cada migración corre en su propia transacción, en una base propia por corrida."""
+"""Data: each migration runs in its own transaction, in a database of its own per run."""
 
 from typing import Any
 
@@ -8,22 +8,22 @@ from sqlalchemy import Engine, event
 from test_data_migrations_lock import own_db  # noqa: F401 — fixture
 
 
-def test_cada_migracion_hace_su_propio_commit(
+def test_each_migration_makes_its_own_commit(
     own_db: tuple[Engine, AlembicConfig],  # noqa: F811
 ) -> None:
-    """el upgrade commitea una vez por migración, no una sola al final
+    """the upgrade commits once per migration, not once at the end
     @REV-03-S7 @assumption:REV-03-ASM-15
     """
     _, alembic = own_db
     commits: list[Any] = []
 
-    def contar(conn: Any) -> None:
+    def count(conn: Any) -> None:
         commits.append(conn)
 
-    event.listen(Engine, "commit", contar)
+    event.listen(Engine, "commit", count)
     try:
         command.upgrade(alembic, "0006")
     finally:
-        event.remove(Engine, "commit", contar)
+        event.remove(Engine, "commit", count)
 
     assert len(commits) >= 6

@@ -11,9 +11,7 @@ from app.shared import email
 from app.shared.config import Settings, config
 from app.shared.message import Message
 
-MESSAGE = Message(
-    recipient="lucia+club@correo.com", subject="Create a new password", body="Hola"
-)
+MESSAGE = Message(recipient="lucia+club@correo.com", subject="Create a new password", body="Hola")
 ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -31,11 +29,11 @@ def _in_brevo_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(config, "email_sender", "club@correo.com")
 
 
-def test_con_modo_brevo_el_correo_sale_por_la_api_con_clave_remitente_y_texto(
+def test_in_brevo_mode_the_email_goes_out_through_the_api_with_key_sender_and_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """con CORREO_MODO=brevo el correo sale por la API de Brevo con su clave, remitente,
-    destinatario, asunto y cuerpo @MAIL-01-S1 @assumption:MAIL-01-ASM-02"""
+    """with CORREO_MODO=brevo the email goes out through the Brevo API with its key, sender,
+    recipient, subject and body @MAIL-01-S1 @assumption:MAIL-01-ASM-02"""
     _in_brevo_mode(monkeypatch)
     requests: list[Any] = []
 
@@ -45,7 +43,7 @@ def test_con_modo_brevo_el_correo_sale_por_la_api_con_clave_remitente_y_texto(
 
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
     monkeypatch.setattr(
-        "smtplib.SMTP", lambda *a, **k: pytest.fail("no debe abrir una conexión SMTP")
+        "smtplib.SMTP", lambda *a, **k: pytest.fail("must not open an SMTP connection")
     )
     email.send(MESSAGE)
 
@@ -73,15 +71,15 @@ NO_HEADERS: Any = None
         TimeoutError("agotado"),
     ],
 )
-def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
+def test_if_brevo_fails_the_log_has_no_address_and_the_request_stays_202(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
     api: TestClient,
     unique: Callable[[], str],
     failure: Exception,
 ) -> None:
-    """si Brevo falla o no responde el error queda en el log sin la dirección y el pedido
-    sigue en 202 @MAIL-01-S2"""
+    """if Brevo fails or does not answer the error is logged without the address and the request
+    stays 202 @MAIL-01-S2"""
     _in_brevo_mode(monkeypatch)
 
     def broken(*_: Any, **__: Any) -> None:
@@ -89,9 +87,7 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
 
     monkeypatch.setattr("urllib.request.urlopen", broken)
     email.send(MESSAGE)
-    assert (
-        f"could not send the email «{MESSAGE.subject}»: {type(failure).__name__}" in caplog.text
-    )
+    assert f"could not send the email «{MESSAGE.subject}»: {type(failure).__name__}" in caplog.text
     assert "lucia" not in caplog.text
     assert "clave-secreta" not in caplog.text
 
@@ -108,10 +104,10 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
     assert api.post("/password-recovery", json={"email": payload["email"]}).status_code == 202
 
 
-def test_smtp_y_buzon_siguen_igual_y_render_yaml_usa_brevo_con_la_clave_secreta(
+def test_smtp_and_outbox_stay_the_same_and_render_yaml_uses_brevo_with_the_secret_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """smtp y buzon siguen igual y render.yaml usa brevo con la clave como secreto
+    """smtp and outbox stay the same and render.yaml uses brevo with the key as a secret
     @assumption:MAIL-01-ASM-01"""
     monkeypatch.setenv("CORREO_MODO", "smtp")
     assert Settings(_env_file=None).email_mode == "smtp"

@@ -4,11 +4,10 @@ from uuid import UUID
 import pytest
 
 from app.modules.session.profile import Profile
-from app.modules.users.password import DOES_NOT_MATCH as NO_COINCIDE
-from app.modules.users.password import change_password as cambiar_contrasena
+from app.modules.users.password import DOES_NOT_MATCH, change_password
 from app.shared.errors import InvalidData
 
-PERFIL = Profile(
+PROFILE = Profile(
     id=UUID(int=7),
     uid="u7",
     first_name="Lucía",
@@ -20,84 +19,84 @@ PERFIL = Profile(
 )
 
 
-class Identidad:
-    def __init__(self, contrasena: str) -> None:
-        self.contrasena = contrasena
-        self.cambios: list[tuple[str, str]] = []
+class Identity:
+    def __init__(self, password: str) -> None:
+        self.password = password
+        self.changes: list[tuple[str, str]] = []
 
     def password_matches(self, email: str, password: str) -> bool:
-        return email == PERFIL.email and password == self.contrasena
+        return email == PROFILE.email and password == self.password
 
     def change_password(self, uid: str, new_password: str) -> None:
-        self.cambios.append((uid, new_password))
+        self.changes.append((uid, new_password))
 
 
-class Rastro:
+class Trail:
     def __init__(self) -> None:
-        self.marcados: list[UUID] = []
+        self.marked: list[UUID] = []
 
-    def mark_password_changed(self, id_usuario: UUID) -> None:
-        self.marcados.append(id_usuario)
-
-
-def test_con_la_actual_correcta_cambia_y_deja_rastro() -> None:
-    identidad, rastro = Identidad("ClubNahuel1"), Rastro()
-    cambiar_contrasena(PERFIL, "ClubNahuel1", "ClubNahuel2", identidad, rastro)
-    assert identidad.cambios == [("u7", "ClubNahuel2")]
-    assert rastro.marcados == [UUID(int=7)]
+    def mark_password_changed(self, user_id: UUID) -> None:
+        self.marked.append(user_id)
 
 
-def test_con_la_actual_equivocada_no_cambia_nada() -> None:
-    identidad, rastro = Identidad("ClubNahuel1"), Rastro()
+def test_with_the_correct_current_one_it_changes_and_leaves_a_trail() -> None:
+    identity, trail = Identity("ClubNahuel1"), Trail()
+    change_password(PROFILE, "ClubNahuel1", "ClubNahuel2", identity, trail)
+    assert identity.changes == [("u7", "ClubNahuel2")]
+    assert trail.marked == [UUID(int=7)]
+
+
+def test_with_the_wrong_current_one_nothing_changes() -> None:
+    identity, trail = Identity("ClubNahuel1"), Trail()
     with pytest.raises(InvalidData) as error:
-        cambiar_contrasena(PERFIL, "OtraClave9", "ClubNahuel2", identidad, rastro)
-    assert error.value.errors == {"current_password": NO_COINCIDE}
-    assert identidad.cambios == [] and rastro.marcados == []
+        change_password(PROFILE, "OtraClave9", "ClubNahuel2", identity, trail)
+    assert error.value.errors == {"current_password": DOES_NOT_MATCH}
+    assert identity.changes == [] and trail.marked == []
 
 
 @pytest.mark.parametrize(
-    ("nueva", "mensaje"),
+    ("new", "message"),
     [
         ("Corta1", "At least 8 characters"),
         ("clubnahuel1", "An uppercase letter"),
         ("ClubNahuel", "At least one number"),
     ],
 )
-def test_una_nueva_que_no_cumple_las_reglas_se_rechaza_antes_de_mirar_la_actual(
-    nueva: str, mensaje: str
+def test_a_new_one_that_breaks_the_rules_is_rejected_before_looking_at_the_current_one(
+    new: str, message: str
 ) -> None:
-    identidad = Identidad("ClubNahuel1")
+    identity = Identity("ClubNahuel1")
     with pytest.raises(InvalidData) as error:
-        cambiar_contrasena(PERFIL, "equivocada", nueva, identidad, Rastro())
-    assert error.value.errors == {"new_password": mensaje}
+        change_password(PROFILE, "equivocada", new, identity, Trail())
+    assert error.value.errors == {"new_password": message}
 
 
-def test_una_nueva_igual_a_la_actual_se_acepta() -> None:
-    """Verifica CU-04-SUP-01."""
-    identidad = Identidad("ClubNahuel1")
-    cambiar_contrasena(PERFIL, "ClubNahuel1", "ClubNahuel1", identidad, Rastro())
-    assert identidad.cambios == [("u7", "ClubNahuel1")]
+def test_a_new_one_equal_to_the_current_one_is_accepted() -> None:
+    """Verifies CU-04-SUP-01."""
+    identity = Identity("ClubNahuel1")
+    change_password(PROFILE, "ClubNahuel1", "ClubNahuel1", identity, Trail())
+    assert identity.changes == [("u7", "ClubNahuel1")]
 
 
-class RastroQueFalla:
-    def mark_password_changed(self, id_usuario: UUID) -> None:
-        raise RuntimeError("la base no contesta")
+class FailingTrail:
+    def mark_password_changed(self, user_id: UUID) -> None:
+        raise RuntimeError("the database does not answer")
 
 
-def test_si_falla_el_rastro_el_cambio_igual_se_informa_hecho(
+def test_if_the_trail_fails_the_change_is_still_reported_as_done(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    identidad = Identidad("ClubNahuel1")
-    cambiar_contrasena(PERFIL, "ClubNahuel1", "ClubNahuel2", identidad, RastroQueFalla())
-    assert identidad.cambios == [("u7", "ClubNahuel2")]
+    identity = Identity("ClubNahuel1")
+    change_password(PROFILE, "ClubNahuel1", "ClubNahuel2", identity, FailingTrail())
+    assert identity.changes == [("u7", "ClubNahuel2")]
     assert "could not record the password change" in caplog.text
 
 
-def test_sin_la_actual_no_se_pregunta_al_proveedor() -> None:
-    class SinConsultas(Identidad):
+def test_without_the_current_one_the_provider_is_not_asked() -> None:
+    class WithoutQueries(Identity):
         def password_matches(self, email: str, password: str) -> bool:
-            raise AssertionError("no tendría que consultar")
+            raise AssertionError("it should not query")
 
     with pytest.raises(InvalidData) as error:
-        cambiar_contrasena(PERFIL, "", "ClubNahuel2", SinConsultas("x"), Rastro())
-    assert error.value.errors == {"current_password": NO_COINCIDE}
+        change_password(PROFILE, "", "ClubNahuel2", WithoutQueries("x"), Trail())
+    assert error.value.errors == {"current_password": DOES_NOT_MATCH}

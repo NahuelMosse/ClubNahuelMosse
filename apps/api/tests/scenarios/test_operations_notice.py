@@ -1,4 +1,4 @@
-"""Un aviso que no salió queda a la vista de quien opera."""
+"""A notice that was not sent stays visible to whoever operates."""
 
 import logging
 
@@ -6,15 +6,15 @@ import pytest
 from sqlalchemy import Engine, text
 
 
-class _CanalQueFalla:
-    def send(self, tokens: list[str], aviso: object) -> object:
-        raise ConnectionError("FCM no responde")
+class _FailingChannel:
+    def send(self, tokens: list[str], notice: object) -> object:
+        raise ConnectionError("FCM does not answer")
 
 
-def test_un_aviso_que_no_salio_queda_a_la_vista(
+def test_a_notice_that_was_not_sent_is_left_visible(
     engine: Engine, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """un recordatorio que no salió queda a la vista de quien opera @REV-02-S4"""
+    """a reminder that was not sent stays visible to whoever operates @REV-02-S4"""
     from app.modules.notifications.use_cases import dispatch_pending
     from app.modules.notifications.repository import NotificationsSql
 
@@ -35,8 +35,8 @@ def test_un_aviso_que_no_salio_queda_a_la_vista(
         )
 
     with caplog.at_level(logging.INFO), engine.connect() as conn:
-        dispatch_pending(NotificationsSql(conn), _CanalQueFalla())
+        dispatch_pending(NotificationsSql(conn), _FailingChannel())
 
-    errores = [r for r in caplog.records if r.levelno >= logging.ERROR]
-    assert any("aviso_sin_enviar" in r.getMessage() for r in errores)
+    errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+    assert any("aviso_sin_enviar" in r.getMessage() for r in errors)
     assert not any("fcm-" in r.getMessage() for r in caplog.records)

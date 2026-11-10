@@ -8,39 +8,39 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.shared import body_limit
 
-UN_MB = 1024 * 1024
+ONE_MB = 1024 * 1024
 
 
-def _por_partes(partes: int, tamano: int) -> Iterator[bytes]:
-    for _ in range(partes):
-        yield b"x" * tamano
+def _in_chunks(chunks: int, size: int) -> Iterator[bytes]:
+    for _ in range(chunks):
+        yield b"x" * size
 
 
-def test_la_api_corta_un_cuerpo_de_mas_de_1_mb_con_413() -> None:
-    """la API corta un cuerpo de más de 1 MB con 413 @SIM-01-S2 @assumption:SIM-01-ASM-09"""
-    cliente = TestClient(create_app())
+def test_the_api_cuts_a_body_over_1_mb_with_413() -> None:
+    """the API cuts a body over 1 MB with 413 @SIM-01-S2 @assumption:SIM-01-ASM-09"""
+    client = TestClient(create_app())
 
-    declarado = cliente.post("/venues", content=b"x" * (UN_MB + 1))
-    por_partes = cliente.post("/venues", content=_por_partes(3, UN_MB // 2))
+    declared = client.post("/venues", content=b"x" * (ONE_MB + 1))
+    chunked = client.post("/venues", content=_in_chunks(3, ONE_MB // 2))
 
-    assert declarado.status_code == 413
-    assert por_partes.status_code == 413
+    assert declared.status_code == 413
+    assert chunked.status_code == 413
 
 
-def test_la_api_corta_con_408_en_5_s_un_cuerpo_que_no_termina_de_llegar(
+def test_the_api_cuts_with_408_in_5_s_a_body_that_never_finishes_arriving(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """la API corta con 408 en 5 s un cuerpo que no termina de llegar @SIM-01-S2 @assumption:SIM-01-ASM-09"""
+    """the API cuts with 408 in 5 s a body that never finishes arriving @SIM-01-S2 @assumption:SIM-01-ASM-09"""
     assert body_limit.TIMEOUT_SECONDS == 5
     monkeypatch.setattr(body_limit, "TIMEOUT_SECONDS", 0.2)
-    enviados: list[dict[str, Any]] = []
+    sent: list[dict[str, Any]] = []
 
-    async def nunca_termina() -> dict[str, Any]:
+    async def never_ends() -> dict[str, Any]:
         await asyncio.sleep(60)
         return {"type": "http.disconnect"}
 
-    async def enviar(mensaje: dict[str, Any]) -> None:
-        enviados.append(mensaje)
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
 
     scope = {
         "type": "http",
@@ -51,6 +51,6 @@ def test_la_api_corta_con_408_en_5_s_un_cuerpo_que_no_termina_de_llegar(
         "headers": [(b"host", b"testserver")],
     }
 
-    asyncio.run(create_app()(scope, nunca_termina, enviar))
+    asyncio.run(create_app()(scope, never_ends, send))
 
-    assert enviados[0]["status"] == 408
+    assert sent[0]["status"] == 408

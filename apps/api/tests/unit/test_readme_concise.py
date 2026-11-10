@@ -1,10 +1,10 @@
 import re
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[4]
-README = (RAIZ / "README.md").read_text(encoding="utf-8")
-SECCIONES = ["What it does", "What it is built with", "How to run it", "Documentation"]
-ENLACES_QUE_LEEN_LOS_TESTS = [
+ROOT = Path(__file__).resolve().parents[4]
+README = (ROOT / "README.md").read_text(encoding="utf-8")
+SECTIONS = ["What it does", "What it is built with", "How to run it", "Documentation"]
+LINKS_THE_TESTS_READ = [
     "apps/api/README.md",
     "apps/mobile/README.md",
     "docs/getting-started.md",
@@ -12,48 +12,48 @@ ENLACES_QUE_LEEN_LOS_TESTS = [
     "docs/technical/runbook.md",
     "specs/asvs.md",
 ]
-COMANDOS_QUE_LEEN_LOS_TESTS = ("sh scripts/test.sh", "npm run emuladores", "npm run build")
-FORMAS_DE_SECRETO = [r"Test1234", r"xkeysib-", r"rnd_", r"contraseña:"]
-MAXIMO_DE_LINEAS = 70
-MAXIMO_DE_VINETAS_DE_QUE_HACE = 6
+COMMANDS_THE_TESTS_READ = ("sh scripts/test.sh", "npm run emuladores", "npm run build")
+SECRET_PATTERNS = [r"Test1234", r"xkeysib-", r"rnd_", r"contraseña:"]
+MAX_LINES = 70
+MAX_WHAT_IT_DOES_BULLETS = 6
 
 
-def _seccion(titulo: str) -> str:
-    return re.search(rf"^## {titulo}$(.*?)(?=^## |\Z)", README, flags=re.M | re.S).group(1)
+def _section(title: str) -> str:
+    return re.search(rf"^## {title}$(.*?)(?=^## |\Z)", README, flags=re.M | re.S).group(1)
 
 
-def test_el_readme_entra_en_unas_60_lineas_con_que_es_que_hace_en_6_vinetas_con_que_esta_hecha_como_correrla_y_la_documentacion() -> (  # noqa: E501
+def test_the_readme_fits_in_about_60_lines_with_what_it_is_what_it_does_in_6_bullets_what_it_is_built_with_how_to_run_it_and_the_documentation() -> (  # noqa: E501
     None
 ):
-    """el README entra en unas 60 líneas con qué es, qué hace en 6 viñetas, con qué está hecha,
-    cómo correrla y la documentación @DOC-06-S2"""
-    titulos = re.findall(r"^## (.+)$", README, flags=re.M)
-    vinetas = re.findall(r"^- .+$", _seccion("What it does"), flags=re.M)
+    """the README fits in about 60 lines with what it is, what it does in 6 bullets, what it is
+    built with, how to run it and the documentation @DOC-06-S2"""
+    titles = re.findall(r"^## (.+)$", README, flags=re.M)
+    bullets = re.findall(r"^- .+$", _section("What it does"), flags=re.M)
 
-    assert len(README.splitlines()) <= MAXIMO_DE_LINEAS
-    for seccion in SECCIONES:
-        assert seccion in titulos, seccion
-    assert 1 <= len(vinetas) <= MAXIMO_DE_VINETAS_DE_QUE_HACE
-    assert "docs/technical/integrations.md" in _seccion("What it is built with")
-    for tecnologia in ("Flutter", "FastAPI", "PostgreSQL", "Firebase", "Brevo", "Render"):
-        assert tecnologia in README, tecnologia
+    assert len(README.splitlines()) <= MAX_LINES
+    for section in SECTIONS:
+        assert section in titles, section
+    assert 1 <= len(bullets) <= MAX_WHAT_IT_DOES_BULLETS
+    assert "docs/technical/integrations.md" in _section("What it is built with")
+    for technology in ("Flutter", "FastAPI", "PostgreSQL", "Firebase", "Brevo", "Render"):
+        assert technology in README, technology
 
 
-def test_lo_que_los_tests_de_documentacion_leen_del_readme_sigue_estando() -> None:
-    """lo que los tests de documentación leen del README sigue estando
+def test_what_the_documentation_tests_read_from_the_readme_is_still_there() -> None:
+    """what the documentation tests read from the README is still there
     @assumption:DOC-06-ASM-01"""
-    for enlace in ENLACES_QUE_LEEN_LOS_TESTS:
-        assert enlace in README, enlace
-    for comando in COMANDOS_QUE_LEEN_LOS_TESTS:
-        assert comando in README, comando
-    enlaces_a_docs = re.findall(r"\]\((docs/[^)#\s]+\.md)\)", README)
+    for link in LINKS_THE_TESTS_READ:
+        assert link in README, link
+    for command in COMMANDS_THE_TESTS_READ:
+        assert command in README, command
+    links_to_docs = re.findall(r"\]\((docs/[^)#\s]+\.md)\)", README)
     assert any(
-        re.search(r"^- REV-07-ASM-01", (RAIZ / e).read_text(encoding="utf-8"), flags=re.M)
-        for e in enlaces_a_docs
+        re.search(r"^- REV-07-ASM-01", (ROOT / e).read_text(encoding="utf-8"), flags=re.M)
+        for e in links_to_docs
     )
 
 
-def test_el_readme_no_publica_contrasenas_ni_claves() -> None:
-    """el README no publica contraseñas ni claves @assumption:DOC-06-ASM-02"""
-    for forma in FORMAS_DE_SECRETO:
-        assert not re.search(forma, README, flags=re.I), forma
+def test_the_readme_publishes_no_passwords_or_keys() -> None:
+    """the README publishes no passwords or keys @assumption:DOC-06-ASM-02"""
+    for pattern in SECRET_PATTERNS:
+        assert not re.search(pattern, README, flags=re.I), pattern

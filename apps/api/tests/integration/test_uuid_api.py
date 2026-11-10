@@ -1,6 +1,6 @@
-"""DAT-01: la API recibe y devuelve los ids como texto UUID."""
+"""DAT-01: the API receives and returns ids as UUID text."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tag and are not split)
 import re
 import uuid
 
@@ -10,13 +10,13 @@ from fastapi.testclient import TestClient
 UUID_V7 = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio(sede_id: str) -> dict[str, object]:
+def _space(venue_id: str) -> dict[str, object]:
     return {
-        "venue_id": sede_id,
+        "venue_id": venue_id,
         "sport": "Futbol",
         "kind": "F5",
         "covered": False,
@@ -26,59 +26,59 @@ def _espacio(sede_id: str) -> dict[str, object]:
 
 
 @pytest.fixture
-def espacio_id(api: TestClient, admin_token: str, venue: tuple[str, str]) -> str:
-    r = api.post("/spaces", headers=_con(admin_token), json=_espacio(venue[0]))
+def space_id(api: TestClient, admin_token: str, venue: tuple[str, str]) -> str:
+    r = api.post("/spaces", headers=_bearer(admin_token), json=_space(venue[0]))
     assert r.status_code == 201, r.text
     id_ = r.json()["id"]
     assert isinstance(id_, str)
     return id_
 
 
-def test_la_api_devuelve_y_recibe_los_ids_como_texto_uuid(
-    api: TestClient, admin_token: str, venue: tuple[str, str], espacio_id: str
+def test_the_api_returns_and_receives_ids_as_uuid_text(
+    api: TestClient, admin_token: str, venue: tuple[str, str], space_id: str
 ) -> None:
-    """la API devuelve y recibe los ids como texto UUID en rutas, cuerpos y consultas @DAT-01-S3"""
-    sede_id = venue[0]
+    """the API returns and receives ids as UUID text in paths, bodies and queries @DAT-01-S3"""
+    venue_id = venue[0]
 
-    assert UUID_V7.match(sede_id)
-    assert UUID_V7.match(espacio_id)
-    listado = api.get("/spaces", headers=_con(admin_token), params={"venue_id": sede_id})
-    assert listado.status_code == 200
-    assert espacio_id in [e["id"] for e in listado.json()["spaces"]]
-    horarios = api.get(f"/spaces/{espacio_id}/slots", headers=_con(admin_token))
-    assert horarios.status_code == 200, horarios.text
+    assert UUID_V7.match(venue_id)
+    assert UUID_V7.match(space_id)
+    listing = api.get("/spaces", headers=_bearer(admin_token), params={"venue_id": venue_id})
+    assert listing.status_code == 200
+    assert space_id in [e["id"] for e in listing.json()["spaces"]]
+    slots = api.get(f"/spaces/{space_id}/slots", headers=_bearer(admin_token))
+    assert slots.status_code == 200, slots.text
 
 
-def test_un_id_mal_formado_responde_422_y_uno_que_no_existe_404(
+def test_a_malformed_id_answers_422_and_one_that_does_not_exist_404(
     api: TestClient, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    """un id mal formado en la ruta, en el cuerpo o en la consulta responde 422 y un UUID que no existe responde 404 @DAT-01-S3"""
-    admin = _con(admin_token)
-    inexistente = str(uuid.uuid4())
+    """a malformed id in the path, the body or the query answers 422 and a UUID that does not exist answers 404 @DAT-01-S3"""
+    admin = _bearer(admin_token)
+    missing = str(uuid.uuid4())
 
     assert api.put("/venues/no-es-un-uuid", headers=admin, json={}).status_code == 422
-    assert api.post("/spaces", headers=admin, json=_espacio("no-es-un-uuid")).status_code == 422
+    assert api.post("/spaces", headers=admin, json=_space("no-es-un-uuid")).status_code == 422
     assert (
         api.get("/spaces", headers=admin, params={"venue_id": "no-es-un-uuid"}).status_code == 422
     )
-    assert api.delete(f"/spaces/{inexistente}", headers=admin).status_code == 404
-    assert api.delete(f"/venues/{inexistente}", headers=admin).status_code == 404
+    assert api.delete(f"/spaces/{missing}", headers=admin).status_code == 404
+    assert api.delete(f"/venues/{missing}", headers=admin).status_code == 404
 
 
-def test_un_uuid_en_mayusculas_o_sin_guiones_se_acepta(
-    api: TestClient, admin_token: str, espacio_id: str
+def test_an_uppercase_or_hyphenless_uuid_is_accepted(
+    api: TestClient, admin_token: str, space_id: str
 ) -> None:
-    """un UUID en mayúsculas o sin guiones se acepta y la respuesta lo trae en minúsculas con guiones @assumption:DAT-01-ASM-06"""
-    admin = _con(admin_token)
+    """an uppercase or hyphenless UUID is accepted and the response returns it lowercase with hyphens @assumption:DAT-01-ASM-06"""
+    admin = _bearer(admin_token)
 
-    for escrito in (espacio_id.upper(), espacio_id.replace("-", "")):
-        r = api.put(f"/spaces/{escrito}", headers=admin, json={"price_per_hour": 40000})
+    for written in (space_id.upper(), space_id.replace("-", "")):
+        r = api.put(f"/spaces/{written}", headers=admin, json={"price_per_hour": 40000})
         assert r.status_code == 200, r.text
-        assert r.json()["id"] == espacio_id
+        assert r.json()["id"] == space_id
 
 
-def test_un_metodo_no_admitido_responde_405_aunque_el_id_este_mal_formado(
+def test_an_unsupported_method_answers_405_even_if_the_id_is_malformed(
     api: TestClient, admin_token: str
 ) -> None:
-    """un método no admitido responde 405 aunque el id esté mal formado @assumption:DAT-01-ASM-08"""
-    assert api.patch("/venues/no-es-un-uuid", headers=_con(admin_token)).status_code == 405
+    """an unsupported method answers 405 even if the id is malformed @assumption:DAT-01-ASM-08"""
+    assert api.patch("/venues/no-es-un-uuid", headers=_bearer(admin_token)).status_code == 405

@@ -18,10 +18,10 @@ def _hour(days: int = 0, minutes: int = 0) -> datetime:
 
 
 def _world(engine: Engine) -> dict[str, UUID]:
-    """Una cuenta, una sede con un espacio, todo confirmado en la base."""
+    """One account, one venue with a space, everything committed in the database."""
     s = uuid.uuid4().hex[:8]
     with engine.begin() as conn:
-        usuario = conn.execute(
+        user = conn.execute(
             text(
                 "INSERT INTO app_user (firebase_uid, email, first_name, last_name, dni,"
                 " birth_date) VALUES (:uid, :email, 'Ana', 'Pérez', :dni, '2000-03-14')"
@@ -41,7 +41,7 @@ def _world(engine: Engine) -> dict[str, UUID]:
             ),
             {"n": f"Sede Propia {s}"},
         ).scalar_one()
-        espacio = conn.execute(
+        space = conn.execute(
             text(
                 "INSERT INTO space (venue_id, sport, kind, number, name, covered,"
                 " lit, price_per_hour) VALUES (:venue, 'Futbol', 'F5', 1, :n, false,"
@@ -49,11 +49,11 @@ def _world(engine: Engine) -> dict[str, UUID]:
             ),
             {"venue": venue, "n": f"Propia{s}_Rivadavia_19850_Futbol_F5_1"},
         ).scalar_one()
-    return {"user": usuario, "venue": venue, "space": espacio}
+    return {"user": user, "venue": venue, "space": space}
 
 
 def _booking(
-    engine: Engine, mundo: dict[str, UUID], inicio: datetime, created: datetime | None = None
+    engine: Engine, world: dict[str, UUID], start: datetime, created: datetime | None = None
 ) -> UUID:
     with engine.begin() as conn:
         return conn.execute(
@@ -63,82 +63,82 @@ def _booking(
                 " coalesce(:c, now()), coalesce(:c, now())) RETURNING id"
             ),
             {
-                "u": mundo["user"],
-                "e": mundo["space"],
-                "i": inicio,
-                "f": inicio + timedelta(hours=1),
+                "u": world["user"],
+                "e": world["space"],
+                "i": start,
+                "f": start + timedelta(hours=1),
                 "c": created,
             },
         ).scalar_one()
 
 
-def _uno(engine: Engine, sql: str, **datos: Any) -> Any:
+def _one(engine: Engine, sql: str, **data: Any) -> Any:
     with engine.connect() as conn:
-        return conn.execute(text(sql), datos).scalar_one()
+        return conn.execute(text(sql), data).scalar_one()
 
 
-def test_baja_de_cuenta_cancela_reservas_futuras(engine: Engine) -> None:
-    """dar de baja una cuenta sigue cancelando sus reservas futuras @REV-06-S6 @assumption:REV-06-ASM-05"""
-    mundo = _world(engine)
-    reserva = _booking(engine, mundo, _hour(days=3))
+def test_account_deactivation_cancels_future_bookings(engine: Engine) -> None:
+    """deactivating an account still cancels its future bookings @REV-06-S6 @assumption:REV-06-ASM-05"""
+    world = _world(engine)
+    booking = _booking(engine, world, _hour(days=3))
     with engine.connect() as conn:
-        assert UsersSql(conn).deactivate(mundo["user"]) is True
-    assert _uno(engine, "SELECT status FROM booking WHERE id = :i", i=reserva) == "canceled"
-    assert not _uno(engine, "SELECT active FROM app_user WHERE id = :i", i=mundo["user"])
+        assert UsersSql(conn).deactivate(world["user"]) is True
+    assert _one(engine, "SELECT status FROM booking WHERE id = :i", i=booking) == "canceled"
+    assert not _one(engine, "SELECT active FROM app_user WHERE id = :i", i=world["user"])
 
 
-def test_cancelar_una_reserva_deja_su_aviso(engine: Engine) -> None:
-    """cancelar una reserva sigue dejando su aviso @REV-06-S6 @assumption:REV-06-ASM-05"""
-    mundo = _world(engine)
-    reserva = _booking(engine, mundo, _hour(days=3))
+def test_canceling_a_booking_leaves_its_notice(engine: Engine) -> None:
+    """canceling a booking still leaves its notice @REV-06-S6 @assumption:REV-06-ASM-05"""
+    world = _world(engine)
+    booking = _booking(engine, world, _hour(days=3))
     with engine.connect() as conn:
-        BookingsSql(conn).cancel(mundo["user"], reserva)
+        BookingsSql(conn).cancel(world["user"], booking)
     assert (
-        _uno(
+        _one(
             engine,
             "SELECT count(*) FROM notification WHERE booking_id = :i"
             " AND kind = 'user_cancellation'",
-            i=reserva,
+            i=booking,
         )
         == 1
     )
 
 
-def test_baja_de_sede_da_de_baja_sus_espacios(engine: Engine) -> None:
-    """dar de baja una sede sigue dando de baja sus espacios @REV-06-S6 @assumption:REV-06-ASM-05"""
-    mundo = _world(engine)
+def test_venue_deactivation_deactivates_its_spaces(engine: Engine) -> None:
+    """deactivating a venue still deactivates its spaces @REV-06-S6 @assumption:REV-06-ASM-05"""
+    world = _world(engine)
     with engine.connect() as conn:
-        VenuesSql(conn).deactivate(mundo["venue"], mundo["user"])
-    assert not _uno(engine, "SELECT active FROM venue WHERE id = :i", i=mundo["venue"])
-    assert not _uno(engine, "SELECT active FROM space WHERE id = :i", i=mundo["space"])
+        VenuesSql(conn).deactivate(world["venue"], world["user"])
+    assert not _one(engine, "SELECT active FROM venue WHERE id = :i", i=world["venue"])
+    assert not _one(engine, "SELECT active FROM space WHERE id = :i", i=world["space"])
 
 
-def test_la_baja_de_sede_sobrevive_al_reinicio(engine: Engine) -> None:
-    """la baja de una sede y de sus espacios sobrevive al reinicio de la app sobre la misma base @REV-06-S6 @assumption:REV-06-ASM-05"""
-    mundo = _world(engine)
+def test_venue_deactivation_survives_a_restart(engine: Engine) -> None:
+    """the deactivation of a venue and its spaces survives the restart of the app on the same database @REV-06-S6 @assumption:REV-06-ASM-05"""
+    world = _world(engine)
     with engine.connect() as conn:
-        VenuesSql(conn).deactivate(mundo["venue"], mundo["user"])
-    nuevo = create_engine(engine.url)
+        VenuesSql(conn).deactivate(world["venue"], world["user"])
+    fresh = create_engine(engine.url)
     try:
-        assert not _uno(nuevo, "SELECT active FROM venue WHERE id = :i", i=mundo["venue"])
-        assert not _uno(nuevo, "SELECT active FROM space WHERE id = :i", i=mundo["space"])
+        assert not _one(fresh, "SELECT active FROM venue WHERE id = :i", i=world["venue"])
+        assert not _one(fresh, "SELECT active FROM space WHERE id = :i", i=world["space"])
     finally:
-        nuevo.dispose()
+        fresh.dispose()
 
 
-def test_si_la_baja_de_sede_falla_no_queda_nada(
+def test_if_venue_deactivation_fails_nothing_is_left(
     engine: Engine, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """si la baja de una sede falla a mitad de camino no queda ni la sede dada de baja ni sus espacios @REV-06-S6 @assumption:REV-06-ASM-11"""
-    mundo = _world(engine)
+    """if the deactivation of a venue fails halfway, neither the venue deactivated nor its spaces are left @REV-06-S6 @assumption:REV-06-ASM-11"""
+    world = _world(engine)
     original = SpacesSql.deactivate_venue_spaces
 
-    def escribe_y_cae(self: SpacesSql, venue_id: UUID, author: UUID) -> None:
+    def writes_and_fails(self: SpacesSql, venue_id: UUID, author: UUID) -> None:
         original(self, venue_id, author)
-        raise RuntimeError("falla después de escribir los espacios")
+        raise RuntimeError("fails after writing the spaces")
 
-    monkeypatch.setattr(SpacesSql, "deactivate_venue_spaces", escribe_y_cae)
+    monkeypatch.setattr(SpacesSql, "deactivate_venue_spaces", writes_and_fails)
     with engine.connect() as conn, pytest.raises(RuntimeError):
-        VenuesSql(conn).deactivate(mundo["venue"], mundo["user"])
-    assert _uno(engine, "SELECT active FROM venue WHERE id = :i", i=mundo["venue"])
-    assert _uno(engine, "SELECT active FROM space WHERE id = :i", i=mundo["space"])
+        VenuesSql(conn).deactivate(world["venue"], world["user"])
+    assert _one(engine, "SELECT active FROM venue WHERE id = :i", i=world["venue"])
+    assert _one(engine, "SELECT active FROM space WHERE id = :i", i=world["space"])

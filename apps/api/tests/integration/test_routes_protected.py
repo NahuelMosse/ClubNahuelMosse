@@ -1,5 +1,5 @@
-"""Toda operación registrada en la API, publicada o no en OpenAPI, pide sesión salvo las
-públicas."""
+"""Every operation registered in the API, published in OpenAPI or not, requires a session except
+the public ones."""
 
 import re
 from collections.abc import Iterator
@@ -11,9 +11,9 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 
-# Lo que la API sirve sin sesión: alta de cuenta y recuperación de contraseña, con la página
-# del enlace del correo.
-PUBLICAS = {
+# What the API serves without a session: account creation and password recovery, with the
+# page of the email link.
+PUBLIC = {
     ("POST", "/register"),
     ("POST", "/password-recovery"),
     ("POST", "/password-recovery/check"),
@@ -21,36 +21,36 @@ PUBLICAS = {
     ("GET", "/link/recover"),
     ("GET", "/health"),
 }
-PROTEGIDAS = 28
+PROTECTED = 28
 
 
-def _rutas(app: FastAPI) -> Iterator[tuple[str, str]]:
-    """Método y ruta de cada operación, también las de un router incluido dentro de otro."""
-    yield from _rutas_de(list(app.routes), "")
+def _routes(app: FastAPI) -> Iterator[tuple[str, str]]:
+    """Method and path of each operation, also those of a router included inside another."""
+    yield from _routes_of(list(app.routes), "")
 
 
-def _rutas_de(grupos: list[Any], prefijo: str) -> Iterator[tuple[str, str]]:
-    for grupo in grupos:
-        if isinstance(grupo, APIRoute):
-            for metodo in grupo.methods or ():
-                yield metodo, prefijo + grupo.path
-        elif (router := getattr(grupo, "original_router", None)) is not None:
-            yield from _rutas_de(list(router.routes), prefijo + grupo.include_context.prefix)
-        # /docs, /redoc y /openapi.json no son operaciones de la API.
+def _routes_of(groups: list[Any], prefix: str) -> Iterator[tuple[str, str]]:
+    for group in groups:
+        if isinstance(group, APIRoute):
+            for method in group.methods or ():
+                yield method, prefix + group.path
+        elif (router := getattr(group, "original_router", None)) is not None:
+            yield from _routes_of(list(router.routes), prefix + group.include_context.prefix)
+        # /docs, /redoc and /openapi.json are not operations of the API.
 
 
-def test_cada_ruta_registrada_fuera_de_las_publicas_rechaza_sin_sesion() -> None:
+def test_every_registered_route_outside_the_public_ones_rejects_without_a_session() -> None:
     """@REV-02-ASM-03"""
     app = create_app()
-    operaciones = sorted(op for op in _rutas(app) if op not in PUBLICAS)
-    aceptadas = []
+    operations = sorted(op for op in _routes(app) if op not in PUBLIC)
+    accepted = []
 
-    with TestClient(app) as cliente:
-        for metodo, ruta in operaciones:
-            url = re.sub(r"\{[^}]*\}", "1", ruta)
-            r = cliente.request(metodo, url, json=None if metodo == "GET" else {})
+    with TestClient(app) as client:
+        for method, route in operations:
+            url = re.sub(r"\{[^}]*\}", "1", route)
+            r = client.request(method, url, json=None if method == "GET" else {})
             if r.status_code != 401:
-                aceptadas.append((metodo, ruta, r.status_code))
+                accepted.append((method, route, r.status_code))
 
-    assert not aceptadas, aceptadas
-    assert len(operaciones) == PROTEGIDAS, len(operaciones)
+    assert not accepted, accepted
+    assert len(operations) == PROTECTED, len(operations)

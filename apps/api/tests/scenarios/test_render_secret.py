@@ -7,7 +7,19 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[4]
 # Render's Postgres hosts start with that prefix; written as a class so this file does not match itself.
 RENDER_HOST = re.compile(r"\bdpg[-][a-z0-9]")
-BINARY = (".png", ".jpg", ".jpeg", ".gif", ".pdf", ".ttf", ".otf", ".ico", ".webp", ".jar", ".keystore")
+BINARY = (
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".pdf",
+    ".ttf",
+    ".otf",
+    ".ico",
+    ".webp",
+    ".jar",
+    ".keystore",
+)
 
 
 def test_no_versioned_file_holds_the_render_host() -> None:

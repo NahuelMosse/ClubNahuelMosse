@@ -1,6 +1,6 @@
-"""Las condiciones del historial global según la búsqueda de texto."""
+"""The conditions of the global history according to the text search."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import pytest
 
 from app.modules.bookings.repository import _common_conditions
@@ -8,19 +8,19 @@ from app.modules.bookings.rules import HistoryFilters
 
 
 @pytest.mark.parametrize("q", [None, "", "   "])
-def test_sin_busqueda_o_con_busqueda_en_blanco_el_historial_no_filtra_por_texto(
+def test_without_a_search_or_with_a_blank_one_the_history_does_not_filter_by_text(
     q: str | None,
 ) -> None:
-    """sin búsqueda o con búsqueda en blanco el historial no filtra por texto @SIM-02-S1"""
-    condiciones, parametros = _common_conditions(HistoryFilters(q=q))
+    """without a search or with a blank one the history does not filter by text @SIM-02-S1"""
+    conditions, parameters = _common_conditions(HistoryFilters(q=q))
 
-    assert not any(":q" in c for c in condiciones)
-    assert "q" not in parametros
+    assert not any(":q" in c for c in conditions)
+    assert "q" not in parameters
 
 
-def test_la_busqueda_filtra_por_socio_sede_o_espacio_y_escapa_los_comodines() -> None:
-    """la búsqueda filtra por socio, sede o espacio y escapa los comodines @SIM-02-S1"""
-    condiciones, parametros = _common_conditions(HistoryFilters(q=" 50%_a "))
+def test_the_search_filters_by_member_venue_or_space_and_escapes_the_wildcards() -> None:
+    """the search filters by member, venue or space and escapes the wildcards @SIM-02-S1"""
+    conditions, parameters = _common_conditions(HistoryFilters(q=" 50%_a "))
 
-    assert any(":q" in c for c in condiciones)
-    assert parametros["q"] == "%50\\%\\_a%"
+    assert any(":q" in c for c in conditions)
+    assert parameters["q"] == "%50\\%\\_a%"

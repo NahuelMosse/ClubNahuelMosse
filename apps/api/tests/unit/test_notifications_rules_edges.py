@@ -1,4 +1,4 @@
-"""Bordes de las reglas de avisos: tipo desconocido, un solo anulado y el límite del motivo."""
+"""Edges of the notice rules: unknown kind, a single voided booking and the reason limit."""
 
 from datetime import UTC, datetime
 from uuid import uuid4
@@ -27,13 +27,16 @@ def _voided(reason: str) -> VoidedBooking:
     )
 
 
-def test_un_tipo_desconocido_del_deporte_nombra_el_deporte_y_no_falla() -> None:  # @ENG-14-S1
+def test_an_unknown_kind_of_the_sport_names_the_sport_and_does_not_fail() -> None:  # @ENG-14-S1
     sport = CATALOG[0]
-    assert short_kind(sport.key, "no-existe") == sport.key
-    assert short_kind("no-existe", "no-existe") == "no-existe"
+    unknown = "no-existe"
+    assert short_kind(sport.key, unknown) == sport.key
+    assert short_kind(unknown, unknown) == unknown
 
 
-def test_un_solo_anulado_lleva_su_reserva_y_varios_sólo_la_cuenta() -> None:  # @ENG-14-S1
+def test_a_single_voided_booking_carries_its_booking_and_several_only_the_count() -> (
+    None
+):  # @ENG-14-S1
     one = forced_cancellation_message([_voided("Lluvia")])
     assert one.title == "The club voided your booking"
     assert one.data["booking_id"]
@@ -44,7 +47,7 @@ def test_un_solo_anulado_lleva_su_reserva_y_varios_sólo_la_cuenta() -> None:  #
     assert two.data == {"kind": "forced_cancellation"}
 
 
-def test_el_motivo_en_el_límite_exacto_no_se_recorta() -> None:  # @ENG-14-S1
+def test_a_reason_at_the_exact_limit_is_not_trimmed() -> None:  # @ENG-14-S1
     exact = "m" * REASON_LIMIT
     assert f"Reason: {exact}." in forced_cancellation_message([_voided(exact)]).body
 

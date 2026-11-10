@@ -1,4 +1,4 @@
-"""`PUT /yo` contra la base y el emulador reales."""
+"""`PUT /me` against the real database and emulator."""
 
 from collections.abc import Callable
 from typing import Any
@@ -6,38 +6,38 @@ from typing import Any
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-CONTRASENA = "ClubNahuel1"
+PASSWORD = "ClubNahuel1"
 
 
-def _registrar(api: TestClient, s: str, dni: str | None = None) -> tuple[str, str]:
-    correo = f"socia.{s}@correo.com"
+def _register(api: TestClient, s: str, dni: str | None = None) -> tuple[str, str]:
+    email = f"socia.{s}@correo.com"
     dni = dni or str(int(s, 16) % 90_000_000 + 10_000_000)
-    pedido = {
+    payload = {
         "first_name": "Lucía",
         "last_name": "Gómez",
         "dni": dni,
         "birth_date": "1998-11-02",
-        "email": correo,
-        "password": CONTRASENA,
+        "email": email,
+        "password": PASSWORD,
     }
-    assert api.post("/register", json=pedido).status_code == 201
-    return correo, dni
+    assert api.post("/register", json=payload).status_code == 201
+    return email, dni
 
 
-def _editar(api: TestClient, token: str | None, **datos: str) -> tuple[int, dict[str, Any]]:
-    r = api.put("/me", headers={"Authorization": f"Bearer {token}"}, json=datos)
+def _edit(api: TestClient, token: str | None, **data: str) -> tuple[int, dict[str, Any]]:
+    r = api.put("/me", headers={"Authorization": f"Bearer {token}"}, json=data)
     return r.status_code, r.json()
 
 
-def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
+def test_saves_the_personal_data_and_returns_the_new_profile(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    correo, _ = _registrar(api, unique())
-    token = sign_in(correo, CONTRASENA)
-    codigo, cuerpo = _editar(
+    email, _ = _register(api, unique())
+    token = sign_in(email, PASSWORD)
+    code, body = _edit(
         api,
         token,
         first_name=" Lucía Inés ",
@@ -45,29 +45,29 @@ def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
         dni="30.111.225",
         birth_date="1998-11-03",
     )
-    assert codigo == 200
-    assert cuerpo == {
+    assert code == 200
+    assert body == {
         "first_name": "Lucía Inés",
         "last_name": "Gómez Paz",
-        "email": correo,
+        "email": email,
         "role": "user",
         "dni": "30111225",
         "birth_date": "1998-11-03",
     }
     with engine.connect() as conn:
-        creado, modificado = conn.execute(
-            text("SELECT created_at, updated_at FROM app_user WHERE email = :c"), {"c": correo}
+        created, modified = conn.execute(
+            text("SELECT created_at, updated_at FROM app_user WHERE email = :c"), {"c": email}
         ).one()
-    # El rastro de la modificación lo estampa la base.
-    assert modificado > creado
+    # The database stamps the trace of the modification.
+    assert modified > created
 
 
-def test_el_correo_no_se_cambia_aunque_se_mande(
+def test_the_email_is_not_changed_even_if_sent(
     api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo, dni = _registrar(api, unique())
-    token = sign_in(correo, CONTRASENA)
-    codigo, cuerpo = _editar(
+    email, dni = _register(api, unique())
+    token = sign_in(email, PASSWORD)
+    code, body = _edit(
         api,
         token,
         first_name="Lucía",
@@ -76,36 +76,36 @@ def test_el_correo_no_se_cambia_aunque_se_mande(
         birth_date="1998-11-02",
         email="otra@correo.com",
     )
-    assert (codigo, cuerpo["email"]) == (200, correo)
+    assert (code, body["email"]) == (200, email)
 
 
-def test_datos_invalidos_no_guardan_nada(
+def test_invalid_data_saves_nothing(
     api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    correo, _ = _registrar(api, unique())
-    token = sign_in(correo, CONTRASENA)
-    codigo, cuerpo = _editar(
+    email, _ = _register(api, unique())
+    token = sign_in(email, PASSWORD)
+    code, body = _edit(
         api, token, first_name="Otra", last_name="", dni="42118", birth_date="2000-13-32"
     )
-    assert codigo == 422
-    assert set(cuerpo["errors"]) == {"last_name", "dni", "birth_date"}
+    assert code == 422
+    assert set(body["errors"]) == {"last_name", "dni", "birth_date"}
     assert (
         api.get("/me", headers={"Authorization": f"Bearer {token}"}).json()["first_name"] == "Lucía"
     )
 
 
-def test_un_dni_de_otra_cuenta_se_rechaza(
+def test_a_dni_of_another_account_is_rejected(
     api: TestClient, sign_in: Callable[[str, str], str | None], unique: Callable[[], str]
 ) -> None:
-    """Verifica CU-06-SUP-02."""
-    _, ajeno = _registrar(api, unique())
-    correo, _ = _registrar(api, unique())
-    token = sign_in(correo, CONTRASENA)
-    codigo, cuerpo = _editar(
-        api, token, first_name="Lucía", last_name="Gómez", dni=ajeno, birth_date="1998-11-02"
+    """Checks CU-06-SUP-02."""
+    _, foreign = _register(api, unique())
+    email, _ = _register(api, unique())
+    token = sign_in(email, PASSWORD)
+    code, body = _edit(
+        api, token, first_name="Lucía", last_name="Gómez", dni=foreign, birth_date="1998-11-02"
     )
-    assert (codigo, cuerpo) == (409, {"errors": {"dni": "This DNI is already registered"}})
+    assert (code, body) == (409, {"errors": {"dni": "This DNI is already registered"}})
 
 
-def test_sin_sesion_no_se_edita(api: TestClient) -> None:
+def test_without_a_session_it_is_not_edited(api: TestClient) -> None:
     assert api.put("/me", json={"name": "X"}).status_code == 401

@@ -1,5 +1,6 @@
 """Each mail channel gets the HTML part only when there is one; the outbox stores only the text."""
 
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import json
 from contextlib import contextmanager
 from typing import Any
@@ -13,10 +14,10 @@ from app.shared.config import config
 ADDRESS = "ana@correo.com"
 
 
-def test_brevo_recibe_htmlcontent_solo_si_hay_html_smtp_la_alternativa_y_el_buzon_solo_el_texto(
+def test_brevo_gets_htmlcontent_only_if_there_is_html_smtp_the_alternative_and_the_outbox_only_the_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Brevo recibe htmlContent sólo si hay HTML, SMTP la alternativa y el buzón sólo el texto
+    """Brevo gets htmlContent only if there is HTML, SMTP the alternative and the outbox only the text
     @assumption:MAIL-02-ASM-01"""
     requests: list[dict[str, Any]] = []
 

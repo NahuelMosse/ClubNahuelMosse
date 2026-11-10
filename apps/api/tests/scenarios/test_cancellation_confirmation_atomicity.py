@@ -1,4 +1,4 @@
-"""La cancelación y su confirmación se confirman juntas o no se confirman."""
+"""The cancellation and its confirmation are committed together or not at all."""
 
 from collections.abc import Callable, Iterator
 from typing import Any
@@ -12,16 +12,16 @@ from app.modules.notifications.push import push_channel
 
 
 @pytest.fixture
-def canal(api: TestClient) -> Iterator[FakeChannel]:
-    canal = FakeChannel()
-    app_of(api).dependency_overrides[push_channel] = lambda: canal
-    yield canal
+def channel(api: TestClient) -> Iterator[FakeChannel]:
+    channel = FakeChannel()
+    app_of(api).dependency_overrides[push_channel] = lambda: channel
+    yield channel
     app_of(api).dependency_overrides.pop(push_channel, None)
 
 
 @pytest.fixture
-def aviso_que_falla(engine: Engine) -> Iterator[None]:
-    """Hace fallar el INSERT de la confirmación, que corre después del UPDATE de la reserva."""
+def failing_notice(engine: Engine) -> Iterator[None]:
+    """Makes the confirmation INSERT fail, which runs after the booking UPDATE."""
     with engine.begin() as conn:
         conn.execute(
             text(
@@ -42,32 +42,32 @@ def aviso_que_falla(engine: Engine) -> Iterator[None]:
         conn.execute(text("DROP FUNCTION falla_la_confirmacion()"))
 
 
-def test_si_falla_el_aviso_la_reserva_sigue_activa_y_no_queda_ningun_aviso(
+def test_if_the_notice_fails_the_booking_stays_active_and_no_notice_is_left(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
-    aviso_que_falla: None,
+    channel: FakeChannel,
+    failing_notice: None,
 ) -> None:
-    """una cancelación cuyo aviso no se registra no se confirma @supuesto:CU-24.3-SUP-04"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
+    """a cancellation whose notice is not recorded is not confirmed @assumption:CU-24.3-SUP-04"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
 
     try:
-        respuesta = api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.session)
-        assert respuesta.status_code >= 500
+        response = api.post(f"/bookings/{booking['id']}/cancel", headers=member.session)
+        assert response.status_code >= 500
     except Exception as e:
-        # El cliente de pruebas propaga el error del servidor en vez de responder 500.
+        # The test client propagates the server error instead of answering 500.
         assert "falla el aviso" in str(e)
 
     with engine.connect() as conn:
-        estado: Any = conn.execute(
-            text("SELECT status FROM booking WHERE id = :id"), {"id": reserva["id"]}
+        status: Any = conn.execute(
+            text("SELECT status FROM booking WHERE id = :id"), {"id": booking["id"]}
         ).scalar_one()
-        avisos: Any = conn.execute(
+        notices: Any = conn.execute(
             text("SELECT count(*) FROM notification WHERE user_id = :u"),
-            {"u": socio.user_id},
+            {"u": member.user_id},
         ).scalar_one()
-    assert (estado, avisos) == ("active", 0)
-    assert canal.sent == []
+    assert (status, notices) == ("active", 0)
+    assert channel.sent == []

@@ -1,7 +1,7 @@
-"""Datos: la ida y vuelta de las migraciones, cada corrida con su propia base.
+"""Data: the migrations' round trip, each run with its own database.
 
-Reemplaza los dos tests de migraciones de test_data.py, que usaban un nombre fijo de base:
-dos corridas a la vez (suite, escenarios y mutaciones) se pisaban al crearla.
+Replaces the two migration tests of test_data.py, which used a fixed database name:
+two simultaneous runs (suite, scenarios and mutations) clobbered each other when creating it.
 """
 
 import threading
@@ -26,75 +26,75 @@ from test_data import (
 
 @pytest.fixture
 def own_db(engine: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
-    """Una base vacía con nombre único, para subir y bajar migraciones sin pisar a otra corrida."""
-    nombre = f"club_rev03_m{uuid.uuid4().hex[:10]}_test"
-    servidor = TEST_DATABASE_URL.rsplit("/", 1)[0]
-    admin = create_engine(servidor + "/postgres", isolation_level="AUTOCOMMIT")
+    """An empty database with a unique name, to migrate up and down without clobbering another run."""
+    name = f"club_rev03_m{uuid.uuid4().hex[:10]}_test"
+    server = TEST_DATABASE_URL.rsplit("/", 1)[0]
+    admin = create_engine(server + "/postgres", isolation_level="AUTOCOMMIT")
     with admin.connect() as conn:
-        conn.execute(text(f'CREATE DATABASE "{nombre}"'))
-    url = f"{servidor}/{nombre}"
-    base = create_engine(url)
+        conn.execute(text(f'CREATE DATABASE "{name}"'))
+    url = f"{server}/{name}"
+    db = create_engine(url)
     alembic = AlembicConfig(str(API_ROOT / "alembic.ini"))
     alembic.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
     try:
-        yield base, alembic
+        yield db, alembic
     finally:
-        base.dispose()
+        db.dispose()
         with admin.connect() as conn:
-            conn.execute(text(f'DROP DATABASE IF EXISTS "{nombre}" WITH (FORCE)'))
+            conn.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
         admin.dispose()
 
 
-def test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo_en_base_propia(
+def test_the_new_migration_does_not_wait_on_a_lock_in_its_own_database(
     own_db: tuple[Engine, AlembicConfig],
 ) -> None:
-    """la migración nueva no bloquea las tablas mientras la versión anterior atiende @REV-03-S7"""
-    base, alembic = own_db
+    """the new migration does not lock the tables while the previous version serves @REV-03-S7"""
+    db, alembic = own_db
     command.upgrade(alembic, "0007")
-    _seed(base)
-    bloqueo = base.connect()
-    bloqueo.execute(text("LOCK TABLE reserva IN ACCESS EXCLUSIVE MODE"))
-    resultado: list[BaseException] = []
-    hilo = threading.Thread(
-        target=lambda: _capture(resultado, lambda: command.upgrade(alembic, "0008"))
+    _seed(db)
+    lock = db.connect()
+    lock.execute(text("LOCK TABLE reserva IN ACCESS EXCLUSIVE MODE"))
+    result: list[BaseException] = []
+    thread = threading.Thread(
+        target=lambda: _capture(result, lambda: command.upgrade(alembic, "0008"))
     )
 
-    hilo.start()
-    hilo.join(timeout=60)
-    bloqueo.rollback()
-    bloqueo.close()
+    thread.start()
+    thread.join(timeout=60)
+    lock.rollback()
+    lock.close()
 
-    assert not hilo.is_alive()
-    assert isinstance(resultado[0], OperationalError)
-    assert "lock timeout" in str(resultado[0])
+    assert not thread.is_alive()
+    assert isinstance(result[0], OperationalError)
+    assert "lock timeout" in str(result[0])
     command.upgrade(alembic, "0008")
-    with base.connect() as conn:
-        invalidos = conn.execute(
+    with db.connect() as conn:
+        invalid = conn.execute(
             text("SELECT count(*) FROM pg_index WHERE NOT indisvalid")
         ).scalar_one()
-    assert invalidos == 0
-    assert _bookings(base) == 1
+    assert invalid == 0
+    assert _bookings(db) == 1
 
 
 @pytest.mark.parametrize(
-    ("anterior", "revision"), list(zip(["0001", *REVISIONS], REVISIONS, strict=False))
+    ("previous", "revision"), list(zip(["0001", *REVISIONS], REVISIONS, strict=False))
 )
-def test_cada_migracion_va_y_vuelve_con_datos_en_base_propia(
-    own_db: tuple[Engine, AlembicConfig], anterior: str, revision: str
+def test_each_migration_goes_up_and_back_with_data_in_its_own_database(
+    own_db: tuple[Engine, AlembicConfig], previous: str, revision: str
 ) -> None:
     """@REV-03-S8 @assumption:REV-03-ASM-06"""
-    base, alembic = own_db
+    db, alembic = own_db
     command.upgrade(alembic, "0001")
-    _seed(base)
-    command.upgrade(alembic, anterior)
-    antes = _schema(base)
+    _seed(db)
+    command.upgrade(alembic, previous)
+    before = _schema(db)
 
     command.upgrade(alembic, revision)
-    despues = _schema(base)
+    after = _schema(db)
     command.downgrade(alembic, "-1")
-    vuelta = _schema(base)
+    back = _schema(db)
     command.upgrade(alembic, revision)
 
-    assert vuelta == antes
-    assert _schema(base) == despues
-    assert _bookings(base) == 1
+    assert back == before
+    assert _schema(db) == after
+    assert _bookings(db) == 1

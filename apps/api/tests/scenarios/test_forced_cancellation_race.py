@@ -13,57 +13,59 @@ from app.modules.notifications.push import push_channel
 admin = base.admin
 
 
-class CanalQueRetieneElPrimero(FakeChannel):
-    """El primer envío queda en curso hasta que se lo suelta, como un push lento."""
+class ChannelThatHoldsTheFirst(FakeChannel):
+    """The first send stays in progress until released, like a slow push."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.saliendo = threading.Event()
-        self.soltar = threading.Event()
+        self.sending = threading.Event()
+        self.release = threading.Event()
 
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        primero = not self.sent
-        resultado = super().send(tokens, aviso)
-        if primero:
-            self.saliendo.set()
-            assert self.soltar.wait(timeout=30)
-        return resultado
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
+        first = not self.sent
+        result = super().send(tokens, notice)
+        if first:
+            self.sending.set()
+            assert self.release.wait(timeout=30)
+        return result
 
 
 @pytest.fixture
-def canal_lento(api: TestClient) -> Iterator[CanalQueRetieneElPrimero]:
-    channel = CanalQueRetieneElPrimero()
+def slow_channel(api: TestClient) -> Iterator[ChannelThatHoldsTheFirst]:
+    channel = ChannelThatHoldsTheFirst()
     app_of(api).dependency_overrides[push_channel] = lambda: channel
     yield channel
-    channel.soltar.set()
+    channel.release.set()
     app_of(api).dependency_overrides.pop(push_channel, None)
 
 
-def test_la_anulacion_que_llega_con_el_aviso_anterior_saliendo_se_agrupa_igual(
+def test_a_voiding_that_arrives_while_the_previous_notice_is_going_out_is_grouped_anyway(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal_lento: CanalQueRetieneElPrimero,
+    slow_channel: ChannelThatHoldsTheFirst,
     admin: dict[str, str],
 ) -> None:
-    """el despacho del primer aviso va lento y la segunda anulación igual llega en un solo
-    aviso con la cantidad @supuesto:CU-24.2-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    primera = socio.book("20:00")
-    segunda = socio.book("21:00")
-    estados: list[int] = []
-    hilo = threading.Thread(target=lambda: estados.append(base.force_cancel(socio, admin, primera)))
-    hilo.start()
+    """the dispatch of the first notice is slow and the second voiding still arrives in a single
+    notice with the count @assumption:CU-24.2-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    first = member.book("20:00")
+    second = member.book("21:00")
+    statuses: list[int] = []
+    thread = threading.Thread(
+        target=lambda: statuses.append(base.force_cancel(member, admin, first))
+    )
+    thread.start()
     try:
-        assert canal_lento.saliendo.wait(timeout=30)
+        assert slow_channel.sending.wait(timeout=30)
 
-        estados.append(base.force_cancel(socio, admin, segunda))
+        statuses.append(base.force_cancel(member, admin, second))
     finally:
-        canal_lento.soltar.set()
-        hilo.join(timeout=30)
+        slow_channel.release.set()
+        thread.join(timeout=30)
 
-    assert estados == [200, 200]
-    center = socio.center()
+    assert statuses == [200, 200]
+    center = member.center()
     assert center["unread"] == 1
     assert [e["title"] for e in center["notifications"]] == ["The club voided 2 of your bookings"]

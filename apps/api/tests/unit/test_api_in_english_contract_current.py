@@ -1,6 +1,6 @@
-"""El contrato de la API en inglés se compara con el main de hoy, que ya pasó de 1ee70de."""
+"""The API contract in English is compared with today's main, which has moved past 1ee70de."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import json
 import subprocess
 from typing import Any
@@ -8,48 +8,48 @@ from typing import Any
 from tests import contract_renames as renames
 from tests.unit.test_api_in_english import ROOT
 
-MAIN_ACTUAL = "88d1a9c7161b62c2476822f15f045daa935e367a"
-TIPOS_SIN_CINCO = ["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
+CURRENT_MAIN = "88d1a9c7161b62c2476822f15f045daa935e367a"
+TYPES_WITHOUT_FIVE = ["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
 
 
-def _con_aviso_de_cinco_minutos(nodo: Any) -> Any:
-    """El `openapi.json` de main no se regeneró tras NOT-05: su API ya publica `recordatorio_cinco`."""
-    if isinstance(nodo, list):
-        if nodo == TIPOS_SIN_CINCO:
+def _with_five_minute_notice(node: Any) -> Any:
+    """main's `openapi.json` was not regenerated after NOT-05: its API already publishes `recordatorio_cinco`."""
+    if isinstance(node, list):
+        if node == TYPES_WITHOUT_FIVE:
             return [
                 "recordatorio",
                 "recordatorio_cinco",
                 "cancelacion_forzosa",
                 "cancelacion_usuario",
             ]
-        return [_con_aviso_de_cinco_minutos(n) for n in nodo]
-    if isinstance(nodo, dict):
-        return {k: _con_aviso_de_cinco_minutos(v) for k, v in nodo.items()}
-    return nodo
+        return [_with_five_minute_notice(n) for n in node]
+    if isinstance(node, dict):
+        return {k: _with_five_minute_notice(v) for k, v in node.items()}
+    return node
 
 
 def contract_differs_from_main() -> dict[str, Any]:
-    """Las formas del contrato actual que difieren de las de main; vacío si coinciden en rutas y formas."""
+    """The shapes of the current contract that differ from main's; empty if routes and shapes match."""
     from app.main import app
 
-    de_main = subprocess.run(
-        ["git", "show", f"{MAIN_ACTUAL}:apps/api/openapi.json"],
+    from_main = subprocess.run(
+        ["git", "show", f"{CURRENT_MAIN}:apps/api/openapi.json"],
         cwd=ROOT, capture_output=True, check=True, encoding="utf-8",
     ).stdout  # fmt: skip
-    esperado = renames.comparable(_con_aviso_de_cinco_minutos(json.loads(de_main)), renamed=True)
-    actual = renames.comparable(app.openapi(), renamed=False)
+    expected = renames.comparable(_with_five_minute_notice(json.loads(from_main)), renamed=True)
+    current = renames.comparable(app.openapi(), renamed=False)
 
-    assert sorted(actual) == sorted(esperado)
-    return {k: v for k, v in actual.items() if v != esperado[k]}
-
-
-def operations_differing_in(*prefijos: str) -> list[tuple[str, str]]:
-    """Las operaciones bajo esas rutas cuya forma difiere de la de main."""
-    return [clave for clave in contract_differs_from_main() if clave[1].startswith(prefijos)]
+    assert sorted(current) == sorted(expected)
+    return {k: v for k, v in current.items() if v != expected[k]}
 
 
-def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
+def operations_differing_in(*prefixes: str) -> list[tuple[str, str]]:
+    """The operations under those routes whose shape differs from main's."""
+    return [key for key in contract_differs_from_main() if key[1].startswith(prefixes)]
+
+
+def test_the_contract_has_the_same_routes_codes_fields_operation_id_and_security_as_main_at_1ee70de() -> (
     None
 ):
-    """el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
+    """the contract has the same routes, codes, fields, operationId and security as main at 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
     assert contract_differs_from_main() == {}

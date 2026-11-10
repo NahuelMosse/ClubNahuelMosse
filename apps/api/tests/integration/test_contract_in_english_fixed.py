@@ -59,7 +59,12 @@ def test_every_hand_built_409_body_names_its_fields_in_english(
     own_dni = api.put(
         "/me",
         headers=_auth(token),
-        json={"first_name": "Lucía", "last_name": "Gómez", "dni": first["dni"], "birth_date": "1998-11-02"},
+        json={
+            "first_name": "Lucía",
+            "last_name": "Gómez",
+            "dni": first["dni"],
+            "birth_date": "1998-11-02",
+        },
     )
     assert (own_dni.status_code, set(own_dni.json()["errors"])) == (409, {"dni"})
     slot = _book(api, token, space["id"])
@@ -94,7 +99,11 @@ def test_every_operation_id_is_fastapis_default_over_the_english_handler() -> No
 
 
 def test_the_testing_support_lives_under_testing_with_english_names(
-    engine: Engine, admin_token: str, user_token: str, unique: Callable[[], str], venue: tuple[str, str]
+    engine: Engine,
+    admin_token: str,
+    user_token: str,
+    unique: Callable[[], str],
+    venue: tuple[str, str],
 ) -> None:
     """the testing support lives under /_testing with English names @assumption:ENG-18-ASM-09"""
     from app import e2e_support
@@ -109,10 +118,30 @@ def test_the_testing_support_lives_under_testing_with_english_names(
         devices = support.get("/_testing/devices", params={"email": "nadie@correo.com"})
         assert devices.json() == {"devices": []}
         assert support.post("/_testing/bookings/clear").status_code == 204
-        assert support.post("/_testing/venues/deactivate", json={"name": "Sede inexistente"}).status_code == 204
-        assert support.post("/_testing/spaces/deactivate", json={"space": "Espacio inexistente"}).status_code == 204
-        assert support.post("/_testing/bookings/start", json={"space": "Espacio inexistente"}).status_code == 204
-        assert support.post("/_testing/bookings/void", json={"space": "Espacio inexistente"}).status_code == 204
+        assert (
+            support.post(
+                "/_testing/venues/deactivate", json={"name": "Sede inexistente"}
+            ).status_code
+            == 204
+        )
+        assert (
+            support.post(
+                "/_testing/spaces/deactivate", json={"space": "Espacio inexistente"}
+            ).status_code
+            == 204
+        )
+        assert (
+            support.post(
+                "/_testing/bookings/start", json={"space": "Espacio inexistente"}
+            ).status_code
+            == 204
+        )
+        assert (
+            support.post(
+                "/_testing/bookings/void", json={"space": "Espacio inexistente"}
+            ).status_code
+            == 204
+        )
         assert support.post("/_testing/password-recovery/x/expire").status_code == 204
         reminders = support.post("/_testing/reminders", json={"email": "nadie@correo.com"})
         assert reminders.json() == {"registered": 0}

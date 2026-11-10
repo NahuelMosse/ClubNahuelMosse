@@ -116,8 +116,8 @@ uv run pytest
 uv run pytest tests/scenarios --card <ID>
 ```
 
-Without the emulator (variable missing or emulator off) the run fails with "hace falta el emulador
-de Firebase Auth" (the Firebase Auth emulator is required). `uv run pytest --sin-emulador` skips the
+Without the emulator (variable missing or emulator off) the run fails with "the Firebase Auth
+emulator is required". `uv run pytest --no-emulator` skips the
 tests that use the API and runs the rest (the unit tests need neither a database nor the emulator);
 the output counts the skipped ones as `skipped`.
 

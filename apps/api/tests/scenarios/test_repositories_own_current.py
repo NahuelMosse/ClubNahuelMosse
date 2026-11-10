@@ -1,6 +1,6 @@
-"""La anticipación del recordatorio ya es una por clase de aviso (NOT-05), no una sola constante."""
+"""The reminder lead time is now one per notice kind (NOT-05), not a single constant."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (the test titles carry their tag and are not split)
 from datetime import timedelta
 from uuid import UUID
 
@@ -12,22 +12,22 @@ from app.modules.notifications.repository import NotificationsSql
 from tests.scenarios.test_repositories_own import _hour, _world, _booking
 
 
-def test_el_recordatorio_sale_una_hora_antes(
+def test_the_reminder_goes_out_one_hour_before(
     engine: Engine, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """el recordatorio sale una hora antes del inicio, con la anticipación de dominio @REV-06-S9 @assumption:REV-06-ASM-08"""
-    mundo = _world(engine)
+    """the reminder goes out one hour before the start, with the domain lead time @REV-06-S9 @assumption:REV-06-ASM-08"""
+    world = _world(engine)
     base = _hour(days=9)
-    ahora = base - timedelta(minutes=50)
-    creada = base - timedelta(days=30)
-    cerca = _booking(engine, mundo, base, created=creada)
-    lejos = _booking(engine, mundo, base + timedelta(hours=1), created=creada)
+    now = base - timedelta(minutes=50)
+    created = base - timedelta(days=30)
+    near = _booking(engine, world, base, created=created)
+    far = _booking(engine, world, base + timedelta(hours=1), created=created)
 
     def ids(conn: Connection) -> list[UUID]:
-        return [r.booking_id for r in NotificationsSql(conn).due(ahora, mundo["user"])]
+        return [r.booking_id for r in NotificationsSql(conn).due(now, world["user"])]
 
     with engine.connect() as conn:
-        assert ids(conn) == [cerca]
+        assert ids(conn) == [near]
     monkeypatch.setitem(repository.LEAD_TIME_BY_KIND, "reminder", timedelta(hours=2))
     with engine.connect() as conn:
-        assert ids(conn) == [cerca, lejos]
+        assert ids(conn) == [near, far]

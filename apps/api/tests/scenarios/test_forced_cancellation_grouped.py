@@ -1,4 +1,4 @@
-"""El agrupado de avisos de anulación: trazabilidad por reserva, id nuevo y concurrencia."""
+"""The grouping of voiding notices: traceability per booking, new id and concurrency."""
 
 import threading
 import time
@@ -18,19 +18,21 @@ admin = base.admin
 channel = base.channel
 
 
-def _anular_en_la_base(engine: Engine, socio: Member, reservas: Sequence[dict[str, Any]]) -> None:
+def _void_in_the_database(
+    engine: Engine, member: Member, bookings: Sequence[dict[str, Any]]
+) -> None:
     with engine.begin() as conn:
-        for r in reservas:
+        for r in bookings:
             conn.execute(
                 text(
                     "UPDATE booking SET status = 'voided', reason = 'Baja de la sede',"
                     " canceled_at = now(), canceled_by = :u WHERE id = :id"
                 ),
-                {"u": socio.user_id, "id": r["id"]},
+                {"u": member.user_id, "id": r["id"]},
             )
 
 
-def _avisos(engine: Engine, socio: Member) -> list[Any]:
+def _notices(engine: Engine, member: Member) -> list[Any]:
     with engine.connect() as conn:
         return list(
             conn.execute(
@@ -38,49 +40,49 @@ def _avisos(engine: Engine, socio: Member) -> list[Any]:
                     "SELECT id, title, count, replaced_by, delivery, sent_at"
                     " FROM notification WHERE user_id = :u ORDER BY id"
                 ),
-                {"u": socio.user_id},
+                {"u": member.user_id},
             )
         )
 
 
-def _en_paralelo(engine: Engine, user_id: UUID, lotes: Sequence[Sequence[UUID]]) -> None:
-    """Encola el primer lote y, con su transacción todavía abierta, el segundo, que tiene que
-    quedar esperando a que la primera termine."""
-    primera_dentro, soltar = threading.Event(), threading.Event()
-    errores: list[BaseException] = []
+def _in_parallel(engine: Engine, user_id: UUID, batches: Sequence[Sequence[UUID]]) -> None:
+    """Queues the first batch and, with its transaction still open, the second, which has to
+    wait for the first to finish."""
+    first_inside, release = threading.Event(), threading.Event()
+    errors: list[BaseException] = []
 
-    def primera() -> None:
+    def first() -> None:
         try:
             with engine.begin() as conn:
-                enqueue_forced_cancellation(conn, user_id, lotes[0])
-                primera_dentro.set()
-                soltar.wait(10)
+                enqueue_forced_cancellation(conn, user_id, batches[0])
+                first_inside.set()
+                release.wait(10)
         except BaseException as e:
-            errores.append(e)
-            primera_dentro.set()
+            errors.append(e)
+            first_inside.set()
 
-    def segunda() -> None:
+    def second() -> None:
         try:
-            primera_dentro.wait(10)
+            first_inside.wait(10)
             with engine.begin() as conn:
-                enqueue_forced_cancellation(conn, user_id, lotes[1])
+                enqueue_forced_cancellation(conn, user_id, batches[1])
         except BaseException as e:
-            errores.append(e)
+            errors.append(e)
 
-    hilos = [threading.Thread(target=primera), threading.Thread(target=segunda)]
-    for h in hilos:
-        h.start()
-    primera_dentro.wait(10)
+    threads = [threading.Thread(target=first), threading.Thread(target=second)]
+    for t in threads:
+        t.start()
+    first_inside.wait(10)
     time.sleep(0.5)
-    esperando = hilos[1].is_alive()
-    soltar.set()
-    for h in hilos:
-        h.join(10)
-    assert errores == []
-    assert esperando, "la segunda anulación no esperó a la primera"
+    waiting = threads[1].is_alive()
+    release.set()
+    for t in threads:
+        t.join(10)
+    assert errors == []
+    assert waiting, "the second voiding did not wait for the first"
 
 
-def test_agrupar_abre_un_aviso_nuevo_y_cada_reserva_conserva_el_envio_del_suyo(
+def test_grouping_opens_a_new_notice_and_each_booking_keeps_the_sending_of_its_own(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
@@ -88,94 +90,94 @@ def test_agrupar_abre_un_aviso_nuevo_y_cada_reserva_conserva_el_envio_del_suyo(
     channel: FakeChannel,
     admin: dict[str, str],
 ) -> None:
-    """el aviso agrupado tiene id nuevo y la trazabilidad de cada reserva no cambia @supuesto:CU-24.2-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    primera = socio.book("20:00")
-    segunda = socio.book("21:00")
-    assert base.force_cancel(socio, admin, primera) == 200
-    [antes] = socio.center()["notifications"]
-    trazabilidad = base.for_admin(socio, admin, primera["id"])
+    """the grouped notice has a new id and the traceability of each booking does not change @assumption:CU-24.2-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    first = member.book("20:00")
+    second = member.book("21:00")
+    assert base.force_cancel(member, admin, first) == 200
+    [before] = member.center()["notifications"]
+    traceability = base.for_admin(member, admin, first["id"])
 
-    assert base.force_cancel(socio, admin, segunda) == 200
+    assert base.force_cancel(member, admin, second) == 200
 
-    [despues] = socio.center()["notifications"]
-    assert despues["id"] != antes["id"]
-    assert despues["title"] == "The club voided 2 of your bookings"
-    assert base.for_admin(socio, admin, primera["id"])["notice_at"] == trazabilidad["notice_at"]
-    assert base.for_admin(socio, admin, segunda["id"])["notice_delivery"] == "sent"
-    anterior, nuevo = _avisos(engine, socio)
-    assert anterior.replaced_by == nuevo.id
-    assert anterior.sent_at < nuevo.sent_at
+    [after] = member.center()["notifications"]
+    assert after["id"] != before["id"]
+    assert after["title"] == "The club voided 2 of your bookings"
+    assert base.for_admin(member, admin, first["id"])["notice_at"] == traceability["notice_at"]
+    assert base.for_admin(member, admin, second["id"])["notice_delivery"] == "sent"
+    previous, new = _notices(engine, member)
+    assert previous.replaced_by == new.id
+    assert previous.sent_at < new.sent_at
 
 
-def test_un_aviso_que_no_salio_pasa_sus_reservas_al_que_lo_reemplaza(
+def test_a_notice_that_did_not_go_out_passes_its_bookings_to_the_one_that_replaces_it(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
     channel: FakeChannel,
 ) -> None:
-    """lo que se agrupa antes de salir se informa en el aviso que sale @supuesto:CU-24.2-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    reservas = [socio.book("20:00"), socio.book("21:00")]
-    _anular_en_la_base(engine, socio, reservas)
+    """what is grouped before going out is reported in the notice that goes out @assumption:CU-24.2-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    bookings = [member.book("20:00"), member.book("21:00")]
+    _void_in_the_database(engine, member, bookings)
     with engine.begin() as conn:
-        enqueue_forced_cancellation(conn, socio.user_id, [UUID(reservas[0]["id"])])
+        enqueue_forced_cancellation(conn, member.user_id, [UUID(bookings[0]["id"])])
     with engine.begin() as conn:
-        enqueue_forced_cancellation(conn, socio.user_id, [UUID(reservas[1]["id"])])
+        enqueue_forced_cancellation(conn, member.user_id, [UUID(bookings[1]["id"])])
 
     with engine.connect() as conn:
-        vinculos = conn.execute(
+        links = conn.execute(
             text("SELECT notification_id FROM notification_booking WHERE booking_id = ANY(:ids)"),
-            {"ids": [UUID(r["id"]) for r in reservas]},
+            {"ids": [UUID(r["id"]) for r in bookings]},
         ).all()
-    *_, nuevo = _avisos(engine, socio)
-    assert {v.notification_id for v in vinculos} == {nuevo.id}
+    *_, new = _notices(engine, member)
+    assert {v.notification_id for v in links} == {new.id}
 
 
-@pytest.mark.parametrize("con_aviso_previo", [False, True])
-def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
+@pytest.mark.parametrize("with_previous_notice", [False, True])
+def test_two_simultaneous_voidings_leave_the_count_and_a_single_visible_notice(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
     channel: FakeChannel,
     admin: dict[str, str],
-    con_aviso_previo: bool,
+    with_previous_notice: bool,
 ) -> None:
-    """las anulaciones de una misma persona se serializan @supuesto:CU-24.2-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    reservas = [socio.book("20:00"), socio.book("21:00"), socio.book("22:00")]
-    if con_aviso_previo:
-        assert base.force_cancel(socio, admin, reservas[0]) == 200
-        simultaneas = reservas[1:]
+    """the voidings of the same person are serialized @assumption:CU-24.2-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    bookings = [member.book("20:00"), member.book("21:00"), member.book("22:00")]
+    if with_previous_notice:
+        assert base.force_cancel(member, admin, bookings[0]) == 200
+        simultaneous = bookings[1:]
     else:
-        simultaneas = reservas[:2]
-        _anular_en_la_base(engine, socio, simultaneas)
-    total = len(simultaneas) + int(con_aviso_previo)
-    if con_aviso_previo:
-        _anular_en_la_base(engine, socio, simultaneas)
+        simultaneous = bookings[:2]
+        _void_in_the_database(engine, member, simultaneous)
+    total = len(simultaneous) + int(with_previous_notice)
+    if with_previous_notice:
+        _void_in_the_database(engine, member, simultaneous)
 
-    _en_paralelo(
-        engine, socio.user_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]]
+    _in_parallel(
+        engine, member.user_id, [[UUID(simultaneous[0]["id"])], [UUID(simultaneous[1]["id"])]]
     )
 
-    [visible] = socio.center()["notifications"]
+    [visible] = member.center()["notifications"]
     assert visible["title"] == f"The club voided {total} of your bookings"
-    sin_reemplazar = [a for a in _avisos(engine, socio) if a.replaced_by is None]
-    assert [a.count for a in sin_reemplazar] == [total]
+    not_replaced = [a for a in _notices(engine, member) if a.replaced_by is None]
+    assert [a.count for a in not_replaced] == [total]
     with engine.connect() as conn:
-        vinculadas: Any = conn.execute(
+        linked: Any = conn.execute(
             text(
                 "SELECT count(*) FROM notification_booking nr JOIN notification n"
                 " ON n.id = nr.notification_id WHERE n.user_id = :u"
             ),
-            {"u": socio.user_id},
+            {"u": member.user_id},
         ).scalar_one()
-    assert vinculadas == total
+    assert linked == total
 
 
-def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
+def test_a_notice_read_while_grouping_does_not_swallow_the_new_voiding(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
@@ -183,49 +185,49 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
     channel: FakeChannel,
     admin: dict[str, str],
 ) -> None:
-    """leer el aviso anterior en medio del agrupado deja el nuevo sin leer @supuesto:CU-24.2-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    primera = socio.book("20:00")
-    segunda = socio.book("21:00")
-    assert base.force_cancel(socio, admin, primera) == 200
-    [leido] = socio.center()["notifications"]
-    _anular_en_la_base(engine, socio, [segunda])
+    """reading the previous notice in the middle of the grouping leaves the new one unread @assumption:CU-24.2-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    first = member.book("20:00")
+    second = member.book("21:00")
+    assert base.force_cancel(member, admin, first) == 200
+    [read] = member.center()["notifications"]
+    _void_in_the_database(engine, member, [second])
 
-    def leyendo() -> None:
+    def reading() -> None:
         with engine.connect() as conn:
-            NotificationsSql(conn).read(socio.user_id, UUID(leido["id"]))
+            NotificationsSql(conn).read(member.user_id, UUID(read["id"]))
 
-    lectura = threading.Thread(target=leyendo)
+    reader = threading.Thread(target=reading)
 
-    primera_dentro, soltar = threading.Event(), threading.Event()
+    first_inside, release = threading.Event(), threading.Event()
 
-    def encolando() -> None:
+    def queueing() -> None:
         with engine.begin() as conn:
-            enqueue_forced_cancellation(conn, socio.user_id, [UUID(segunda["id"])])
-            primera_dentro.set()
-            soltar.wait(10)
+            enqueue_forced_cancellation(conn, member.user_id, [UUID(second["id"])])
+            first_inside.set()
+            release.wait(10)
 
-    hilo = threading.Thread(target=encolando)
-    hilo.start()
-    primera_dentro.wait(10)
-    lectura.start()
+    thread = threading.Thread(target=queueing)
+    thread.start()
+    first_inside.wait(10)
+    reader.start()
     time.sleep(0.5)
-    soltar.set()
-    hilo.join(10)
-    lectura.join(10)
+    release.set()
+    thread.join(10)
+    reader.join(10)
 
-    center = socio.center()
+    center = member.center()
     assert center["unread"] == 1
-    [entrada] = center["notifications"]
-    assert entrada["title"] == "The club voided 2 of your bookings"
-    assert entrada["read"] is False
+    [entry] = center["notifications"]
+    assert entry["title"] == "The club voided 2 of your bookings"
+    assert entry["read"] is False
 
 
-def test_el_despacho_toma_los_pendientes_por_un_indice_parcial(engine: Engine) -> None:
-    """la consulta del despacho tiene su índice"""
+def test_the_dispatch_takes_the_pending_ones_through_a_partial_index(engine: Engine) -> None:
+    """the dispatch query has its index"""
     with engine.connect() as conn:
-        definicion: Any = conn.execute(
+        definition: Any = conn.execute(
             text("SELECT indexdef FROM pg_indexes WHERE indexname = 'notification_to_dispatch'")
         ).scalar_one()
-    assert "delivery = 'pending'" in definicion
-    assert "kind <> 'reminder'" in definicion
+    assert "delivery = 'pending'" in definition
+    assert "kind <> 'reminder'" in definition

@@ -1,4 +1,4 @@
-"""DAT-01: claves UUIDv7 y columnas de auditoría en las 9 tablas (la migración 0010)."""
+"""DAT-01: UUIDv7 keys and audit columns on the 9 tables (migration 0010)."""
 
 import os
 import uuid
@@ -13,9 +13,9 @@ from alembic.config import Config as AlembicConfig
 from sqlalchemy import Connection, create_engine, text
 from sqlalchemy.engine import make_url
 
-RAIZ_API = Path(__file__).resolve().parents[2]
+API_ROOT = Path(__file__).resolve().parents[2]
 
-TABLAS_CON_ID = (
+TABLES_WITH_ID = (
     "usuario",
     "sede",
     "espacio",
@@ -26,7 +26,7 @@ TABLAS_CON_ID = (
     "notificacion",
 )
 
-REFERENCIAS = {
+REFERENCES = {
     ("sede", "creado_por", "usuario"),
     ("sede", "modificado_por", "usuario"),
     ("sede", "dado_de_baja_por", "usuario"),
@@ -46,7 +46,7 @@ REFERENCIAS = {
     ("notificacion_reserva", "reserva_id", "reserva"),
 }
 
-TABLAS_CON_ID_ACTUAL = (
+CURRENT_TABLES_WITH_ID = (
     "app_user",
     "venue",
     "space",
@@ -56,9 +56,9 @@ TABLAS_CON_ID_ACTUAL = (
     "device",
     "notification",
 )
-TABLAS_ACTUAL = (*TABLAS_CON_ID_ACTUAL, "notification_booking")
+CURRENT_TABLES = (*CURRENT_TABLES_WITH_ID, "notification_booking")
 
-REFERENCIAS_ACTUAL = {
+CURRENT_REFERENCES = {
     ("venue", "created_by", "app_user"),
     ("venue", "updated_by", "app_user"),
     ("venue", "deactivated_by", "app_user"),
@@ -78,7 +78,7 @@ REFERENCIAS_ACTUAL = {
     ("notification_booking", "booking_id", "booking"),
 }
 
-CLAVES_ACTUAL = {
+CURRENT_KEYS = {
     "app_user": "id = :user",
     "venue": "id = :venue",
     "space": "id = :space",
@@ -91,15 +91,15 @@ CLAVES_ACTUAL = {
 }
 
 
-def heredado(viejo: int) -> uuid.UUID:
-    """El UUID versión 7 con marca de tiempo cero que la migración arma con el id viejo."""
-    return uuid.UUID(int=(7 << 76) | (2 << 62) | viejo)
+def inherited(old: int) -> uuid.UUID:
+    """The version 7 UUID with a zero timestamp that the migration builds from the old id."""
+    return uuid.UUID(int=(7 << 76) | (2 << 62) | old)
 
 
-def _sembrar_0009(conn: Connection) -> dict[str, Any]:
-    """Una fila en cada una de las 9 tablas, con todas las referencias usadas."""
+def _seed_0009(conn: Connection) -> dict[str, Any]:
+    """One row in each of the 9 tables, with every reference used."""
     s = uuid.uuid4().hex[:8]
-    usuario: Any = conn.execute(
+    user: Any = conn.execute(
         text(
             "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni, fecha_nacimiento)"
             " VALUES (:uid, :correo, 'Ana', 'Pérez', :dni, '2000-03-14') RETURNING id"
@@ -116,74 +116,72 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
             " modificado_por, dado_de_baja_por)"
             " VALUES (:n, 'Av. X', 1, '08:00', '23:00', '{1,2,3}', :u, :u, :u) RETURNING id"
         ),
-        {"n": f"Sede {s}", "u": usuario},
+        {"n": f"Sede {s}", "u": user},
     ).scalar_one()
-    espacio: Any = conn.execute(
+    space: Any = conn.execute(
         text(
             "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada, iluminada,"
             " precio_por_hora, creado_por, modificado_por, dado_de_baja_por)"
             " VALUES (:sede, 'Tenis', 'Polvo', 1, :n, true, true, 1000, :u, :u, :u) RETURNING id"
         ),
-        {"sede": venue, "n": f"Cancha {s}", "u": usuario},
+        {"sede": venue, "n": f"Cancha {s}", "u": user},
     ).scalar_one()
-    reserva: Any = conn.execute(
+    booking: Any = conn.execute(
         text(
             "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total,"
             " cancelada_por)"
             " VALUES (:u, :e, '2030-01-01 10:00-03', '2030-01-01 11:00-03', 1000, 1000, :u)"
             " RETURNING id"
         ),
-        {"u": usuario, "e": espacio},
+        {"u": user, "e": space},
     ).scalar_one()
-    enlace: Any = conn.execute(
+    link: Any = conn.execute(
         text(
             "INSERT INTO enlace_recuperacion (usuario_id, codigo_hash, vence_en)"
             " VALUES (:u, :h, now() + interval '1 hour') RETURNING id"
         ),
-        {"u": usuario, "h": f"hash-{s}"},
+        {"u": user, "h": f"hash-{s}"},
     ).scalar_one()
-    correo: Any = conn.execute(
+    email: Any = conn.execute(
         text(
             "INSERT INTO correo_saliente (para, asunto, cuerpo)"
             " VALUES ('a@b.c', 'x', 'y') RETURNING id"
         )
     ).scalar_one()
-    dispositivo: Any = conn.execute(
+    device: Any = conn.execute(
         text(
             "INSERT INTO dispositivo (usuario_id, token, plataforma, permiso)"
             " VALUES (:u, :t, 'android', true) RETURNING id"
         ),
-        {"u": usuario, "t": f"token-{s}"},
+        {"u": user, "t": f"token-{s}"},
     ).scalar_one()
-    insertar = (
+    insert = (
         "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio{extra})"
-        " VALUES (:u, 'cancelacion_forzosa', 't', 'c', 'pendiente'{valor}) RETURNING id"
+        " VALUES (:u, 'cancelacion_forzosa', 't', 'c', 'pendiente'{value}) RETURNING id"
     )
-    nuevo: Any = conn.execute(
-        text(insertar.format(extra="", valor="")), {"u": usuario}
-    ).scalar_one()
-    notificacion: Any = conn.execute(
-        text(insertar.format(extra=", reserva_id, reemplazada_por", valor=", :r, :n")),
-        {"u": usuario, "r": reserva, "n": nuevo},
+    new: Any = conn.execute(text(insert.format(extra="", value="")), {"u": user}).scalar_one()
+    notification: Any = conn.execute(
+        text(insert.format(extra=", reserva_id, reemplazada_por", value=", :r, :n")),
+        {"u": user, "r": booking, "n": new},
     ).scalar_one()
     conn.execute(
         text("INSERT INTO notificacion_reserva (notificacion_id, reserva_id) VALUES (:n, :r)"),
-        {"n": notificacion, "r": reserva},
+        {"n": notification, "r": booking},
     )
     return {
-        "usuario": usuario,
-        "sede": venue,
-        "espacio": espacio,
-        "reserva": reserva,
-        "enlace": enlace,
-        "correo": correo,
-        "dispositivo": dispositivo,
-        "notificacion": notificacion,
+        "user": user,
+        "venue": venue,
+        "space": space,
+        "booking": booking,
+        "link": link,
+        "email": email,
+        "device": device,
+        "notification": notification,
     }
 
 
-def _sembrar(conn: Connection) -> dict[str, Any]:
-    """Una fila en cada una de las 9 tablas de la base actual, con todas las referencias usadas."""
+def _seed(conn: Connection) -> dict[str, Any]:
+    """One row in each of the 9 tables of the current database, with every reference used."""
     s = uuid.uuid4().hex[:8]
     user: Any = conn.execute(
         text(
@@ -241,16 +239,14 @@ def _sembrar(conn: Connection) -> dict[str, Any]:
         ),
         {"u": user, "t": f"token-{s}"},
     ).scalar_one()
-    insertar = (
+    insert = (
         "INSERT INTO notification (user_id, kind, title, body, delivery{extra})"
-        " VALUES (:u, 'forced_cancellation', 't', 'c', 'pending'{valor}) RETURNING id"
+        " VALUES (:u, 'forced_cancellation', 't', 'c', 'pending'{value}) RETURNING id"
     )
-    nuevo: Any = conn.execute(
-        text(insertar.format(extra="", valor="")), {"u": user}
-    ).scalar_one()
+    new: Any = conn.execute(text(insert.format(extra="", value="")), {"u": user}).scalar_one()
     notification: Any = conn.execute(
-        text(insertar.format(extra=", booking_id, replaced_by", valor=", :r, :n")),
-        {"u": user, "r": booking, "n": nuevo},
+        text(insert.format(extra=", booking_id, replaced_by", value=", :r, :n")),
+        {"u": user, "r": booking, "n": new},
     ).scalar_one()
     conn.execute(
         text("INSERT INTO notification_booking (notification_id, booking_id) VALUES (:n, :r)"),
@@ -268,76 +264,74 @@ def _sembrar(conn: Connection) -> dict[str, Any]:
     }
 
 
-def _foto(conn: Connection) -> dict[tuple[str, str], set[Any]]:
-    """Los ids y las 17 referencias tal como están guardados."""
-    columnas = [(t, "id") for t in TABLAS_CON_ID] + [(t, c) for t, c, _ in REFERENCIAS]
+def _snapshot(conn: Connection) -> dict[tuple[str, str], set[Any]]:
+    """The ids and the 17 references as they are stored."""
+    columns = [(t, "id") for t in TABLES_WITH_ID] + [(t, c) for t, c, _ in REFERENCES]
     return {
-        (t, c): {
-            fila[0] for fila in conn.execute(text(f"SELECT {c} FROM {t} WHERE {c} IS NOT NULL"))
-        }
-        for t, c in columnas
+        (t, c): {row[0] for row in conn.execute(text(f"SELECT {c} FROM {t} WHERE {c} IS NOT NULL"))}
+        for t, c in columns
     }
 
 
 @pytest.fixture
 def new_db() -> Iterator[tuple[AlembicConfig, str]]:
-    """Una base vacía sólo para este test, para correr la migración hacia arriba y hacia abajo."""
-    nombre = f"club_dat01_{uuid.uuid4().hex[:10]}_test"
+    """An empty database just for this test, to run the migration up and down."""
+    name = f"club_dat01_{uuid.uuid4().hex[:10]}_test"
     url = make_url(os.environ["DATABASE_URL"])
     admin = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
     with admin.connect() as c:
-        c.execute(text(f'CREATE DATABASE "{nombre}"'))
-    destino = url.set(database=nombre).render_as_string(hide_password=False)
-    config = AlembicConfig(str(RAIZ_API / "alembic.ini"))
-    config.set_main_option("sqlalchemy.url", destino.replace("%", "%%"))
+        c.execute(text(f'CREATE DATABASE "{name}"'))
+    target = url.set(database=name).render_as_string(hide_password=False)
+    config = AlembicConfig(str(API_ROOT / "alembic.ini"))
+    config.set_main_option("sqlalchemy.url", target.replace("%", "%%"))
     try:
-        yield config, destino
+        yield config, target
     finally:
         with admin.connect() as c:
-            c.execute(text(f'DROP DATABASE IF EXISTS "{nombre}" WITH (FORCE)'))
+            c.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
         admin.dispose()
 
 
-def test_clave_uuid_con_valor_por_defecto(db: Connection) -> None:
-    """después de la migración 0010 la clave de usuario, sede, espacio, reserva, enlace_recuperacion, correo_saliente, dispositivo y notificacion es uuid con valor por defecto uuid_v7() @DAT-01-S1 @assumption:DAT-01-ASM-01"""
-    filas = db.execute(
+def test_uuid_key_with_default_value(db: Connection) -> None:
+    """after migration 0010 the key of app_user, venue, space, booking, recovery_link, outgoing_email, device and notification is uuid with default value uuid_v7() @DAT-01-S1 @assumption:DAT-01-ASM-01"""
+    rows = db.execute(
         text(
             "SELECT table_name, data_type, column_default FROM information_schema.columns"
             " WHERE table_schema = 'public' AND column_name = 'id' AND table_name = ANY(:t)"
         ),
-        {"t": list(TABLAS_CON_ID_ACTUAL)},
+        {"t": list(CURRENT_TABLES_WITH_ID)},
     ).all()
-    assert {f.table_name for f in filas} == set(TABLAS_CON_ID_ACTUAL)
-    for f in filas:
+    assert {f.table_name for f in rows} == set(CURRENT_TABLES_WITH_ID)
+    for f in rows:
         assert f.data_type == "uuid", f.table_name
         assert f.column_default == "uuid_v7()", f.table_name
 
 
-def test_las_17_referencias_son_uuid(db: Connection) -> None:
-    """las 17 referencias entre tablas, también las de notificacion_reserva, son uuid y apuntan a la tabla correcta @DAT-01-S1 @assumption:DAT-01-ASM-04"""
-    filas = db.execute(
+def test_the_17_references_are_uuid(db: Connection) -> None:
+    """the 17 references between tables, including those of notification_booking, are uuid and point to the right table @DAT-01-S1 @assumption:DAT-01-ASM-04"""
+    rows = db.execute(
         text(
-            "SELECT c.conrelid::regclass::text AS tabla, a.attname AS columna,"
-            " c.confrelid::regclass::text AS destino, format_type(a.atttypid, a.atttypmod) AS tipo"
+            "SELECT c.conrelid::regclass::text AS table_name, a.attname AS column_name,"
+            " c.confrelid::regclass::text AS target, format_type(a.atttypid, a.atttypmod) AS type_name"
             " FROM pg_constraint c JOIN pg_attribute a"
             " ON a.attrelid = c.conrelid AND a.attnum = c.conkey[1]"
             " WHERE c.contype = 'f' AND c.connamespace = 'public'::regnamespace"
         )
     ).all()
-    assert {(f.tabla, f.columna, f.destino) for f in filas} == REFERENCIAS_ACTUAL
-    assert {f.tipo for f in filas} == {"uuid"}
-    clave: Any = db.execute(
+    assert {(f.table_name, f.column_name, f.target) for f in rows} == CURRENT_REFERENCES
+    assert {f.type_name for f in rows} == {"uuid"}
+    key: Any = db.execute(
         text(
             "SELECT a.attname FROM pg_index i JOIN pg_attribute a"
             " ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)"
             " WHERE i.indisprimary AND i.indrelid = 'notification_booking'::regclass"
         )
     ).scalars()
-    assert set(clave) == {"notification_id", "booking_id"}
+    assert set(key) == {"notification_id", "booking_id"}
 
 
-def test_ids_nuevos_version_7_y_en_orden(db: Connection) -> None:
-    """los ids nuevos son versión 7 y salen en el orden en que se crean @DAT-01-S1"""
+def test_new_ids_are_version_7_and_ordered(db: Connection) -> None:
+    """new ids are version 7 and come out in the order they are created @DAT-01-S1"""
     ids: list[uuid.UUID] = [
         db.execute(text("INSERT INTO outgoing_email (recipient, subject, body)"
                         " VALUES ('a@b.c', 'x', 'y') RETURNING id")).scalar_one()
@@ -348,44 +342,44 @@ def test_ids_nuevos_version_7_y_en_orden(db: Connection) -> None:
     assert len(set(ids)) == 40
 
 
-def test_migracion_con_filas_existentes(new_db: tuple[AlembicConfig, str]) -> None:
-    """la migración 0010 da a las filas existentes un UUID versión 7 con sus relaciones intactas y vuelve atrás si no hay filas nuevas @assumption:DAT-01-ASM-02"""
+def test_migration_with_existing_rows(new_db: tuple[AlembicConfig, str]) -> None:
+    """migration 0010 gives existing rows a version 7 UUID with their relations intact and rolls back if there are no new rows @assumption:DAT-01-ASM-02"""
     config, url = new_db
     engine = create_engine(url)
     command.upgrade(config, "0009")
     with engine.begin() as conn:
-        _sembrar_0009(conn)
-        antes = _foto(conn)
-    assert all(isinstance(v, int) for valores in antes.values() for v in valores)
+        _seed_0009(conn)
+        before = _snapshot(conn)
+    assert all(isinstance(v, int) for values in before.values() for v in values)
 
     command.upgrade(config, "0010")
     with engine.begin() as conn:
-        despues = _foto(conn)
-        for clave, valores in antes.items():
-            assert despues[clave] == {heredado(v) for v in valores}, clave
-        assert {u.version for u in despues[("usuario", "id")]} == {7}
-        vista: Any = conn.execute(text("SELECT estado_actual FROM reserva_con_estado")).scalar_one()
-        assert vista == "activa"
+        after = _snapshot(conn)
+        for key, values in before.items():
+            assert after[key] == {inherited(v) for v in values}, key
+        assert {u.version for u in after[("usuario", "id")]} == {7}
+        view: Any = conn.execute(text("SELECT estado_actual FROM reserva_con_estado")).scalar_one()
+        assert view == "activa"
         assert conn.execute(text("SELECT to_regproc('id_heredado')")).scalar_one() is None
-        nuevo: Any = conn.execute(
+        new: Any = conn.execute(
             text(
                 "INSERT INTO correo_saliente (para, asunto, cuerpo) VALUES ('a', 'b', 'c')"
                 " RETURNING id"
             )
         ).scalar_one()
-        assert nuevo > max(despues[("correo_saliente", "id")])
-        conn.execute(text("DELETE FROM correo_saliente WHERE id = :i"), {"i": nuevo})
+        assert new > max(after[("correo_saliente", "id")])
+        conn.execute(text("DELETE FROM correo_saliente WHERE id = :i"), {"i": new})
 
     command.downgrade(config, "0009")
     with engine.begin() as conn:
-        assert _foto(conn) == antes
-        siguiente: Any = conn.execute(
+        assert _snapshot(conn) == before
+        following: Any = conn.execute(
             text(
                 "INSERT INTO correo_saliente (para, asunto, cuerpo) VALUES ('a', 'b', 'c')"
                 " RETURNING id"
             )
         ).scalar_one()
-        assert siguiente > max(antes[("correo_saliente", "id")])
+        assert following > max(before[("correo_saliente", "id")])
         assert conn.execute(text("SELECT estado_actual FROM reserva_con_estado")).scalar_one()
 
     command.upgrade(config, "0010")
@@ -401,72 +395,72 @@ def test_migracion_con_filas_existentes(new_db: tuple[AlembicConfig, str]) -> No
     engine.dispose()
 
 
-def test_auditoria_en_las_9_tablas(db: Connection) -> None:
-    """cada una de las 9 tablas tiene creado_en y modificado_en y la base actualiza modificado_en @DAT-01-S2 @assumption:DAT-01-ASM-03 @assumption:DAT-01-ASM-04"""
-    columnas = db.execute(
+def test_audit_on_the_9_tables(db: Connection) -> None:
+    """each of the 9 tables has created_at and updated_at and the database updates updated_at @DAT-01-S2 @assumption:DAT-01-ASM-03 @assumption:DAT-01-ASM-04"""
+    columns = db.execute(
         text(
             "SELECT table_name, column_name, data_type, is_nullable FROM information_schema.columns"
             " WHERE table_schema = 'public' AND column_name IN ('created_at', 'updated_at')"
             " AND table_name = ANY(:t)"
         ),
-        {"t": list(TABLAS_ACTUAL)},
+        {"t": list(CURRENT_TABLES)},
     ).all()
-    assert {(c.table_name, c.column_name) for c in columnas} == {
-        (t, c) for t in TABLAS_ACTUAL for c in ("created_at", "updated_at")
+    assert {(c.table_name, c.column_name) for c in columns} == {
+        (t, c) for t in CURRENT_TABLES for c in ("created_at", "updated_at")
     }
-    assert {(c.data_type, c.is_nullable) for c in columnas} == {("timestamp with time zone", "NO")}
-    viejas = db.execute(
+    assert {(c.data_type, c.is_nullable) for c in columns} == {("timestamp with time zone", "NO")}
+    old = db.execute(
         text(
             "SELECT table_name, column_name FROM information_schema.columns"
             " WHERE table_schema = 'public' AND column_name IN"
             " ('creada_en', 'registrado_en', 'actualizado_en', 'emitido_en')"
         )
     ).all()
-    assert viejas == []
+    assert old == []
 
-    ids = _sembrar(db)
-    for tabla in TABLAS_ACTUAL:
-        donde = CLAVES_ACTUAL[tabla]
-        antes = db.execute(
-            text(f"SELECT created_at, updated_at FROM {tabla} WHERE {donde}"), ids
+    ids = _seed(db)
+    for table in CURRENT_TABLES:
+        where = CURRENT_KEYS[table]
+        before = db.execute(
+            text(f"SELECT created_at, updated_at FROM {table} WHERE {where}"), ids
         ).one()
-        db.execute(text(f"UPDATE {tabla} SET created_at = created_at WHERE {donde}"), ids)
-        despues = db.execute(
-            text(f"SELECT created_at, updated_at FROM {tabla} WHERE {donde}"), ids
+        db.execute(text(f"UPDATE {table} SET created_at = created_at WHERE {where}"), ids)
+        after = db.execute(
+            text(f"SELECT created_at, updated_at FROM {table} WHERE {where}"), ids
         ).one()
-        assert despues.created_at == antes.created_at, tabla
-        assert despues.updated_at > antes.updated_at, tabla
+        assert after.created_at == before.created_at, table
+        assert after.updated_at > before.updated_at, table
 
 
-def test_filas_existentes_conservan_su_fecha(new_db: tuple[AlembicConfig, str]) -> None:
-    """las filas existentes conservan su fecha en creado_en y modificado_en arranca igual @assumption:DAT-01-ASM-07"""
+def test_existing_rows_keep_their_date(new_db: tuple[AlembicConfig, str]) -> None:
+    """existing rows keep their date in «creado_en» and «modificado_en» starts the same @assumption:DAT-01-ASM-07"""
     config, url = new_db
     engine = create_engine(url)
     command.upgrade(config, "0009")
-    viejas = {
+    old = {
         "enlace_recuperacion": ("emitido_en", datetime(2020, 1, 1, tzinfo=UTC)),
         "correo_saliente": ("creado_en", datetime(2020, 2, 1, tzinfo=UTC)),
         "notificacion": ("creada_en", datetime(2020, 3, 1, tzinfo=UTC)),
         "dispositivo": ("registrado_en", datetime(2020, 4, 1, tzinfo=UTC)),
     }
     with engine.begin() as conn:
-        _sembrar_0009(conn)
-        for tabla, (columna, fecha) in viejas.items():
-            conn.execute(text(f"UPDATE {tabla} SET {columna} = :f"), {"f": fecha})
+        _seed_0009(conn)
+        for table, (column, date) in old.items():
+            conn.execute(text(f"UPDATE {table} SET {column} = :f"), {"f": date})
         conn.execute(text("UPDATE dispositivo SET actualizado_en = registrado_en"))
-        antes: Any = conn.execute(text("SELECT now()")).scalar_one()
+        before: Any = conn.execute(text("SELECT now()")).scalar_one()
 
     command.upgrade(config, "0010")
     with engine.begin() as conn:
-        despues: Any = conn.execute(text("SELECT now()")).scalar_one()
-        for tabla, (_, fecha) in viejas.items():
-            fila = conn.execute(text(f"SELECT DISTINCT creado_en, modificado_en FROM {tabla}"))
-            for creado, modificado in fila:
-                assert creado == fecha, tabla
-                assert modificado == fecha, tabla
-        creado, modificado = conn.execute(
+        after: Any = conn.execute(text("SELECT now()")).scalar_one()
+        for table, (_, date) in old.items():
+            rows = conn.execute(text(f"SELECT DISTINCT creado_en, modificado_en FROM {table}"))
+            for created, modified in rows:
+                assert created == date, table
+                assert modified == date, table
+        created, modified = conn.execute(
             text("SELECT creado_en, modificado_en FROM notificacion_reserva")
         ).one()
-        assert antes <= creado <= despues
-        assert modificado == creado
+        assert before <= created <= after
+        assert modified == created
     engine.dispose()

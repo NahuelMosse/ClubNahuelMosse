@@ -88,7 +88,8 @@ def test_no_versioned_file_holds_the_render_connection_string() -> None:
     leaking = [
         name
         for name in files
-        if name and Path(REPO_ROOT, name).is_file()
+        if name
+        and Path(REPO_ROOT, name).is_file()
         and not name.endswith((".png", ".jpg", ".pdf", ".ttf", ".otf", ".ico", ".webp"))
         and "dpg-" in Path(REPO_ROOT, name).read_text(encoding="utf-8", errors="ignore")
     ]

@@ -3,14 +3,14 @@ from collections.abc import Callable
 from fastapi.testclient import TestClient
 
 
-def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administrador(
+def test_the_api_rejects_a_void_requested_by_a_user_without_the_admin_role(
     api: TestClient,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """la API rechaza la anulación pedida por un usuario sin rol de administrador @CU-15-H01-04"""
+    """the API rejects a void requested by a user without the admin role @CU-15-H01-04"""
     s = unique()
-    correo = f"socio.{s}@correo.com"
+    email = f"socio.{s}@correo.com"
     assert (
         api.post(
             "/register",
@@ -19,13 +19,13 @@ def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administra
                 "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
                 "birth_date": "1994-07-21",
-                "email": correo,
+                "email": email,
                 "password": "ClubNahuel1",
             },
         ).status_code
         == 201
     )
-    token = sign_in(correo, "ClubNahuel1")
+    token = sign_in(email, "ClubNahuel1")
 
     r = api.post(
         "/bookings/00000000-0000-7000-8000-000000000001/void",
@@ -37,5 +37,5 @@ def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administra
         },
     )
 
-    # Verifica: la API lo rechaza por falta de permisos, no por un error de datos.
+    # Checks: the API rejects it for lack of permissions, not for a data error.
     assert r.status_code == 403

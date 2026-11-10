@@ -1,4 +1,4 @@
-"""Las reglas de la confirmación de cancelación que ningún escenario de la card ejercita."""
+"""The cancellation confirmation rules that no scenario of the card exercises."""
 
 from collections.abc import Callable, Iterator
 from typing import Any
@@ -13,116 +13,116 @@ from app.modules.notifications.repository import NotificationsSql
 from app.modules.notifications.push import push_channel
 
 
-class CanalCaido:
+class DownChannel:
     def send(self, tokens: list[str], aviso: Any) -> Any:
         raise ConnectionError("el servicio no contesta")
 
 
 @pytest.fixture
-def canal(api: TestClient) -> Iterator[FakeChannel]:
-    canal = FakeChannel()
-    app_of(api).dependency_overrides[push_channel] = lambda: canal
-    yield canal
+def channel(api: TestClient) -> Iterator[FakeChannel]:
+    channel = FakeChannel()
+    app_of(api).dependency_overrides[push_channel] = lambda: channel
+    yield channel
     app_of(api).dependency_overrides.pop(push_channel, None)
 
 
-def _cancelar(socio: Member, reserva_id: str) -> int:
-    return socio.api.post(f"/bookings/{reserva_id}/cancel", headers=socio.session).status_code
+def _cancel(member: Member, booking_id: str) -> int:
+    return member.api.post(f"/bookings/{booking_id}/cancel", headers=member.session).status_code
 
 
-def _envios(socio: Member) -> list[str]:
-    with socio.engine.connect() as conn:
+def _deliveries(member: Member) -> list[str]:
+    with member.engine.connect() as conn:
         return [
             f.delivery
             for f in conn.execute(
                 text("SELECT delivery FROM notification WHERE user_id = :u ORDER BY id"),
-                {"u": socio.user_id},
+                {"u": member.user_id},
             )
         ]
 
 
-def test_repetir_la_cancelacion_no_repite_la_confirmacion(
+def test_repeating_the_cancellation_does_not_repeat_the_confirmation(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """un reintento de la cancelación no duplica el aviso @supuesto:CU-24.3-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
+    """a retry of the cancellation does not duplicate the notice @assumption:CU-24.3-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
 
-    assert _cancelar(socio, reserva["id"]) == 200
-    assert _cancelar(socio, reserva["id"]) == 200
+    assert _cancel(member, booking["id"]) == 200
+    assert _cancel(member, booking["id"]) == 200
 
-    assert len(canal.sent) == 1
-    assert len(socio.center()["notifications"]) == 1
+    assert len(channel.sent) == 1
+    assert len(member.center()["notifications"]) == 1
 
 
-def test_cada_reserva_cancelada_tiene_su_confirmacion(
+def test_each_cancelled_booking_has_its_confirmation(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """varias cancelaciones seguidas dan una confirmación cada una @supuesto:CU-24.3-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    primera = socio.book("20:00")
-    segunda = socio.book("21:00")
+    """several cancellations in a row give one confirmation each @assumption:CU-24.3-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    first = member.book("20:00")
+    second = member.book("21:00")
 
-    assert _cancelar(socio, primera["id"]) == 200
-    assert _cancelar(socio, segunda["id"]) == 200
+    assert _cancel(member, first["id"]) == 200
+    assert _cancel(member, second["id"]) == 200
 
-    assert len(canal.sent) == 2
-    center = socio.center()
+    assert len(channel.sent) == 2
+    center = member.center()
     assert center["unread"] == 2
-    assert {n["booking_id"] for n in center["notifications"]} == {primera["id"], segunda["id"]}
+    assert {n["booking_id"] for n in center["notifications"]} == {first["id"], second["id"]}
 
 
-def test_si_el_servicio_push_cae_la_confirmacion_queda_en_el_centro_como_fallida(
+def test_if_the_push_service_is_down_the_confirmation_stays_in_the_center_as_failed(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """el envío fallido no se reintenta y la cancelación sigue hecha @supuesto:CU-24.3-SUP-01"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
-    app_of(api).dependency_overrides[push_channel] = CanalCaido
+    """the failed delivery is not retried and the cancellation stays done @assumption:CU-24.3-SUP-01"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
+    app_of(api).dependency_overrides[push_channel] = DownChannel
     try:
-        assert _cancelar(socio, reserva["id"]) == 200
+        assert _cancel(member, booking["id"]) == 200
     finally:
         app_of(api).dependency_overrides.pop(push_channel, None)
 
-    assert _envios(socio) == ["failed"]
-    assert len(socio.center()["notifications"]) == 1
+    assert _deliveries(member) == ["failed"]
+    assert len(member.center()["notifications"]) == 1
 
 
-def test_lo_que_quedo_pendiente_se_despacha_una_sola_vez(
+def test_what_was_left_pending_is_dispatched_only_once(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """el barrido retoma lo que no salió y nadie lo manda dos veces @supuesto:CU-24.3-SUP-04"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
-    assert _cancelar(socio, reserva["id"]) == 200
-    canal.sent.clear()
-    # Como si el servidor se hubiera caído antes de despachar.
+    """the sweep picks up what did not go out and nobody sends it twice @assumption:CU-24.3-SUP-04"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
+    assert _cancel(member, booking["id"]) == 200
+    channel.sent.clear()
+    # As if the server had crashed before dispatching.
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE notification SET delivery = 'pending' WHERE user_id = :u"),
-            {"u": socio.user_id},
+            {"u": member.user_id},
         )
 
     with engine.connect() as conn:
-        primero = dispatch_pending(NotificationsSql(conn), canal, socio.user_id)
+        first = dispatch_pending(NotificationsSql(conn), channel, member.user_id)
     with engine.connect() as conn:
-        segundo = dispatch_pending(NotificationsSql(conn), canal, socio.user_id)
+        second = dispatch_pending(NotificationsSql(conn), channel, member.user_id)
 
-    assert (primero, segundo) == (1, 0)
-    assert len(canal.sent) == 1
-    assert _envios(socio) == ["sent"]
+    assert (first, second) == (1, 0)
+    assert len(channel.sent) == 1
+    assert _deliveries(member) == ["sent"]

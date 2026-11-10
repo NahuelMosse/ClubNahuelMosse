@@ -1,4 +1,4 @@
-"""Casos de uso de reservas con un repositorio en memoria: sin base ni emulador."""
+"""Bookings use cases with an in-memory repository: no database or emulator."""
 
 from dataclasses import replace
 from datetime import date, datetime, time, timedelta, timezone
@@ -24,7 +24,7 @@ from app.modules.bookings.use_cases import (
     my_bookings,
     void_booking,
 )
-from app.modules.session.profile import Profile as Perfil
+from app.modules.session.profile import Profile
 from app.shared.errors import (
     ConcurrentChange,
     Forbidden,
@@ -35,512 +35,512 @@ from app.shared.errors import (
     Unavailable,
 )
 
-ZONA = timezone(timedelta(hours=-3))
-AHORA = datetime(2026, 3, 2, 10, 0, tzinfo=ZONA)  # lunes
-MANANA = date(2026, 3, 3)
-AGENDA = OpeningHours(opens_at=time(8, 0), closes_at=time(23, 0), open_days=(1, 2, 3, 4, 5, 6, 7))
+ZONE = timezone(timedelta(hours=-3))
+NOW = datetime(2026, 3, 2, 10, 0, tzinfo=ZONE)  # Monday
+TOMORROW = date(2026, 3, 3)
+SCHEDULE = OpeningHours(opens_at=time(8, 0), closes_at=time(23, 0), open_days=(1, 2, 3, 4, 5, 6, 7))
 
 
-def _id(numero: int) -> UUID:
-    return UUID(int=numero)
+def _id(number: int) -> UUID:
+    return UUID(int=number)
 
 
-def _perfil(id: int = 1, rol: str = "user") -> Perfil:
-    return Perfil(
-        id=_id(id), uid=f"u{id}", first_name="Ana", last_name="Paz", email="a@b.c", role=rol,
+def _profile(id: int = 1, role: str = "user") -> Profile:
+    return Profile(
+        id=_id(id), uid=f"u{id}", first_name="Ana", last_name="Paz", email="a@b.c", role=role,
         dni="1", birth_date=date(2000, 1, 1),
     )  # fmt: skip
 
 
-def _reserva(**cambios: object) -> Booking:
+def _booking(**changes: object) -> Booking:
     base = Booking(
         id=_id(5), space_id=_id(2), venue_id=_id(1), space="Cancha 1", sport="futbol",
         kind="5",
-        venue="Centro", address="x", starts_at=datetime(2026, 3, 3, 18, 0, tzinfo=ZONA),
-        ends_at=datetime(2026, 3, 3, 20, 0, tzinfo=ZONA), price_per_hour=100, total=200,
+        venue="Centro", address="x", starts_at=datetime(2026, 3, 3, 18, 0, tzinfo=ZONE),
+        ends_at=datetime(2026, 3, 3, 20, 0, tzinfo=ZONE), price_per_hour=100, total=200,
         status="active", reason=None,
     )  # fmt: skip
-    return replace(base, **cambios)
+    return replace(base, **changes)
 
 
-def _historial(**cambios: object) -> BookingHistoryEntry:
-    r = _reserva()
+def _history(**changes: object) -> BookingHistoryEntry:
+    r = _booking()
     base = BookingHistoryEntry(
         id=r.id, space_id=r.space_id, venue_id=r.venue_id, space=r.space,
         sport=r.sport, kind=r.kind, venue=r.venue, address=r.address, starts_at=r.starts_at,
         ends_at=r.ends_at, price_per_hour=100, total=200, status="active", reason=None,
-        user_id=_id(1), user="Ana Paz", created_at=AHORA, canceled_at=None,
+        user_id=_id(1), user="Ana Paz", created_at=NOW, canceled_at=None,
         canceled_by_name=None, space_deactivated=False,
     )  # fmt: skip
-    return replace(base, **cambios)
+    return replace(base, **changes)
 
 
-class Memoria:
+class InMemory:
     def __init__(self) -> None:
-        self.agenda_actual: OpeningHours | None = AGENDA
-        self.repetida_hecha: Booking | None = None
-        self.propia_de: Booking | None = None
-        self.tipo: tuple[UUID, str, str] | None = (_id(1), "futbol", "5")
-        self.agendas_cambiadas = 0
-        self.llamadas: list[tuple] = []
-        self.detalle: BookingHistoryEntry | None = None
+        self.current_schedule: OpeningHours | None = SCHEDULE
+        self.repeated_done: Booking | None = None
+        self.own_of: Booking | None = None
+        self.kind: tuple[UUID, str, str] | None = (_id(1), "futbol", "5")
+        self.schedules_changed = 0
+        self.calls: list[tuple] = []
+        self.detail: BookingHistoryEntry | None = None
 
-    def of_user(self, usuario_id, cuando):
-        self.llamadas.append(("de_usuario", usuario_id, cuando))
-        return [_reserva()]
+    def of_user(self, user_id, when):
+        self.calls.append(("of_user", user_id, when))
+        return [_booking()]
 
-    def opening_hours(self, espacio_id):
-        return self.agenda_actual
+    def opening_hours(self, space_id):
+        return self.current_schedule
 
-    def repeated(self, usuario_id, espacio_id, inicio, fin):
-        self.llamadas.append(("repetida", usuario_id, espacio_id, inicio, fin))
-        return self.repetida_hecha
+    def repeated(self, user_id, space_id, start, end):
+        self.calls.append(("repeated", user_id, space_id, start, end))
+        return self.repeated_done
 
-    def own(self, usuario_id, reserva_id):
-        self.llamadas.append(("propia", usuario_id, reserva_id))
-        return self.propia_de
+    def own(self, user_id, booking_id):
+        self.calls.append(("own", user_id, booking_id))
+        return self.own_of
 
-    def space_kind(self, espacio_id):
-        return self.tipo
+    def space_kind(self, space_id):
+        return self.kind
 
-    def move(self, usuario_id, reserva_id, antes, espacio_id, inicio, fin, agenda):
-        self.llamadas.append(("mover", usuario_id, reserva_id, antes, espacio_id, inicio, fin))
-        if self.agendas_cambiadas:
-            self.agendas_cambiadas -= 1
+    def move(self, user_id, booking_id, before, space_id, start, end, schedule):
+        self.calls.append(("move", user_id, booking_id, before, space_id, start, end))
+        if self.schedules_changed:
+            self.schedules_changed -= 1
             raise OpeningHoursChanged()
-        return _reserva(space_id=espacio_id, starts_at=inicio, ends_at=fin)
+        return _booking(space_id=space_id, starts_at=start, ends_at=end)
 
-    def cancel(self, usuario_id, reserva_id):
-        self.llamadas.append(("cancelar", usuario_id, reserva_id))
-        return _reserva(status="canceled")
+    def cancel(self, user_id, booking_id):
+        self.calls.append(("cancel", user_id, booking_id))
+        return _booking(status="canceled")
 
-    def insert(self, usuario_id, espacio_id, inicio, fin, agenda):
-        self.llamadas.append(("insertar", usuario_id, espacio_id, inicio, fin, agenda))
-        if self.agendas_cambiadas:
-            self.agendas_cambiadas -= 1
+    def insert(self, user_id, space_id, start, end, schedule):
+        self.calls.append(("insert", user_id, space_id, start, end, schedule))
+        if self.schedules_changed:
+            self.schedules_changed -= 1
             raise OpeningHoursChanged()
-        return _reserva(space_id=espacio_id, starts_at=inicio, ends_at=fin)
+        return _booking(space_id=space_id, starts_at=start, ends_at=end)
 
-    def void(self, admin_id, reserva_id, motivo, espacio_id, inicio):
-        self.llamadas.append(("anular", admin_id, reserva_id, motivo, espacio_id, inicio))
-        return _historial(status="voided", reason=motivo)
+    def void(self, admin_id, booking_id, reason, space_id, start):
+        self.calls.append(("void", admin_id, booking_id, reason, space_id, start))
+        return _history(status="voided", reason=reason)
 
-    def history(self, filtros):
-        self.llamadas.append(("history", filtros))
+    def history(self, filters):
+        self.calls.append(("history", filters))
         return BookingHistory(
             bookings=[], total=0, page=1, per_page=20,
             counters=Counters(all=0, active=0, completed=0, voided=0),
         )  # fmt: skip
 
-    def any_one(self, reserva_id):
-        self.llamadas.append(("una_de_cualquiera", reserva_id))
-        return self.detalle
+    def any_one(self, booking_id):
+        self.calls.append(("any_one", booking_id))
+        return self.detail
 
 
-def _errores(excepcion: pytest.ExceptionInfo[InvalidData]) -> dict[str, str]:
-    return excepcion.value.errors
+def _errors(exception: pytest.ExceptionInfo[InvalidData]) -> dict[str, str]:
+    return exception.value.errors
 
 
-# mis_reservas
+# my_bookings
 
 
-def test_mis_reservas_pide_solo_las_de_quien_consulta() -> None:
-    repo = Memoria()
+def test_my_bookings_asks_only_for_those_of_the_requester() -> None:
+    repo = InMemory()
 
-    resultado = my_bookings(repo, _perfil(id=7), "upcoming")
+    result = my_bookings(repo, _profile(id=7), "upcoming")
 
-    assert resultado == [_reserva()]
-    assert repo.llamadas == [("de_usuario", _id(7), "upcoming")]
-    my_bookings(repo, _perfil(id=7), "history")
-    assert repo.llamadas[-1] == ("de_usuario", _id(7), "history")
-
-
-# reservar
+    assert result == [_booking()]
+    assert repo.calls == [("of_user", _id(7), "upcoming")]
+    my_bookings(repo, _profile(id=7), "history")
+    assert repo.calls[-1] == ("of_user", _id(7), "history")
 
 
-def test_reservar_guarda_con_el_horario_pedido_y_la_agenda_de_la_sede() -> None:
-    repo = Memoria()
+# book
 
-    reserva = book(repo, _perfil(), _id(2), MANANA, time(18, 0), 2, AHORA)
 
-    inicio = datetime(2026, 3, 3, 18, 0, tzinfo=ZONA)
-    assert repo.llamadas[-1] == (
-        "insertar",
+def test_book_saves_with_the_requested_time_and_the_venue_schedule() -> None:
+    repo = InMemory()
+
+    booking = book(repo, _profile(), _id(2), TOMORROW, time(18, 0), 2, NOW)
+
+    start = datetime(2026, 3, 3, 18, 0, tzinfo=ZONE)
+    assert repo.calls[-1] == (
+        "insert",
         _id(1),
         _id(2),
-        inicio,
-        inicio + timedelta(hours=2),
-        AGENDA,
+        start,
+        start + timedelta(hours=2),
+        SCHEDULE,
     )
-    assert (reserva.starts_at, reserva.ends_at) == (inicio, inicio + timedelta(hours=2))
+    assert (booking.starts_at, booking.ends_at) == (start, start + timedelta(hours=2))
 
 
-def test_reservar_hasta_la_medianoche_es_valido() -> None:
-    repo = Memoria()
+def test_book_until_midnight_is_valid() -> None:
+    repo = InMemory()
 
-    reserva = book(repo, _perfil(), _id(2), MANANA, time(22, 0), 1, AHORA)
+    booking = book(repo, _profile(), _id(2), TOMORROW, time(22, 0), 1, NOW)
 
-    assert reserva.ends_at == datetime(2026, 3, 3, 23, 0, tzinfo=ZONA)
+    assert booking.ends_at == datetime(2026, 3, 3, 23, 0, tzinfo=ZONE)
 
 
-def test_reservar_un_administrador_es_prohibido() -> None:
+def test_book_an_administrator_is_forbidden() -> None:
     with pytest.raises(Forbidden):
-        book(Memoria(), _perfil(rol="admin"), _id(2), MANANA, time(18, 0), 1, AHORA)
+        book(InMemory(), _profile(role="admin"), _id(2), TOMORROW, time(18, 0), 1, NOW)
 
 
-def test_reservar_sin_hora_pide_una_hora_en_punto() -> None:
+def test_book_without_an_hour_asks_for_an_on_the_hour_time() -> None:
     with pytest.raises(InvalidData) as e:
-        book(Memoria(), _perfil(), _id(2), MANANA, None, 1, AHORA)
+        book(InMemory(), _profile(), _id(2), TOMORROW, None, 1, NOW)
 
-    assert set(_errores(e)) == {"start_hour"}
+    assert set(_errors(e)) == {"start_hour"}
 
 
-@pytest.mark.parametrize("horas", [0, 5, -1])
-def test_reservar_con_una_duracion_fuera_de_una_a_cuatro_horas_falla(horas: int) -> None:
-    repo = Memoria()
+@pytest.mark.parametrize("hours", [0, 5, -1])
+def test_book_with_a_duration_outside_one_to_four_hours_fails(hours: int) -> None:
+    repo = InMemory()
 
     with pytest.raises(InvalidData) as e:
-        book(repo, _perfil(), _id(2), MANANA, time(18, 0), horas, AHORA)
+        book(repo, _profile(), _id(2), TOMORROW, time(18, 0), hours, NOW)
 
-    assert set(_errores(e)) == {"hours", "until"}
-    assert repo.llamadas == []
-
-
-@pytest.mark.parametrize("horas", [1, 4])
-def test_reservar_acepta_los_bordes_de_la_duracion(horas: int) -> None:
-    reserva = book(Memoria(), _perfil(), _id(2), MANANA, time(10, 0), horas, AHORA)
-
-    assert reserva.ends_at - reserva.starts_at == timedelta(hours=horas)
+    assert set(_errors(e)) == {"hours", "until"}
+    assert repo.calls == []
 
 
-def test_reservar_un_dia_fuera_de_la_ventana_falla_aun_en_date_max() -> None:
+@pytest.mark.parametrize("hours", [1, 4])
+def test_book_accepts_the_duration_edges(hours: int) -> None:
+    booking = book(InMemory(), _profile(), _id(2), TOMORROW, time(10, 0), hours, NOW)
+
+    assert booking.ends_at - booking.starts_at == timedelta(hours=hours)
+
+
+def test_book_a_day_outside_the_window_fails_even_at_date_max() -> None:
     with pytest.raises(InvalidData) as e:
-        book(Memoria(), _perfil(), _id(2), date.max, time(18, 0), 4, AHORA)
-    assert set(_errores(e)) == {"date"}
+        book(InMemory(), _profile(), _id(2), date.max, time(18, 0), 4, NOW)
+    assert set(_errors(e)) == {"date"}
 
     with pytest.raises(InvalidData):
-        book(Memoria(), _perfil(), _id(2), AHORA.date() + timedelta(days=7), time(18, 0), 1, AHORA)
+        book(InMemory(), _profile(), _id(2), NOW.date() + timedelta(days=7), time(18, 0), 1, NOW)
 
 
-def test_reservar_el_ultimo_dia_de_la_ventana_se_acepta() -> None:
-    dia = AHORA.date() + timedelta(days=6)
+def test_book_the_last_day_of_the_window_is_accepted() -> None:
+    day = NOW.date() + timedelta(days=6)
 
-    assert book(Memoria(), _perfil(), _id(2), dia, time(18, 0), 1, AHORA).id == _id(5)
-
-
-def test_reservar_devuelve_el_pedido_repetido_sin_validar_el_horario() -> None:
-    repo = Memoria()
-    repo.repetida_hecha = _reserva(id=_id(99))
-    repo.agenda_actual = None
-    ya_empezado = AHORA - timedelta(days=1)
-
-    reserva = book(repo, _perfil(), _id(2), ya_empezado.date(), time(9, 0), 1, AHORA)
-
-    assert reserva.id == _id(99)
-    assert [c[0] for c in repo.llamadas] == ["repetida"]
+    assert book(InMemory(), _profile(), _id(2), day, time(18, 0), 1, NOW).id == _id(5)
 
 
-def test_reservar_un_espacio_sin_agenda_no_esta_disponible() -> None:
-    repo = Memoria()
-    repo.agenda_actual = None
+def test_book_returns_the_repeated_request_without_validating_the_time() -> None:
+    repo = InMemory()
+    repo.repeated_done = _booking(id=_id(99))
+    repo.current_schedule = None
+    already_started = NOW - timedelta(days=1)
+
+    booking = book(repo, _profile(), _id(2), already_started.date(), time(9, 0), 1, NOW)
+
+    assert booking.id == _id(99)
+    assert [c[0] for c in repo.calls] == ["repeated"]
+
+
+def test_book_a_space_without_a_schedule_is_not_available() -> None:
+    repo = InMemory()
+    repo.current_schedule = None
 
     with pytest.raises(Unavailable):
-        book(repo, _perfil(), _id(2), MANANA, time(18, 0), 1, AHORA)
+        book(repo, _profile(), _id(2), TOMORROW, time(18, 0), 1, NOW)
 
 
-def test_reservar_fuera_del_horario_de_la_sede_falla_sin_guardar() -> None:
-    repo = Memoria()
+def test_book_outside_the_venue_hours_fails_without_saving() -> None:
+    repo = InMemory()
 
     with pytest.raises(InvalidData):
-        book(repo, _perfil(), _id(2), MANANA, time(7, 0), 1, AHORA)
+        book(repo, _profile(), _id(2), TOMORROW, time(7, 0), 1, NOW)
     with pytest.raises(InvalidData):
-        book(repo, _perfil(), _id(2), MANANA, time(22, 0), 2, AHORA)
-    assert [c for c in repo.llamadas if c[0] == "insertar"] == []
+        book(repo, _profile(), _id(2), TOMORROW, time(22, 0), 2, NOW)
+    assert [c for c in repo.calls if c[0] == "insert"] == []
 
 
-def test_reservar_revalida_si_la_agenda_cambio_en_el_medio() -> None:
-    repo = Memoria()
-    repo.agendas_cambiadas = 2
+def test_book_revalidates_if_the_schedule_changed_in_the_meantime() -> None:
+    repo = InMemory()
+    repo.schedules_changed = 2
 
-    reserva = book(repo, _perfil(), _id(2), MANANA, time(18, 0), 1, AHORA)
+    booking = book(repo, _profile(), _id(2), TOMORROW, time(18, 0), 1, NOW)
 
-    assert reserva.id == _id(5)
-    assert len([c for c in repo.llamadas if c[0] == "insertar"]) == 3
+    assert booking.id == _id(5)
+    assert len([c for c in repo.calls if c[0] == "insert"]) == 3
 
 
-def test_reservar_con_la_agenda_cambiando_siempre_termina_en_horario_ocupado() -> None:
-    repo = Memoria()
-    repo.agendas_cambiadas = 99
+def test_book_with_an_always_changing_schedule_ends_in_a_taken_slot() -> None:
+    repo = InMemory()
+    repo.schedules_changed = 99
 
     with pytest.raises(SlotTaken):
-        book(repo, _perfil(), _id(2), MANANA, time(18, 0), 1, AHORA)
+        book(repo, _profile(), _id(2), TOMORROW, time(18, 0), 1, NOW)
 
-    assert len([c for c in repo.llamadas if c[0] == "insertar"]) == 3
+    assert len([c for c in repo.calls if c[0] == "insert"]) == 3
 
 
 # cancel_booking
 
 
-def test_cancelar_reserva_cancela_la_de_quien_pide() -> None:
-    repo = Memoria()
+def test_cancel_booking_cancels_the_one_of_the_requester() -> None:
+    repo = InMemory()
 
-    reserva = cancel_booking(repo, _perfil(id=3), _id(5))
+    booking = cancel_booking(repo, _profile(id=3), _id(5))
 
-    assert reserva.status == "canceled"
-    assert repo.llamadas == [("cancelar", _id(3), _id(5))]
+    assert booking.status == "canceled"
+    assert repo.calls == [("cancel", _id(3), _id(5))]
 
 
-def test_cancelar_reserva_deja_pasar_los_errores_del_repositorio() -> None:
-    class Ajena(Memoria):
-        def cancel(self, usuario_id, reserva_id):
+def test_cancel_booking_lets_the_repository_errors_through() -> None:
+    class Foreign(InMemory):
+        def cancel(self, user_id, booking_id):
             raise NotFound("no")
 
     with pytest.raises(NotFound):
-        cancel_booking(Ajena(), _perfil(), _id(5))
+        cancel_booking(Foreign(), _profile(), _id(5))
 
 
 # modify_booking
 
 
-def _con_reserva() -> Memoria:
-    repo = Memoria()
-    repo.propia_de = _reserva()
+def _with_booking() -> InMemory:
+    repo = InMemory()
+    repo.own_of = _booking()
     return repo
 
 
-def test_modificar_reserva_mueve_con_la_misma_duracion_y_el_estado_anterior() -> None:
-    repo = _con_reserva()
+def test_modify_booking_moves_with_the_same_duration_and_the_previous_state() -> None:
+    repo = _with_booking()
 
-    nueva = modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
+    new = modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(10, 0), NOW)
 
-    inicio = datetime(2026, 3, 3, 10, 0, tzinfo=ZONA)
-    antes = (_id(2), datetime(2026, 3, 3, 18, 0, tzinfo=ZONA))
-    assert repo.llamadas[-1] == (
-        "mover",
+    start = datetime(2026, 3, 3, 10, 0, tzinfo=ZONE)
+    before = (_id(2), datetime(2026, 3, 3, 18, 0, tzinfo=ZONE))
+    assert repo.calls[-1] == (
+        "move",
         _id(1),
         _id(5),
-        antes,
+        before,
         _id(3),
-        inicio,
-        inicio + timedelta(hours=2),
+        start,
+        start + timedelta(hours=2),
     )
-    assert (nueva.space_id, nueva.starts_at) == (_id(3), inicio)
+    assert (new.space_id, new.starts_at) == (_id(3), start)
 
 
-def test_modificar_reserva_un_administrador_es_prohibido() -> None:
+def test_modify_booking_an_administrator_is_forbidden() -> None:
     with pytest.raises(Forbidden):
         modify_booking(
-            _con_reserva(), _perfil(rol="admin"), _id(5), _id(2), MANANA, time(9, 0), AHORA
+            _with_booking(), _profile(role="admin"), _id(5), _id(2), TOMORROW, time(9, 0), NOW
         )
 
 
-def test_modificar_reserva_sin_hora_falla() -> None:
+def test_modify_booking_without_an_hour_fails() -> None:
     with pytest.raises(InvalidData) as e:
-        modify_booking(_con_reserva(), _perfil(), _id(5), _id(2), MANANA, None, AHORA)
+        modify_booking(_with_booking(), _profile(), _id(5), _id(2), TOMORROW, None, NOW)
 
-    assert set(_errores(e)) == {"start_hour"}
+    assert set(_errors(e)) == {"start_hour"}
 
 
-def test_modificar_reserva_fuera_de_la_ventana_falla_antes_de_buscarla() -> None:
-    repo = _con_reserva()
+def test_modify_booking_outside_the_window_fails_before_looking_it_up() -> None:
+    repo = _with_booking()
 
     with pytest.raises(InvalidData) as e:
-        modify_booking(repo, _perfil(), _id(5), _id(2), date.max, time(9, 0), AHORA)
+        modify_booking(repo, _profile(), _id(5), _id(2), date.max, time(9, 0), NOW)
 
-    assert set(_errores(e)) == {"date"}
-    assert repo.llamadas == []
+    assert set(_errors(e)) == {"date"}
+    assert repo.calls == []
 
 
-def test_modificar_reserva_ajena_no_se_encuentra() -> None:
+def test_modify_booking_of_someone_else_is_not_found() -> None:
     with pytest.raises(NotFound):
-        modify_booking(Memoria(), _perfil(), _id(5), _id(2), MANANA, time(9, 0), AHORA)
+        modify_booking(InMemory(), _profile(), _id(5), _id(2), TOMORROW, time(9, 0), NOW)
 
 
-def test_modificar_reserva_repetida_devuelve_la_actual_sin_mover() -> None:
-    repo = _con_reserva()
+def test_modify_booking_repeated_returns_the_current_one_without_moving() -> None:
+    repo = _with_booking()
 
-    reserva = modify_booking(repo, _perfil(), _id(5), _id(2), MANANA, time(18, 0), AHORA)
+    booking = modify_booking(repo, _profile(), _id(5), _id(2), TOMORROW, time(18, 0), NOW)
 
-    assert reserva == _reserva()
-    assert [c[0] for c in repo.llamadas] == ["propia"]
-
-
-def test_modificar_reserva_cancelada_con_el_mismo_horario_no_se_da_por_repetida() -> None:
-    repo = Memoria()
-    repo.propia_de = _reserva(status="canceled")
-
-    modify_booking(repo, _perfil(), _id(5), _id(2), MANANA, time(18, 0), AHORA)
-
-    assert repo.llamadas[-1][0] == "mover"
+    assert booking == _booking()
+    assert [c[0] for c in repo.calls] == ["own"]
 
 
-def test_modificar_reserva_mismo_espacio_otro_horario_o_otro_espacio_mismo_horario_mueve() -> None:
-    repo = _con_reserva()
+def test_modify_booking_canceled_with_the_same_time_is_not_taken_as_repeated() -> None:
+    repo = InMemory()
+    repo.own_of = _booking(status="canceled")
 
-    modify_booking(repo, _perfil(), _id(5), _id(2), MANANA, time(19, 0), AHORA)
-    assert repo.llamadas[-1][0] == "mover"
-    modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(18, 0), AHORA)
-    assert repo.llamadas[-1][0] == "mover"
+    modify_booking(repo, _profile(), _id(5), _id(2), TOMORROW, time(18, 0), NOW)
+
+    assert repo.calls[-1][0] == "move"
+
+
+def test_modify_booking_same_space_other_time_or_other_space_same_time_moves() -> None:
+    repo = _with_booking()
+
+    modify_booking(repo, _profile(), _id(5), _id(2), TOMORROW, time(19, 0), NOW)
+    assert repo.calls[-1][0] == "move"
+    modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(18, 0), NOW)
+    assert repo.calls[-1][0] == "move"
 
 
 @pytest.mark.parametrize(
-    "tipo", [None, (_id(2), "futbol", "5"), (_id(1), "tenis", "5"), (_id(1), "futbol", "7")]
+    "kind", [None, (_id(2), "futbol", "5"), (_id(1), "tenis", "5"), (_id(1), "futbol", "7")]
 )
-def test_modificar_reserva_a_una_cancha_de_otro_tipo_o_sede_falla(tipo) -> None:
-    repo = _con_reserva()
-    repo.tipo = tipo
+def test_modify_booking_to_a_court_of_another_kind_or_venue_fails(kind) -> None:
+    repo = _with_booking()
+    repo.kind = kind
 
     with pytest.raises(InvalidData) as e:
-        modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
+        modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(10, 0), NOW)
 
-    assert set(_errores(e)) == {"space_id"}
+    assert set(_errors(e)) == {"space_id"}
 
 
-def test_modificar_reserva_valida_el_horario_con_la_agenda() -> None:
+def test_modify_booking_validates_the_time_against_the_schedule() -> None:
     with pytest.raises(InvalidData):
-        modify_booking(_con_reserva(), _perfil(), _id(5), _id(3), MANANA, time(7, 0), AHORA)
+        modify_booking(_with_booking(), _profile(), _id(5), _id(3), TOMORROW, time(7, 0), NOW)
 
-    repo = _con_reserva()
-    repo.agenda_actual = None
+    repo = _with_booking()
+    repo.current_schedule = None
     with pytest.raises(Unavailable):
-        modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
+        modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(10, 0), NOW)
 
 
-def test_modificar_reserva_revalida_si_cambia_la_agenda_y_se_rinde_a_la_tercera() -> None:
-    repo = _con_reserva()
-    repo.agendas_cambiadas = 1
-    modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
-    assert len([c for c in repo.llamadas if c[0] == "mover"]) == 2
+def test_modify_booking_revalidates_if_the_schedule_changes_and_gives_up_on_the_third() -> None:
+    repo = _with_booking()
+    repo.schedules_changed = 1
+    modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(10, 0), NOW)
+    assert len([c for c in repo.calls if c[0] == "move"]) == 2
 
-    repo = _con_reserva()
-    repo.agendas_cambiadas = 99
+    repo = _with_booking()
+    repo.schedules_changed = 99
     with pytest.raises(SlotTaken):
-        modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
-    assert len([c for c in repo.llamadas if c[0] == "mover"]) == 3
+        modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(10, 0), NOW)
+    assert len([c for c in repo.calls if c[0] == "move"]) == 3
 
 
-def test_modificar_reserva_de_tres_horas_conserva_la_duracion() -> None:
-    repo = Memoria()
-    repo.propia_de = _reserva(ends_at=datetime(2026, 3, 3, 21, 0, tzinfo=ZONA))
+def test_modify_booking_of_three_hours_keeps_the_duration() -> None:
+    repo = InMemory()
+    repo.own_of = _booking(ends_at=datetime(2026, 3, 3, 21, 0, tzinfo=ZONE))
 
-    nueva = modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
+    new = modify_booking(repo, _profile(), _id(5), _id(3), TOMORROW, time(10, 0), NOW)
 
-    assert nueva.ends_at - nueva.starts_at == timedelta(hours=3)
+    assert new.ends_at - new.starts_at == timedelta(hours=3)
 
 
 # global_history
 
 
-def test_historial_global_lo_consulta_un_administrador_con_sus_filtros() -> None:
-    repo = Memoria()
-    filtros = HistoryFilters(since=date(2026, 1, 1), until=date(2026, 1, 1), q="ana")
+def test_global_history_is_queried_by_an_administrator_with_their_filters() -> None:
+    repo = InMemory()
+    filters = HistoryFilters(since=date(2026, 1, 1), until=date(2026, 1, 1), q="ana")
 
-    resultado = global_history(repo, _perfil(rol="admin"), filtros)
+    result = global_history(repo, _profile(role="admin"), filters)
 
-    assert resultado.total == 0
-    assert repo.llamadas == [("history", filtros)]
+    assert result.total == 0
+    assert repo.calls == [("history", filters)]
 
 
-def test_historial_global_un_usuario_es_prohibido() -> None:
-    repo = Memoria()
+def test_global_history_a_user_is_forbidden() -> None:
+    repo = InMemory()
 
     with pytest.raises(Forbidden):
-        global_history(repo, _perfil(), HistoryFilters())
-    assert repo.llamadas == []
+        global_history(repo, _profile(), HistoryFilters())
+    assert repo.calls == []
 
 
-def test_historial_global_rechaza_desde_posterior_a_hasta() -> None:
-    admin = _perfil(rol="admin")
-    filtros = HistoryFilters(since=date(2026, 1, 2), until=date(2026, 1, 1))
+def test_global_history_rejects_since_after_until() -> None:
+    admin = _profile(role="admin")
+    filters = HistoryFilters(since=date(2026, 1, 2), until=date(2026, 1, 1))
 
     with pytest.raises(InvalidData) as e:
-        global_history(Memoria(), admin, filtros)
+        global_history(InMemory(), admin, filters)
 
-    assert set(_errores(e)) == {"dates"}
+    assert set(_errors(e)) == {"dates"}
 
 
-def test_historial_global_acepta_rangos_abiertos() -> None:
-    admin = _perfil(rol="admin")
+def test_global_history_accepts_open_ranges() -> None:
+    admin = _profile(role="admin")
 
-    global_history(Memoria(), admin, HistoryFilters(since=date(2026, 1, 2)))
-    global_history(Memoria(), admin, HistoryFilters(until=date(2026, 1, 2)))
+    global_history(InMemory(), admin, HistoryFilters(since=date(2026, 1, 2)))
+    global_history(InMemory(), admin, HistoryFilters(until=date(2026, 1, 2)))
 
 
 # admin_detail
 
 
-def test_detalle_admin_devuelve_la_reserva_de_cualquiera() -> None:
-    repo = Memoria()
-    repo.detalle = _historial(user_id=_id(44))
+def test_admin_detail_returns_the_booking_of_anyone() -> None:
+    repo = InMemory()
+    repo.detail = _history(user_id=_id(44))
 
-    assert admin_detail(repo, _perfil(rol="admin"), _id(5)).user_id == _id(44)
-    assert repo.llamadas == [("una_de_cualquiera", _id(5))]
+    assert admin_detail(repo, _profile(role="admin"), _id(5)).user_id == _id(44)
+    assert repo.calls == [("any_one", _id(5))]
 
 
-def test_detalle_admin_un_usuario_es_prohibido() -> None:
-    repo = Memoria()
-    repo.detalle = _historial()
+def test_admin_detail_a_user_is_forbidden() -> None:
+    repo = InMemory()
+    repo.detail = _history()
 
     with pytest.raises(Forbidden):
-        admin_detail(repo, _perfil(), _id(5))
-    assert repo.llamadas == []
+        admin_detail(repo, _profile(), _id(5))
+    assert repo.calls == []
 
 
-def test_detalle_admin_sin_reserva_no_se_encuentra() -> None:
+def test_admin_detail_without_a_booking_is_not_found() -> None:
     with pytest.raises(NotFound):
-        admin_detail(Memoria(), _perfil(rol="admin"), _id(5))
+        admin_detail(InMemory(), _profile(role="admin"), _id(5))
 
 
-# anular_reserva
+# void_booking
 
 
-def test_anular_reserva_guarda_el_motivo_sin_espacios_y_quien_anula() -> None:
-    repo = Memoria()
-    inicio = datetime(2026, 3, 3, 18, 0, tzinfo=ZONA)
+def test_void_booking_saves_the_trimmed_reason_and_who_voids() -> None:
+    repo = InMemory()
+    start = datetime(2026, 3, 3, 18, 0, tzinfo=ZONE)
 
-    resultado = void_booking(repo, _perfil(id=9, rol="admin"), _id(5), "  lluvia  ", _id(2), inicio)
+    result = void_booking(repo, _profile(id=9, role="admin"), _id(5), "  lluvia  ", _id(2), start)
 
-    assert repo.llamadas == [("anular", _id(9), _id(5), "lluvia", _id(2), inicio)]
-    assert resultado.reason == "lluvia"
+    assert repo.calls == [("void", _id(9), _id(5), "lluvia", _id(2), start)]
+    assert result.reason == "lluvia"
 
 
-def test_anular_reserva_un_usuario_es_prohibido() -> None:
-    repo = Memoria()
+def test_void_booking_a_user_is_forbidden() -> None:
+    repo = InMemory()
 
     with pytest.raises(Forbidden):
-        void_booking(repo, _perfil(), _id(5), "lluvia", _id(2), AHORA)
-    assert repo.llamadas == []
+        void_booking(repo, _profile(), _id(5), "lluvia", _id(2), NOW)
+    assert repo.calls == []
 
 
-@pytest.mark.parametrize("motivo", ["", "   ", "\n\t"])
-def test_anular_reserva_sin_motivo_falla(motivo: str) -> None:
-    repo = Memoria()
+@pytest.mark.parametrize("reason", ["", "   ", "\n\t"])
+def test_void_booking_without_a_reason_fails(reason: str) -> None:
+    repo = InMemory()
 
     with pytest.raises(InvalidData) as e:
-        void_booking(repo, _perfil(rol="admin"), _id(5), motivo, _id(2), AHORA)
+        void_booking(repo, _profile(role="admin"), _id(5), reason, _id(2), NOW)
 
-    assert set(_errores(e)) == {"reason"}
-    assert repo.llamadas == []
+    assert set(_errors(e)) == {"reason"}
+    assert repo.calls == []
 
 
-def test_anular_reserva_acepta_el_motivo_maximo_y_rechaza_uno_mas() -> None:
-    admin = _perfil(rol="admin")
-    repo = Memoria()
+def test_void_booking_accepts_the_maximum_reason_and_rejects_one_more() -> None:
+    admin = _profile(role="admin")
+    repo = InMemory()
 
-    void_booking(repo, admin, _id(5), "x" * MAX_REASON_LENGTH, _id(2), AHORA)
-    void_booking(repo, admin, _id(5), " " + "x" * MAX_REASON_LENGTH + " ", _id(2), AHORA)
+    void_booking(repo, admin, _id(5), "x" * MAX_REASON_LENGTH, _id(2), NOW)
+    void_booking(repo, admin, _id(5), " " + "x" * MAX_REASON_LENGTH + " ", _id(2), NOW)
     with pytest.raises(InvalidData) as e:
-        void_booking(repo, admin, _id(5), "x" * (MAX_REASON_LENGTH + 1), _id(2), AHORA)
+        void_booking(repo, admin, _id(5), "x" * (MAX_REASON_LENGTH + 1), _id(2), NOW)
 
-    assert set(_errores(e)) == {"reason"}
-    assert str(MAX_REASON_LENGTH) in _errores(e)["reason"]
-    assert len(repo.llamadas) == 2
+    assert set(_errors(e)) == {"reason"}
+    assert str(MAX_REASON_LENGTH) in _errors(e)["reason"]
+    assert len(repo.calls) == 2
 
 
-def test_anular_reserva_deja_pasar_lo_que_ya_cambio() -> None:
-    class Cambio(Memoria):
+def test_void_booking_lets_through_what_already_changed() -> None:
+    class Changed(InMemory):
         def void(self, *a):
             raise ConcurrentChange()
 
     with pytest.raises(ConcurrentChange):
-        void_booking(Cambio(), _perfil(rol="admin"), _id(5), "x", _id(2), AHORA)
+        void_booking(Changed(), _profile(role="admin"), _id(5), "x", _id(2), NOW)

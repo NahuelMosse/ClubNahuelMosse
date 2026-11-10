@@ -1,4 +1,4 @@
-"""RNF-01 probado contra el contrato que la API publica, sin leer el código de la app."""
+"""RNF-01 tested against the contract the API publishes, without reading the app code."""
 
 import json
 import re
@@ -7,11 +7,11 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-METODOS = {"get", "post", "put", "delete", "patch"}
+API_ROOT = Path(__file__).resolve().parents[2]
+METHODS = {"get", "post", "put", "delete", "patch"}
 
-# Lo que la API sirve sin sesión: alta de cuenta y recuperación de contraseña (con la página del enlace del correo).
-PUBLICAS = {
+# What the API serves without a session: account signup and password recovery (with the page of the email link).
+PUBLIC = {
     ("post", "/register"),
     ("post", "/password-recovery"),
     ("post", "/password-recovery/check"),
@@ -21,54 +21,54 @@ PUBLICAS = {
 }
 
 
-def _operaciones(esquema: dict[str, Any]) -> set[tuple[str, str]]:
+def _operations(schema: dict[str, Any]) -> set[tuple[str, str]]:
     return {
-        (metodo, ruta)
-        for ruta, ops in esquema["paths"].items()
-        for metodo in ops
-        if metodo in METODOS
+        (method, route)
+        for route, ops in schema["paths"].items()
+        for method in ops
+        if method in METHODS
     }
 
 
-def test_la_api_publica_openapi_con_todos_los_endpoints_del_contrato(api: TestClient) -> None:
-    """la API publica su documentación OpenAPI con todos los endpoints del contrato que usa la app @RNF-01-H04-01"""
-    publicado = api.get("/openapi.json")
-    versionado = json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
+def test_the_api_publishes_openapi_with_all_the_contract_endpoints(api: TestClient) -> None:
+    """the API publishes its OpenAPI documentation with all the contract endpoints the app uses @RNF-01-H04-01"""
+    published = api.get("/openapi.json")
+    versioned = json.loads((API_ROOT / "openapi.json").read_text(encoding="utf-8"))
     docs = api.get("/docs")
 
-    assert publicado.status_code == 200
-    assert _operaciones(publicado.json()) == _operaciones(versionado)
-    assert len(_operaciones(versionado)) >= 30
-    assert _operaciones(versionado) >= PUBLICAS
+    assert published.status_code == 200
+    assert _operations(published.json()) == _operations(versioned)
+    assert len(_operations(versioned)) >= 30
+    assert _operations(versioned) >= PUBLIC
     assert docs.status_code == 200
     assert "swagger" in docs.text.lower()
 
 
-def test_toda_operacion_de_la_api_sin_usuario_se_rechaza_con_401(api: TestClient) -> None:
-    """una operación sobre usuarios o reservas sin usuario autenticado se rechaza con 401 @RNF-01-H06-02 @supuesto:RNF-01-SUP-01"""
-    esquema: dict[str, Any] = api.get("/openapi.json").json()
-    protegidas = sorted(_operaciones(esquema) - PUBLICAS)
-    aceptadas = []
+def test_every_api_operation_without_a_user_is_rejected_with_401(api: TestClient) -> None:
+    """an operation on users or bookings without an authenticated user is rejected with 401 @RNF-01-H06-02 @assumption:RNF-01-SUP-01"""
+    schema: dict[str, Any] = api.get("/openapi.json").json()
+    protected = sorted(_operations(schema) - PUBLIC)
+    accepted = []
 
-    for metodo, ruta in protegidas:
-        url = re.sub(r"\{[^}]*\}", "1", ruta)
-        r = api.request(metodo.upper(), url, json={} if metodo != "get" else None)
+    for method, route in protected:
+        url = re.sub(r"\{[^}]*\}", "1", route)
+        r = api.request(method.upper(), url, json={} if method != "get" else None)
         if r.status_code != 401:
-            aceptadas.append((metodo, ruta, r.status_code))
+            accepted.append((method, route, r.status_code))
 
-    assert not aceptadas, aceptadas
-    assert len(protegidas) >= 28
-    token_falso = {"Authorization": "Bearer no-es-un-token"}
-    assert api.get("/bookings", headers=token_falso).status_code == 401
-    assert api.get("/me", headers=token_falso).status_code == 401
+    assert not accepted, accepted
+    assert len(protected) >= 28
+    fake_token = {"Authorization": "Bearer no-es-un-token"}
+    assert api.get("/bookings", headers=fake_token).status_code == 401
+    assert api.get("/me", headers=fake_token).status_code == 401
 
 
-def test_rnf_01_h04_01_se_prueba_con_el_contrato_publicado_y_no_leyendo_el_readme(
+def test_rnf_01_h04_01_is_tested_with_the_published_contract_and_not_by_reading_the_readme(
     api: TestClient,
 ) -> None:
-    """RNF-01-H04-01 se prueba con el contrato publicado y no leyendo el README @REV-08-S4 @assumption:REV-08-ASM-08"""
-    contrato = api.get("/openapi.json")
+    """RNF-01-H04-01 is tested with the published contract and not by reading the README @REV-08-S4 @assumption:REV-08-ASM-08"""
+    contract = api.get("/openapi.json")
 
-    assert contrato.status_code == 200
-    assert len(contrato.json()["paths"]) >= 20
+    assert contract.status_code == 200
+    assert len(contract.json()["paths"]) >= 20
     assert "swagger" in api.get("/docs").text.lower()

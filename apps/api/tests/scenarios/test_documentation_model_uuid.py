@@ -1,4 +1,4 @@
-"""El modelo de datos describe el esquema vigente (claves uuid, auditoría renombrada)."""
+"""The data model describes the current schema (uuid keys, renamed audit)."""
 
 import re
 
@@ -12,55 +12,55 @@ from tests.scenarios.test_documentation_current import (
 )
 from tests.scenarios.test_documentation_model_current import MODEL
 
-COMUNES = {"id", "created_at", "updated_at"}
-RENOMBRES = re.compile(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)")
+COMMON = {"id", "created_at", "updated_at"}
+RENAMES = re.compile(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)")
 
 
-def _columnas_vigentes() -> dict[str, set[str]]:
-    """Las columnas de cada tabla tras los RENAME COLUMN de `upgrade()` de la 0010."""
-    tablas = _columns_by_table()
-    migracion = next((API / "migrations" / "versions").glob("0010_*.py"))
-    subida = _text(migracion).split("def _auditoria_abajo")[0]
-    for tabla, viejo, nuevo in RENOMBRES.findall(subida):
-        tablas[current_table(tabla)].discard(column(tabla, viejo))
-        tablas[current_table(tabla)].add(column(tabla, nuevo))
-    return tablas
+def _current_columns() -> dict[str, set[str]]:
+    """The columns of each table after the RENAME COLUMN of the `upgrade()` of 0010."""
+    tables = _columns_by_table()
+    migration = next((API / "migrations" / "versions").glob("0010_*.py"))
+    upgrade = _text(migration).split("def _auditoria_abajo")[0]
+    for table, old, new in RENAMES.findall(upgrade):
+        tables[current_table(table)].discard(column(table, old))
+        tables[current_table(table)].add(column(table, new))
+    return tables
 
 
-def test_el_modelo_de_datos_documenta_cada_columna_del_esquema_vigente() -> None:
-    """el modelo de datos documenta las nueve tablas con sus columnas vigentes
+def test_the_data_model_documents_each_column_of_the_current_schema() -> None:
+    """the data model documents the nine tables with their current columns
     @REV-07-S8 @DAT-01-S2
     """
-    datos = _text(MODEL)
-    tablas = _columnas_vigentes()
+    data = _text(MODEL)
+    tables = _current_columns()
 
-    assert len(tablas) == 9
-    faltan = [
-        f"{tabla}.{columna}"
-        for tabla, columnas in sorted(tablas.items())
-        for columna in sorted(columnas - COMUNES)
-        if f"`{columna}`" not in datos
+    assert len(tables) == 9
+    missing = [
+        f"{table}.{column}"
+        for table, columns in sorted(tables.items())
+        for column in sorted(columns - COMMON)
+        if f"`{column}`" not in data
     ]
-    assert faltan == []
+    assert missing == []
 
 
-def test_cada_seccion_de_tabla_nombra_sus_columnas_vigentes() -> None:
-    """cada sección de tabla del modelo nombra sus columnas vigentes
+def test_each_table_section_names_its_current_columns() -> None:
+    """each table section of the model names its current columns
     @REV-07-S8 @DAT-01-S1
     """
-    datos = _text(MODEL)
+    data = _text(MODEL)
 
-    for tabla, columnas in _columnas_vigentes().items():
-        trozos = re.split(rf"^### {tabla}$", datos, flags=re.M)
-        assert len(trozos) > 1, tabla
-        seccion = re.split(r"^#+ ", trozos[1], flags=re.M)[0]
-        omitidas = [c for c in sorted(columnas) if f"`{c}`" not in seccion]
-        assert set(omitidas) <= COMUNES, (tabla, omitidas)
+    for table, columns in _current_columns().items():
+        chunks = re.split(rf"^### {table}$", data, flags=re.M)
+        assert len(chunks) > 1, table
+        section = re.split(r"^#+ ", chunks[1], flags=re.M)[0]
+        omitted = [c for c in sorted(columns) if f"`{c}`" not in section]
+        assert set(omitted) <= COMMON, (table, omitted)
 
 
-def test_la_seccion_de_datos_del_diseno_remite_al_modelo_de_datos() -> None:
-    """la sección Data del diseño de sistema remite al modelo de datos @REV-07-S8"""
-    datos = _section(_text(DESIGN), "Data")
+def test_the_data_section_of_the_design_points_to_the_data_model() -> None:
+    """the Data section of the system design points to the data model @REV-07-S8"""
+    data = _section(_text(DESIGN), "Data")
 
-    assert "data-model.md" in datos
-    assert "nine tables" in datos
+    assert "data-model.md" in data
+    assert "nine tables" in data

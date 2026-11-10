@@ -47,10 +47,10 @@ def _recovery(name: str = "Ana") -> Message:
     return message
 
 
-def test_el_correo_de_recuperacion_sale_en_html_con_la_plantilla_el_saludo_el_boton_al_enlace_y_el_vencimiento() -> (
+def test_the_recovery_email_goes_out_in_html_with_the_template_the_greeting_the_link_button_and_the_expiry() -> (
     None
 ):
-    """el correo de recuperación sale en HTML con la plantilla, el saludo, el botón al enlace y el vencimiento
+    """the recovery email goes out in HTML with the template, the greeting, the link button and the expiry
     @MAIL-02-S1 @assumption:MAIL-02-ASM-03"""
     html = _recovery().html
 
@@ -68,7 +68,7 @@ def test_el_correo_de_recuperacion_sale_en_html_con_la_plantilla_el_saludo_el_bo
 
 
 def _booking(**changes: Any) -> Booking:
-    starts_at = datetime(2026, 10, 28, 23, 0, tzinfo=UTC)  # 20:00 en el club
+    starts_at = datetime(2026, 10, 28, 23, 0, tzinfo=UTC)  # 20:00 at the club
     data: dict[str, Any] = {
         "id": _id(9),
         "space_id": _id(2),
@@ -108,8 +108,8 @@ def _reminder(venue: str = "Sede Morón") -> Reminder:
     )
 
 
-def test_cada_correo_sigue_llevando_su_texto_y_el_html_repite_el_enlace_del_boton() -> None:
-    """cada correo sigue llevando su texto y el HTML repite el enlace del botón
+def test_each_email_still_carries_its_text_and_the_html_repeats_the_button_link() -> None:
+    """each email still carries its text and the HTML repeats the button link
     @MAIL-02-S2"""
     recovery = _recovery()
     link = recovery.body.split("\n")[3]
@@ -147,10 +147,10 @@ def _run(tasks: BackgroundTasks) -> None:
         task.func(*task.args, **task.kwargs)
 
 
-def test_brevo_recibe_htmlcontent_solo_si_hay_html_smtp_la_alternativa_y_el_buzon_solo_el_texto(
+def test_brevo_gets_htmlcontent_only_if_there_is_html_smtp_the_alternative_and_the_outbox_only_the_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Brevo recibe htmlContent sólo si hay HTML, SMTP la alternativa y el buzón sólo el texto
+    """Brevo gets htmlContent only if there is HTML, SMTP the alternative and the outbox only the text
     @assumption:MAIL-02-ASM-01"""
     requests: list[dict[str, Any]] = []
 
@@ -208,8 +208,8 @@ def test_brevo_recibe_htmlcontent_solo_si_hay_html_smtp_la_alternativa_y_el_buzo
     assert saved == [{"recipient": ADDRESS, "subject": "Asunto", "body": "texto"}]
 
 
-def test_un_nombre_o_una_sede_con_marcado_salen_escapados_en_el_html() -> None:
-    """un nombre o una sede con marcado salen escapados en el HTML
+def test_a_name_or_a_venue_with_markup_goes_out_escaped_in_the_html() -> None:
+    """a name or a venue with markup goes out escaped in the HTML
     @assumption:MAIL-02-ASM-02"""
     from app.modules.bookings.email import booking_email
     from app.modules.notifications.rules import reminder_email
@@ -229,10 +229,10 @@ def test_un_nombre_o_una_sede_con_marcado_salen_escapados_en_el_html() -> None:
     assert "a=1&amp;b=2" in str(htmls[3])
 
 
-def test_al_hacer_una_reserva_sale_el_correo_de_confirmacion_con_deporte_sede_dia_horario_y_total(
+def test_making_a_booking_sends_the_confirmation_email_with_sport_venue_day_time_and_total(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """al hacer una reserva sale el correo de confirmación con deporte, sede, día, horario y total
+    """making a booking sends the confirmation email with sport, venue, day, time and total
     @MAIL-02-S3"""
     sent: list[Message] = []
     monkeypatch.setattr(routes, "send", sent.append)
@@ -247,7 +247,7 @@ def test_al_hacer_una_reserva_sale_el_correo_de_confirmacion_con_deporte_sede_di
         tasks,
     )
     assert not isinstance(response, type(None))
-    assert sent == []  # sale después de responder
+    assert sent == []  # it goes out after responding
 
     _run(tasks)
 
@@ -261,10 +261,10 @@ def test_al_hacer_una_reserva_sale_el_correo_de_confirmacion_con_deporte_sede_di
         assert item in message.html
 
 
-def test_si_el_correo_de_confirmacion_falla_la_reserva_responde_igual_y_queda_en_el_log_sin_la_direccion(
+def test_if_the_confirmation_email_fails_the_booking_answers_the_same_and_the_log_has_no_address(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """si el correo de confirmación falla la reserva responde igual y queda en el log sin la dirección
+    """if the confirmation email fails the booking answers the same and the log has no address
     @assumption:MAIL-02-ASM-04"""
     monkeypatch.setattr(config, "email_mode", "brevo")
 
@@ -292,8 +292,8 @@ def test_si_el_correo_de_confirmacion_falla_la_reserva_responde_igual_y_queda_en
     assert ADDRESS not in caplog.text
 
 
-def test_modificar_cancelar_o_anular_no_mandan_correo(monkeypatch: pytest.MonkeyPatch) -> None:
-    """modificar, cancelar o anular no mandan correo
+def test_modifying_canceling_or_voiding_send_no_email(monkeypatch: pytest.MonkeyPatch) -> None:
+    """modifying, canceling or voiding send no email
     @assumption:MAIL-02-ASM-05"""
     sent: list[Message] = []
     monkeypatch.setattr(routes, "send", sent.append)
@@ -344,10 +344,10 @@ class _Channel:
         return DeliveryResult(sent=1)
 
 
-def test_el_recordatorio_de_una_hora_antes_sale_por_push_y_por_correo_una_sola_vez(
+def test_the_reminder_one_hour_before_goes_out_by_push_and_by_email_only_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """el recordatorio de una hora antes sale por push y por correo, una sola vez
+    """the reminder one hour before goes out by push and by email, only once
     @MAIL-02-S4"""
     from app.modules.notifications import use_cases
 
@@ -369,10 +369,10 @@ def test_el_recordatorio_de_una_hora_antes_sale_por_push_y_por_correo_una_sola_v
         assert item in sent[0].html
 
 
-def test_si_el_correo_del_recordatorio_falla_el_push_sale_igual(
+def test_if_the_reminder_email_fails_the_push_goes_out_anyway(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """si el correo del recordatorio falla el push sale igual
+    """if the reminder email fails the push goes out anyway
     @assumption:MAIL-02-ASM-04"""
     from app.modules.notifications import use_cases
 

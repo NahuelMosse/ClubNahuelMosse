@@ -1,4 +1,4 @@
-"""`/reservas` contra la base y el emulador reales."""
+"""`/bookings` against the real database and emulator."""
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, time, timedelta
@@ -15,18 +15,18 @@ from app.modules.bookings.repository import BookingsSql
 from app.shared.errors import OpeningHoursChanged, SlotTaken
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _reservar(
+def _book(
     engine: Engine,
-    usuario: UUID,
-    espacio: str,
-    dia: date,
-    hora: int,
-    estado: str = "active",
-    motivo: str | None = None,
+    user: UUID,
+    space: str,
+    day: date,
+    hour: int,
+    status: str = "active",
+    reason: str | None = None,
 ) -> None:
     with engine.begin() as conn:
         conn.execute(
@@ -38,31 +38,31 @@ def _reservar(
                 " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
                 " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
             ),
-            {"u": usuario, "e": espacio, "dia": dia, "h": hora, "status": estado, "reason": motivo},
+            {"u": user, "e": space, "dia": day, "h": hour, "status": status, "reason": reason},
         )
 
 
-def _yo(api: TestClient, engine: Engine, token: str) -> UUID:
-    correo = api.get("/me", headers=_con(token)).json()["email"]
+def _me(api: TestClient, engine: Engine, token: str) -> UUID:
+    email = api.get("/me", headers=_bearer(token)).json()["email"]
     with engine.connect() as conn:
         return UUID(
             str(
                 conn.execute(
-                    text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
+                    text("SELECT id FROM app_user WHERE email = :c"), {"c": email}
                 ).scalar_one()
             )
         )
 
 
-def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
+def test_everyone_sees_their_upcoming_bookings_and_their_history_in_order(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, prefijo = venue
-    espacio = api.post(
+    venue_id, prefix = venue
+    space = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -70,44 +70,44 @@ def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
             "price_per_hour": 38000,
         },
     ).json()["id"]
-    yo = _yo(api, engine, user_token)
-    hoy = date.today()
-    _reservar(engine, yo, espacio, hoy + timedelta(days=3), 10)
-    _reservar(engine, yo, espacio, hoy + timedelta(days=1), 10)
-    _reservar(engine, yo, espacio, hoy + timedelta(days=2), 10, "canceled")
-    _reservar(engine, yo, espacio, hoy - timedelta(days=5), 10)
-    _reservar(engine, yo, espacio, hoy - timedelta(days=2), 10, "voided", "lluvia")
-    _reservar(engine, _yo(api, engine, admin_token), espacio, hoy + timedelta(days=4), 10)
+    me = _me(api, engine, user_token)
+    today = date.today()
+    _book(engine, me, space, today + timedelta(days=3), 10)
+    _book(engine, me, space, today + timedelta(days=1), 10)
+    _book(engine, me, space, today + timedelta(days=2), 10, "canceled")
+    _book(engine, me, space, today - timedelta(days=5), 10)
+    _book(engine, me, space, today - timedelta(days=2), 10, "voided", "lluvia")
+    _book(engine, _me(api, engine, admin_token), space, today + timedelta(days=4), 10)
 
-    def reservas(cuando: str) -> list[dict[str, object]]:
-        r = api.get("/bookings", headers=_con(user_token), params={"when": cuando})
+    def bookings(when: str) -> list[dict[str, object]]:
+        r = api.get("/bookings", headers=_bearer(user_token), params={"when": when})
         assert r.status_code == 200
-        lista: list[dict[str, object]] = r.json()["bookings"]
-        return lista
+        items: list[dict[str, object]] = r.json()["bookings"]
+        return items
 
-    proximas = reservas("upcoming")
-    assert [str(p["starts_at"])[:10] for p in proximas] == [
-        str(hoy + timedelta(days=1)),
-        str(hoy + timedelta(days=3)),
+    upcoming = bookings("upcoming")
+    assert [str(p["starts_at"])[:10] for p in upcoming] == [
+        str(today + timedelta(days=1)),
+        str(today + timedelta(days=3)),
     ]
-    assert proximas[0]["space"] == f"{prefijo}_Futbol_F5_1"
-    assert proximas[0]["address"] == "Av. Vergara 1850"
-    assert {p["status"] for p in proximas} == {"active"}
-    historial = reservas("history")
-    assert [h["status"] for h in historial] == ["canceled", "voided", "completed"]
-    assert historial[1]["reason"] == "lluvia"
+    assert upcoming[0]["space"] == f"{prefix}_Futbol_F5_1"
+    assert upcoming[0]["address"] == "Av. Vergara 1850"
+    assert {p["status"] for p in upcoming} == {"active"}
+    history = bookings("history")
+    assert [h["status"] for h in history] == ["canceled", "voided", "completed"]
+    assert history[1]["reason"] == "lluvia"
 
 
-def test_las_reservas_se_piden_con_sesion(api: TestClient) -> None:
+def test_bookings_require_a_session(api: TestClient) -> None:
     assert api.get("/bookings").status_code == 401
 
 
-def _espacio_nuevo(api: TestClient, admin_token: str, sede_id: str) -> str:
+def _new_space(api: TestClient, admin_token: str, venue_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -118,35 +118,35 @@ def _espacio_nuevo(api: TestClient, admin_token: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
+def test_booking_saves_the_price_and_a_repeated_request_returns_the_same_one(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
-    manana = (date.today() + timedelta(days=1)).isoformat()
-    pedido = {"space_id": espacio, "date": manana, "start_hour": "18:00", "hours": 2}
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    payload = {"space_id": space, "date": tomorrow, "start_hour": "18:00", "hours": 2}
 
-    primera = api.post("/bookings", headers=_con(user_token), json=pedido)
-    segunda = api.post("/bookings", headers=_con(user_token), json=pedido)
+    first = api.post("/bookings", headers=_bearer(user_token), json=payload)
+    second = api.post("/bookings", headers=_bearer(user_token), json=payload)
 
-    assert primera.status_code == 201
-    assert (primera.json()["total"], primera.json()["status"]) == (76000, "active")
-    assert segunda.status_code == 201
-    assert segunda.json()["id"] == primera.json()["id"]
+    assert first.status_code == 201
+    assert (first.json()["total"], first.json()["status"]) == (76000, "active")
+    assert second.status_code == 201
+    assert second.json()["id"] == first.json()["id"]
     with engine.connect() as conn:
         assert (
             conn.execute(
-                text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": espacio}
+                text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": space}
             ).scalar_one()
             == 1
         )
-    grilla = api.get(
-        f"/spaces/{espacio}/slots",
-        headers=_con(user_token),
-        params={"date": manana},
+    grid = api.get(
+        f"/spaces/{space}/slots",
+        headers=_bearer(user_token),
+        params={"date": tomorrow},
     ).json()
-    libres = {f["starts_at"]: f["available"] for f in grilla["slots"]}
-    assert (libres["17:00"], libres["18:00"], libres["19:00"], libres["20:00"]) == (
+    free = {f["starts_at"]: f["available"] for f in grid["slots"]}
+    assert (free["17:00"], free["18:00"], free["19:00"], free["20:00"]) == (
         True,
         False,
         False,
@@ -154,156 +154,153 @@ def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
     )
 
 
-def test_el_administrador_no_reserva_y_un_espacio_dado_de_baja_no_se_reserva(
+def test_the_admin_does_not_book_and_a_deactivated_space_is_not_booked(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
-    manana = (date.today() + timedelta(days=1)).isoformat()
-    pedido = {"space_id": espacio, "date": manana, "start_hour": "10:00", "hours": 1}
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    payload = {"space_id": space, "date": tomorrow, "start_hour": "10:00", "hours": 1}
 
-    assert api.post("/bookings", headers=_con(admin_token), json=pedido).status_code == 403
+    assert api.post("/bookings", headers=_bearer(admin_token), json=payload).status_code == 403
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :e"),
-            {"e": espacio},
+            {"e": space},
         )
-    r = api.post("/bookings", headers=_con(user_token), json=pedido)
+    r = api.post("/bookings", headers=_bearer(user_token), json=payload)
     assert r.status_code == 422
     assert "space_id" in r.json()["errors"]
-    assert api.post("/bookings", json=pedido).status_code == 401
+    assert api.post("/bookings", json=payload).status_code == 401
 
 
-def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
+def test_two_simultaneous_bookings_of_the_same_slot_leave_one_and_the_other_is_taken(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
-    yo = _yo(api, engine, user_token)
-    otro = _yo(api, engine, admin_token)
-    manana = datetime.combine(
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
+    me = _me(api, engine, user_token)
+    other = _me(api, engine, admin_token)
+    tomorrow = datetime.combine(
         date.today() + timedelta(days=1), time(0), tzinfo=ZoneInfo("America/Argentina/Buenos_Aires")
     )
-    for hora in range(8, 18):
-        inicio = manana + timedelta(hours=hora)
-        fin = inicio + timedelta(hours=1)
-        barrera = Barrier(2)
+    for hour in range(8, 18):
+        start = tomorrow + timedelta(hours=hour)
+        end = start + timedelta(hours=1)
+        barrier = Barrier(2)
 
-        def pedir(
-            usuario: UUID,
-            inicio: datetime = inicio,
-            fin: datetime = fin,
-            barrera: Barrier = barrera,
+        def request(
+            user: UUID,
+            start: datetime = start,
+            end: datetime = end,
+            barrier: Barrier = barrier,
         ) -> str:
             with engine.connect() as conn:
-                barrera.wait()
+                barrier.wait()
                 try:
                     sql = BookingsSql(conn)
-                    agenda = sql.opening_hours(UUID(espacio))
-                    assert agenda is not None
-                    return str(sql.insert(usuario, UUID(espacio), inicio, fin, agenda).id)
+                    schedule = sql.opening_hours(UUID(space))
+                    assert schedule is not None
+                    return str(sql.insert(user, UUID(space), start, end, schedule).id)
                 except SlotTaken:
-                    return "ocupado"
+                    return "taken"
 
-        # Dos personas distintas: una la toma y la otra ve el horario ocupado.
-        with ThreadPoolExecutor(2) as hilos:
-            resultados = sorted(hilos.map(pedir, [yo, otro]))
-        assert resultados[1] == "ocupado", resultados
-        UUID(resultados[0])
+        # Two different people: one gets it and the other sees the slot taken.
+        with ThreadPoolExecutor(2) as threads:
+            results = sorted(threads.map(request, [me, other]))
+        assert results[1] == "taken", results
+        UUID(results[0])
 
-    # La misma persona dos veces a la vez: las dos respuestas son la misma reserva.
-    inicio = manana + timedelta(hours=20)
-    barrera = Barrier(2)
+    # The same person twice at once: both responses are the same booking.
+    start = tomorrow + timedelta(hours=20)
+    barrier = Barrier(2)
 
-    def repetir(_: int) -> str:
+    def repeat(_: int) -> str:
         with engine.connect() as conn:
-            barrera.wait()
+            barrier.wait()
             sql = BookingsSql(conn)
-            agenda = sql.opening_hours(UUID(espacio))
-            assert agenda is not None
-            return str(
-                sql.insert(yo, UUID(espacio), inicio, inicio + timedelta(hours=1), agenda).id
-            )
+            schedule = sql.opening_hours(UUID(space))
+            assert schedule is not None
+            return str(sql.insert(me, UUID(space), start, start + timedelta(hours=1), schedule).id)
 
-    with ThreadPoolExecutor(2) as hilos:
-        a, b = hilos.map(repetir, [0, 1])
+    with ThreadPoolExecutor(2) as threads:
+        a, b = threads.map(repeat, [0, 1])
     assert a == b
 
 
-def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
+def test_cancelling_frees_the_slot_stamps_who_and_can_be_repeated(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
-    manana = (date.today() + timedelta(days=1)).isoformat()
-    pedido = {"space_id": espacio, "date": manana, "start_hour": "18:00", "hours": 1}
-    reserva = api.post("/bookings", headers=_con(user_token), json=pedido).json()["id"]
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    payload = {"space_id": space, "date": tomorrow, "start_hour": "18:00", "hours": 1}
+    booking = api.post("/bookings", headers=_bearer(user_token), json=payload).json()["id"]
 
-    r = api.post(f"/bookings/{reserva}/cancel", headers=_con(user_token))
-    otra_vez = api.post(f"/bookings/{reserva}/cancel", headers=_con(user_token))
+    r = api.post(f"/bookings/{booking}/cancel", headers=_bearer(user_token))
+    again = api.post(f"/bookings/{booking}/cancel", headers=_bearer(user_token))
 
     assert r.status_code == 200
     assert r.json()["status"] == "canceled"
-    assert otra_vez.status_code == 200
+    assert again.status_code == 200
     with engine.connect() as conn:
-        fila = conn.execute(
+        row = conn.execute(
             text(
-                "SELECT canceled_at IS NOT NULL, canceled_by = user_id FROM booking"
-                " WHERE id = :id"
+                "SELECT canceled_at IS NOT NULL, canceled_by = user_id FROM booking WHERE id = :id"
             ),
-            {"id": reserva},
+            {"id": booking},
         ).one()
-    assert tuple(fila) == (True, True)
-    # El horario vuelve a estar libre para otra reserva.
-    assert api.post("/bookings", headers=_con(user_token), json=pedido).status_code == 201
+    assert tuple(row) == (True, True)
+    # The slot is free again for another booking.
+    assert api.post("/bookings", headers=_bearer(user_token), json=payload).status_code == 201
 
 
-def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
+def test_a_foreign_a_started_or_a_voided_booking_is_not_cancelled(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
-    yo = _yo(api, engine, user_token)
-    otro = _yo(api, engine, admin_token)
-    hoy = date.today()
-    _reservar(engine, otro, espacio, hoy + timedelta(days=1), 10)
-    _reservar(engine, yo, espacio, hoy + timedelta(days=1), 12)
-    _reservar(engine, yo, espacio, hoy + timedelta(days=2), 12, "voided", "lluvia")
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
+    me = _me(api, engine, user_token)
+    other = _me(api, engine, admin_token)
+    today = date.today()
+    _book(engine, other, space, today + timedelta(days=1), 10)
+    _book(engine, me, space, today + timedelta(days=1), 12)
+    _book(engine, me, space, today + timedelta(days=2), 12, "voided", "lluvia")
     with engine.begin() as conn:
-        ids_reservas: list[Any] = list(
+        booking_ids: list[Any] = list(
             conn.execute(
                 text("SELECT id FROM booking WHERE space_id = :e ORDER BY starts_at"),
-                {"e": espacio},
+                {"e": space},
             ).scalars()
         )
-        ajena, mia, anulada = ids_reservas
+        foreign, mine, voided = booking_ids
         conn.execute(
             text(
                 "UPDATE booking SET starts_at = date_trunc('hour', now()), ends_at ="
                 " date_trunc('hour', now()) + interval '1 hour' WHERE id = :id"
             ),
-            {"id": mia},
+            {"id": mine},
         )
 
-    def cancelar(reserva: UUID) -> int:
-        return api.post(f"/bookings/{reserva}/cancel", headers=_con(user_token)).status_code
+    def cancel(booking: UUID) -> int:
+        return api.post(f"/bookings/{booking}/cancel", headers=_bearer(user_token)).status_code
 
-    assert cancelar(ajena) == 404
-    assert cancelar(mia) == 409
-    assert cancelar(anulada) == 409
-    assert api.post(f"/bookings/{mia}/cancel").status_code == 401
+    assert cancel(foreign) == 404
+    assert cancel(mine) == 409
+    assert cancel(voided) == 409
+    assert api.post(f"/bookings/{mine}/cancel").status_code == 401
 
 
-def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total(
+def test_modifying_moves_the_same_booking_frees_the_slot_and_recalculates_the_total(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    una = _espacio_nuevo(api, admin_token, sede_id)
-    otra = api.post(
+    venue_id, _ = venue
+    one = _new_space(api, admin_token, venue_id)
+    other = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Futbol",
             "kind": "F5",
             "covered": True,
@@ -311,57 +308,57 @@ def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total
             "price_per_hour": 43000,
         },
     ).json()["id"]
-    manana = (date.today() + timedelta(days=1)).isoformat()
-    reserva = api.post(
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    booking = api.post(
         "/bookings",
-        headers=_con(user_token),
-        json={"space_id": una, "date": manana, "start_hour": "21:00", "hours": 2},
+        headers=_bearer(user_token),
+        json={"space_id": one, "date": tomorrow, "start_hour": "21:00", "hours": 2},
     ).json()
 
     r = api.post(
-        f"/bookings/{reserva['id']}/modify",
-        headers=_con(user_token),
-        json={"space_id": otra, "date": manana, "start_hour": "18:00"},
+        f"/bookings/{booking['id']}/modify",
+        headers=_bearer(user_token),
+        json={"space_id": other, "date": tomorrow, "start_hour": "18:00"},
     )
 
     assert r.status_code == 200, r.text
     assert (r.json()["id"], r.json()["space_id"], r.json()["total"]) == (
-        reserva["id"],
-        otra,
+        booking["id"],
+        other,
         86000,
     )
-    # El horario anterior quedó libre y la grilla de la cancha nueva lo ignora sólo para su
-    # dueño.
-    libre = api.post(
+    # The previous slot is free and the new court's grid ignores it only for its
+    # owner.
+    free = api.post(
         "/bookings",
-        headers=_con(user_token),
-        json={"space_id": una, "date": manana, "start_hour": "21:00", "hours": 1},
+        headers=_bearer(user_token),
+        json={"space_id": one, "date": tomorrow, "start_hour": "21:00", "hours": 1},
     )
-    assert libre.status_code == 201
-    grilla = api.get(
-        f"/spaces/{otra}/slots",
-        headers=_con(user_token),
-        params={"date": manana, "hours": 2, "booking_id": reserva["id"]},
+    assert free.status_code == 201
+    grid = api.get(
+        f"/spaces/{other}/slots",
+        headers=_bearer(user_token),
+        params={"date": tomorrow, "hours": 2, "booking_id": booking["id"]},
     ).json()
-    assert {f["starts_at"]: f["available"] for f in grilla["slots"]}["18:00"] is True
-    ajena = api.get(
-        f"/spaces/{otra}/slots",
-        headers=_con(admin_token),
-        params={"date": manana, "hours": 2, "booking_id": reserva["id"]},
+    assert {f["starts_at"]: f["available"] for f in grid["slots"]}["18:00"] is True
+    foreign = api.get(
+        f"/spaces/{other}/slots",
+        headers=_bearer(admin_token),
+        params={"date": tomorrow, "hours": 2, "booking_id": booking["id"]},
     ).json()
-    assert {f["starts_at"]: f["available"] for f in ajena["slots"]}["18:00"] is False
+    assert {f["starts_at"]: f["available"] for f in foreign["slots"]}["18:00"] is False
 
 
-def test_modificar_rechaza_lo_que_no_corresponde(
+def test_modifying_rejects_what_does_not_apply(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
     hockey = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Hockey",
             "kind": "H7",
             "covered": False,
@@ -369,110 +366,110 @@ def test_modificar_rechaza_lo_que_no_corresponde(
             "price_per_hour": 50000,
         },
     ).json()["id"]
-    manana = (date.today() + timedelta(days=1)).isoformat()
-    mia = api.post(
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    mine = api.post(
         "/bookings",
-        headers=_con(user_token),
-        json={"space_id": espacio, "date": manana, "start_hour": "10:00", "hours": 1},
+        headers=_bearer(user_token),
+        json={"space_id": space, "date": tomorrow, "start_hour": "10:00", "hours": 1},
     ).json()["id"]
-    _reservar(engine, _yo(api, engine, admin_token), espacio, date.today() + timedelta(days=1), 12)
+    _book(engine, _me(api, engine, admin_token), space, date.today() + timedelta(days=1), 12)
 
-    def cambiar(cuerpo: dict[str, object], token: str = user_token) -> tuple[int, object]:
-        r = api.post(f"/bookings/{mia}/modify", headers=_con(token), json=cuerpo)
+    def change(body: dict[str, object], token: str = user_token) -> tuple[int, object]:
+        r = api.post(f"/bookings/{mine}/modify", headers=_bearer(token), json=body)
         return r.status_code, r.json() if r.content else None
 
-    # El mismo horario es un reintento de un cambio que ya se hizo: responde la reserva.
-    mismo = cambiar({"space_id": espacio, "date": manana, "start_hour": "10:00"})
-    assert mismo[0] == 200
-    assert isinstance(mismo[1], dict)
-    assert mismo[1]["id"] == mia
-    assert cambiar({"space_id": hockey, "date": manana, "start_hour": "10:00"})[0] == 422
-    ocupado = cambiar({"space_id": espacio, "date": manana, "start_hour": "12:00"})
-    assert ocupado == (409, {"errors": {"slot": "That slot was taken"}})
+    # The same slot is a retry of a change already made: it answers with the booking.
+    same = change({"space_id": space, "date": tomorrow, "start_hour": "10:00"})
+    assert same[0] == 200
+    assert isinstance(same[1], dict)
+    assert same[1]["id"] == mine
+    assert change({"space_id": hockey, "date": tomorrow, "start_hour": "10:00"})[0] == 422
+    taken = change({"space_id": space, "date": tomorrow, "start_hour": "12:00"})
+    assert taken == (409, {"errors": {"slot": "That slot was taken"}})
     assert (
-        cambiar({"space_id": espacio, "date": manana, "start_hour": "15:00"}, admin_token)[0] == 403
+        change({"space_id": space, "date": tomorrow, "start_hour": "15:00"}, admin_token)[0] == 403
     )
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE booking SET status = 'voided', reason = 'lluvia' WHERE id = :id"),
-            {"id": mia},
+            {"id": mine},
         )
-    cambio = cambiar({"space_id": espacio, "date": manana, "start_hour": "15:00"})
-    assert cambio == (409, {"errors": {"booking": "This changed in the meantime"}})
+    changed = change({"space_id": space, "date": tomorrow, "start_hour": "15:00"})
+    assert changed == (409, {"errors": {"booking": "This changed in the meantime"}})
 
 
-def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
+def test_two_crossed_changes_between_the_same_courts_wait_for_each_other_without_locking_up(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    a = _espacio_nuevo(api, admin_token, sede_id)
-    b = _espacio_nuevo(api, admin_token, sede_id)
-    yo = _yo(api, engine, user_token)
-    manana = datetime.combine(
+    venue_id, _ = venue
+    a = _new_space(api, admin_token, venue_id)
+    b = _new_space(api, admin_token, venue_id)
+    me = _me(api, engine, user_token)
+    tomorrow = datetime.combine(
         date.today() + timedelta(days=1), time(0), tzinfo=ZoneInfo("America/Argentina/Buenos_Aires")
     )
     ua, ub = UUID(a), UUID(b)
     with engine.connect() as conn:
-        agenda = BookingsSql(conn).opening_hours(ua)
-    assert agenda is not None
-    for hora in range(8, 20, 2):
-        diez, once = manana + timedelta(hours=hora), manana + timedelta(hours=hora + 1)
-        hora_ = timedelta(hours=1)
+        schedule = BookingsSql(conn).opening_hours(ua)
+    assert schedule is not None
+    for hour in range(8, 20, 2):
+        ten, eleven = tomorrow + timedelta(hours=hour), tomorrow + timedelta(hours=hour + 1)
+        one_hour = timedelta(hours=1)
         with engine.connect() as conn:
             sql = BookingsSql(conn)
-            r1 = sql.insert(yo, ua, diez, diez + hora_, agenda).id
-            r2 = sql.insert(yo, ub, once, once + hora_, agenda).id
-        barrera = Barrier(2)
+            r1 = sql.insert(me, ua, ten, ten + one_hour, schedule).id
+            r2 = sql.insert(me, ub, eleven, eleven + one_hour, schedule).id
+        barrier = Barrier(2)
 
-        # Cada una quiere el lugar de la otra, que sigue tomado: las dos terminan en ocupado.
-        def mover(
-            cambio: tuple[UUID, tuple[UUID, datetime], UUID, datetime],
-            barrera: Barrier = barrera,
-            hora_: timedelta = hora_,
+        # Each one wants the other's place, which is still taken: both end up taken.
+        def move(
+            change: tuple[UUID, tuple[UUID, datetime], UUID, datetime],
+            barrier: Barrier = barrier,
+            one_hour: timedelta = one_hour,
         ) -> str:
-            reserva, antes, espacio, inicio = cambio
+            booking, before, space, start = change
             with engine.connect() as conn:
-                barrera.wait()
+                barrier.wait()
                 try:
                     BookingsSql(conn).move(
-                        yo, reserva, antes, espacio, inicio, inicio + hora_, agenda
+                        me, booking, before, space, start, start + one_hour, schedule
                     )
                 except SlotTaken:
-                    return "ocupado"
-                return "movida"
+                    return "taken"
+                return "moved"
 
-        with ThreadPoolExecutor(2) as hilos:
-            resultados = list(
-                hilos.map(mover, [(r1, (ua, diez), ub, once), (r2, (ub, once), ua, diez)])
+        with ThreadPoolExecutor(2) as threads:
+            results = list(
+                threads.map(move, [(r1, (ua, ten), ub, eleven), (r2, (ub, eleven), ua, ten)])
             )
-        assert resultados == ["ocupado", "ocupado"]
+        assert results == ["taken", "taken"]
 
 
-def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
+def test_a_booking_validated_with_the_old_hours_is_not_saved(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    sede_id, _ = venue
-    espacio = _espacio_nuevo(api, admin_token, sede_id)
-    yo = _yo(api, engine, user_token)
-    manana = datetime.combine(
+    venue_id, _ = venue
+    space = _new_space(api, admin_token, venue_id)
+    me = _me(api, engine, user_token)
+    tomorrow = datetime.combine(
         date.today() + timedelta(days=1), time(8), tzinfo=ZoneInfo("America/Argentina/Buenos_Aires")
     )
     with engine.connect() as conn:
-        vieja = BookingsSql(conn).opening_hours(UUID(espacio))
-    assert vieja is not None
+        old = BookingsSql(conn).opening_hours(UUID(space))
+    assert old is not None
     with engine.begin() as conn:
-        conn.execute(text("UPDATE venue SET opens_at = '09:00' WHERE id = :s"), {"s": sede_id})
+        conn.execute(text("UPDATE venue SET opens_at = '09:00' WHERE id = :s"), {"s": venue_id})
 
-    # Verifica: la reserva de las 8, validada antes del cambio, no entra.
+    # Checks: the 8 o'clock booking, validated before the change, does not go in.
     with engine.connect() as conn, pytest.raises(OpeningHoursChanged):
-        BookingsSql(conn).insert(yo, UUID(espacio), manana, manana + timedelta(hours=1), vieja)
-    # Verifica: por la API, se vuelve a validar con el horario nuevo.
+        BookingsSql(conn).insert(me, UUID(space), tomorrow, tomorrow + timedelta(hours=1), old)
+    # Checks: through the API, it is validated again with the new hours.
     r = api.post(
         "/bookings",
-        headers=_con(user_token),
+        headers=_bearer(user_token),
         json={
-            "space_id": espacio,
-            "date": manana.date().isoformat(),
+            "space_id": space,
+            "date": tomorrow.date().isoformat(),
             "start_hour": "08:00",
             "hours": 1,
         },

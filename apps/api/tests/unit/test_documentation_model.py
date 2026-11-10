@@ -1,258 +1,251 @@
-"""La documentación del modelo de datos y de la navegación dice lo que hay en el código."""
+"""The data model and navigation documentation says what is in the code."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import ast
 import re
 from pathlib import Path
 
 from tests.current_schema import current, names, value
 
-RAIZ = Path(__file__).resolve().parents[4]
-MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migrations" / "versions").glob("0*.py"))
-APP_DART = RAIZ / "apps" / "mobile" / "lib" / "router.dart"
-MODELO = RAIZ / "docs" / "technical" / "data-model.md"
-NAVEGACION = RAIZ / "docs" / "technical" / "app-navigation.md"
-DISENO = RAIZ / "docs" / "technical" / "system-design.md"
-COPIAR = RAIZ / "docs-site" / "scripts" / "copy-docs.mjs"
-NO_COLUMNA = {"constraint", "check", "primary", "unique", "exclude", "foreign"}
+ROOT = Path(__file__).resolve().parents[4]
+MIGRATIONS = sorted((ROOT / "apps" / "api" / "migrations" / "versions").glob("0*.py"))
+APP_DART = ROOT / "apps" / "mobile" / "lib" / "router.dart"
+MODEL = ROOT / "docs" / "technical" / "data-model.md"
+NAVIGATION = ROOT / "docs" / "technical" / "app-navigation.md"
+DESIGN = ROOT / "docs" / "technical" / "system-design.md"
+COPY = ROOT / "docs-site" / "scripts" / "copy-docs.mjs"
+NOT_COLUMN = {"constraint", "check", "primary", "unique", "exclude", "foreign"}
 
 
-def _texto(ruta: Path) -> str:
-    return ruta.read_text(encoding="utf-8")
+def _text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
-def _sql(migracion: Path) -> str:
-    """El cuerpo de `upgrade()` y de las funciones del módulo que llama, con las cadenas contiguas
-    de Python unidas en una sola."""
-    fuente = _texto(migracion)
-    funciones = {
-        n.name: ast.get_source_segment(fuente, n) or ""
-        for n in ast.parse(fuente).body
+def _sql(migration: Path) -> str:
+    """The body of `upgrade()` and of the module functions it calls, with the contiguous Python
+    strings joined into one."""
+    source = _text(migration)
+    functions = {
+        n.name: ast.get_source_segment(source, n) or ""
+        for n in ast.parse(source).body
         if isinstance(n, ast.FunctionDef)
     }
-    subir = funciones.get("upgrade", "")
-    llamadas = re.findall(r"\b(_\w+)\(\)", subir)
-    cuerpo = "\n".join([subir, *(funciones.get(nombre, "") for nombre in llamadas)])
-    return re.sub(r'"\s*\n\s*"', "", cuerpo)
+    upgrade = functions.get("upgrade", "")
+    calls = re.findall(r"\b(_\w+)\(\)", upgrade)
+    body = "\n".join([upgrade, *(functions.get(name, "") for name in calls)])
+    return re.sub(r'"\s*\n\s*"', "", body)
 
 
-def _partes(cuerpo: str) -> list[str]:
-    """Parte `cuerpo` por las comas que no están dentro de paréntesis."""
-    partes, profundidad, actual = [], 0, ""
-    for caracter in cuerpo:
-        profundidad += caracter == "("
-        profundidad -= caracter == ")"
-        if caracter == "," and profundidad == 0:
-            partes.append(actual)
-            actual = ""
+def _split(body: str) -> list[str]:
+    """Splits `body` at the commas that are not inside parentheses."""
+    parts, depth, current_part = [], 0, ""
+    for char in body:
+        depth += char == "("
+        depth -= char == ")"
+        if char == "," and depth == 0:
+            parts.append(current_part)
+            current_part = ""
         else:
-            actual += caracter
-    return [*partes, actual]
+            current_part += char
+    return [*parts, current_part]
 
 
-def _tablas() -> dict[str, set[str]]:
-    """Las columnas de cada tabla tal como las dejan las migraciones aplicadas en orden."""
-    tablas: dict[str, set[str]] = {}
-    for migracion in MIGRACIONES:
-        sql = _sql(migracion)
-        for nombre, cuerpo in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", sql, re.S):
-            sin_comentarios = re.sub(r"--[^\n]*", "", cuerpo)
-            primeras = (p.split()[0].lower() for p in _partes(sin_comentarios) if p.strip())
-            tablas[nombre] = {c for c in primeras if c not in NO_COLUMNA}
-        for tabla, cambios in re.findall(
+def _tables() -> dict[str, set[str]]:
+    """The columns of each table as the migrations applied in order leave them."""
+    tables: dict[str, set[str]] = {}
+    for migration in MIGRATIONS:
+        sql = _sql(migration)
+        for name, body in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", sql, re.S):
+            without_comments = re.sub(r"--[^\n]*", "", body)
+            firsts = (p.split()[0].lower() for p in _split(without_comments) if p.strip())
+            tables[name] = {c for c in firsts if c not in NOT_COLUMN}
+        for table, changes in re.findall(
             r"ALTER TABLE (\w+)\s+((?:ADD|DROP) COLUMN.*?)\"", sql, re.S
         ):
-            for accion, columna in re.findall(
-                r"(ADD|DROP) COLUMN (?:IF (?:NOT )?EXISTS )?(\w+)", cambios
+            for action, column in re.findall(
+                r"(ADD|DROP) COLUMN (?:IF (?:NOT )?EXISTS )?(\w+)", changes
             ):
-                (tablas[tabla].add if accion == "ADD" else tablas[tabla].discard)(columna)
-        for tabla, vieja, nueva in re.findall(
-            r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", sql
-        ):
-            tablas[tabla].discard(vieja)
-            tablas[tabla].add(nueva)
-    # La 0010 agrega la auditoría con un bucle sobre las tablas (`f"ALTER TABLE {tabla} …"`), que
-    # este lector de texto no resuelve; que las nueve la tienen lo comprueba contra la base
+                (tables[table].add if action == "ADD" else tables[table].discard)(column)
+        for table, old, new in re.findall(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", sql):
+            tables[table].discard(old)
+            tables[table].add(new)
+    # 0010 adds the audit with a loop over the tables (`f"ALTER TABLE {table} …"`), which
+    # this text reader does not resolve; that all nine have it is checked against the database by
     # tests/integration/test_uuid_and_audit.py.
-    for columnas in tablas.values():
-        columnas |= {"creado_en", "modificado_en"}
-    return current(tablas)
+    for columns in tables.values():
+        columns |= {"creado_en", "modificado_en"}
+    return current(tables)
 
 
-def _palabras_de_las_migraciones() -> set[str]:
-    """Todo nombre que aparece en las migraciones, también los de las constantes de módulo."""
-    escritas = set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_texto(m) for m in MIGRACIONES)))
-    modulos = {c.name for c in (RAIZ / "apps" / "api" / "app" / "modules").iterdir() if c.is_dir()}
-    return escritas | names() | modulos
+def _words_of_the_migrations() -> set[str]:
+    """Every name that appears in the migrations, also those of the module constants."""
+    written = set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_text(m) for m in MIGRATIONS)))
+    modules = {c.name for c in (ROOT / "apps" / "api" / "app" / "modules").iterdir() if c.is_dir()}
+    return written | names() | modules
 
 
-def _secciones(texto: str, nivel: str) -> dict[str, str]:
-    """Los cuerpos de los encabezados de ese nivel (`##`, `###`), por título."""
-    partes = re.split(rf"^{nivel} (.+)$", texto, flags=re.M)
-    return {partes[i].strip(): partes[i + 1] for i in range(1, len(partes) - 1, 2)}
+def _sections(text: str, level: str) -> dict[str, str]:
+    """The bodies of the headings of that level (`##`, `###`), by title."""
+    parts = re.split(rf"^{level} (.+)$", text, flags=re.M)
+    return {parts[i].strip(): parts[i + 1] for i in range(1, len(parts) - 1, 2)}
 
 
-def _entidades() -> dict[str, str]:
-    modelo = _texto(MODELO)
-    return _secciones(_secciones(modelo, "##")["Entities"], "###")
+def _entities() -> dict[str, str]:
+    model = _text(MODEL)
+    return _sections(_sections(model, "##")["Entities"], "###")
 
 
-def _diagrama_er(texto: str) -> dict[str, set[str]]:
-    bloque = texto.split("```mermaid", 1)[1].split("```", 1)[0]
-    columnas = {}
-    for tabla, cuerpo in re.findall(r"^\s+(\w+) \{\n(.*?)\n\s+\}", bloque, re.S | re.M):
-        columnas[tabla] = {linea.split()[1] for linea in cuerpo.splitlines() if linea.strip()}
-    return columnas
+def _er_diagram(text: str) -> dict[str, set[str]]:
+    block = text.split("```mermaid", 1)[1].split("```", 1)[0]
+    columns = {}
+    for table, body in re.findall(r"^\s+(\w+) \{\n(.*?)\n\s+\}", block, re.S | re.M):
+        columns[table] = {line.split()[1] for line in body.splitlines() if line.strip()}
+    return columns
 
 
-def test_cada_tabla_y_columna_que_nombra_la_pagina_del_modelo_de_datos_existe_en_las_migraciones() -> (
-    None
-):
-    """cada tabla y columna que nombra la página del modelo de datos existe en las migraciones @DOC-01-S1"""
-    tablas = _tablas()
-    texto = _texto(MODELO)
-    conocidas = _palabras_de_las_migraciones()
+def test_each_table_and_column_the_data_model_page_names_exists_in_the_migrations() -> None:
+    """each table and column the data model page names exists in the migrations @DOC-01-S1"""
+    tables = _tables()
+    text = _text(MODEL)
+    known = _words_of_the_migrations()
 
-    assert len(tablas) == 9
-    diagrama = _diagrama_er(texto)
-    assert diagrama.keys() <= tablas.keys()
-    for tabla, columnas in diagrama.items():
-        assert columnas <= tablas[tabla], (tabla, columnas - tablas[tabla])
-    for tabla, cuerpo in _entidades().items():
-        assert tabla in tablas, tabla
-        for nombre in re.findall(r"`([a-z_][a-z_0-9]*)`", cuerpo):
-            assert nombre in conocidas, (tabla, nombre)
-    for nombre in re.findall(r"`([a-z_][a-z_0-9]*)`", texto):
-        assert nombre in conocidas, nombre
+    assert len(tables) == 9
+    diagram = _er_diagram(text)
+    assert diagram.keys() <= tables.keys()
+    for table, columns in diagram.items():
+        assert columns <= tables[table], (table, columns - tables[table])
+    for table, body in _entities().items():
+        assert table in tables, table
+        for name in re.findall(r"`([a-z_][a-z_0-9]*)`", body):
+            assert name in known, (table, name)
+    for name in re.findall(r"`([a-z_][a-z_0-9]*)`", text):
+        assert name in known, name
 
 
-def test_la_pagina_del_modelo_de_datos_explica_cada_tabla_de_las_migraciones() -> None:
-    """la página del modelo de datos explica cada tabla de las migraciones @DOC-01-S1"""
-    tablas = _tablas()
-    entidades = _entidades()
-    texto = _texto(MODELO)
+def test_the_data_model_page_explains_each_table_of_the_migrations() -> None:
+    """the data model page explains each table of the migrations @DOC-01-S1"""
+    tables = _tables()
+    entities = _entities()
+    text = _text(MODEL)
 
-    assert entidades.keys() == tablas.keys()
-    assert "booking_with_status" in texto
-    assert "erDiagram" in texto and set(_diagrama_er(texto)) == set(tablas)
-    for tabla, columnas in tablas.items():
-        cuerpo = entidades[tabla]
-        assert len(cuerpo.split()) > 15, tabla
-        assert "firebase_uid" in cuerpo or tabla != "app_user"
-        nombradas = set(re.findall(r"`([a-z_][a-z_0-9]*)`", cuerpo))
-        assert columnas - {"id", "created_at", "updated_at"} <= nombradas, (
-            tabla,
-            sorted(columnas - nombradas),
+    assert entities.keys() == tables.keys()
+    assert "booking_with_status" in text
+    assert "erDiagram" in text and set(_er_diagram(text)) == set(tables)
+    for table, columns in tables.items():
+        body = entities[table]
+        assert len(body.split()) > 15, table
+        assert "firebase_uid" in body or table != "app_user"
+        named = set(re.findall(r"`([a-z_][a-z_0-9]*)`", body))
+        assert columns - {"id", "created_at", "updated_at"} <= named, (
+            table,
+            sorted(columns - named),
         )
 
 
-def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_migraciones_todos() -> (
-    None
-):
-    """los estados de reserva y de aviso de la página son los que admiten las migraciones, todos @DOC-01-S1"""
-    sql = "\n".join(_sql(m) for m in MIGRACIONES)
-    por_estado = re.search(r"estado IN \(([^)]*)\)", sql)
-    assert por_estado is not None
-    reserva = {value(v) for v in re.findall(r"'(\w+)'", por_estado.group(1))}
-    envio = {
-        value(v)
-        for v in re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1])
+def test_the_booking_and_notice_states_of_the_page_are_all_those_the_migrations_admit() -> None:
+    """the booking and notice states of the page are all those the migrations admit @DOC-01-S1"""
+    sql = "\n".join(_sql(m) for m in MIGRATIONS)
+    by_state = re.search(r"estado IN \(([^)]*)\)", sql)
+    assert by_state is not None
+    booking = {value(v) for v in re.findall(r"'(\w+)'", by_state.group(1))}
+    delivery = {
+        value(v) for v in re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1])
     }
-    estados = _secciones(_texto(MODELO), "##")["States"]
-    por_diagrama = _secciones(estados, "###")
+    states = _sections(_text(MODEL), "##")["States"]
+    by_diagram = _sections(states, "###")
 
-    def en_diagrama(titulo: str) -> set[str]:
-        bloque = por_diagrama[titulo].split("```mermaid", 1)[1].split("```", 1)[0]
-        return set(re.findall(r"(?:\[\*\]|\w+) --> (\w+)", bloque))
+    def in_diagram(title: str) -> set[str]:
+        block = by_diagram[title].split("```mermaid", 1)[1].split("```", 1)[0]
+        return set(re.findall(r"(?:\[\*\]|\w+) --> (\w+)", block))
 
-    assert reserva == {"active", "canceled", "voided"}
-    assert envio >= {"pending", "sending", "sent", "failed", "no_permission", "no_channel"}
-    assert en_diagrama("booking") == reserva | {"completed"}
-    assert en_diagrama("notification.delivery") == envio
+    assert booking == {"active", "canceled", "voided"}
+    assert delivery >= {"pending", "sending", "sent", "failed", "no_permission", "no_channel"}
+    assert in_diagram("booking") == booking | {"completed"}
+    assert in_diagram("notification.delivery") == delivery
 
 
-def test_la_seccion_data_de_system_design_remite_a_la_pagina_del_modelo_de_datos_sin_repetir_sus_columnas() -> (
+def test_the_data_section_of_system_design_refers_to_the_data_model_page_without_repeating_its_columns() -> (
     None
 ):
-    """la sección Data de system-design remite a la página del modelo de datos sin repetir sus columnas @DOC-01-S3 @assumption:DOC-01-ASM-01"""
-    datos = _secciones(_texto(DISENO), "##")["Data"]
+    """the Data section of system-design refers to the data model page without repeating its columns @DOC-01-S3 @assumption:DOC-01-ASM-01"""
+    data = _sections(_text(DESIGN), "##")["Data"]
 
-    assert "data-model.md" in datos
-    assert "firebase_uid" not in datos
-    assert "|" not in datos
-    assert len(datos.split()) < 120
+    assert "data-model.md" in data
+    assert "firebase_uid" not in data
+    assert "|" not in data
+    assert len(data.split()) < 120
 
 
-def _rutas_de_app_dart() -> set[str]:
-    """Cada ruta de GoRouter con su camino completo, anidando por la sangría. Una ruta que arma un
-    método aparte (`GoRoute _x() => GoRoute(`) cuelga de la ruta donde se llama `_x(),`."""
-    pila: list[tuple[int, str]] = []
-    rutas = set()
-    padres_de_metodos: dict[str, str] = {}
-    for linea in _texto(APP_DART).splitlines():
-        metodo = re.match(r"^\s*(GoRoute|List<RouteBase>) (_\w+)\(\) =>", linea)
-        if metodo:
-            pila = [(-1, padres_de_metodos[metodo.group(2)])] if metodo.group(1) == "GoRoute" else []
+def _app_dart_routes() -> set[str]:
+    """Each GoRouter route with its full path, nesting by indentation. A route that a separate
+    method builds (`GoRoute _x() => GoRoute(`) hangs from the route where `_x(),` is called."""
+    stack: list[tuple[int, str]] = []
+    routes = set()
+    method_parents: dict[str, str] = {}
+    for line in _text(APP_DART).splitlines():
+        method = re.match(r"^\s*(GoRoute|List<RouteBase>) (_\w+)\(\) =>", line)
+        if method:
+            stack = [(-1, method_parents[method.group(2)])] if method.group(1) == "GoRoute" else []
             continue
-        llamada = re.match(r"^(\s+)(_\w+)\(\),$", linea)
-        if llamada:
-            while pila and pila[-1][0] >= len(llamada.group(1)):
-                pila.pop()
-            padres_de_metodos[llamada.group(2)] = pila[-1][1] if pila else ""
+        call = re.match(r"^(\s+)(_\w+)\(\),$", line)
+        if call:
+            while stack and stack[-1][0] >= len(call.group(1)):
+                stack.pop()
+            method_parents[call.group(2)] = stack[-1][1] if stack else ""
             continue
-        coincide = re.match(r"^(\s+)path: '([^']*)',", linea)
-        if not coincide:
+        matches = re.match(r"^(\s+)path: '([^']*)',", line)
+        if not matches:
             continue
-        sangria = len(coincide.group(1))
-        while pila and pila[-1][0] >= sangria:
-            pila.pop()
-        padre = pila[-1][1].rstrip("/") if pila else ""
-        ruta = (
-            coincide.group(2)
-            if coincide.group(2).startswith("/")
-            else f"{padre}/{coincide.group(2)}"
+        indent = len(matches.group(1))
+        while stack and stack[-1][0] >= indent:
+            stack.pop()
+        parent = stack[-1][1].rstrip("/") if stack else ""
+        route = (
+            matches.group(2) if matches.group(2).startswith("/") else f"{parent}/{matches.group(2)}"
         )
-        pila.append((sangria, ruta))
-        rutas.add(ruta)
-    return rutas
+        stack.append((indent, route))
+        routes.add(route)
+    return routes
 
 
-def _rutas_documentadas() -> set[str]:
-    tabla = _secciones(_texto(NAVEGACION), "##")["Routes"]
-    filas = re.findall(r"^\| `([^`]+)` \|", tabla, re.M)
-    return {fila.split("?")[0] for fila in filas}
+def _documented_routes() -> set[str]:
+    table = _sections(_text(NAVIGATION), "##")["Routes"]
+    rows = re.findall(r"^\| `([^`]+)` \|", table, re.M)
+    return {row.split("?")[0] for row in rows}
 
 
-def test_cada_ruta_que_nombra_la_pagina_de_navegacion_existe_en_app_dart() -> None:
-    """cada ruta que nombra la página de navegación existe en app.dart @DOC-01-S2"""
-    reales = _rutas_de_app_dart()
-    texto = _texto(NAVEGACION)
+def test_each_route_the_navigation_page_names_exists_in_app_dart() -> None:
+    """each route the navigation page names exists in app.dart @DOC-01-S2"""
+    real = _app_dart_routes()
+    text = _text(NAVIGATION)
 
-    assert _rutas_documentadas() <= reales, _rutas_documentadas() - reales
-    for ruta in re.findall(r'\["(/[^"\s?]*)', texto.split("```mermaid", 1)[1].split("```", 1)[0]):
-        assert any(r.startswith(ruta.rstrip("/")) or ruta.startswith(r) for r in reales), ruta
-
-
-def test_la_pagina_de_navegacion_lista_cada_ruta_de_app_dart() -> None:
-    """la página de navegación lista cada ruta de app.dart @DOC-01-S2"""
-    reales = _rutas_de_app_dart()
-
-    assert len(reales) >= 30
-    assert reales <= _rutas_documentadas(), reales - _rutas_documentadas()
+    assert _documented_routes() <= real, _documented_routes() - real
+    for route in re.findall(r'\["(/[^"\s?]*)', text.split("```mermaid", 1)[1].split("```", 1)[0]):
+        assert any(r.startswith(route.rstrip("/")) or route.startswith(r) for r in real), route
 
 
-def test_el_sitio_de_documentacion_incluye_el_modelo_de_datos_y_la_navegacion_en_tecnica() -> None:
-    """el sitio de documentación incluye el modelo de datos y la navegación under Technical @DOC-01-S3"""
-    copiar = _texto(COPIAR)
-    paginas = re.findall(r"\['([^']+)', '(technical/[^']+)', (\d+)\]", copiar)
-    por_origen = {origen: (destino, int(pos)) for origen, destino, pos in paginas}
+def test_the_navigation_page_lists_each_route_of_app_dart() -> None:
+    """the navigation page lists each route of app.dart @DOC-01-S2"""
+    real = _app_dart_routes()
 
-    assert por_origen["docs/technical/data-model.md"] == ("technical/data-model.md", 2)
-    assert por_origen["docs/technical/app-navigation.md"] == (
+    assert len(real) >= 30
+    assert real <= _documented_routes(), real - _documented_routes()
+
+
+def test_the_documentation_site_includes_the_data_model_and_the_navigation_under_technical() -> (
+    None
+):
+    """the documentation site includes the data model and the navigation under Technical @DOC-01-S3"""
+    copy = _text(COPY)
+    pages = re.findall(r"\['([^']+)', '(technical/[^']+)', (\d+)\]", copy)
+    by_source = {source: (target, int(pos)) for source, target, pos in pages}
+
+    assert by_source["docs/technical/data-model.md"] == ("technical/data-model.md", 2)
+    assert by_source["docs/technical/app-navigation.md"] == (
         "technical/app-navigation.md",
         3,
     )
-    posiciones = [pos for _, pos in por_origen.values()]
-    assert sorted(posiciones) == list(range(1, len(posiciones) + 1))
-    assert (RAIZ / "docs" / "technical" / "data-model.md").exists() or "existsSync" in copiar
-    assert "existsSync(join(repo, source))" in copiar
+    positions = [pos for _, pos in by_source.values()]
+    assert sorted(positions) == list(range(1, len(positions) + 1))
+    assert (ROOT / "docs" / "technical" / "data-model.md").exists() or "existsSync" in copy
+    assert "existsSync(join(repo, source))" in copy

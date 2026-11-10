@@ -9,51 +9,51 @@ from app.shared import input_validation
 from app.shared.input_validation import Identifier
 
 
-class _Pedido(BaseModel):
+class _Request(BaseModel):
     name: str = ""
     cantidad: Identifier = UUID(int=1)
 
 
 @pytest.fixture(scope="module")
-def cliente() -> TestClient:
+def client() -> TestClient:
     app = FastAPI()
     input_validation.install(app)
 
     @app.post("/pedido")
-    def pedido(p: _Pedido) -> dict[str, str]:
+    def request(p: _Request) -> dict[str, str]:
         return {"name": p.name}
 
     return TestClient(app)
 
 
-@pytest.mark.parametrize("texto", ["", "1", "no-es-un-uuid", "0123456789abcdef0123456789abcdeg"])
-def test_un_identificador_mal_formado_no_pasa(texto: str) -> None:
+@pytest.mark.parametrize("text", ["", "1", "no-es-un-uuid", "0123456789abcdef0123456789abcdeg"])
+def test_a_malformed_identifier_does_not_pass(text: str) -> None:
     with pytest.raises(ValidationError):
-        TypeAdapter(Identifier).validate_python(texto)
+        TypeAdapter(Identifier).validate_python(text)
 
 
-def test_un_identificador_acepta_mayusculas_y_sin_guiones() -> None:
-    adaptador = TypeAdapter(Identifier)
-    esperado = UUID("0197b5a2-7c3e-7a10-8f4d-1e2f3a4b5c6d")
+def test_an_identifier_accepts_uppercase_and_no_hyphens() -> None:
+    adapter = TypeAdapter(Identifier)
+    expected = UUID("0197b5a2-7c3e-7a10-8f4d-1e2f3a4b5c6d")
 
-    assert adaptador.validate_python("0197B5A2-7C3E-7A10-8F4D-1E2F3A4B5C6D") == esperado
-    assert adaptador.validate_python("0197b5a27c3e7a108f4d1e2f3a4b5c6d") == esperado
+    assert adapter.validate_python("0197B5A2-7C3E-7A10-8F4D-1E2F3A4B5C6D") == expected
+    assert adapter.validate_python("0197b5a27c3e7a108f4d1e2f3a4b5c6d") == expected
 
 
-def test_un_identificador_mal_formado_tiene_un_mensaje_general(cliente: TestClient) -> None:
-    r = cliente.post("/pedido", json={"cantidad": "1"})
+def test_a_malformed_identifier_has_a_general_message(client: TestClient) -> None:
+    r = client.post("/pedido", json={"cantidad": "1"})
 
     assert r.json() == {"errors": {"cantidad": "The value is not valid"}}
 
 
-def test_un_dato_de_otro_tipo_tiene_un_mensaje_general(cliente: TestClient) -> None:
-    r = cliente.post("/pedido", json={"name": 5})
+def test_a_value_of_another_type_has_a_general_message(client: TestClient) -> None:
+    r = client.post("/pedido", json={"name": 5})
 
     assert r.json() == {"errors": {"name": "The value is not valid"}}
 
 
-def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
-    r = cliente.post(
+def test_broken_json_answers_400_without_repeating_it(client: TestClient) -> None:
+    r = client.post(
         "/pedido", content='{"name": "clave-secreta', headers={"Content-Type": "application/json"}
     )
 
@@ -61,8 +61,8 @@ def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
     assert r.json() == {"errors": {"body": "The body is not valid JSON"}}
 
 
-def test_un_cuerpo_que_falta_responde_422(cliente: TestClient) -> None:
-    r = cliente.post("/pedido")
+def test_a_missing_body_answers_422(client: TestClient) -> None:
+    r = client.post("/pedido")
 
     assert r.status_code == 422
     assert list(r.json()["errors"]) == ["body"]

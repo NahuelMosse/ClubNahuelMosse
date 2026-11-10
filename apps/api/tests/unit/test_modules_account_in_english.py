@@ -1,6 +1,6 @@
-"""Los módulos de sedes, usuarios, sesión y recuperación de la API están en inglés."""
+"""The API's venues, users, session and password recovery modules are in English."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tag and are not split)
 import ast
 import io
 import json
@@ -12,7 +12,7 @@ from tests.contract_renames import SPANISH_NAMES
 from tests.unit.test_api_in_english_contract_current import operations_differing_in
 
 API_ROOT = Path(__file__).resolve().parents[2]
-RAIZ = API_ROOT.parents[1]
+ROOT = API_ROOT.parents[1]
 APP = API_ROOT / "app"
 MODULES = APP / "modules"
 
@@ -25,7 +25,7 @@ FILES = {
     "session": ["__init__", "use_cases", "profile", "repository", "current_user"],
     "password_recovery": ["__init__", "use_cases", "email", "rules", "repository", "routes"],
 }  # fmt: skip
-NUEVOS = [MODULES / m / f"{a}.py" for m, archivos in FILES.items() for a in archivos]
+NEW_FILES = [MODULES / m / f"{a}.py" for m, files in FILES.items() for a in files]
 OLD_NAMES = ("sedes", "usuarios", "sesion", "recuperacion")
 OLD_IMPORT = re.compile(
     r"\bapp\.modules\.(?:sedes|usuarios|sesion|recuperacion)\b"
@@ -35,128 +35,126 @@ OLD_IMPORT = re.compile(
 )
 
 
-def _route_params(fuente: str) -> set[str]:
-    """Los `{nombre}` de las rutas: son parte de la URL y no cambian."""
-    return set(re.findall(r"\{(\w+)\}", fuente))
+def _route_params(source: str) -> set[str]:
+    """The `{name}` of the routes: they are part of the URL and do not change."""
+    return set(re.findall(r"\{(\w+)\}", source))
 
 
-def _model_fields(arbol: ast.AST) -> set[str]:
-    """Los campos anotados de una clase: son las claves JSON y conservan su nombre."""
+def _model_fields(tree: ast.AST) -> set[str]:
+    """The annotated fields of a class: they are the JSON keys and keep their name."""
     return {
         n.target.id
-        for clase in ast.walk(arbol)
-        if isinstance(clase, ast.ClassDef)
-        for n in clase.body
+        for cls in ast.walk(tree)
+        if isinstance(cls, ast.ClassDef)
+        for n in cls.body
         if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name)
     }
 
 
-def _defined_names(arbol: ast.AST) -> set[str]:
-    nombres: set[str] = set()
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
-            nombres.add(nodo.name)
-        elif isinstance(nodo, ast.arg):
-            nombres.add(nodo.arg)
-        elif isinstance(nodo, ast.Name) and isinstance(nodo.ctx, ast.Store):
-            nombres.add(nodo.id)
-        elif isinstance(nodo, ast.Attribute) and isinstance(nodo.ctx, ast.Store):
-            nombres.add(nodo.attr)
-        elif isinstance(nodo, ast.Global | ast.Nonlocal):
-            nombres.update(nodo.names)
-    return nombres
+def _defined_names(tree: ast.AST) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
+            names.add(node.name)
+        elif isinstance(node, ast.arg):
+            names.add(node.arg)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Store):
+            names.add(node.attr)
+        elif isinstance(node, ast.Global | ast.Nonlocal):
+            names.update(node.names)
+    return names
 
 
-def _prose(fuente: str, arbol: ast.AST) -> list[str]:
-    textos = [
+def _prose(source: str, tree: ast.AST) -> list[str]:
+    texts = [
         t.string
-        for t in tokenize.generate_tokens(io.StringIO(fuente).readline)
+        for t in tokenize.generate_tokens(io.StringIO(source).readline)
         if t.type == tokenize.COMMENT
     ]
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
-            doc = ast.get_docstring(nodo, clean=False)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
+            doc = ast.get_docstring(node, clean=False)
             if doc:
-                textos.append(doc)
-    return textos
+                texts.append(doc)
+    return texts
 
 
-def _contrato_normalizado(contrato: dict) -> dict:
-    """Operaciones con sus parámetros, security y códigos, y los campos de cada esquema, sin los nombres de esquema."""
+def _normalized_contract(contract: dict) -> dict:
+    """Operations with their parameters, security and codes, and the fields of each schema, without the schema names."""
 
-    def sin_nombre(valor: object) -> object:
-        if isinstance(valor, dict):
-            if "$ref" in valor:
+    def without_name(value: object) -> object:
+        if isinstance(value, dict):
+            if "$ref" in value:
                 return {"$ref": "schema"}
-            return {k: sin_nombre(v) for k, v in valor.items() if k != "title"}
-        if isinstance(valor, list):
-            return [sin_nombre(v) for v in valor]
-        return valor
+            return {k: without_name(v) for k, v in value.items() if k != "title"}
+        if isinstance(value, list):
+            return [without_name(v) for v in value]
+        return value
 
-    esquemas = contrato.get("components", {}).get("schemas", {})
-    operaciones = {
-        f"{metodo.upper()} {ruta}": sin_nombre(op)
-        for ruta, metodos in contrato["paths"].items()
-        for metodo, op in metodos.items()
+    schemas = contract.get("components", {}).get("schemas", {})
+    operations = {
+        f"{method.upper()} {route}": without_name(op)
+        for route, methods in contract["paths"].items()
+        for method, op in methods.items()
     }
-    campos = sorted(
-        json.dumps(sin_nombre(e), sort_keys=True, ensure_ascii=False) for e in esquemas.values()
+    fields = sorted(
+        json.dumps(without_name(e), sort_keys=True, ensure_ascii=False) for e in schemas.values()
     )
-    return {"operaciones": operaciones, "esquemas": campos}
+    return {"operations": operations, "schemas": fields}
 
 
-def _contrato_publicado() -> dict:
+def _published_contract() -> dict:
     return json.loads((API_ROOT / "openapi.json").read_text(encoding="utf-8"))
 
 
-def test_los_campos_de_los_modelos_de_entrada_y_salida_son_las_claves_json_en_ingles() -> (
-    None
-):
-    """los campos de los modelos de entrada y salida son las claves JSON en inglés @assumption:ENG-02-ASM-05"""
-    publicado = {
+def test_the_fields_of_the_input_and_output_models_are_the_json_keys_in_english() -> None:
+    """the fields of the input and output models are the JSON keys in English @assumption:ENG-02-ASM-05"""
+    published = {
         k
-        for e in _contrato_publicado()["components"]["schemas"].values()
+        for e in _published_contract()["components"]["schemas"].values()
         for k in e.get("properties", {})
     }
-    en_castellano = sorted(publicado & SPANISH_NAMES)
-    con_alias = [
+    in_spanish = sorted(published & SPANISH_NAMES)
+    with_alias = [
         str(p.relative_to(APP))
-        for p in NUEVOS
+        for p in NEW_FILES
         if p.exists() and re.search(r"\balias\s*=", p.read_text(encoding="utf-8"))
     ]
 
-    assert not en_castellano, en_castellano
-    assert not con_alias, con_alias
+    assert not in_spanish, in_spanish
+    assert not with_alias, with_alias
 
 
-def test_e2e_sh_y_e2e_support_usan_los_modulos_nuevos_con_las_mismas_opciones() -> None:
-    """scripts/e2e.sh y e2e_support usan los módulos nuevos con las mismas opciones @assumption:ENG-02-ASM-06"""
-    script = (RAIZ / "scripts" / "e2e.sh").read_text(encoding="utf-8")
-    soporte = (APP / "e2e_support.py").read_text(encoding="utf-8")
+def test_e2e_sh_and_e2e_support_use_the_new_modules_with_the_same_options() -> None:
+    """scripts/e2e.sh and e2e_support use the new modules with the same options @assumption:ENG-02-ASM-06"""
+    script = (ROOT / "scripts" / "e2e.sh").read_text(encoding="utf-8")
+    support = (APP / "e2e_support.py").read_text(encoding="utf-8")
 
     assert not OLD_IMPORT.search(script)
-    assert not OLD_IMPORT.search(soporte)
+    assert not OLD_IMPORT.search(support)
     assert "--correo" in script
-    assert "app.modules.users" in script or "app.modules.users" in soporte
+    assert "app.modules.users" in script or "app.modules.users" in support
 
 
-def test_cada_operacion_conserva_sus_parametros_y_su_security() -> None:
-    """cada operación conserva sus parámetros y su security @assumption:ENG-02-ASM-07"""
-    assert operations_differing_in("/register", "/me", "/password-recovery", "/link", "/venues") == []
+def test_each_operation_keeps_its_parameters_and_its_security() -> None:
+    """each operation keeps its parameters and its security @assumption:ENG-02-ASM-07"""
+    assert (
+        operations_differing_in("/register", "/me", "/password-recovery", "/link", "/venues") == []
+    )
 
 
-def test_ningun_documento_nombra_sedes_usuarios_sesion_ni_recuperacion_como_modulo() -> None:
-    """ningún documento nombra sedes, usuarios, sesion ni recuperacion como módulo @assumption:ENG-02-ASM-08"""
-    documentos = [
-        RAIZ / "docs" / "technical" / "code-map.md",
+def test_no_document_names_the_old_spanish_account_modules_as_a_module() -> None:
+    """no document names «sedes», «usuarios», «sesion» or «recuperacion» as a module @assumption:ENG-02-ASM-08"""
+    documents = [
+        ROOT / "docs" / "technical" / "code-map.md",
         API_ROOT / "README.md",
-        *(RAIZ / "docs" / "features").glob("*.md"),
+        *(ROOT / "docs" / "features").glob("*.md"),
     ]
 
-    problemas = [
-        p.name
-        for p in documentos
-        if p.exists() and OLD_IMPORT.search(p.read_text(encoding="utf-8"))
+    problems = [
+        p.name for p in documents if p.exists() and OLD_IMPORT.search(p.read_text(encoding="utf-8"))
     ]
 
-    assert not problemas, problemas
+    assert not problems, problems

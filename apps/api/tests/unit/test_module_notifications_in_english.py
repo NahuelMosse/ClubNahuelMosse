@@ -1,6 +1,6 @@
-"""El módulo de notificaciones de la API está en inglés."""
+"""The API's notifications module is in English."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tag and are not split)
 import ast
 import re
 from pathlib import Path
@@ -14,11 +14,11 @@ from tests.unit.test_base_in_english import (
 )
 
 APP = Path(__file__).resolve().parents[2] / "app"
-MODULO = APP / "modules" / "notifications"
-ARCHIVOS = ["use_cases", "rules", "repository", "routes", "store", "sweep", "push"]
-VIEJOS = ["casos_de_uso", "reglas", "repositorio", "rutas", "almacen", "barrido", "push"]
-# Términos de este módulo que el glosario no lista como palabra suelta.
-EXTRA_CASTELLANO = {
+MODULE = APP / "modules" / "notifications"
+FILES = ["use_cases", "rules", "repository", "routes", "store", "sweep", "push"]
+OLD_FILES = ["casos_de_uso", "reglas", "repositorio", "rutas", "almacen", "barrido", "push"]
+# Terms of this module that the glossary does not list as a standalone word.
+EXTRA_SPANISH = {
     "aviso", "avisos", "canal", "envio", "enviar", "enviado", "enviados", "invalido",
     "invalidos", "anticipacion", "espera", "motivo", "vigente", "registro", "pedido",
     "cuenta", "fila", "filas", "vencidos", "varados", "atascados", "muertos", "previo",
@@ -30,68 +30,68 @@ EXTRA_CASTELLANO = {
     "total", "cantidad", "pendiente", "pendientes", "fallida", "fallidos", "siguiente",
     "tomar", "marcar", "registrar", "entregar", "despachar", "barrer", "armar", "mensaje",
 }  # fmt: skip
-INGLES = {"total", "token", "tokens", "push", "id", "ids"}  # `total` y `token` son inglés también
-# Campos de los modelos Pydantic: son claves JSON y se quedan en castellano (ENG-04-ASM-05).
-CLASES_DE_CAMPOS = {"BaseModel"}
+ENGLISH = {"total", "token", "tokens", "push", "id", "ids"}  # `total` and `token` are English too
+# Fields of the Pydantic models: they are JSON keys and stay in Spanish (ENG-04-ASM-05).
+FIELD_CLASSES = {"BaseModel"}
 
 
-def _campos_json(arbol: ast.AST) -> set[str]:
-    campos: set[str] = set()
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.ClassDef) and any(
-            isinstance(b, ast.Name) and b.id in CLASES_DE_CAMPOS for b in nodo.bases
+def _json_fields(tree: ast.AST) -> set[str]:
+    fields: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and any(
+            isinstance(b, ast.Name) and b.id in FIELD_CLASSES for b in node.bases
         ):
-            campos |= {
+            fields |= {
                 s.target.id
-                for s in nodo.body
+                for s in node.body
                 if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)
             }
-    return campos
+    return fields
 
 
-def test_el_modulo_de_notificaciones_se_llama_como_dice_el_glosario() -> None:
-    """el módulo de notificaciones se llama como dice el glosario @ENG-04-S1 @assumption:ENG-04-ASM-02 @assumption:ENG-04-ASM-03"""
-    faltan = [f"{n}.py" for n in ARCHIVOS if not (MODULO / f"{n}.py").exists()]
-    sobran = [
+def test_the_notifications_module_is_named_as_the_glossary_says() -> None:
+    """the notifications module is named as the glossary says @ENG-04-S1 @assumption:ENG-04-ASM-02 @assumption:ENG-04-ASM-03"""
+    missing = [f"{n}.py" for n in FILES if not (MODULE / f"{n}.py").exists()]
+    left_over = [
         f"notificaciones/{n}.py"
-        for n in VIEJOS
+        for n in OLD_FILES
         if (APP / "modules" / "notificaciones" / f"{n}.py").exists()
     ]
-    importes = re.compile(
+    imports = re.compile(
         r"\bapp\.modules\.notificaciones\b|\bmodules import [^\n]*\bnotificaciones\b"
     )
-    raiz = APP.parent
-    viejos = [
-        str(p.relative_to(raiz))
-        for carpeta in (APP, raiz / "tests", raiz / "migrations")
-        for p in carpeta.rglob("*.py")
+    root = APP.parent
+    old = [
+        str(p.relative_to(root))
+        for folder in (APP, root / "tests", root / "migrations")
+        for p in folder.rglob("*.py")
         if p.resolve() != Path(__file__).resolve()
         and ".venv" not in p.parts
-        and importes.search(p.read_text(encoding="utf-8"))
+        and imports.search(p.read_text(encoding="utf-8"))
     ]
 
-    assert not faltan, faltan
-    assert not sobran, sobran
-    assert not viejos, viejos
-    assert (MODULO / "__init__.py").exists()
+    assert not missing, missing
+    assert not left_over, left_over
+    assert not old, old
+    assert (MODULE / "__init__.py").exists()
 
 
-def test_los_nombres_comentarios_y_docstrings_de_notificaciones_estan_en_ingles() -> None:
-    """los nombres, comentarios y docstrings de notificaciones están en inglés @ENG-04-S2 @assumption:ENG-04-ASM-04"""
-    castellano = (_spanish() | EXTRA_CASTELLANO) - INGLES
-    problemas: list[str] = []
-    archivos = [MODULO / "__init__.py", *(MODULO / f"{n}.py" for n in ARCHIVOS)]
-    for ruta in archivos:
-        if not ruta.exists():
-            problemas.append(f"{ruta.name}: no existe")
+def test_the_names_comments_and_docstrings_of_notifications_are_in_english() -> None:
+    """the names, comments and docstrings of notifications are in English @ENG-04-S2 @assumption:ENG-04-ASM-04"""
+    spanish = (_spanish() | EXTRA_SPANISH) - ENGLISH
+    problems: list[str] = []
+    files = [MODULE / "__init__.py", *(MODULE / f"{n}.py" for n in FILES)]
+    for path in files:
+        if not path.exists():
+            problems.append(f"{path.name}: does not exist")
             continue
-        fuente = ruta.read_text(encoding="utf-8")
-        arbol = ast.parse(fuente)
-        for nombre in sorted(_defined_names(arbol) - _campos_json(arbol)):
-            if castellano & set(_words(nombre)):
-                problemas.append(f"{ruta.name}: nombre {nombre}")
-        for texto in _prose_texts(fuente, arbol):
-            if COMMON_WORDS.search(texto):
-                problemas.append(f"{ruta.name}: {texto.strip().splitlines()[0][:60]}")
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        for name in sorted(_defined_names(tree) - _json_fields(tree)):
+            if spanish & set(_words(name)):
+                problems.append(f"{path.name}: name {name}")
+        for text in _prose_texts(source, tree):
+            if COMMON_WORDS.search(text):
+                problems.append(f"{path.name}: {text.strip().splitlines()[0][:60]}")
 
-    assert not problemas, problemas
+    assert not problems, problems

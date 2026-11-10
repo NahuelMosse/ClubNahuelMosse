@@ -3,80 +3,79 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.users.registration import register as registrar
-from app.modules.users.rules import Registration as Registro
-from app.modules.users.rules import RegistrationData as DatosRegistro
+from app.modules.users.registration import register
+from app.modules.users.rules import Registration, RegistrationData
 from app.shared.errors import Duplicate
 
-DATOS = DatosRegistro("Ana", "Pérez", "12345678", "2000-03-14", "ana@correo.com", "ClubNahuel1")
-HOY = date(2026, 11, 12)
+DATA = RegistrationData("Ana", "Pérez", "12345678", "2000-03-14", "ana@correo.com", "ClubNahuel1")
+TODAY = date(2026, 11, 12)
 
 
-class Identidad:
-    def __init__(self, existente: str | None = None, falla_borrar: bool = False) -> None:
-        self.cuentas: dict[str, str] = {} if existente is None else {"ana@correo.com": existente}
-        self.borradas: list[str] = []
-        self.falla_borrar = falla_borrar
+class Identity:
+    def __init__(self, existing: str | None = None, delete_fails: bool = False) -> None:
+        self.accounts: dict[str, str] = {} if existing is None else {"ana@correo.com": existing}
+        self.deleted: list[str] = []
+        self.delete_fails = delete_fails
 
     def create_account(self, email: str, password: str) -> str:
-        if email in self.cuentas:
+        if email in self.accounts:
             raise Duplicate(["correo"])
-        self.cuentas[email] = f"uid-{len(self.cuentas) + len(self.borradas)}"
-        return self.cuentas[email]
+        self.accounts[email] = f"uid-{len(self.accounts) + len(self.deleted)}"
+        return self.accounts[email]
 
     def uid_of(self, email: str) -> str | None:
-        return self.cuentas.get(email)
+        return self.accounts.get(email)
 
     def delete_account(self, uid: str) -> None:
-        if self.falla_borrar:
-            raise RuntimeError("el proveedor no responde")
-        self.borradas.append(uid)
-        self.cuentas = {c: u for c, u in self.cuentas.items() if u != uid}
+        if self.delete_fails:
+            raise RuntimeError("the provider does not answer")
+        self.deleted.append(uid)
+        self.accounts = {c: u for c, u in self.accounts.items() if u != uid}
 
 
-class Usuarios:
-    def __init__(self, activos: set[str] | None = None, falla: BaseException | None = None) -> None:
-        self.activos = activos or set()
-        self.falla = falla
-        self.insertados: list[str] = []
+class Users:
+    def __init__(self, active: set[str] | None = None, fails: BaseException | None = None) -> None:
+        self.active = active or set()
+        self.fails = fails
+        self.inserted: list[str] = []
 
-    def duplicates(self, correo: str, dni: str) -> list[str]:
+    def duplicates(self, email: str, dni: str) -> list[str]:
         return []
 
     def uid_is_active(self, uid: str) -> bool:
-        return uid in self.activos
+        return uid in self.active
 
-    def insert(self, uid: str, registro: Registro) -> UUID:
-        if self.falla is not None:
-            raise self.falla
-        self.insertados.append(uid)
+    def insert(self, uid: str, registration: Registration) -> UUID:
+        if self.fails is not None:
+            raise self.fails
+        self.inserted.append(uid)
         return UUID(int=1)
 
 
-def test_si_falla_el_alta_se_borra_la_cuenta_creada() -> None:
-    identidad = Identidad()
+def test_if_the_signup_fails_the_created_account_is_deleted() -> None:
+    identity = Identity()
     with pytest.raises(ConnectionError):
-        registrar(DATOS, HOY, identidad, Usuarios(falla=ConnectionError("se cortó la base")))
-    assert identidad.borradas == ["uid-0"]
+        register(DATA, TODAY, identity, Users(fails=ConnectionError("the database dropped")))
+    assert identity.deleted == ["uid-0"]
 
 
-def test_un_error_al_borrar_no_tapa_el_error_original() -> None:
-    identidad = Identidad(falla_borrar=True)
+def test_an_error_on_delete_does_not_hide_the_original_error() -> None:
+    identity = Identity(delete_fails=True)
     with pytest.raises(Duplicate) as e:
-        registrar(DATOS, HOY, identidad, Usuarios(falla=Duplicate(["dni"])))
+        register(DATA, TODAY, identity, Users(fails=Duplicate(["dni"])))
     assert e.value.fields == ["dni"]
 
 
-def test_una_cuenta_del_proveedor_sin_perfil_activo_se_reemplaza() -> None:
-    identidad = Identidad(existente="uid-viejo")
-    usuarios = Usuarios()
-    assert registrar(DATOS, HOY, identidad, usuarios) == UUID(int=1)
-    assert identidad.borradas == ["uid-viejo"]
-    assert usuarios.insertados == [identidad.cuentas["ana@correo.com"]]
+def test_a_provider_account_without_an_active_profile_is_replaced() -> None:
+    identity = Identity(existing="uid-viejo")
+    users = Users()
+    assert register(DATA, TODAY, identity, users) == UUID(int=1)
+    assert identity.deleted == ["uid-viejo"]
+    assert users.inserted == [identity.accounts["ana@correo.com"]]
 
 
-def test_una_cuenta_con_perfil_activo_sigue_siendo_duplicado() -> None:
-    identidad = Identidad(existente="uid-activo")
+def test_an_account_with_an_active_profile_is_still_a_duplicate() -> None:
+    identity = Identity(existing="uid-activo")
     with pytest.raises(Duplicate):
-        registrar(DATOS, HOY, identidad, Usuarios(activos={"uid-activo"}))
-    assert identidad.borradas == []
+        register(DATA, TODAY, identity, Users(active={"uid-activo"}))
+    assert identity.deleted == []

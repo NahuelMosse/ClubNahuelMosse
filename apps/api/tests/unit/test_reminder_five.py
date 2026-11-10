@@ -16,16 +16,16 @@ from app.modules.notifications.rules import (
 from app.modules.notifications.use_cases import DeliveryResult, send_reminders
 from app.shared.message import Message
 
-AHORA = datetime(2026, 10, 1, 23, 56, tzinfo=UTC)
-INICIO = datetime(2026, 10, 2, 0, 0, tzinfo=UTC)
+NOW = datetime(2026, 10, 1, 23, 56, tzinfo=UTC)
+START = datetime(2026, 10, 2, 0, 0, tzinfo=UTC)
 
 
-def _cinco() -> Reminder:
+def _five() -> Reminder:
     return Reminder(
         UUID(int=7),
         UUID(int=3),
-        INICIO,
-        INICIO + timedelta(hours=1),
+        START,
+        START + timedelta(hours=1),
         "Futbol",
         "F5",
         "Sede Morón",
@@ -35,18 +35,18 @@ def _cinco() -> Reminder:
     )
 
 
-class _Repositorio:
+class _Repository:
     def __init__(self) -> None:
-        self.registrados: list[Reminder] = []
-        self.envios: list[str] = []
+        self.registered: list[Reminder] = []
+        self.deliveries: list[str] = []
 
     def due(self, now: datetime, user_id: UUID | None) -> list[Reminder]:
-        return [_cinco(), _cinco()]
+        return [_five(), _five()]
 
     def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
-        if self.registrados:
+        if self.registered:
             return None
-        self.registrados.append(reminder)
+        self.registered.append(reminder)
         return UUID(int=50)
 
     def recipient(self, user_id: UUID) -> Recipient | None:
@@ -56,39 +56,42 @@ class _Repositorio:
         return ["token"]
 
     def mark_delivery(self, notification_id: UUID, delivery: str) -> None:
-        self.envios.append(delivery)
+        self.deliveries.append(delivery)
 
     def deactivate_tokens(self, tokens: Sequence[str]) -> None: ...
 
 
-class _Canal:
+class _Channel:
     def __init__(self) -> None:
-        self.avisos: list[Notice] = []
+        self.notices: list[Notice] = []
 
     def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
-        self.avisos.append(notice)
+        self.notices.append(notice)
         return DeliveryResult(sent=len(tokens))
 
 
-def test_a_5_minutos_de_la_reserva_sale_un_aviso_por_push_y_por_correo_una_sola_vez(
+def test_five_minutes_before_the_booking_one_notice_goes_out_by_push_and_by_email_only_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """a 5 minutos de la reserva sale un aviso por push y por correo, una sola vez @NOT-05-S1"""
-    correos: list[Message] = []
-    monkeypatch.setattr(use_cases, "send", correos.append)
-    repo, canal = _Repositorio(), _Canal()
+    """five minutes before the booking one notice goes out by push and email, once @NOT-05-S1"""
+    emails: list[Message] = []
+    monkeypatch.setattr(use_cases, "send", emails.append)
+    repo, channel = _Repository(), _Channel()
 
-    registrados = send_reminders(cast(Any, repo), canal, AHORA)
+    registered = send_reminders(cast(Any, repo), channel, NOW)
 
-    assert registrados == 1
-    assert [a.title for a in canal.avisos] == ["Your booking starts in 5 minutes"]
-    assert canal.avisos[0].body == "Football 5 · Sede Morón · 21:00 – 22:00"
-    assert canal.avisos[0].data == {"kind": "five_minute_reminder", "booking_id": str(UUID(int=7))}
-    assert [c.subject for c in correos] == ["Your booking starts in 5 minutes"]
-    assert repo.envios == ["sent"]
+    assert registered == 1
+    assert [a.title for a in channel.notices] == ["Your booking starts in 5 minutes"]
+    assert channel.notices[0].body == "Football 5 · Sede Morón · 21:00 – 22:00"
+    assert channel.notices[0].data == {
+        "kind": "five_minute_reminder",
+        "booking_id": str(UUID(int=7)),
+    }
+    assert [c.subject for c in emails] == ["Your booking starts in 5 minutes"]
+    assert repo.deliveries == ["sent"]
     assert FIVE_MINUTE_LEAD_TIME == timedelta(minutes=5)
 
 
-def test_el_aviso_de_una_hora_sigue_igual() -> None:
-    una_hora = Reminder(UUID(int=7), UUID(int=3), INICIO, INICIO, "Futbol", "F5", "Sede")
-    assert reminder_message(una_hora).title == "Your booking is in 1 hour"
+def test_the_one_hour_notice_stays_the_same() -> None:
+    one_hour = Reminder(UUID(int=7), UUID(int=3), START, START, "Futbol", "F5", "Sede")
+    assert reminder_message(one_hour).title == "Your booking is in 1 hour"

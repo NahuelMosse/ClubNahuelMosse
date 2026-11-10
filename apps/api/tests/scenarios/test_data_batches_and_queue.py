@@ -1,6 +1,6 @@
-"""Datos (continuación): historiales, índices, cola de avisos y migración 0008.
+"""Data (continued): histories, indexes, notice queue and migration 0008.
 
-Los helpers y los fixtures son los de test_data.py.
+The helpers and fixtures are those of test_data.py.
 """
 
 import threading
@@ -11,7 +11,7 @@ from alembic import command
 from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, event, text
-from test_data import (  # noqa: F401 — los fixtures se importan para que pytest los vea
+from test_data import (  # noqa: F401 — the fixtures are imported so that pytest sees them
     _sweep,
     _cancel,
     _capture,
@@ -29,7 +29,7 @@ from test_data import (  # noqa: F401 — los fixtures se importan para que pyte
 from test_reminder import Member
 
 
-def _ids_del_socio(member: Member) -> set[str]:
+def _member_ids(member: Member) -> set[str]:
     with member.engine.connect() as conn:
         return {
             str(f.id)
@@ -39,69 +39,69 @@ def _ids_del_socio(member: Member) -> set[str]:
         }
 
 
-def _historial(member: Member, **params: str) -> dict[str, Any]:
+def _history(member: Member, **params: str) -> dict[str, Any]:
     r = member.api.get("/bookings", headers=member.session, params={"when": "history", **params})
     assert r.status_code == 200
-    cuerpo: dict[str, Any] = r.json()
-    return cuerpo
+    body: dict[str, Any] = r.json()
+    return body
 
 
-def _capturar_sql(accion: Callable[[], None]) -> list[tuple[str, Any]]:
-    """Las sentencias que la base recibe mientras corre [accion]."""
-    vistas: list[tuple[str, Any]] = []
+def _capture_sql(action: Callable[[], None]) -> list[tuple[str, Any]]:
+    """The statements the database receives while [action] runs."""
+    seen: list[tuple[str, Any]] = []
 
-    def escuchar(conn: Any, cursor: Any, statement: str, parameters: Any, *_: Any) -> None:
-        vistas.append((statement, parameters))
+    def listen(conn: Any, cursor: Any, statement: str, parameters: Any, *_: Any) -> None:
+        seen.append((statement, parameters))
 
-    event.listen(Engine, "before_cursor_execute", escuchar)
+    event.listen(Engine, "before_cursor_execute", listen)
     try:
-        accion()
+        action()
     finally:
-        event.remove(Engine, "before_cursor_execute", escuchar)
-    return vistas
+        event.remove(Engine, "before_cursor_execute", listen)
+    return seen
 
 
-def test_el_total_y_los_contadores_siguen_exactos_en_una_sola_consulta(
+def test_the_total_and_the_counters_stay_exact_in_a_single_query(
     api: TestClient, member: Member, admin_token: str
 ) -> None:
-    """el total y los contadores del historial global siguen exactos, como pide CU-14, en una sola
-    consulta @REV-03-S3 @assumption:REV-03-ASM-10
+    """the total and the counters of the global history stay exact, as CU-14 asks, in a single
+    query @REV-03-S3 @assumption:REV-03-ASM-10
     """
     _past(member, 25)
     admin = {"Authorization": f"Bearer {admin_token}"}
-    cuerpos: list[dict[str, Any]] = []
+    bodies: list[dict[str, Any]] = []
 
-    sentencias = _capturar_sql(
-        lambda: cuerpos.append(
+    statements = _capture_sql(
+        lambda: bodies.append(
             api.get("/bookings/all", headers=admin, params={"q": member.venue}).json()
         )
     )
 
-    assert cuerpos[0]["total"] == 25
-    assert cuerpos[0]["counters"]["all"] == 25
-    assert cuerpos[0]["counters"]["completed"] == 25
-    assert len([s for s, _ in sentencias if "count(*)" in s.lower()]) == 1
+    assert bodies[0]["total"] == 25
+    assert bodies[0]["counters"]["all"] == 25
+    assert bodies[0]["counters"]["completed"] == 25
+    assert len([s for s, _ in statements if "count(*)" in s.lower()]) == 1
 
 
-def test_en_el_historial_propio_con_el_mismo_inicio_va_primero_el_id_mas_alto(
+def test_in_the_own_history_with_the_same_start_the_highest_id_comes_first(
     member: Member,
 ) -> None:
-    """en el historial propio, con el mismo inicio va primero el id más alto y llegan todas
+    """in the own history, with the same start the highest id comes first and all of them arrive
     @REV-03-S2
     """
     _past(member, 20)
     _tie(member)
 
-    todas = _historial(member)["bookings"]
+    everything = _history(member)["bookings"]
 
-    claves = [(r["starts_at"], r["id"]) for r in todas]
-    assert claves == sorted(claves, reverse=True)
-    assert {r["id"] for r in todas} == _ids_del_socio(member)
-    assert len(todas) == 21
+    keys = [(r["starts_at"], r["id"]) for r in everything]
+    assert keys == sorted(keys, reverse=True)
+    assert {r["id"] for r in everything} == _member_ids(member)
+    assert len(everything) == 21
 
 
-def test_las_proximas_reservas_siguen_llegando_enteras(member: Member) -> None:
-    """las próximas reservas siguen llegando enteras @REV-03-S2 @assumption:REV-03-ASM-16"""
+def test_upcoming_bookings_keep_arriving_in_full(member: Member) -> None:
+    """upcoming bookings keep arriving in full @REV-03-S2 @assumption:REV-03-ASM-16"""
     with member.engine.begin() as conn:
         conn.execute(
             text(
@@ -118,29 +118,29 @@ def test_las_proximas_reservas_siguen_llegando_enteras(member: Member) -> None:
     assert len(r["bookings"]) == 25
 
 
-def test_la_migracion_0008_corta_por_lock_timeout_y_se_puede_volver_a_correr(
+def test_migration_0008_aborts_on_lock_timeout_and_can_be_run_again(
     migrations_db: tuple[Engine, AlembicConfig],
 ) -> None:
-    """la migración 0008 corta por lock_timeout si una transacción larga tiene la tabla
+    """migration 0008 aborts on lock_timeout if a long transaction holds the table
     @REV-03-S7 @assumption:REV-03-ASM-15
     """
-    base, alembic = migrations_db
+    db, alembic = migrations_db
     command.upgrade(alembic, "0007")
-    bloqueo = base.connect()
-    bloqueo.execute(text("LOCK TABLE notificacion IN ACCESS EXCLUSIVE MODE"))
-    resultado: list[BaseException] = []
-    hilo = threading.Thread(
-        target=lambda: _capture(resultado, lambda: command.upgrade(alembic, "0008"))
+    lock = db.connect()
+    lock.execute(text("LOCK TABLE notificacion IN ACCESS EXCLUSIVE MODE"))
+    result: list[BaseException] = []
+    thread = threading.Thread(
+        target=lambda: _capture(result, lambda: command.upgrade(alembic, "0008"))
     )
 
-    hilo.start()
-    hilo.join(timeout=60)
-    bloqueo.rollback()
-    bloqueo.close()
+    thread.start()
+    thread.join(timeout=60)
+    lock.rollback()
+    lock.close()
 
-    assert not hilo.is_alive()
-    assert "lock timeout" in str(resultado[0])
-    with base.connect() as conn:
+    assert not thread.is_alive()
+    assert "lock timeout" in str(result[0])
+    with db.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
     assert version == "0007"
     command.upgrade(alembic, "0008")

@@ -1,6 +1,6 @@
-"""La base de la API (shared, config, main, health, e2e_support) está en inglés."""
+"""The API base (shared, config, main, health, e2e_support) is in English."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import ast
 import io
 import re
@@ -12,11 +12,11 @@ from fastapi.testclient import TestClient
 
 from tests.unit.test_glossary_english import GLOSSARY, _translations
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-APP = RAIZ_API / "app"
+API_ROOT = Path(__file__).resolve().parents[2]
+APP = API_ROOT / "app"
 SHARED = APP / "shared"
 
-NUEVOS = [
+NEW_FILES = [
     APP / "main.py",
     APP / "health.py",
     APP / "e2e_support.py",
@@ -31,7 +31,7 @@ NUEVOS = [
     SHARED / "responses.py",
     SHARED / "club_timezone.py",
 ]
-VIEJOS = [
+OLD_FILES = [
     APP / "salud.py",
     APP / "pruebas.py",
     SHARED / "credencial_firebase.py",
@@ -43,10 +43,10 @@ VIEJOS = [
     SHARED / "respuestas.py",
     SHARED / "zona.py",
 ]
-# Palabras que son castellano en el glosario y también inglés o nombres propios de la API.
-INGLES = {"admin", "total", "token", "version", "dni", "club", "color", "plan", "no", "real"}
-# Los términos de los nombres de hoy que el glosario no lista como palabra suelta.
-EXTRA_CASTELLANO = {
+# Words that are Spanish in the glossary and also English or proper names of the API.
+ENGLISH = {"admin", "total", "token", "version", "dni", "club", "color", "plan", "no", "real"}
+# The terms of today's names that the glossary does not list as a standalone word.
+EXTRA_SPANISH = {
     "motor", "conexion", "transaccion", "restriccion", "violada", "ventana", "reintento",
     "body", "acotado", "limite", "plazo", "segundos", "entradas", "errors", "hora",
     "leer", "instalar", "forma", "identidad", "email", "password", "new_password", "crear",
@@ -57,90 +57,88 @@ EXTRA_CASTELLANO = {
     "cambiada", "futuras", "fields", "siguiente", "cantidad", "mensajes", "generico",
     "origenes", "responder", "ingreso", "rechazo", "bookings", "space", "venue",
 }  # fmt: skip
-COMMON_WORDS = re.compile(
-    r"\b(de|la|el|los|las|que|por|para|con|una|del|sin|cuando|si)\b", re.I
-)
+COMMON_WORDS = re.compile(r"\b(de|la|el|los|las|que|por|para|con|una|del|sin|cuando|si)\b", re.I)
 
 
 def _spanish() -> set[str]:
-    glosario = {
+    glossary = {
         p for p in _translations(GLOSSARY.read_text(encoding="utf-8")) if re.fullmatch(r"[a-z]+", p)
     }
-    # Una palabra que el glosario da como traducción ya es inglés, aunque otra fila la liste como origen.
-    traducidas = {
+    # A word the glossary gives as a translation is already English, even if another row lists it as a source.
+    translated = {
         w
-        for destinos in _translations(GLOSSARY.read_text(encoding="utf-8")).values()
-        for d in destinos
+        for targets in _translations(GLOSSARY.read_text(encoding="utf-8")).values()
+        for d in targets
         for w in re.findall(r"[a-z]+", d)
     }
-    return (glosario | EXTRA_CASTELLANO) - INGLES - traducidas
+    return (glossary | EXTRA_SPANISH) - ENGLISH - translated
 
 
-def _words(nombre: str) -> list[str]:
-    partes = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", nombre).lower().split("_")
-    return [p for p in partes if p]
+def _words(name: str) -> list[str]:
+    parts = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower().split("_")
+    return [p for p in parts if p]
 
 
-def _defined_names(arbol: ast.AST) -> set[str]:
-    nombres: set[str] = set()
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
-            nombres.add(nodo.name)
-        elif isinstance(nodo, ast.arg):
-            nombres.add(nodo.arg)
-        elif isinstance(nodo, ast.Name) and isinstance(nodo.ctx, ast.Store):
-            nombres.add(nodo.id)
-        elif isinstance(nodo, ast.Attribute) and isinstance(nodo.ctx, ast.Store):
-            nombres.add(nodo.attr)
-        elif isinstance(nodo, ast.Global | ast.Nonlocal):
-            nombres.update(nodo.names)
-    return nombres
+def _defined_names(tree: ast.AST) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
+            names.add(node.name)
+        elif isinstance(node, ast.arg):
+            names.add(node.arg)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Store):
+            names.add(node.attr)
+        elif isinstance(node, ast.Global | ast.Nonlocal):
+            names.update(node.names)
+    return names
 
 
-def _prose_texts(fuente: str, arbol: ast.AST) -> list[str]:
-    textos = [
+def _prose_texts(source: str, tree: ast.AST) -> list[str]:
+    texts = [
         t.string
-        for t in tokenize.generate_tokens(io.StringIO(fuente).readline)
+        for t in tokenize.generate_tokens(io.StringIO(source).readline)
         if t.type == tokenize.COMMENT
     ]
-    for nodo in ast.walk(arbol):
-        if isinstance(nodo, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
-            doc = ast.get_docstring(nodo, clean=False)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
+            doc = ast.get_docstring(node, clean=False)
             if doc:
-                textos.append(doc)
-    return textos
+                texts.append(doc)
+    return texts
 
 
-def test_los_archivos_de_la_base_de_la_api_se_llaman_como_dice_el_glosario() -> None:
-    """los archivos de la base de la API se llaman como dice el glosario @ENG-01-S1"""
-    faltan = [str(p.relative_to(APP)) for p in NUEVOS if not p.exists()]
-    sobran = [str(p.relative_to(APP)) for p in VIEJOS if p.exists()]
+def test_the_api_base_files_are_named_as_the_glossary_says() -> None:
+    """the API base files are named as the glossary says @ENG-01-S1"""
+    missing = [str(p.relative_to(APP)) for p in NEW_FILES if not p.exists()]
+    leftover = [str(p.relative_to(APP)) for p in OLD_FILES if p.exists()]
 
-    assert not faltan, faltan
-    assert not sobran, sobran
+    assert not missing, missing
+    assert not leftover, leftover
 
 
-def test_los_nombres_comentarios_y_docstrings_de_la_base_de_la_api_estan_en_ingles() -> None:
-    """los nombres, comentarios y docstrings de la base de la API están en inglés @ENG-01-S2 @assumption:ENG-01-ASM-04"""
-    castellano = _spanish()
-    problemas: list[str] = []
-    for ruta in NUEVOS:
-        if not ruta.exists():
-            problemas.append(f"{ruta.name}: no existe")
+def test_the_names_comments_and_docstrings_of_the_api_base_are_in_english() -> None:
+    """the names, comments and docstrings of the API base are in English @ENG-01-S2 @assumption:ENG-01-ASM-04"""
+    spanish = _spanish()
+    problems: list[str] = []
+    for path in NEW_FILES:
+        if not path.exists():
+            problems.append(f"{path.name}: does not exist")
             continue
-        fuente = ruta.read_text(encoding="utf-8")
-        arbol = ast.parse(fuente)
-        for nombre in sorted(_defined_names(arbol)):
-            if castellano & set(_words(nombre)):
-                problemas.append(f"{ruta.name}: nombre {nombre}")
-        for texto in _prose_texts(fuente, arbol):
-            if COMMON_WORDS.search(texto):
-                problemas.append(f"{ruta.name}: {texto.strip().splitlines()[0][:60]}")
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        for name in sorted(_defined_names(tree)):
+            if spanish & set(_words(name)):
+                problems.append(f"{path.name}: name {name}")
+        for text in _prose_texts(source, tree):
+            if COMMON_WORDS.search(text):
+                problems.append(f"{path.name}: {text.strip().splitlines()[0][:60]}")
 
-    assert not problemas, problemas
+    assert not problems, problems
 
 
-def _app_con_errores() -> FastAPI:
+def _app_with_errors() -> FastAPI:
     from app.shared import errors, http_errors, input_validation
     from app.shared.body_limit import BodyLimit
 
@@ -150,68 +148,66 @@ def _app_con_errores() -> FastAPI:
     http_errors.install(app)
 
     @app.post("/eco")
-    def eco(dato: dict[str, int]) -> dict[str, int]:
-        return dato
+    def echo(data: dict[str, int]) -> dict[str, int]:
+        return data
 
     @app.get("/invalido")
-    def invalido() -> None:
+    def invalid() -> None:
         raise errors.InvalidData({"name": "Falta"})
 
     @app.get("/prohibido")
-    def prohibido() -> None:
+    def forbidden() -> None:
         raise errors.Forbidden()
 
     @app.get("/ausente")
-    def ausente() -> None:
+    def missing() -> None:
         raise errors.NotFound()
 
     return app
 
 
-def test_los_cuerpos_de_error_413_422_403_y_404_son_los_de_main() -> None:
-    """los cuerpos de error 413, 422, 403 y 404 son los de main @ENG-01-S3"""
-    cliente = TestClient(_app_con_errores())
+def test_the_413_422_403_and_404_error_bodies_are_main_s() -> None:
+    """the 413, 422, 403 and 404 error bodies are main's @ENG-01-S3"""
+    client = TestClient(_app_with_errors())
 
-    grande = cliente.post("/eco", content=b"x", headers={"content-length": str(1024 * 1024 + 1)})
-    forma = cliente.post("/eco", json={"a": "no"})
-    invalido = cliente.get("/invalido")
-    prohibido = cliente.get("/prohibido")
-    ausente = cliente.get("/ausente")
+    large = client.post("/eco", content=b"x", headers={"content-length": str(1024 * 1024 + 1)})
+    shape = client.post("/eco", json={"a": "no"})
+    invalid = client.get("/invalido")
+    forbidden = client.get("/prohibido")
+    missing = client.get("/ausente")
 
-    assert (grande.status_code, grande.content) == (413, b"")
-    assert forma.status_code == 422
-    assert forma.json() == {"errors": {"a": "The value is not valid"}}
-    assert (invalido.status_code, invalido.json()) == (422, {"errors": {"name": "Falta"}})
-    assert (prohibido.status_code, prohibido.content) == (403, b"")
-    assert (ausente.status_code, ausente.content) == (404, b"")
-
-
-def test_ningun_test_importa_un_modulo_de_la_base_con_su_nombre_en_castellano() -> None:
-    """ningún test importa un módulo de la base con su nombre en castellano @assumption:ENG-01-ASM-03"""
-    assert _importes_viejos(RAIZ_API / "tests") == []
+    assert (large.status_code, large.content) == (413, b"")
+    assert shape.status_code == 422
+    assert shape.json() == {"errors": {"a": "The value is not valid"}}
+    assert (invalid.status_code, invalid.json()) == (422, {"errors": {"name": "Falta"}})
+    assert (forbidden.status_code, forbidden.content) == (403, b"")
+    assert (missing.status_code, missing.content) == (404, b"")
 
 
-def test_ningun_archivo_de_la_api_importa_un_modulo_de_la_base_con_su_nombre_en_castellano() -> (
-    None
-):
-    """ningún archivo de la API importa un módulo de la base con su nombre en castellano @assumption:ENG-01-ASM-06"""
-    asunto = [*_importes_viejos(APP), *_importes_viejos(RAIZ_API / "migrations")]
-
-    assert asunto == []
+def test_no_test_imports_a_base_module_by_its_spanish_name() -> None:
+    """no test imports a base module by its Spanish name @assumption:ENG-01-ASM-03"""
+    assert _old_imports(API_ROOT / "tests") == []
 
 
-def _importes_viejos(carpeta: Path) -> list[str]:
-    viejos = re.compile(
+def test_no_api_file_imports_a_base_module_by_its_spanish_name() -> None:
+    """no API file imports a base module by its Spanish name @assumption:ENG-01-ASM-06"""
+    subject = [*_old_imports(APP), *_old_imports(API_ROOT / "migrations")]
+
+    assert subject == []
+
+
+def _old_imports(folder: Path) -> list[str]:
+    old = re.compile(
         r"\bapp\.(salud|pruebas)\b"
         r"|\bapp\.shared\.(credencial_firebase|cuerpo|entradas|errores_http|errores|identidad|respuestas|zona)\b"
         r"|\bfrom app import [^\n]*\b(salud|pruebas)\b"
         r"|\bfrom app\.shared import [^\n]*\b(credencial_firebase|cuerpo|entradas|errores_http|errores|identidad|respuestas|zona)\b"
     )
-    yo = Path(__file__).resolve()
+    me = Path(__file__).resolve()
     return [
-        str(p.relative_to(RAIZ_API))
-        for p in carpeta.rglob("*.py")
-        if p.resolve() != yo
+        str(p.relative_to(API_ROOT))
+        for p in folder.rglob("*.py")
+        if p.resolve() != me
         and ".venv" not in p.parts
-        and viejos.search(p.read_text(encoding="utf-8"))
+        and old.search(p.read_text(encoding="utf-8"))
     ]

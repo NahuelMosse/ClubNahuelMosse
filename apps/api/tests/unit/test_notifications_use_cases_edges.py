@@ -1,4 +1,4 @@
-"""Bordes de los casos de uso de avisos: filtro por persona, registro del teléfono y lectura."""
+"""Edges of the notice use cases: filter by person, phone registration and reading."""
 
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
@@ -22,7 +22,7 @@ NOW = datetime(2026, 10, 1, 20, 0, tzinfo=UTC)
 
 
 class _Notifications:
-    """Guarda con qué filtro de persona le preguntaron y contesta lo que se le configuró."""
+    """Keeps which person filter it was asked with and answers what it was configured to."""
 
     def __init__(self, accepts_device: bool = True, owns_notification: bool = True) -> None:
         self.accepts_device = accepts_device
@@ -69,14 +69,16 @@ def _profile(role: str = "user") -> Profile:
     )
 
 
-def test_sin_persona_el_barrido_y_el_despacho_miran_a_todos() -> None:  # @ENG-14-S1
+def test_without_a_person_the_sweep_and_the_dispatch_look_at_everyone() -> None:  # @ENG-14-S1
     repo = _Notifications()
     use_cases.dispatch_pending(cast(Any, repo), _Channel())
     use_cases.send_reminders(cast(Any, repo), _Channel(), NOW)
     assert repo.filters == [None, None, None]
 
 
-def test_sólo_un_usuario_registra_su_teléfono_con_token_y_cuenta_activa() -> None:  # @ENG-14-S1
+def test_only_a_user_registers_their_phone_with_a_token_and_an_active_account() -> (
+    None
+):  # @ENG-14-S1
     repo = cast(Any, _Notifications())
     use_cases.register_device(repo, _profile(), "tok", "ios", True)
 
@@ -90,7 +92,9 @@ def test_sólo_un_usuario_registra_su_teléfono_con_token_y_cuenta_activa() -> N
         )
 
 
-def test_mis_avisos_son_los_del_repositorio_y_leer_uno_ajeno_no_existe() -> None:  # @ENG-14-S1
+def test_my_notices_are_the_repository_ones_and_reading_anothers_does_not_exist() -> (
+    None
+):  # @ENG-14-S1
     assert use_cases.my_notifications(cast(Any, _Notifications()), _profile()) == ([], 3)
     use_cases.mark_read(cast(Any, _Notifications()), _profile(), UUID(int=9))
     with pytest.raises(NotFound):

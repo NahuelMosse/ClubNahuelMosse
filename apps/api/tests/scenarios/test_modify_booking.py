@@ -6,32 +6,32 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
+ZONE = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
-def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_del_cierre(
+def test_the_backend_rejects_a_new_time_in_the_past_or_ending_after_closing(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """el backend rechaza un horario nuevo en el pasado o que termina después del cierre @CU-11-H01-03"""
+    """the backend rejects a new time in the past or ending after closing @CU-11-H01-03"""
     s = unique()
-    correo = f"socio.{s}@correo.com"
-    alta = api.post(
+    email = f"socio.{s}@correo.com"
+    signup = api.post(
         "/register",
         json={
             "first_name": "Martín",
             "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             "birth_date": "1994-07-21",
-            "email": correo,
+            "email": email,
             "password": "ClubNahuel1",
         },
     )
-    assert alta.status_code == 201
+    assert signup.status_code == 201
     with engine.begin() as conn:
-        espacio: Any = conn.execute(
+        space: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
@@ -42,43 +42,43 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
         ).scalar_one()
-    token = sign_in(correo, "ClubNahuel1")
-    sesion = {"Authorization": f"Bearer {token}"}
-    manana = datetime.now(ZONA).date() + timedelta(days=1)
-    reserva = api.post(
+    token = sign_in(email, "ClubNahuel1")
+    session = {"Authorization": f"Bearer {token}"}
+    tomorrow = datetime.now(ZONE).date() + timedelta(days=1)
+    booking = api.post(
         "/bookings",
-        headers=sesion,
+        headers=session,
         json={
-            "space_id": str(espacio),
-            "date": manana.isoformat(),
+            "space_id": str(space),
+            "date": tomorrow.isoformat(),
             "start_hour": "21:00",
             "hours": 1,
         },
     ).json()
 
-    ayer = api.post(
-        f"/bookings/{reserva['id']}/modify",
-        headers=sesion,
+    yesterday = api.post(
+        f"/bookings/{booking['id']}/modify",
+        headers=session,
         json={
-            "space_id": str(espacio),
-            "date": (manana - timedelta(days=2)).isoformat(),
+            "space_id": str(space),
+            "date": (tomorrow - timedelta(days=2)).isoformat(),
             "start_hour": "10:00",
         },
     )
-    tarde = api.post(
-        f"/bookings/{reserva['id']}/modify",
-        headers=sesion,
-        json={"space_id": str(espacio), "date": manana.isoformat(), "start_hour": "23:00"},
+    late = api.post(
+        f"/bookings/{booking['id']}/modify",
+        headers=session,
+        json={"space_id": str(space), "date": tomorrow.isoformat(), "start_hour": "23:00"},
     )
 
-    # Verifica: los dos cambios se rechazan por su regla.
-    assert ayer.status_code == 422
-    assert ayer.json()["errors"]["date"] == "The date must be in the future"
-    assert tarde.status_code == 422
-    assert tarde.json()["errors"]["until"] == "The venue closes at 23:00"
-    # Verifica: la reserva sigue en su horario.
+    # Checks: both changes are rejected by their rule.
+    assert yesterday.status_code == 422
+    assert yesterday.json()["errors"]["date"] == "The date must be in the future"
+    assert late.status_code == 422
+    assert late.json()["errors"]["until"] == "The venue closes at 23:00"
+    # Checks: the booking stays at its time.
     with engine.connect() as conn:
-        inicio: Any = conn.execute(
-            text("SELECT starts_at FROM booking WHERE id = :id"), {"id": reserva["id"]}
+        start: Any = conn.execute(
+            text("SELECT starts_at FROM booking WHERE id = :id"), {"id": booking["id"]}
         ).scalar_one()
-    assert inicio.astimezone(ZONA).hour == 21
+    assert start.astimezone(ZONE).hour == 21

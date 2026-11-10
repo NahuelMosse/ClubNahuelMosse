@@ -1,4 +1,4 @@
-"""`DELETE /yo` contra la base y el emulador reales."""
+"""`DELETE /me` against the real database and emulator."""
 
 import os
 from collections.abc import Callable
@@ -11,28 +11,28 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.users.seed_admin import main as sembrar
+from app.modules.users.seed_admin import main as seed
 
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
-CONTRASENA = "ClubNahuel1"
+ZONE = ZoneInfo("America/Argentina/Buenos_Aires")
+PASSWORD = "ClubNahuel1"
 
 
-def _registrar(api: TestClient, s: str) -> tuple[str, str]:
-    correo = f"socia.{s}@correo.com"
+def _register(api: TestClient, s: str) -> tuple[str, str]:
+    email = f"socia.{s}@correo.com"
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
-    pedido = {
+    payload = {
         "first_name": "Lucía",
         "last_name": "Gómez",
         "dni": dni,
         "birth_date": "1998-11-02",
-        "email": correo,
-        "password": CONTRASENA,
+        "email": email,
+        "password": PASSWORD,
     }
-    assert api.post("/register", json=pedido).status_code == 201
-    return correo, dni
+    assert api.post("/register", json=payload).status_code == 201
+    return email, dni
 
 
-def _espacio(engine: Engine, s: str) -> UUID:
+def _space(engine: Engine, s: str) -> UUID:
     with engine.begin() as conn:
         venue: Any = conn.execute(
             text(
@@ -56,7 +56,7 @@ def _espacio(engine: Engine, s: str) -> UUID:
         )
 
 
-def _reservar(engine: Engine, correo: str, espacio: UUID, inicio: datetime) -> UUID:
+def _book(engine: Engine, email: str, space: UUID, start: datetime) -> UUID:
     with engine.begin() as conn:
         return UUID(
             str(
@@ -67,82 +67,82 @@ def _reservar(engine: Engine, correo: str, espacio: UUID, inicio: datetime) -> U
                         " SELECT id, :e, :i, :f, 33000, 33000 FROM app_user"
                         " WHERE email = :c AND active RETURNING id"
                     ),
-                    {"c": correo, "e": espacio, "i": inicio, "f": inicio + timedelta(hours=1)},
+                    {"c": email, "e": space, "i": start, "f": start + timedelta(hours=1)},
                 ).scalar_one()
             )
         )
 
 
-def test_la_baja_es_logica_conserva_el_historial_y_libera_el_correo(
+def test_deactivation_is_logical_keeps_the_history_and_frees_the_email(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
     s = unique()
-    correo, dni = _registrar(api, s)
-    espacio = _espacio(engine, s)
-    hora = datetime.now(ZONA).replace(minute=0, second=0, microsecond=0)
-    pasada = _reservar(engine, correo, espacio, hora - timedelta(days=3))
-    en_curso = _reservar(engine, correo, espacio, hora)
-    futura = _reservar(engine, correo, espacio, hora + timedelta(days=1))
-    token = sign_in(correo, CONTRASENA)
+    email, dni = _register(api, s)
+    space = _space(engine, s)
+    hour = datetime.now(ZONE).replace(minute=0, second=0, microsecond=0)
+    past = _book(engine, email, space, hour - timedelta(days=3))
+    ongoing = _book(engine, email, space, hour)
+    future = _book(engine, email, space, hour + timedelta(days=1))
+    token = sign_in(email, PASSWORD)
 
     assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 204
 
     with engine.connect() as conn:
-        estados: dict[UUID, str] = dict(
+        statuses: dict[UUID, str] = dict(
             conn.execute(
                 text("SELECT id, status FROM booking WHERE id IN (:a, :b, :c)"),
-                {"a": pasada, "b": en_curso, "c": futura},
+                {"a": past, "b": ongoing, "c": future},
             ).all()
         )
-        activo: Any = conn.execute(
-            text("SELECT active FROM app_user WHERE email = :c"), {"c": correo}
+        active: Any = conn.execute(
+            text("SELECT active FROM app_user WHERE email = :c"), {"c": email}
         ).scalar_one()
-    # Verifica CU-07-SUP-04: la futura se cancela; la pasada y la que está en curso quedan.
-    assert estados == {pasada: "active", en_curso: "active", futura: "canceled"}
-    assert activo is False
-    # La sesión ya no vale y con esa contraseña no se entra.
+    # Checks CU-07-SUP-04: the future one is cancelled; the past one and the ongoing one stay.
+    assert statuses == {past: "active", ongoing: "active", future: "canceled"}
+    assert active is False
+    # The session is no longer valid and that password no longer signs in.
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
-    assert sign_in(correo, CONTRASENA) is None
-    # Verifica CU-07-SUP-01: el correo y el DNI quedan libres para una cuenta nueva.
-    otra = {
+    assert sign_in(email, PASSWORD) is None
+    # Checks CU-07-SUP-01: the email and the DNI are free for a new account.
+    another = {
         "first_name": "Lucía",
         "last_name": "Gómez",
         "dni": dni,
         "birth_date": "1998-11-02",
-        "email": correo,
-        "password": CONTRASENA,
+        "email": email,
+        "password": PASSWORD,
     }
-    assert api.post("/register", json=otra).status_code == 201
+    assert api.post("/register", json=another).status_code == 201
 
 
-def test_un_administrador_no_se_da_de_baja(
+def test_an_admin_is_not_deactivated(
     api: TestClient,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     s = unique()
-    correo = f"admin.{s}@club.com"
-    monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
-    argumentos = [
-        "--correo", correo, "--nombre", "Ana", "--apellido", "Díaz",
+    email = f"admin.{s}@club.com"
+    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    arguments = [
+        "--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
-    assert sembrar(argumentos) == 0
-    token = sign_in(correo, CONTRASENA)
+    assert seed(arguments) == 0
+    token = sign_in(email, PASSWORD)
     assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 403
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 200
     os.environ.pop("ADMIN_CONTRASENA", None)
 
 
-def test_sin_sesion_no_hay_baja(api: TestClient) -> None:
+def test_no_session_no_deactivation(api: TestClient) -> None:
     assert api.delete("/me").status_code == 401
 
 
-def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
+def test_two_simultaneous_deactivations_deactivate_only_once(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
@@ -150,10 +150,10 @@ def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
 ) -> None:
     from concurrent.futures import ThreadPoolExecutor
 
-    correo, _ = _registrar(api, unique())
-    token = sign_in(correo, CONTRASENA)
+    email, _ = _register(api, unique())
+    token = sign_in(email, PASSWORD)
     with ThreadPoolExecutor(max_workers=2) as pool:
-        codigos = sorted(
+        codes = sorted(
             pool.map(
                 lambda _: (
                     api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code
@@ -161,10 +161,10 @@ def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
                 range(2),
             )
         )
-    # Una hace la baja; la otra ya la encuentra hecha (204) o la sesión vencida (401).
-    assert codigos[0] == 204 and codigos[1] in (204, 401)
+    # One deactivates; the other finds it already done (204) or the session expired (401).
+    assert codes[0] == 204 and codes[1] in (204, 401)
     with engine.connect() as conn:
-        activo: Any = conn.execute(
-            text("SELECT active FROM app_user WHERE email = :c"), {"c": correo}
+        active: Any = conn.execute(
+            text("SELECT active FROM app_user WHERE email = :c"), {"c": email}
         ).scalar_one()
-    assert activo is False
+    assert active is False

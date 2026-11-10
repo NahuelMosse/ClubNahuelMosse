@@ -1,23 +1,23 @@
 import pytest
 
-from app.shared import email as correo
+from app.shared import email
 from app.shared.config import config
 from app.shared.message import Message
 
-MENSAJE = Message(recipient="lucia@correo.com", subject="Asunto", body="Cuerpo")
+MESSAGE = Message(recipient="lucia@correo.com", subject="Asunto", body="Cuerpo")
 
 
-def test_sin_servidor_configurado_el_correo_no_sale_y_queda_en_el_log(
+def test_without_a_configured_server_the_email_is_not_sent_and_stays_in_the_log(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "")
-    correo.send(MENSAJE)
+    email.send(MESSAGE)
     assert "could not send the email" in caplog.text
     assert "RuntimeError" in caplog.text
 
 
-def test_el_default_es_smtp_y_no_el_buzon(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_default_is_smtp_and_not_the_outbox(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.shared.config import Settings
 
     monkeypatch.delenv("CORREO_MODO", raising=False)

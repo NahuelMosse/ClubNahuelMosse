@@ -1,4 +1,4 @@
-"""Lo que confirma un repositorio sigue en la base para otra conexión, como al reiniciar la API."""
+"""What a repository commits stays in the database for another connection, as after a restart."""
 
 from collections.abc import Callable
 
@@ -7,26 +7,26 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 from app.main import create_app
-from app.modules.users.seed_admin import main as sembrar
+from app.modules.users.seed_admin import main as seed
 
-CONTRASENA = "ClubNahuel1"
+PASSWORD = "ClubNahuel1"
 
 
-def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
+def test_a_created_venue_survives_restarting_the_api_on_the_same_database(
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
     engine: Engine,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """una sede dada de alta sobrevive a reiniciar la API sobre la misma base @ARQ-02-S2"""
+    """a created venue survives restarting the API on the same database @ARQ-02-S2"""
     s = unique()
-    correo = f"admin.{s}@club.com"
-    monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
+    email = f"admin.{s}@club.com"
+    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
-    argumentos = ["--correo", correo, "--nombre", "Ana", "--apellido", "Díaz",
-                  "--dni", dni, "--nacimiento", "1985-06-01"]  # fmt: skip
-    assert sembrar(argumentos) == 0
-    token = sign_in(correo, CONTRASENA)
+    arguments = ["--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
+                 "--dni", dni, "--nacimiento", "1985-06-01"]  # fmt: skip
+    assert seed(arguments) == 0
+    token = sign_in(email, PASSWORD)
     assert token is not None
     venue = {
         "name": f"Sede {s}",
@@ -36,16 +36,16 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
         "open_days": [1, 2, 3, 4, 5],
     }
 
-    alta = TestClient(create_app(), base_url="http://localhost").post(
+    created = TestClient(create_app(), base_url="http://localhost").post(
         "/venues", json=venue, headers={"Authorization": f"Bearer {token}"}
     )
-    assert alta.status_code == 201
+    assert created.status_code == 201
 
-    with engine.connect() as otra:
-        guardada = otra.execute(
-            text("SELECT name FROM venue WHERE id = :id"), {"id": alta.json()["id"]}
+    with engine.connect() as other:
+        saved = other.execute(
+            text("SELECT name FROM venue WHERE id = :id"), {"id": created.json()["id"]}
         ).scalar_one()
-    assert guardada == venue["name"]
-    otra_api = TestClient(create_app(), base_url="http://localhost")
-    listado = otra_api.get("/venues", headers={"Authorization": f"Bearer {token}"}).json()
-    assert venue["name"] in [x["name"] for x in listado["venues"]]
+    assert saved == venue["name"]
+    other_api = TestClient(create_app(), base_url="http://localhost")
+    listing = other_api.get("/venues", headers={"Authorization": f"Bearer {token}"}).json()
+    assert venue["name"] in [x["name"] for x in listing["venues"]]

@@ -1,4 +1,4 @@
-"""Reemplazos de los unitarios de reservas tras renombrar el módulo a bookings (ver `replaces:` en el Log de la card ENG-14)."""
+"""Replacements of the bookings unit tests after renaming the module to bookings (see `replaces:` in the Log of the card ENG-14)."""
 
 import ast
 import os
@@ -7,12 +7,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-UNITARIOS = RAIZ_API / "tests" / "unit" / "test_use_cases_bookings.py"
-CASOS_DE_USO = RAIZ_API / "app" / "modules" / "bookings" / "use_cases.py"
+API_ROOT = Path(__file__).resolve().parents[2]
+UNIT_TESTS = API_ROOT / "tests" / "unit" / "test_use_cases_bookings.py"
+USE_CASES = API_ROOT / "app" / "modules" / "bookings" / "use_cases.py"
 
 
-def _entorno_sin_servicios() -> dict[str, str]:
+def _env_without_services() -> dict[str, str]:
     base = {k: v for k, v in os.environ.items() if k != "FIREBASE_AUTH_EMULATOR_HOST"}
     return base | {
         "DATABASE_URL": "postgresql+psycopg://nadie:nadie@127.0.0.1:9/nada_test",
@@ -20,38 +20,40 @@ def _entorno_sin_servicios() -> dict[str, str]:
     }
 
 
-def _casos_de_uso() -> list[str]:
-    fuente = CASOS_DE_USO.read_text(encoding="utf-8")
+def _use_cases() -> list[str]:
+    source = USE_CASES.read_text(encoding="utf-8")
     return [
         n.name
-        for n in ast.parse(fuente).body
+        for n in ast.parse(source).body
         if isinstance(n, ast.FunctionDef) and not n.name.startswith("_")
     ]
 
 
-def _sin_unitario(codigo: str) -> list[str]:
-    return [c for c in _casos_de_uso() if not re.search(rf"\b{c}\(", codigo)]
+def _without_unit_test(code: str) -> list[str]:
+    return [c for c in _use_cases() if not re.search(rf"\b{c}\(", code)]
 
 
-def test_cada_funcion_publica_de_reservas_tiene_su_unitario_con_la_llamada_en_el_codigo() -> None:
-    """cada función pública de bookings/use_cases.py se llama por su nombre en los unitarios
+def test_every_public_bookings_function_has_its_unit_test_with_the_call_in_the_code() -> None:
+    """every public function of bookings/use_cases.py is called by name in the unit tests
     @REV-08-S7 @assumption:REV-08-ASM-09
     """
-    codigo = UNITARIOS.read_text(encoding="utf-8") if UNITARIOS.exists() else ""
+    code = UNIT_TESTS.read_text(encoding="utf-8") if UNIT_TESTS.exists() else ""
 
-    assert len(_casos_de_uso()) >= 7
-    assert _sin_unitario(codigo) == []
+    assert len(_use_cases()) >= 7
+    assert _without_unit_test(code) == []
 
 
-def test_los_unitarios_de_reservas_pasan_sin_base_ni_emulador_y_cubren_cada_caso_de_uso() -> None:
-    """los unitarios de los casos de uso de reservas pasan sin base ni emulador y llaman a cada caso de uso
+def test_the_bookings_unit_tests_pass_without_database_or_emulator_and_cover_every_use_case() -> (
+    None
+):
+    """the unit tests of the bookings use cases pass without database or emulator and call each use case
     @REV-08-S7
     """
-    corrida = subprocess.run(
-        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(UNITARIOS)],
-        cwd=RAIZ_API, env=_entorno_sin_servicios(), capture_output=True, text=True,
+    run = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(UNIT_TESTS)],
+        cwd=API_ROOT, env=_env_without_services(), capture_output=True, text=True,
         timeout=300, check=False,
     )  # fmt: skip
 
-    assert corrida.returncode == 0, corrida.stdout[-2000:]
-    assert _sin_unitario(UNITARIOS.read_text(encoding="utf-8")) == []
+    assert run.returncode == 0, run.stdout[-2000:]
+    assert _without_unit_test(UNIT_TESTS.read_text(encoding="utf-8")) == []

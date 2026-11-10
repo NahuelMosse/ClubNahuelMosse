@@ -1,12 +1,12 @@
-"""El contrato de la API se compara con el main de hoy: NOT-05 sumó `recordatorio_cinco` y esquemas."""
+"""The API contract is compared with today's main: NOT-05 added `recordatorio_cinco` and schemas."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 from tests.unit.test_api_in_english_contract_current import (
     contract_differs_from_main,
 )
 
 
-def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None:
-    """el contrato tiene las mismas rutas, métodos, códigos y formas que el de main, salvo los cuatro nombres de esquema
+def test_the_contract_is_main_s_except_for_the_four_schema_names() -> None:
+    """the contract has the same routes, methods, codes and shapes as main's, except for the four schema names
     @ARQ-04-S3"""
     assert contract_differs_from_main() == {}

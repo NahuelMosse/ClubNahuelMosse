@@ -1,4 +1,4 @@
-"""Seguridad de la API: entradas, límites de frecuencia, registro, cabeceras y configuración."""
+"""API security: inputs, rate limits, log, headers and configuration."""
 
 import json
 import logging
@@ -22,48 +22,48 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.password_recovery.rules import Message as Mensaje
+from app.modules.password_recovery.rules import Message
 from app.shared.config import config
-from app.shared import email as correo
-from app.modules.users.seed_admin import main as sembrar
+from app.shared import email as email_module
+from app.modules.users.seed_admin import main as seed_admin
 from app.main import create_app
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-RAIZ_REPO = RAIZ_API.parents[1]
-CONTRASENA = "ClubNahuel1"
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
+API_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = API_ROOT.parents[1]
+PASSWORD = "ClubNahuel1"
+ZONE = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _manana() -> date:
-    return datetime.now(ZONA).date() + timedelta(days=1)
+def _tomorrow() -> date:
+    return datetime.now(ZONE).date() + timedelta(days=1)
 
 
-def _alta_socio(
+def _sign_up_member(
     api: TestClient,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> tuple[dict[str, str], str]:
     s = unique()
-    correo_socio = f"socio.{s}@correo.com"
-    alta = api.post(
+    member_email = f"socio.{s}@correo.com"
+    signup = api.post(
         "/register",
         json={
             "first_name": "Martín",
             "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             "birth_date": "1994-07-21",
-            "email": correo_socio,
-            "password": CONTRASENA,
+            "email": member_email,
+            "password": PASSWORD,
         },
     )
-    assert alta.status_code == 201
-    token = sign_in(correo_socio, CONTRASENA)
+    assert signup.status_code == 201
+    token = sign_in(member_email, PASSWORD)
     assert token is not None
-    return _con(token), correo_socio
+    return _bearer(token), member_email
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def user_token(
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> str:
-    return _alta_socio(api, sign_in, unique)[0]["Authorization"].removeprefix("Bearer ")
+    return _sign_up_member(api, sign_in, unique)[0]["Authorization"].removeprefix("Bearer ")
 
 
 @pytest.fixture
@@ -82,23 +82,23 @@ def admin_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
     s = unique()
-    monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
-    argumentos = [
+    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    arguments = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
-    assert sembrar(argumentos) == 0
-    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
+    assert seed_admin(arguments) == 0
+    token = sign_in(f"admin.{s}@club.com", PASSWORD)
     assert token is not None
     return token
 
 
 @pytest.fixture
-def cancha(api: TestClient, engine: Engine, unique: Callable[[], str]) -> str:
-    """Un Fútbol 5 en una sede abierta de 08:00 a 23:00 todos los días."""
+def court(api: TestClient, engine: Engine, unique: Callable[[], str]) -> str:
+    """A five-a-side football court in a venue open from 08:00 to 23:00 every day."""
     s = unique()
     with engine.begin() as conn:
-        espacio = conn.execute(
+        space = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
@@ -109,117 +109,117 @@ def cancha(api: TestClient, engine: Engine, unique: Callable[[], str]) -> str:
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
         ).scalar_one()
-    return str(espacio)
+    return str(space)
 
 
-class _SmtpFalso:
-    """Un servidor SMTP que anota el contexto TLS que pide el cliente y si llegó a loguearse.
+class _FakeSmtp:
+    """An SMTP server that records the TLS context the client asks for and whether it logged in.
 
-    Con `certificado_invalido`, el TLS falla como falla contra un certificado que no es del servidor.
+    With `invalid_certificate`, TLS fails as it does against a certificate that is not the server's.
     """
 
-    contextos: list[ssl.SSLContext | None] = []
+    contexts: list[ssl.SSLContext | None] = []
     logins: list[str] = []
-    rechazar: bool = False
-    certificado_invalido: bool = False
+    reject: bool = False
+    invalid_certificate: bool = False
 
-    def __init__(self, host: str, puerto: int, timeout: float) -> None:
+    def __init__(self, host: str, port: int, timeout: float) -> None:
         self.host = host
 
-    def __enter__(self) -> "_SmtpFalso":
+    def __enter__(self) -> "_FakeSmtp":
         return self
 
     def __exit__(
-        self, tipo: type[BaseException] | None, e: BaseException | None, tb: TracebackType | None
+        self, kind: type[BaseException] | None, e: BaseException | None, tb: TracebackType | None
     ) -> None:
         return None
 
     def starttls(self, context: ssl.SSLContext | None = None) -> None:
-        _SmtpFalso.contextos.append(context)
-        if _SmtpFalso.certificado_invalido:
+        _FakeSmtp.contexts.append(context)
+        if _FakeSmtp.invalid_certificate:
             raise ssl.SSLCertVerificationError("certificate verify failed: atacante.invalid")
 
-    def login(self, usuario: str, contrasena: str) -> None:
-        _SmtpFalso.logins.append(usuario)
+    def login(self, user: str, password: str) -> None:
+        _FakeSmtp.logins.append(user)
 
-    def send_message(self, mensaje: object) -> None:
-        if _SmtpFalso.rechazar:
+    def send_message(self, message: object) -> None:
+        if _FakeSmtp.reject:
             raise smtplib.SMTPRecipientsRefused({"ana.rios@ejemplo.com": (550, b"no existe")})
 
 
 @pytest.fixture
-def smtp_falso(monkeypatch: pytest.MonkeyPatch) -> type[_SmtpFalso]:
-    _SmtpFalso.contextos = []
-    _SmtpFalso.logins = []
-    _SmtpFalso.rechazar = False
-    _SmtpFalso.certificado_invalido = False
-    monkeypatch.setattr(correo.smtplib, "SMTP", _SmtpFalso)
+def fake_smtp(monkeypatch: pytest.MonkeyPatch) -> type[_FakeSmtp]:
+    _FakeSmtp.contexts = []
+    _FakeSmtp.logins = []
+    _FakeSmtp.reject = False
+    _FakeSmtp.invalid_certificate = False
+    monkeypatch.setattr(email_module.smtplib, "SMTP", _FakeSmtp)
     monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "smtp.ejemplo.com")
     monkeypatch.setattr(config, "smtp_user", "club-smtp")
     monkeypatch.setattr(config, "smtp_password", "SmtpClave9")
     monkeypatch.setattr(config, "email_sender", "club@ejemplo.com")
-    return _SmtpFalso
+    return _FakeSmtp
 
 
-def _mensaje() -> Mensaje:
-    return Mensaje(recipient="ana.rios@ejemplo.com", subject="Tu enlace", body="Entrá al enlace")
+def _message() -> Message:
+    return Message(recipient="ana.rios@ejemplo.com", subject="Tu enlace", body="Entrá al enlace")
 
 
-def test_el_correo_exige_un_certificado_valido_para_el_nombre_del_servidor(
-    smtp_falso: type[_SmtpFalso],
+def test_the_email_requires_a_valid_certificate_for_the_server_name(
+    fake_smtp: type[_FakeSmtp],
 ) -> None:
-    """el envío de correo pide un TLS que verifica certificado y nombre @REV-01-S1"""
-    correo.send(_mensaje())
+    """sending email asks for a TLS that verifies certificate and name @REV-01-S1"""
+    email_module.send(_message())
 
-    contexto = smtp_falso.contextos[0]
-    assert isinstance(contexto, ssl.SSLContext)
-    assert contexto.verify_mode == ssl.CERT_REQUIRED
-    assert contexto.check_hostname is True
+    context = fake_smtp.contexts[0]
+    assert isinstance(context, ssl.SSLContext)
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.check_hostname is True
 
 
-def test_con_un_certificado_invalido_no_se_mandan_las_credenciales(
-    smtp_falso: type[_SmtpFalso], caplog: pytest.LogCaptureFixture
+def test_with_an_invalid_certificate_the_credentials_are_not_sent(
+    fake_smtp: type[_FakeSmtp], caplog: pytest.LogCaptureFixture
 ) -> None:
-    """con un certificado inválido no se entregan usuario ni contraseña SMTP
+    """with an invalid certificate neither the SMTP user nor password is handed over
     @REV-01-S1 @assumption:REV-01-ASM-06
     """
-    smtp_falso.certificado_invalido = True
+    fake_smtp.invalid_certificate = True
 
     with caplog.at_level(logging.DEBUG):
-        correo.send(_mensaje())
+        email_module.send(_message())
 
-    assert smtp_falso.logins == []
+    assert fake_smtp.logins == []
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text
 
 
-def test_la_recuperacion_responde_igual_aunque_el_correo_no_salga(
-    api: TestClient, smtp_falso: type[_SmtpFalso]
+def test_recovery_answers_the_same_even_if_the_email_does_not_go_out(
+    api: TestClient, fake_smtp: type[_FakeSmtp]
 ) -> None:
-    """quien pide recuperar ve lo mismo aunque el TLS del correo falle
+    """whoever asks to recover sees the same even if the email TLS fails
     @REV-01-S1 @assumption:REV-01-ASM-06
     """
-    smtp_falso.certificado_invalido = True
+    fake_smtp.invalid_certificate = True
 
     r = api.post("/password-recovery", json={"email": "nadie.tls@correo.com"})
 
     assert r.status_code == 202
 
 
-@pytest.mark.parametrize("horas", [10**12, 5, 0, -1, None, "x"])
-def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
-    api: TestClient, user_token: str, cancha: str, horas: object
+@pytest.mark.parametrize("hours", [10**12, 5, 0, -1, None, "x"])
+def test_a_booking_with_hours_out_of_range_is_invalid_data(
+    api: TestClient, user_token: str, court: str, hours: object
 ) -> None:
-    """una reserva con horas desmesuradas se rechaza como dato inválido @REV-01-S2"""
+    """a booking with outsized hours is rejected as invalid data @REV-01-S2"""
     r = api.post(
         "/bookings",
-        headers=_con(user_token),
+        headers=_bearer(user_token),
         json={
-            "space_id": cancha,
-            "date": _manana().isoformat(),
+            "space_id": court,
+            "date": _tomorrow().isoformat(),
             "start_hour": "10:00",
-            "hours": horas,
+            "hours": hours,
         },
     )
 
@@ -227,58 +227,61 @@ def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
     assert "hours" in r.json()["errors"]
 
 
-def test_una_reserva_de_cuatro_horas_se_acepta(
-    api: TestClient, user_token: str, cancha: str
-) -> None:
-    """el borde de cuatro horas sigue aceptándose @REV-01-S2"""
+def test_a_four_hour_booking_is_accepted(api: TestClient, user_token: str, court: str) -> None:
+    """the four-hour edge is still accepted @REV-01-S2"""
     r = api.post(
         "/bookings",
-        headers=_con(user_token),
-        json={"space_id": cancha, "date": _manana().isoformat(), "start_hour": "10:00", "hours": 4},
+        headers=_bearer(user_token),
+        json={
+            "space_id": court,
+            "date": _tomorrow().isoformat(),
+            "start_hour": "10:00",
+            "hours": 4,
+        },
     )
 
     assert r.status_code == 201
 
 
-@pytest.mark.parametrize(("desde", "horas"), [("23:00", 4), ("23:00", 1), ("10:00", 1)])
-def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
-    api: TestClient, user_token: str, cancha: str, desde: str, horas: int
+@pytest.mark.parametrize(("start", "hours"), [("23:00", 4), ("23:00", 1), ("10:00", 1)])
+def test_a_booking_at_the_end_of_the_calendar_is_invalid_data(
+    api: TestClient, user_token: str, court: str, start: str, hours: int
 ) -> None:
-    """una reserva que termina después del último día representable es inválida @REV-01-S3"""
+    """a booking that ends after the last representable day is invalid @REV-01-S3"""
     r = api.post(
         "/bookings",
-        headers=_con(user_token),
-        json={"space_id": cancha, "date": "9999-12-31", "start_hour": desde, "hours": horas},
+        headers=_bearer(user_token),
+        json={"space_id": court, "date": "9999-12-31", "start_hour": start, "hours": hours},
     )
 
     assert r.status_code == 422
     assert "date" in r.json()["errors"]
 
 
-@pytest.mark.parametrize("pagina", [2**70, 10_001, 0, "x"])
-def test_una_pagina_fuera_de_rango_del_historial_global_es_un_dato_invalido(
-    api: TestClient, admin_token: str, pagina: object
+@pytest.mark.parametrize("page", [2**70, 10_001, 0, "x"])
+def test_an_out_of_range_page_of_the_global_history_is_invalid_data(
+    api: TestClient, admin_token: str, page: object
 ) -> None:
-    """pedir una página enorme del historial global se rechaza como dato inválido @REV-01-S4"""
-    r = api.get("/bookings/all", headers=_con(admin_token), params={"page": pagina})
+    """asking for a huge page of the global history is rejected as invalid data @REV-01-S4"""
+    r = api.get("/bookings/all", headers=_bearer(admin_token), params={"page": page})
 
     assert r.status_code == 422
     assert "page" in r.json()["errors"]
 
 
-def test_la_ultima_pagina_permitida_del_historial_global_responde(
+def test_the_last_allowed_page_of_the_global_history_answers(
     api: TestClient, admin_token: str
 ) -> None:
-    """el borde de la página 10000 sigue respondiendo @REV-01-S4 @assumption:REV-01-ASM-02"""
-    r = api.get("/bookings/all", headers=_con(admin_token), params={"page": 10_000})
+    """the edge of page 10000 still answers @REV-01-S4 @assumption:REV-01-ASM-02"""
+    r = api.get("/bookings/all", headers=_bearer(admin_token), params={"page": 10_000})
 
     assert r.status_code == 200
     assert r.json()["bookings"] == []
 
 
-NULO = "Ana\x00Rios"
-SEDE = {"address": "Av. Vergara 1850", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1]}
-ESPACIO = {
+NULL_BYTE = "Ana\x00Rios"
+VENUE = {"address": "Av. Vergara 1850", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1]}
+SPACE = {
     "venue_id": "00000000-0000-7000-8000-000000000001",
     "kind": "F5",
     "covered": False,
@@ -287,116 +290,117 @@ ESPACIO = {
 }
 
 
-def test_la_api_no_usa_un_certifi_con_vulnerabilidad_conocida() -> None:
-    """la API no depende de una versión de certifi con vulnerabilidad conocida @REV-01-S10"""
-    lock = tomllib.loads((RAIZ_API / "uv.lock").read_text(encoding="utf-8"))
+def test_the_api_does_not_use_a_certifi_with_a_known_vulnerability() -> None:
+    """the API does not depend on a certifi version with a known vulnerability @REV-01-S10"""
+    lock = tomllib.loads((API_ROOT / "uv.lock").read_text(encoding="utf-8"))
     version = next(p["version"] for p in lock["package"] if p["name"] == "certifi")
 
     assert tuple(int(n) for n in version.split(".")) >= (2026, 10, 18)
 
 
-def test_un_rechazo_del_servidor_de_correo_no_deja_la_direccion_en_el_log(
-    smtp_falso: type[_SmtpFalso], caplog: pytest.LogCaptureFixture
+def test_a_rejection_from_the_mail_server_does_not_leave_the_address_in_the_log(
+    fake_smtp: type[_FakeSmtp], caplog: pytest.LogCaptureFixture
 ) -> None:
-    """un rechazo del servidor de correo no deja la dirección de la persona en el log
+    """a rejection from the mail server does not leave the person's address in the log
     @REV-01-S11
     """
-    smtp_falso.rechazar = True
+    fake_smtp.reject = True
 
     with caplog.at_level(logging.DEBUG):
-        correo.send(_mensaje())
+        email_module.send(_message())
 
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text
     assert "SmtpClave9" not in caplog.text
 
 
-def _puerto_libre() -> int:
+def _free_port() -> int:
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         return int(s.getsockname()[1])
 
 
 @pytest.fixture
-def servidor(api: TestClient, tmp_path: Path) -> Iterator[tuple[str, Path]]:
-    """La API servida por uvicorn como en Render, con su salida en un archivo."""
-    puerto = _puerto_libre()
-    salida = tmp_path / "uvicorn.log"
-    with salida.open("w", encoding="utf-8") as archivo:
-        proceso = subprocess.Popen(
+def server(api: TestClient, tmp_path: Path) -> Iterator[tuple[str, Path]]:
+    """The API served by uvicorn as in Render, with its output in a file."""
+    port = _free_port()
+    output = tmp_path / "uvicorn.log"
+    with output.open("w", encoding="utf-8") as file:
+        process = subprocess.Popen(
             [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1"]
-            + ["--port", str(puerto)],
-            cwd=RAIZ_API,
-            stdout=archivo,
+            + ["--port", str(port)],
+            cwd=API_ROOT,
+            stdout=file,
             stderr=subprocess.STDOUT,
             env={**os.environ, "PYTHONUTF8": "1"},
         )
-        base = f"http://127.0.0.1:{puerto}"
-        limite = time.monotonic() + 60
-        while time.monotonic() < limite and proceso.poll() is None:
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline and process.poll() is None:
             try:
                 httpx2.get(f"{base}/yo", timeout=2)
                 break
             except httpx2.HTTPError:
                 time.sleep(0.5)
-        yield base, salida
-        proceso.terminate()
-        proceso.wait(timeout=30)
+        yield base, output
+        process.terminate()
+        process.wait(timeout=30)
 
 
-@pytest.mark.parametrize("salto", ["%0a", "%0d"])
-def test_una_ruta_con_saltos_de_linea_no_falsifica_el_log(
-    api: TestClient, caplog: pytest.LogCaptureFixture, salto: str
+@pytest.mark.parametrize("line_break", ["%0a", "%0d"])
+def test_a_path_with_line_breaks_does_not_forge_the_log(
+    api: TestClient, caplog: pytest.LogCaptureFixture, line_break: str
 ) -> None:
-    """una ruta con saltos de línea no puede falsificar una línea del log @REV-01-S13"""
-    falsa = (
-        f"/bookings/1{salto}2026-10-20 00:00:00,000 ERROR clubnahuelmosse.errores FALSO/cancel"
+    """a path with line breaks cannot forge a log line @REV-01-S13"""
+    forged = (
+        f"/bookings/1{line_break}2026-10-20 00:00:00,000 ERROR clubnahuelmosse.errores FALSO/cancel"
     )
 
     with caplog.at_level(logging.INFO):
-        api.post(falsa)
+        api.post(forged)
 
-    mensajes = [r.getMessage() for r in caplog.records]
-    assert any("/bookings/1" in m for m in mensajes)
-    assert not any("\n" in m or "\r" in m for m in mensajes)
+    messages = [r.getMessage() for r in caplog.records]
+    assert any("/bookings/1" in m for m in messages)
+    assert not any("\n" in m or "\r" in m for m in messages)
 
 
-def test_los_secretos_no_llegan_al_log_ni_a_las_respuestas(
+def test_secrets_do_not_reach_the_log_or_the_responses(
     api: TestClient, user_token: str, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """contraseñas, tokens y códigos de recuperación no llegan al log @REV-01-S14"""
+    """passwords, tokens and recovery codes do not reach the log @REV-01-S14"""
     with caplog.at_level(logging.DEBUG):
-        respuestas = [
-            api.put("/password-recovery", json={"code": "cod-secreto-7Q", "new_password": ["Clave9Secreta"]}),
+        responses = [
+            api.put(
+                "/password-recovery",
+                json={"code": "cod-secreto-7Q", "new_password": ["Clave9Secreta"]},
+            ),
             api.post("/password-recovery/check", json={"code": "cod-secreto-7Q"}),
             api.get("/me", headers={"Authorization": "Bearer token-secreto-9Z"}),
-            api.post(
-                "/register", json={"email": "ana@correo.com", "password": ["Clave9Secreta"]}
-            ),
+            api.post("/register", json={"email": "ana@correo.com", "password": ["Clave9Secreta"]}),
             api.put(
                 "/me/password",
-                headers=_con(user_token),
+                headers=_bearer(user_token),
                 json={"current_password": ["Clave9Secreta"], "new_password": ["Clave9Secreta"]},
             ),
         ]
 
-    textos = caplog.text + "".join(r.text for r in respuestas)
-    assert "Clave9Secreta" not in textos
-    assert "cod-secreto-7Q" not in textos
-    assert "token-secreto-9Z" not in textos
+    texts = caplog.text + "".join(r.text for r in responses)
+    assert "Clave9Secreta" not in texts
+    assert "cod-secreto-7Q" not in texts
+    assert "token-secreto-9Z" not in texts
 
 
-def test_el_contrato_versionado_coincide_con_la_api() -> None:
-    """el contrato OpenAPI versionado coincide con lo que la API publica @REV-01-S15"""
-    versionado = json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
+def test_the_versioned_contract_matches_the_api() -> None:
+    """the versioned OpenAPI contract matches what the API publishes @REV-01-S15"""
+    versioned = json.loads((API_ROOT / "openapi.json").read_text(encoding="utf-8"))
 
-    assert versionado == create_app().openapi()
+    assert versioned == create_app().openapi()
 
 
-def test_la_api_arranca_con_el_emulador_y_un_proyecto_de_demo(
+def test_the_api_starts_with_the_emulator_and_a_demo_project(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """con el emulador, un proyecto de demo y sin credenciales la API arranca
+    """with the emulator, a demo project and no credentials the API starts
     @REV-01-S18 @assumption:REV-01-ASM-10
     """
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
@@ -407,7 +411,7 @@ def test_la_api_arranca_con_el_emulador_y_un_proyecto_de_demo(
     assert isinstance(create_app(), FastAPI)
 
 
-def _duenio(engine: Engine, token: str) -> str:
+def _owner(engine: Engine, token: str) -> str:
     with engine.connect() as conn:
         return str(
             conn.execute(
@@ -420,45 +424,45 @@ def _duenio(engine: Engine, token: str) -> str:
         )
 
 
-def test_el_token_de_otra_persona_no_cambia_de_duenio(
+def test_someone_elses_token_does_not_change_owner(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """registrar el token de dispositivo de otra persona no se lo quita
+    """registering someone else's device token does not take it from them
     @REV-01-S19 @assumption:REV-01-ASM-04
     """
-    duenia, correo_duenia = _alta_socio(api, sign_in, unique)
-    intruso, _ = _alta_socio(api, sign_in, unique)
+    owner, owner_email = _sign_up_member(api, sign_in, unique)
+    intruder, _ = _sign_up_member(api, sign_in, unique)
     token = f"fcm-{unique()}"
-    pedido = {"token": token, "platform": "android", "permission_granted": True}
+    payload = {"token": token, "platform": "android", "permission_granted": True}
 
-    assert api.put("/devices", headers=duenia, json=pedido).status_code == 204
-    intento = api.put("/devices", headers=intruso, json=pedido)
-    baja = api.post("/devices/unregister", headers=intruso, json={"token": token})
+    assert api.put("/devices", headers=owner, json=payload).status_code == 204
+    attempt = api.put("/devices", headers=intruder, json=payload)
+    unregistration = api.post("/devices/unregister", headers=intruder, json={"token": token})
 
-    assert intento.status_code == 204
-    assert baja.status_code == 204
-    assert _duenio(engine, token) == correo_duenia
+    assert attempt.status_code == 204
+    assert unregistration.status_code == 204
+    assert _owner(engine, token) == owner_email
 
 
-def test_un_token_dado_de_baja_pasa_a_quien_lo_registra(
+def test_an_unregistered_token_goes_to_whoever_registers_it(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """un teléfono que cerró sesión pasa a la siguiente persona
+    """a phone that signed out goes to the next person
     @REV-01-S19 @assumption:REV-01-ASM-04
     """
-    primera, _ = _alta_socio(api, sign_in, unique)
-    segunda, correo_segunda = _alta_socio(api, sign_in, unique)
+    first, _ = _sign_up_member(api, sign_in, unique)
+    second, second_email = _sign_up_member(api, sign_in, unique)
     token = f"fcm-{unique()}"
-    pedido = {"token": token, "platform": "android", "permission_granted": True}
+    payload = {"token": token, "platform": "android", "permission_granted": True}
 
-    assert api.put("/devices", headers=primera, json=pedido).status_code == 204
-    assert api.post("/devices/unregister", headers=primera, json={"token": token}).status_code == 204
-    assert api.put("/devices", headers=segunda, json=pedido).status_code == 204
+    assert api.put("/devices", headers=first, json=payload).status_code == 204
+    assert api.post("/devices/unregister", headers=first, json={"token": token}).status_code == 204
+    assert api.put("/devices", headers=second, json=payload).status_code == 204
 
-    assert _duenio(engine, token) == correo_segunda
+    assert _owner(engine, token) == second_email

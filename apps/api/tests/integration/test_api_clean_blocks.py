@@ -1,4 +1,4 @@
-"""Los bloqueos que toma un repositorio siguen valiendo dentro de `en_transaccion`."""
+"""The locks a repository takes still hold inside `in_transaction`."""
 
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -7,33 +7,33 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 
-def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
+def test_creating_a_space_waits_for_the_ongoing_deactivation_of_its_venue_and_rejects_it(
     api: TestClient, engine: Engine, admin_token: str, venue: tuple[str, str]
 ) -> None:
-    """el alta de un espacio espera la baja en curso de su sede y la rechaza
+    """creating a space waits for the ongoing deactivation of its venue and rejects it
     @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
-    sede_id, _ = venue
-    espacio = {
-        "venue_id": sede_id,
+    venue_id, _ = venue
+    space = {
+        "venue_id": venue_id,
         "sport": "Futbol",
         "kind": "F5",
         "covered": False,
         "lit": True,
         "price_per_hour": 38000,
     }
-    with engine.connect() as baja, ThreadPoolExecutor(max_workers=1) as pool:
-        baja.execute(
+    with engine.connect() as deactivation, ThreadPoolExecutor(max_workers=1) as pool:
+        deactivation.execute(
             text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
-            {"id": sede_id},
+            {"id": venue_id},
         )
-        alta = pool.submit(
-            api.post, "/spaces", headers={"Authorization": f"Bearer {admin_token}"}, json=espacio
+        creation = pool.submit(
+            api.post, "/spaces", headers={"Authorization": f"Bearer {admin_token}"}, json=space
         )
         time.sleep(1.5)
-        esperaba = not alta.done()
-        baja.commit()
-        r = alta.result(timeout=30)
+        waited = not creation.done()
+        deactivation.commit()
+        r = creation.result(timeout=30)
 
-    assert esperaba
+    assert waited
     assert r.status_code == 422
     assert r.json() == {"errors": {"venue_id": "The venue is no longer available"}}

@@ -6,8 +6,7 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.session.profile import Profile as Perfil
-from app.modules.session.profile import Role as Rol
+from app.modules.session.profile import Profile, Role
 from app.modules.spaces.rules import (
     CATALOG,
     NewSpace,
@@ -21,7 +20,7 @@ from app.modules.spaces.rules import (
 from app.modules.spaces.use_cases import create_space, suggested_name
 from app.shared.errors import Forbidden, InvalidData, Unavailable
 
-VALIDOS = SpaceData(
+VALID = SpaceData(
     venue_id=UUID(int=3),
     sport="Futbol",
     kind="F5",
@@ -31,64 +30,64 @@ VALIDOS = SpaceData(
 )
 
 
-def _errores(**cambios: Any) -> dict[str, str]:
-    espacio, errores = validate_space(replace(VALIDOS, **cambios))
-    assert espacio is None
-    return errores
+def _errors(**changes: Any) -> dict[str, str]:
+    space, errors = validate_space(replace(VALID, **changes))
+    assert space is None
+    return errors
 
 
-def test_un_espacio_completo_se_puede_guardar() -> None:
-    espacio, errores = validate_space(VALIDOS)
-    assert errores == {}
-    assert espacio == NewSpace(UUID(int=3), "Futbol", "F5", False, True, 38000)
+def test_a_complete_space_can_be_saved() -> None:
+    space, errors = validate_space(VALID)
+    assert errors == {}
+    assert space == NewSpace(UUID(int=3), VALID.sport, "F5", False, True, 38000)
 
 
-def test_cada_campo_que_falta_es_obligatorio() -> None:
-    vacio = SpaceData(None, "", "", None, None, None)
-    _, errores = validate_space(vacio)
-    assert errores == dict.fromkeys(
+def test_each_missing_field_is_required() -> None:
+    empty = SpaceData(None, "", "", None, None, None)
+    _, errors = validate_space(empty)
+    assert errors == dict.fromkeys(
         ["venue_id", "sport", "kind", "covered", "lit", "price_per_hour"],
         "This field is required",
     )
 
 
-def test_deporte_y_tipo_salen_del_catalogo() -> None:
-    assert _errores(sport="Rugby") == {"sport": "Choose a sport from the list"}
-    assert _errores(kind="PDL") == {"kind": "Choose a kind from the list"}
+def test_sport_and_kind_come_from_the_catalog() -> None:
+    assert _errors(sport="Rugby") == {"sport": "Choose a sport from the list"}
+    assert _errors(kind="PDL") == {"kind": "Choose a kind from the list"}
 
 
-@pytest.mark.parametrize("precio", [0, -1, 10_000_000])
-def test_el_precio_es_positivo_y_con_tope(precio: int) -> None:
-    assert _errores(price_per_hour=precio) == {
+@pytest.mark.parametrize("price", [0, -1, 10_000_000])
+def test_the_price_is_positive_and_capped(price: int) -> None:
+    assert _errors(price_per_hour=price) == {
         "price_per_hour": "Enter a price between $ 1 and $ 9,999,999"
     }
 
 
-def test_el_catalogo_no_repite_claves() -> None:
-    claves = [d.key for d in CATALOG]
-    assert len(claves) == len(set(claves))
+def test_the_catalog_does_not_repeat_keys() -> None:
+    keys = [d.key for d in CATALOG]
+    assert len(keys) == len(set(keys))
     for d in CATALOG:
-        tipos = [t.key for t in d.kinds]
-        assert tipos and len(tipos) == len(set(tipos))
+        kinds = [t.key for t in d.kinds]
+        assert kinds and len(kinds) == len(set(kinds))
 
 
-def _perfil(rol: Rol) -> Perfil:
-    return Perfil(
+def _profile(role: Role) -> Profile:
+    return Profile(
         id=UUID(int=7),
         uid="uid",
         first_name="Ana",
         last_name="Díaz",
         email="ana@club.com",
-        role=rol,
+        role=role,
         dni="20000001",
         birth_date=date(1985, 6, 1),
     )
 
 
-class _EspaciosEnMemoria:
-    def __init__(self, sede: SpaceVenue | None) -> None:
-        self.sede = sede
-        self.guardados: list[tuple[NewSpace, int | None, str, UUID]] = []
+class _InMemorySpaces:
+    def __init__(self, venue: SpaceVenue | None) -> None:
+        self.venue = venue
+        self.saved: list[tuple[NewSpace, int | None, str, UUID]] = []
 
     def active(
         self,
@@ -105,7 +104,7 @@ class _EspaciosEnMemoria:
         kind: str,
         name: Callable[[SpaceVenue, int], str],
     ) -> SuggestedName | None:
-        return None if self.sede is None else SuggestedName(name(self.sede, 3), 3)
+        return None if self.venue is None else SuggestedName(name(self.venue, 3), 3)
 
     def insert(
         self,
@@ -114,10 +113,10 @@ class _EspaciosEnMemoria:
         name: Callable[[SpaceVenue, int], str],
         author: UUID,
     ) -> Space:
-        assert self.sede is not None
-        compuesto = name(self.sede, 3)
-        self.guardados.append((new, number, compuesto, author))
-        return Space(UUID(int=1), compuesto, new.venue_id, self.sede.name, new.sport,
+        assert self.venue is not None
+        composite = name(self.venue, 3)
+        self.saved.append((new, number, composite, author))
+        return Space(UUID(int=1), composite, new.venue_id, self.venue.name, new.sport,
                      new.kind, 3, new.covered, new.lit,
                      new.price_per_hour)  # fmt: skip
 
@@ -131,34 +130,34 @@ class _EspaciosEnMemoria:
 MORON = SpaceVenue("Sede Morón", "Av. Rivadavia", 19850)
 
 
-def test_el_nombre_sugerido_es_el_del_enunciado_con_el_numero_siguiente() -> None:
-    s = suggested_name(_perfil("admin"), UUID(int=3), "Futbol", "F5", _EspaciosEnMemoria(MORON))
+def test_the_suggested_name_is_the_one_from_the_brief_with_the_next_number() -> None:
+    s = suggested_name(_profile("admin"), UUID(int=3), "Futbol", "F5", _InMemorySpaces(MORON))
     assert (s.name, s.number) == ("Moron_Rivadavia_19850_Futbol_F5_3", 3)
 
 
-def test_sin_sede_activa_no_hay_nombre() -> None:
+def test_without_an_active_venue_there_is_no_name() -> None:
     with pytest.raises(Unavailable):
-        suggested_name(_perfil("admin"), UUID(int=3), "Futbol", "F5", _EspaciosEnMemoria(None))
+        suggested_name(_profile("admin"), UUID(int=3), "Futbol", "F5", _InMemorySpaces(None))
 
 
-def test_el_alta_queda_a_nombre_del_administrador_con_el_nombre_compuesto() -> None:
-    espacios = _EspaciosEnMemoria(MORON)
-    espacio = create_space(_perfil("admin"), VALIDOS, 3, espacios)
-    assert espacio.name == "Moron_Rivadavia_19850_Futbol_F5_3"
-    assert [(n, a) for _, n, _, a in espacios.guardados] == [(3, UUID(int=7))]
+def test_the_creation_is_made_in_the_administrators_name_with_the_composite_name() -> None:
+    spaces = _InMemorySpaces(MORON)
+    space = create_space(_profile("admin"), VALID, 3, spaces)
+    assert space.name == "Moron_Rivadavia_19850_Futbol_F5_3"
+    assert [(n, a) for _, n, _, a in spaces.saved] == [(3, UUID(int=7))]
 
 
-def test_un_usuario_no_gestiona_espacios() -> None:
-    espacios = _EspaciosEnMemoria(MORON)
+def test_a_user_does_not_manage_spaces() -> None:
+    spaces = _InMemorySpaces(MORON)
     with pytest.raises(Forbidden):
-        create_space(_perfil("user"), VALIDOS, None, espacios)
+        create_space(_profile("user"), VALID, None, spaces)
     with pytest.raises(Forbidden):
-        suggested_name(_perfil("user"), UUID(int=3), "Futbol", "F5", espacios)
-    assert espacios.guardados == []
+        suggested_name(_profile("user"), UUID(int=3), "Futbol", "F5", spaces)
+    assert spaces.saved == []
 
 
-def test_con_datos_invalidos_no_se_guarda_nada() -> None:
-    espacios = _EspaciosEnMemoria(MORON)
+def test_with_invalid_data_nothing_is_saved() -> None:
+    spaces = _InMemorySpaces(MORON)
     with pytest.raises(InvalidData):
-        create_space(_perfil("admin"), replace(VALIDOS, kind=""), None, espacios)
-    assert espacios.guardados == []
+        create_space(_profile("admin"), replace(VALID, kind=""), None, spaces)
+    assert spaces.saved == []

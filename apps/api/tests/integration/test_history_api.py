@@ -1,4 +1,4 @@
-"""`GET /reservas/todas`: los cortes de fecha y la búsqueda contra la base y el emulador reales."""
+"""`GET /bookings/all`: the date cuts and the search against the real database and emulator."""
 
 from datetime import date, timedelta
 from typing import Any
@@ -8,16 +8,16 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio_nuevo(api: TestClient, admin_token: str, sede_id: str) -> str:
+def _new_space(api: TestClient, admin_token: str, venue_id: str) -> str:
     r = api.post(
         "/spaces",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
-            "venue_id": sede_id,
+            "venue_id": venue_id,
             "sport": "Futbol",
             "kind": "F5",
             "covered": False,
@@ -28,20 +28,20 @@ def _espacio_nuevo(api: TestClient, admin_token: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, user_token: str, espacio: str, dia: int) -> dict[str, Any]:
-    fecha = (date.today() + timedelta(days=dia)).isoformat()
+def _book(api: TestClient, user_token: str, space: str, day: int) -> dict[str, Any]:
+    on = (date.today() + timedelta(days=day)).isoformat()
     r = api.post(
         "/bookings",
-        headers=_con(user_token),
-        json={"space_id": espacio, "date": fecha, "start_hour": "18:00", "hours": 1},
+        headers=_bearer(user_token),
+        json={"space_id": space, "date": on, "start_hour": "18:00", "hours": 1},
     )
     assert r.status_code == 201
-    reserva: dict[str, Any] = r.json()
-    return reserva
+    booking: dict[str, Any] = r.json()
+    return booking
 
 
-def _mover_a(engine: Engine, id_: UUID, dia: str, hora: int) -> None:
-    """Deja la reserva en [dia] a las [hora] del club."""
+def _move_to(engine: Engine, id_: UUID, day: str, hour: int) -> None:
+    """Leaves the booking on [day] at [hour] club time."""
     with engine.begin() as conn:
         conn.execute(
             text(
@@ -51,47 +51,47 @@ def _mover_a(engine: Engine, id_: UUID, dia: str, hora: int) -> None:
                 "       AT TIME ZONE 'America/Argentina/Buenos_Aires' AS starts_at) x"
                 " WHERE id = :id"
             ),
-            {"id": id_, "dia": dia, "hora": hora},
+            {"id": id_, "dia": day, "hora": hour},
         )
 
 
-def _ids(api: TestClient, token: str, consulta: str) -> set[str]:
-    r = api.get(f"/bookings/all?{consulta}", headers=_con(token))
+def _ids(api: TestClient, token: str, query: str) -> set[str]:
+    r = api.get(f"/bookings/all?{query}", headers=_bearer(token))
     assert r.status_code == 200
-    cuerpo: dict[str, Any] = r.json()
-    return {x["id"] for x in cuerpo["bookings"]}
+    body: dict[str, Any] = r.json()
+    return {x["id"] for x in body["bookings"]}
 
 
-def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
+def test_the_filter_days_are_cut_at_the_club_time(
     api: TestClient, engine: Engine, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    """a las 21:00 y a las 23:00 del club la reserva cae en su día, no en el siguiente en UTC"""
-    espacio = _espacio_nuevo(api, admin_token, venue[0])
-    a_las_21 = _reservar(api, user_token, espacio, dia=1)["id"]
-    a_las_23 = _reservar(api, user_token, espacio, dia=2)["id"]
-    _mover_a(engine, UUID(a_las_21), "2031-09-10", 21)
-    _mover_a(engine, UUID(a_las_23), "2031-09-10", 23)
+    """at 21:00 and at 23:00 club time the booking falls on its day, not on the next one in UTC"""
+    space = _new_space(api, admin_token, venue[0])
+    at_21 = _book(api, user_token, space, day=1)["id"]
+    at_23 = _book(api, user_token, space, day=2)["id"]
+    _move_to(engine, UUID(at_21), "2031-09-10", 21)
+    _move_to(engine, UUID(at_23), "2031-09-10", 23)
     base = f"q={venue[1]}"
 
     assert _ids(api, admin_token, f"{base}&since=2031-09-10&until=2031-09-10") == {
-        a_las_21,
-        a_las_23,
+        at_21,
+        at_23,
     }
     assert _ids(api, admin_token, f"{base}&since=2031-09-11&until=2031-09-11") == set()
     assert _ids(api, admin_token, f"{base}&since=2031-09-09&until=2031-09-09") == set()
-    assert _ids(api, admin_token, f"{base}&until=2031-09-10") == {a_las_21, a_las_23}
+    assert _ids(api, admin_token, f"{base}&until=2031-09-10") == {at_21, at_23}
 
 
-def test_la_busqueda_toma_los_comodines_como_texto(
+def test_the_search_takes_wildcards_as_text(
     api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
-    """% y _ no son comodines en la búsqueda @supuesto:CU-14-SUP-02"""
-    espacio = _espacio_nuevo(api, admin_token, venue[0])
-    reserva = _reservar(api, user_token, espacio, dia=1)["id"]
-    nombre = venue[1]
+    """% and _ are not wildcards in the search @assumption:CU-14-SUP-02"""
+    space = _new_space(api, admin_token, venue[0])
+    booking = _book(api, user_token, space, day=1)["id"]
+    name = venue[1]
 
-    assert reserva in _ids(api, admin_token, f"q={nombre}")
+    assert booking in _ids(api, admin_token, f"q={name}")
     assert _ids(api, admin_token, "q=%25") == set()
-    assert _ids(api, admin_token, f"q={nombre[:5]}%25") == set()
-    assert _ids(api, admin_token, f"q={nombre[:4]}_{nombre[5:]}") == set()
+    assert _ids(api, admin_token, f"q={name[:5]}%25") == set()
+    assert _ids(api, admin_token, f"q={name[:4]}_{name[5:]}") == set()
     assert _ids(api, admin_token, "q=%5C") == set()

@@ -1,4 +1,4 @@
-"""Una reserva se mueve sólo desde donde está, contra la base real."""
+"""A booking moves only from where it is, against the real database."""
 
 from uuid import UUID
 
@@ -12,24 +12,24 @@ from tests.integration.test_api_clean_bookings import _at_hour, _schedule, court
 __all__ = ["court"]
 
 
-def test_una_reserva_que_ya_se_movio_no_se_vuelve_a_mover_desde_donde_estaba(
+def test_a_booking_that_already_moved_is_not_moved_again_from_where_it_was(
     engine: Engine, court: tuple[str, str, UUID]
 ) -> None:
-    """una reserva que ya se movió no se vuelve a mover desde donde estaba
+    """a booking that already moved is not moved again from where it was
     @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
-    _, espacio_api, yo = court
-    espacio = UUID(espacio_api)
-    agenda = _schedule(engine, espacio)
+    _, space_api, me = court
+    space = UUID(space_api)
+    schedule = _schedule(engine, space)
     with engine.connect() as conn:
-        reserva = BookingsSql(conn).insert(yo, espacio, _at_hour(1, 10), _at_hour(1, 11), agenda)
+        booking = BookingsSql(conn).insert(me, space, _at_hour(1, 10), _at_hour(1, 11), schedule)
 
     with engine.connect() as conn, pytest.raises(ConcurrentChange):
         BookingsSql(conn).move(
-            yo,
-            reserva.id,
-            (espacio, _at_hour(1, 9)),
-            espacio,
+            me,
+            booking.id,
+            (space, _at_hour(1, 9)),
+            space,
             _at_hour(1, 12),
             _at_hour(1, 13),
-            agenda,
+            schedule,
         )

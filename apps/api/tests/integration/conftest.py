@@ -1,16 +1,16 @@
-"""Cuentas y sedes de prueba para los tests de integración, contra la base y el emulador."""
+"""Test accounts and venues for the integration tests, against the database and the emulator."""
 
 from collections.abc import Callable, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.modules.users.seed_admin import main as sembrar
+from app.modules.users.seed_admin import main as seed
 
-CONTRASENA = "ClubNahuel1"
+PASSWORD = "ClubNahuel1"
 
 
-def _con(token: str) -> dict[str, str]:
+def _bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -21,13 +21,13 @@ def admin_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[str]:
     s = unique()
-    monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
-    argumentos = [
+    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    arguments = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
-    assert sembrar(argumentos) == 0
-    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
+    assert seed(arguments) == 0
+    token = sign_in(f"admin.{s}@club.com", PASSWORD)
     assert token is not None
     yield token
 
@@ -39,16 +39,16 @@ def user_token(
     unique: Callable[[], str],
 ) -> str:
     s = unique()
-    pedido = {
+    payload = {
         "first_name": "Martín",
         "last_name": "Ferreyra",
         "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
         "birth_date": "1994-07-21",
         "email": f"socio.{s}@correo.com",
-        "password": CONTRASENA,
+        "password": PASSWORD,
     }
-    assert api.post("/register", json=pedido).status_code == 201
-    token = sign_in(f"socio.{s}@correo.com", CONTRASENA)
+    assert api.post("/register", json=payload).status_code == 201
+    token = sign_in(f"socio.{s}@correo.com", PASSWORD)
     assert token is not None
     return token
 
@@ -58,7 +58,7 @@ def venue(api: TestClient, admin_token: str, unique: Callable[[], str]) -> tuple
     s = unique()
     r = api.post(
         "/venues",
-        headers=_con(admin_token),
+        headers=_bearer(admin_token),
         json={
             "name": f"Sede Haedo {s}",
             "address": "Av. Vergara 1850",
@@ -68,5 +68,5 @@ def venue(api: TestClient, admin_token: str, unique: Callable[[], str]) -> tuple
         },
     )
     assert r.status_code == 201
-    # El nombre compuesto junta las palabras con mayúscula inicial: «Haedo b489» → «HaedoB489».
+    # The compound name joins the words with an initial capital: «Haedo b489» → «HaedoB489».
     return r.json()["id"], f"Haedo{s[0].upper()}{s[1:]}_Vergara_1850"

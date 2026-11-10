@@ -1,7 +1,7 @@
-"""Escenario mínimo que necesita el emulador de Firebase: lo usan las pruebas de la suite confiable."""
+"""Minimal scenario the Firebase emulator needs: the reliable suite tests use it."""
 
 from fastapi.testclient import TestClient
 
 
-def test_un_pedido_sin_sesion_se_rechaza_con_401(api: TestClient) -> None:
+def test_a_request_without_a_session_is_rejected_with_401(api: TestClient) -> None:
     assert api.get("/me").status_code == 401

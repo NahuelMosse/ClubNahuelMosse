@@ -7,145 +7,143 @@ from test_reminder import FakeChannel, Member, app_of, tomorrow, a_member
 
 from app.modules.notifications.push import push_channel
 
-DIAS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 @pytest.fixture
-def canal(api: TestClient) -> Iterator[FakeChannel]:
-    """El servicio de notificaciones del teléfono, que anota lo que la API le pide enviar."""
-    canal = FakeChannel()
-    app_of(api).dependency_overrides[push_channel] = lambda: canal
-    yield canal
+def channel(api: TestClient) -> Iterator[FakeChannel]:
+    """The phone notification service, which records what the API asks it to send."""
+    channel = FakeChannel()
+    app_of(api).dependency_overrides[push_channel] = lambda: channel
+    yield channel
     app_of(api).dependency_overrides.pop(push_channel, None)
 
 
-def cancelar(socio: Member, reserva_id: str) -> int:
-    return socio.api.post(f"/bookings/{reserva_id}/cancel", headers=socio.session).status_code
+def cancel(member: Member, booking_id: str) -> int:
+    return member.api.post(f"/bookings/{booking_id}/cancel", headers=member.session).status_code
 
 
-def cuerpo_esperado(venue: str, hora: str) -> str:
-    dia = tomorrow()
-    return (
-        f"Football 5 · {venue} · {DIAS[dia.weekday()]} {dia.day}, {hora}. The slot was freed."
-    )
+def expected_body(venue: str, hour: str) -> str:
+    day = tomorrow()
+    return f"Football 5 · {venue} · {DAYS[day.weekday()]} {day.day}, {hour}. The slot was freed."
 
 
-def test_al_cancelar_una_reserva_se_envia_la_confirmacion_con_la_reserva_y_el_horario_liberado(
+def test_cancelling_a_booking_sends_the_confirmation_with_the_booking_and_the_freed_slot(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """cancela una reserva y recibe la confirmación con la reserva y el horario liberado @CU-24.3-H01-01"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
+    """cancels a booking and receives the confirmation with the booking and the freed slot @CU-24.3-H01-01"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
 
-    # Verifica: nada sale antes de cancelar.
-    assert canal.sent == []
+    # Verifies: nothing goes out before cancelling.
+    assert channel.sent == []
 
-    assert cancelar(socio, reserva["id"]) == 200
+    assert cancel(member, booking["id"]) == 200
 
-    # Verifica: sale una sola confirmación, al dispositivo del socio, con lo que dice el CU.
-    assert len(canal.sent) == 1
-    tokens, aviso = canal.sent[0]
-    assert tokens == [socio.device]
-    assert aviso.title == "Booking cancelled"
-    assert aviso.body == cuerpo_esperado(socio.venue, "21:00")
-    assert aviso.data["booking_id"] == str(reserva["id"])
-    assert aviso.data["kind"] == "user_cancellation"
+    # Verifies: a single confirmation goes out, to the member's device, with what the CU says.
+    assert len(channel.sent) == 1
+    tokens, notice = channel.sent[0]
+    assert tokens == [member.device]
+    assert notice.title == "Booking cancelled"
+    assert notice.body == expected_body(member.venue, "21:00")
+    assert notice.data["booking_id"] == str(booking["id"])
+    assert notice.data["kind"] == "user_cancellation"
 
 
-def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
+def test_tapping_the_confirmation_tells_the_app_which_booking_to_open(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """al tocar la confirmación la app abre el historial con la reserva cancelada @CU-24.3-H01-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
-    assert cancelar(socio, reserva["id"]) == 200
+    """tapping the confirmation opens the history with the cancelled booking @CU-24.3-H01-02"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
+    assert cancel(member, booking["id"]) == 200
 
-    # Verifica: el push y el centro llevan el número de la reserva, que el historial lista
-    # como cancelada.
-    [(_, aviso)] = canal.sent
-    assert aviso.data["booking_id"] == str(reserva["id"])
-    [entrada] = socio.center()["notifications"]
-    assert entrada["booking_id"] == reserva["id"]
-    historial = socio.api.get("/bookings?when=history", headers=socio.session).json()
-    assert [(r["id"], r["status"]) for r in historial["bookings"]] == [(reserva["id"], "canceled")]
+    # Verifies: the push and the center carry the booking number, which the history lists
+    # as cancelled.
+    [(_, notice)] = channel.sent
+    assert notice.data["booking_id"] == str(booking["id"])
+    [entry] = member.center()["notifications"]
+    assert entry["booking_id"] == booking["id"]
+    history = member.api.get("/bookings?when=history", headers=member.session).json()
+    assert [(r["id"], r["status"]) for r in history["bookings"]] == [(booking["id"], "canceled")]
 
 
-def test_la_confirmacion_queda_en_el_centro_de_notificaciones(
+def test_the_confirmation_stays_in_the_notification_center(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """la confirmación queda en el centro de notificaciones @CU-24.3-H01-03"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
-    assert socio.center() == {"notifications": [], "unread": 0}
+    """the confirmation stays in the notification center @CU-24.3-H01-03"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
+    assert member.center() == {"notifications": [], "unread": 0}
 
-    assert cancelar(socio, reserva["id"]) == 200
+    assert cancel(member, booking["id"]) == 200
 
-    # Verifica: queda una entrada sin leer, de confirmación, con el texto del CU.
-    center = socio.center()
+    # Verifies: an unread confirmation entry remains, with the CU text.
+    center = member.center()
     assert center["unread"] == 1
-    [entrada] = center["notifications"]
-    assert entrada["kind"] == "user_cancellation"
-    assert entrada["title"] == "Booking cancelled"
-    assert entrada["body"] == cuerpo_esperado(socio.venue, "21:00")
-    assert entrada["read"] is False
+    [entry] = center["notifications"]
+    assert entry["kind"] == "user_cancellation"
+    assert entry["title"] == "Booking cancelled"
+    assert entry["body"] == expected_body(member.venue, "21:00")
+    assert entry["read"] is False
 
 
-def test_sin_permiso_de_notificaciones_no_se_envia_pero_la_confirmacion_queda_en_el_centro(
+def test_without_notification_permission_nothing_is_sent_but_the_confirmation_stays_in_the_center(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """sin permiso de notificaciones no llega el push pero la confirmación está en el centro @CU-24.3-H03-01"""
-    socio = a_member(api, engine, sign_in, unique, permission=False)
-    reserva = socio.book("21:00")
+    """without notification permission the push is not sent but the confirmation is in the center @CU-24.3-H03-01"""
+    member = a_member(api, engine, sign_in, unique, permission=False)
+    booking = member.book("21:00")
 
-    assert cancelar(socio, reserva["id"]) == 200
+    assert cancel(member, booking["id"]) == 200
 
-    # Verifica: nada sale hacia el teléfono y la confirmación está en el centro.
-    assert canal.sent == []
-    [entrada] = socio.center()["notifications"]
-    assert entrada["title"] == "Booking cancelled"
+    # Verifies: nothing goes out to the phone and the confirmation is in the center.
+    assert channel.sent == []
+    [entry] = member.center()["notifications"]
+    assert entry["title"] == "Booking cancelled"
 
 
-def test_si_la_cancelacion_falla_no_se_confirma_nada(
+def test_if_the_cancellation_fails_nothing_is_confirmed(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
-    canal: FakeChannel,
+    channel: FakeChannel,
 ) -> None:
-    """si la cancelación falló, no recibe ninguna confirmación @CU-24.3-H04-01"""
-    socio = a_member(api, engine, sign_in, unique)
-    ajeno = a_member(api, engine, sign_in, unique)
-    de_otro = ajeno.book("21:00")
-    anulada = socio.book("20:00")
+    """if the cancellation failed, it receives no confirmation @CU-24.3-H04-01"""
+    member = a_member(api, engine, sign_in, unique)
+    other = a_member(api, engine, sign_in, unique)
+    someone_elses = other.book("21:00")
+    voided = member.book("20:00")
     with engine.begin() as conn:
         conn.execute(
             text(
                 "UPDATE booking SET status = 'voided', reason = 'mantenimiento',"
                 " canceled_at = now(), canceled_by = :u WHERE id = :id"
             ),
-            {"u": socio.user_id, "id": anulada["id"]},
+            {"u": member.user_id, "id": voided["id"]},
         )
 
-    # Verifica: cancelar la de otra persona (404) o una que el club ya anuló (409) falla y
-    # no deja confirmación para nadie.
-    assert cancelar(socio, de_otro["id"]) == 404
-    assert cancelar(socio, anulada["id"]) == 409
-    assert canal.sent == []
-    assert socio.center() == {"notifications": [], "unread": 0}
-    assert ajeno.center() == {"notifications": [], "unread": 0}
+    # Verifies: cancelling someone else's booking (404) or one the club already voided (409)
+    # fails and leaves no confirmation for anybody.
+    assert cancel(member, someone_elses["id"]) == 404
+    assert cancel(member, voided["id"]) == 409
+    assert channel.sent == []
+    assert member.center() == {"notifications": [], "unread": 0}
+    assert other.center() == {"notifications": [], "unread": 0}

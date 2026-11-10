@@ -1,4 +1,4 @@
-"""Seguridad de la API: entradas, proxy, registro de rechazos, correo y contrato (T1 a T4)."""
+"""API security: inputs, proxy, rejection log, email and contract (T1 to T4)."""
 
 import logging
 import ssl
@@ -10,84 +10,84 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.password_recovery.rules import Message as Mensaje
+from app.modules.password_recovery.rules import Message
 from app.shared.config import config
-from app.shared import email as correo
+from app.shared import email as email_module
 
-RAIZ_REPO = Path(__file__).resolve().parents[4]
-CONTRASENA = "ClubNahuel1"
+REPO_ROOT = Path(__file__).resolve().parents[4]
+PASSWORD = "ClubNahuel1"
 
 
-def _socio(
+def _member(
     api: TestClient,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> dict[str, str]:
     s = unique()
-    correo_socio = f"socio.{s}@correo.com"
-    alta = api.post(
+    member_email = f"socio.{s}@correo.com"
+    signup = api.post(
         "/register",
         json={
             "first_name": "Martín",
             "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             "birth_date": "1994-07-21",
-            "email": correo_socio,
-            "password": CONTRASENA,
+            "email": member_email,
+            "password": PASSWORD,
         },
     )
-    assert alta.status_code == 201
-    token = sign_in(correo_socio, CONTRASENA)
+    assert signup.status_code == 201
+    token = sign_in(member_email, PASSWORD)
     assert token is not None
     return {"Authorization": f"Bearer {token}"}
 
 
-def _registro(**cambios: str) -> dict[str, str]:
+def _registration(**changes: str) -> dict[str, str]:
     base = {
         "first_name": "Martín",
         "last_name": "Ferreyra",
         "dni": "31000001",
         "birth_date": "1994-07-21",
         "email": "nadie@correo.com",
-        "password": CONTRASENA,
+        "password": PASSWORD,
     }
-    return {**base, **cambios}
+    return {**base, **changes}
 
 
-def test_la_baja_de_un_token_ajeno_no_hace_nada_y_responde_204(
+def test_deactivating_a_token_of_someone_else_does_nothing_and_answers_204(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """dar de baja un token ajeno no hace nada y responde 204
+    """deactivating a token of someone else does nothing and answers 204
     @REV-01-S19 @assumption:REV-01-ASM-04
     """
-    duenia = _socio(api, sign_in, unique)
-    intruso = _socio(api, sign_in, unique)
+    owner = _member(api, sign_in, unique)
+    intruder = _member(api, sign_in, unique)
     token = f"fcm-{unique()}"
-    pedido = {"token": token, "platform": "android", "permission_granted": True}
-    assert api.put("/devices", headers=duenia, json=pedido).status_code == 204
+    payload = {"token": token, "platform": "android", "permission_granted": True}
+    assert api.put("/devices", headers=owner, json=payload).status_code == 204
 
-    baja = api.post("/devices/unregister", headers=intruso, json={"token": token})
+    unregistered = api.post("/devices/unregister", headers=intruder, json={"token": token})
 
     with engine.connect() as conn:
-        activo = conn.execute(
+        active = conn.execute(
             text("SELECT active FROM device WHERE token = :t"), {"t": token}
         ).scalar_one()
-    assert baja.status_code == 204
-    assert activo is True
+    assert unregistered.status_code == 204
+    assert active is True
 
 
-class _SmtpSinConfianza:
-    def __init__(self, host: str, puerto: int, timeout: float) -> None:
+class _UntrustedSmtp:
+    def __init__(self, host: str, port: int, timeout: float) -> None:
         pass
 
-    def __enter__(self) -> "_SmtpSinConfianza":
+    def __enter__(self) -> "_UntrustedSmtp":
         return self
 
     def __exit__(
-        self, tipo: type[BaseException] | None, e: BaseException | None, tb: TracebackType | None
+        self, kind: type[BaseException] | None, e: BaseException | None, tb: TracebackType | None
     ) -> None:
         return None
 
@@ -95,19 +95,21 @@ class _SmtpSinConfianza:
         raise ssl.SSLCertVerificationError("certificate verify failed: ana.rios@ejemplo.com")
 
 
-def test_un_fallo_de_tls_del_correo_no_deja_la_direccion_en_el_log(
+def test_a_tls_failure_of_the_email_does_not_leave_the_address_in_the_log(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """un fallo de TLS del correo no deja la dirección en el log
+    """a TLS failure of the email does not leave the address in the log
     @REV-01-S11 @assumption:REV-01-ASM-06
     """
-    monkeypatch.setattr(correo.smtplib, "SMTP", _SmtpSinConfianza)
+    monkeypatch.setattr(email_module.smtplib, "SMTP", _UntrustedSmtp)
     monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "smtp.ejemplo.com")
     monkeypatch.setattr(config, "email_sender", "club@ejemplo.com")
 
     with caplog.at_level(logging.DEBUG):
-        correo.send(Mensaje(recipient="ana.rios@ejemplo.com", subject="Tu enlace", body="Hola"))
+        email_module.send(
+            Message(recipient="ana.rios@ejemplo.com", subject="Tu enlace", body="Hola")
+        )
 
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text

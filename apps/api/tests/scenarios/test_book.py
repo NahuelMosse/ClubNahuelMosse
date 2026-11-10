@@ -7,33 +7,33 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
+ZONE = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 @pytest.fixture
-def cancha(
+def court(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> tuple[dict[str, str], str]:
-    """Una cuenta de usuario y un Fútbol 5 en una sede de 08:00 a 23:00 todos los días."""
+    """A user account and a Football 5 court in a venue open 08:00 to 23:00 every day."""
     s = unique()
-    correo = f"socio.{s}@correo.com"
-    alta = api.post(
+    email = f"socio.{s}@correo.com"
+    signup = api.post(
         "/register",
         json={
             "first_name": "Martín",
             "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             "birth_date": "1994-07-21",
-            "email": correo,
+            "email": email,
             "password": "ClubNahuel1",
         },
     )
-    assert alta.status_code == 201
+    assert signup.status_code == 201
     with engine.begin() as conn:
-        espacio: Any = conn.execute(
+        space: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
@@ -44,132 +44,132 @@ def cancha(
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
         ).scalar_one()
-    token = sign_in(correo, "ClubNahuel1")
+    token = sign_in(email, "ClubNahuel1")
     assert token is not None
-    return {"Authorization": f"Bearer {token}"}, str(espacio)
+    return {"Authorization": f"Bearer {token}"}, str(space)
 
 
-def _manana() -> date:
-    return datetime.now(ZONA).date() + timedelta(days=1)
+def _tomorrow() -> date:
+    return datetime.now(ZONE).date() + timedelta(days=1)
 
 
-def _reservas(engine: Engine, espacio: str) -> int:
+def _bookings(engine: Engine, space: str) -> int:
     with engine.connect() as conn:
         return int(
             conn.execute(
-                text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": espacio}
+                text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": space}
             ).scalar_one()
         )
 
 
-def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
-    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
+def test_the_backend_rejects_a_booking_in_a_past_time_slot(
+    api: TestClient, engine: Engine, court: tuple[dict[str, str], str]
 ) -> None:
-    """el backend rechaza una reserva en un horario pasado @CU-09-H01-04"""
-    sesion, espacio = cancha
-    ayer = datetime.now(ZONA).date() - timedelta(days=1)
+    """the backend rejects a booking in a past time slot @CU-09-H01-04"""
+    session, space = court
+    yesterday = datetime.now(ZONE).date() - timedelta(days=1)
 
     r = api.post(
         "/bookings",
-        headers=sesion,
-        json={"space_id": espacio, "date": ayer.isoformat(), "start_hour": "10:00", "hours": 1},
+        headers=session,
+        json={"space_id": space, "date": yesterday.isoformat(), "start_hour": "10:00", "hours": 1},
     )
 
-    # Verifica: la rechaza por la fecha y no guarda nada.
+    # Verifies: it rejects it because of the date and saves nothing.
     assert r.status_code == 422
     assert r.json()["errors"]["date"] == "The date must be in the future"
-    assert _reservas(engine, espacio) == 0
+    assert _bookings(engine, space) == 0
 
 
-def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sede(
-    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
+def test_the_backend_rejects_a_booking_that_ends_after_the_venue_closes(
+    api: TestClient, engine: Engine, court: tuple[dict[str, str], str]
 ) -> None:
-    """el backend rechaza una reserva que termina después del cierre de la sede @CU-09-H01-05"""
-    sesion, espacio = cancha
+    """the backend rejects a booking that ends after the venue closes @CU-09-H01-05"""
+    session, space = court
 
     r = api.post(
         "/bookings",
-        headers=sesion,
+        headers=session,
         json={
-            "space_id": espacio,
-            "date": _manana().isoformat(),
+            "space_id": space,
+            "date": _tomorrow().isoformat(),
             "start_hour": "22:00",
             "hours": 2,
         },
     )
 
-    # Verifica: la rechaza por el cierre y no guarda nada.
+    # Verifies: it rejects it because of the closing time and saves nothing.
     assert r.status_code == 422
     assert r.json()["errors"]["until"] == "The venue closes at 23:00"
-    assert _reservas(engine, espacio) == 0
+    assert _bookings(engine, space) == 0
 
 
-def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_completa(
-    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
+def test_the_backend_rejects_a_booking_that_does_not_start_or_end_on_the_hour(
+    api: TestClient, engine: Engine, court: tuple[dict[str, str], str]
 ) -> None:
-    """el backend rechaza una reserva que no empieza o no termina en hora completa @CU-09-H01-06"""
-    sesion, espacio = cancha
+    """the backend rejects a booking that does not start or end on the hour @CU-09-H01-06"""
+    session, space = court
 
     r = api.post(
         "/bookings",
-        headers=sesion,
+        headers=session,
         json={
-            "space_id": espacio,
-            "date": _manana().isoformat(),
+            "space_id": space,
+            "date": _tomorrow().isoformat(),
             "start_hour": "18:30",
             "hours": 1,
         },
     )
 
-    # Verifica: la rechaza por la hora y no guarda nada.
+    # Verifies: it rejects it because of the time and saves nothing.
     assert r.status_code == 422
     assert r.json()["errors"]["start_hour"] == "Choose an on-the-hour time"
-    assert _reservas(engine, espacio) == 0
+    assert _bookings(engine, space) == 0
 
 
-def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
-    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
+def test_the_backend_rejects_a_booking_of_less_than_one_hour(
+    api: TestClient, engine: Engine, court: tuple[dict[str, str], str]
 ) -> None:
-    """el backend rechaza una reserva de menos de una hora @CU-09-H01-08"""
-    sesion, espacio = cancha
+    """the backend rejects a booking of less than one hour @CU-09-H01-08"""
+    session, space = court
 
     r = api.post(
         "/bookings",
-        headers=sesion,
+        headers=session,
         json={
-            "space_id": espacio,
-            "date": _manana().isoformat(),
+            "space_id": space,
+            "date": _tomorrow().isoformat(),
             "start_hour": "18:00",
             "hours": 0,
         },
     )
 
-    # Verifica: la rechaza por la duración y no guarda nada.
+    # Verifies: it rejects it because of the duration and saves nothing.
     assert r.status_code == 422
     assert r.json()["errors"]["until"] == "The minimum duration is one hour"
-    assert _reservas(engine, espacio) == 0
+    assert _bookings(engine, space) == 0
 
 
-def test_el_backend_rechaza_una_reserva_que_se_superpone_en_parte_con_otra_del_mismo_espacio(
-    api: TestClient, engine: Engine, cancha: tuple[dict[str, str], str]
+def test_the_backend_rejects_a_booking_that_partly_overlaps_another_of_the_same_space(
+    api: TestClient, engine: Engine, court: tuple[dict[str, str], str]
 ) -> None:
-    """el backend rechaza una reserva que se superpone en parte con otra del mismo espacio @CU-09-H02-02"""
-    sesion, espacio = cancha
-    manana = _manana().isoformat()
-    primera = api.post(
+    """the backend rejects a booking that partly overlaps another of the same space @CU-09-H02-02"""
+    session, space = court
+    tomorrow = _tomorrow().isoformat()
+    first = api.post(
         "/bookings",
-        headers=sesion,
-        json={"space_id": espacio, "date": manana, "start_hour": "18:00", "hours": 2},
+        headers=session,
+        json={"space_id": space, "date": tomorrow, "start_hour": "18:00", "hours": 2},
     )
-    assert primera.status_code == 201
+    assert first.status_code == 201
 
     r = api.post(
         "/bookings",
-        headers=sesion,
-        json={"space_id": espacio, "date": manana, "start_hour": "19:00", "hours": 2},
+        headers=session,
+        json={"space_id": space, "date": tomorrow, "start_hour": "19:00", "hours": 2},
     )
 
-    # Verifica: la segunda choca con la primera y sólo queda una.
+    # Verifies: the second one collides with the first and only one remains.
     assert r.status_code == 409
     assert r.json()["errors"]["slot"] == "That slot was taken"
-    assert _reservas(engine, espacio) == 1
+    assert _bookings(engine, space) == 1

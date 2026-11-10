@@ -61,4 +61,4 @@ def test_a_push_no_device_accepted_is_recorded_as_failed(monkeypatch: pytest.Mon
 
     deliver(cast(Any, repo), _NoDeviceAccepted(), UUID(int=1), USER, NOTICE)
 
-    assert repo.envios == ["failed"]
+    assert repo.deliveries == ["failed"]

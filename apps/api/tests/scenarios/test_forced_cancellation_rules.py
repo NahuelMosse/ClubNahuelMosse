@@ -10,7 +10,7 @@ admin = base.admin
 channel = base.channel
 
 
-def test_un_aviso_que_esta_saliendo_se_agrupa_con_la_anulacion_siguiente(
+def test_a_notice_that_is_going_out_is_grouped_with_the_next_voiding(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
@@ -18,26 +18,26 @@ def test_un_aviso_que_esta_saliendo_se_agrupa_con_la_anulacion_siguiente(
     channel: FakeChannel,
     admin: dict[str, str],
 ) -> None:
-    """el aviso en curso sale igual y la anulación siguiente abre uno con la cantidad total, que es
-    el único del centro @supuesto:CU-24.2-SUP-02"""
-    socio = a_member(api, engine, sign_in, unique)
-    primera = socio.book("20:00")
-    segunda = socio.book("21:00")
-    assert base.force_cancel(socio, admin, primera) == 200
+    """the notice in progress still goes out and the next voiding opens one with the total count,
+    which is the only one of the center @assumption:CU-24.2-SUP-02"""
+    member = a_member(api, engine, sign_in, unique)
+    first = member.book("20:00")
+    second = member.book("21:00")
+    assert base.force_cancel(member, admin, first) == 200
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE notification SET delivery = 'sending' WHERE user_id = :u"),
-            {"u": socio.user_id},
+            {"u": member.user_id},
         )
 
-    assert base.force_cancel(socio, admin, segunda) == 200
+    assert base.force_cancel(member, admin, second) == 200
 
-    center = socio.center()
+    center = member.center()
     assert center["unread"] == 1
     assert [e["title"] for e in center["notifications"]] == ["The club voided 2 of your bookings"]
 
 
-def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
+def test_the_long_reason_is_trimmed_in_the_notice_and_the_history_keeps_it(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
@@ -45,20 +45,20 @@ def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
     channel: FakeChannel,
     admin: dict[str, str],
 ) -> None:
-    """el motivo del aviso tiene 200 caracteres como máximo @supuesto:CU-24.2-SUP-06"""
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
-    motivo = "x" * 300
+    """the reason of the notice has 200 characters at most @assumption:CU-24.2-SUP-06"""
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
+    reason = "x" * 300
 
-    assert base.force_cancel(socio, admin, reserva, motivo) == 200
+    assert base.force_cancel(member, admin, booking, reason) == 200
 
-    [(_, aviso)] = channel.sent
-    assert aviso.body.endswith(f"Reason: {'x' * 199}….")
-    historial = socio.api.get("/bookings?when=history", headers=socio.session).json()
-    assert [r["reason"] for r in historial["bookings"]] == [motivo]
+    [(_, notice)] = channel.sent
+    assert notice.body.endswith(f"Reason: {'x' * 199}….")
+    history = member.api.get("/bookings?when=history", headers=member.session).json()
+    assert [r["reason"] for r in history["bookings"]] == [reason]
 
 
-def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
+def test_a_booking_with_a_notice_does_not_repeat_it_if_it_is_queued_again(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
@@ -66,14 +66,14 @@ def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
     channel: FakeChannel,
     admin: dict[str, str],
 ) -> None:
-    """encolar dos veces la misma reserva deja un solo aviso @supuesto:CU-24.2-SUP-08"""
+    """queueing the same booking twice leaves a single notice @assumption:CU-24.2-SUP-08"""
     from app.modules.notifications.repository import enqueue_forced_cancellation
 
-    socio = a_member(api, engine, sign_in, unique)
-    reserva = socio.book("21:00")
-    assert base.force_cancel(socio, admin, reserva) == 200
+    member = a_member(api, engine, sign_in, unique)
+    booking = member.book("21:00")
+    assert base.force_cancel(member, admin, booking) == 200
 
     with engine.begin() as conn:
-        enqueue_forced_cancellation(conn, socio.user_id, [UUID(reserva["id"])])
+        enqueue_forced_cancellation(conn, member.user_id, [UUID(booking["id"])])
 
-    assert len(socio.center()["notifications"]) == 1
+    assert len(member.center()["notifications"]) == 1

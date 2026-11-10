@@ -4,67 +4,67 @@ from uuid import UUID
 import pytest
 
 from app.modules.session.profile import Profile, Role
-from app.modules.users.deactivation import deactivate as dar_de_baja
+from app.modules.users.deactivation import deactivate
 from app.shared.errors import Forbidden
 
 
-def _perfil(rol: Role = "user") -> Profile:
+def _profile(role: Role = "user") -> Profile:
     return Profile(
         id=UUID(int=7),
         uid="u7",
         first_name="Lucía",
         last_name="Gómez",
         email="lucia@correo.com",
-        role=rol,
+        role=role,
         dni="30111222",
         birth_date=date(1998, 11, 2),
     )
 
 
-class Cuentas:
+class Accounts:
     def __init__(self) -> None:
-        self.bajas: list[UUID] = []
-        self.borradas: list[str] = []
-        self.falla_proveedor = False
+        self.deactivated: list[UUID] = []
+        self.deleted: list[str] = []
+        self.provider_fails = False
 
-    def deactivate(self, id_usuario: UUID) -> bool:
-        if id_usuario in self.bajas:
+    def deactivate(self, user_id: UUID) -> bool:
+        if user_id in self.deactivated:
             return False
-        self.bajas.append(id_usuario)
+        self.deactivated.append(user_id)
         return True
 
     def delete_account(self, uid: str) -> None:
-        if self.falla_proveedor:
+        if self.provider_fails:
             raise RuntimeError("Firebase no contesta")
-        self.borradas.append(uid)
+        self.deleted.append(uid)
 
 
-def test_da_de_baja_y_borra_la_cuenta_del_proveedor() -> None:
-    cuentas = Cuentas()
-    dar_de_baja(_perfil(), cuentas, cuentas)
-    assert (cuentas.bajas, cuentas.borradas) == ([UUID(int=7)], ["u7"])
+def test_it_deactivates_and_deletes_the_provider_account() -> None:
+    accounts = Accounts()
+    deactivate(_profile(), accounts, accounts)
+    assert (accounts.deactivated, accounts.deleted) == ([UUID(int=7)], ["u7"])
 
 
-def test_si_el_proveedor_falla_la_baja_igual_queda_hecha(
+def test_if_the_provider_fails_the_deactivation_is_still_done(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    cuentas = Cuentas()
-    cuentas.falla_proveedor = True
-    dar_de_baja(_perfil(), cuentas, cuentas)
-    assert cuentas.bajas == [UUID(int=7)]
+    accounts = Accounts()
+    accounts.provider_fails = True
+    deactivate(_profile(), accounts, accounts)
+    assert accounts.deactivated == [UUID(int=7)]
     assert "could not delete account" in caplog.text
 
 
-def test_una_cuenta_que_ya_estaba_de_baja_no_toca_el_proveedor() -> None:
-    cuentas = Cuentas()
-    dar_de_baja(_perfil(), cuentas, cuentas)
-    dar_de_baja(_perfil(), cuentas, cuentas)
-    assert (cuentas.bajas, cuentas.borradas) == ([UUID(int=7)], ["u7"])
+def test_an_account_that_was_already_deactivated_does_not_touch_the_provider() -> None:
+    accounts = Accounts()
+    deactivate(_profile(), accounts, accounts)
+    deactivate(_profile(), accounts, accounts)
+    assert (accounts.deactivated, accounts.deleted) == ([UUID(int=7)], ["u7"])
 
 
-def test_un_administrador_no_se_da_de_baja() -> None:
-    """Verifica CU-07-SUP-03."""
-    cuentas = Cuentas()
+def test_an_administrator_is_not_deactivated() -> None:
+    """Verifies CU-07-SUP-03."""
+    accounts = Accounts()
     with pytest.raises(Forbidden):
-        dar_de_baja(_perfil("admin"), cuentas, cuentas)
-    assert cuentas.bajas == []
+        deactivate(_profile("admin"), accounts, accounts)
+    assert accounts.deactivated == []

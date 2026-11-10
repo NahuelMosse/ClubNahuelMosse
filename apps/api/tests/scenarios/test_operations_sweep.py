@@ -1,4 +1,4 @@
-"""El barrido de recordatorios como comando aparte del servicio web."""
+"""The reminder sweep as a command apart from the web service."""
 
 import os
 import subprocess
@@ -10,10 +10,10 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-RAIZ_API = Path(__file__).resolve().parents[2]
+API_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _reserva_en_la_proxima_hora(engine: Engine, correo: str, s: str) -> UUID:
+def _booking_in_the_next_hour(engine: Engine, email: str, s: str) -> UUID:
     with engine.begin() as conn:
         return conn.execute(
             text(
@@ -31,14 +31,14 @@ def _reserva_en_la_proxima_hora(engine: Engine, correo: str, s: str) -> UUID:
                 " + interval '1 hour' AS h) AS t WHERE u.email = :c AND u.active"
                 " RETURNING booking.id"
             ),
-            {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1", "c": correo},
+            {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1", "c": email},
         ).scalar_one()
 
 
-def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
+def test_reminders_go_out_with_a_command_outside_the_web_service(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    """los recordatorios salen aunque el servicio web esté dormido @REV-02-S3
+    """reminders go out even if the web service is asleep @REV-02-S3
     @assumption:REV-02-ASM-02
     """
     s = unique()
@@ -53,20 +53,18 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
             "password": "ClubNahuel1",
         },
     )
-    reserva = _reserva_en_la_proxima_hora(engine, f"socio.{s}@correo.com", s)
+    booking = _booking_in_the_next_hour(engine, f"socio.{s}@correo.com", s)
 
-    corrida = subprocess.run(
+    run = subprocess.run(
         [sys.executable, "-m", "app.modules.notifications.sweep", "--una-vez"],
-        cwd=RAIZ_API, env={**os.environ, "PYTHONUTF8": "1"},
+        cwd=API_ROOT, env={**os.environ, "PYTHONUTF8": "1"},
         capture_output=True, text=True, timeout=120, check=False,
     )  # fmt: skip
 
-    assert corrida.returncode == 0, corrida.stdout + corrida.stderr
+    assert run.returncode == 0, run.stdout + run.stderr
     with engine.connect() as conn:
-        avisos = conn.execute(
-            text(
-                "SELECT count(*) FROM notification WHERE kind = 'reminder' AND booking_id = :r"
-            ),
-            {"r": reserva},
+        notices = conn.execute(
+            text("SELECT count(*) FROM notification WHERE kind = 'reminder' AND booking_id = :r"),
+            {"r": booking},
         ).scalar_one()
-    assert avisos == 1
+    assert notices == 1

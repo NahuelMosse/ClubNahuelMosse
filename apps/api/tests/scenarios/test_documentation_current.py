@@ -1,4 +1,4 @@
-"""Documentación de producción: lo que necesita quien opera, audita o mantiene la app."""
+"""Production documentation: what whoever operates, audits or maintains the app needs."""
 
 import re
 import tomllib
@@ -7,183 +7,177 @@ from pathlib import Path
 import yaml
 
 from tests.current_schema import current
-from tests.unit.test_documentation_model import _sql as _subida
+from tests.unit.test_documentation_model import _sql as _upgrade
 
-RAIZ = Path(__file__).resolve().parents[4]
-API = RAIZ / "apps" / "api"
-MOVIL = RAIZ / "apps" / "mobile"
-DESIGN = RAIZ / "docs" / "technical" / "system-design.md"
-ESTADOS = {"meets", "fails", "not verified", "not applicable"}
-FILA_ASVS = re.compile(r"^\| \*\*(V\d+\.\d+\.\d+)\*\* .*\| *([^|]*?) *\| *([^|]*?) *\|$", re.M)
-TIPOS = (
+ROOT = Path(__file__).resolve().parents[4]
+API = ROOT / "apps" / "api"
+MOBILE = ROOT / "apps" / "mobile"
+DESIGN = ROOT / "docs" / "technical" / "system-design.md"
+STATES = {"meets", "fails", "not verified", "not applicable"}
+ASVS_ROW = re.compile(r"^\| \*\*(V\d+\.\d+\.\d+)\*\* .*\| *([^|]*?) *\| *([^|]*?) *\|$", re.M)
+TYPES = (
     r"bigint|text|integer|boolean|date|timestamptz|time|smallint|numeric|jsonb|integer\[\]|int\[\]"
 )
 
 
-def _text(ruta: Path) -> str:
-    return ruta.read_text(encoding="utf-8")
+def _text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
-def _section(texto: str, titulo: str) -> str:
-    """El cuerpo de la sección `## <titulo>` de un markdown, hasta la sección siguiente."""
-    partes = re.split(r"^## ", texto, flags=re.M)
-    return next((p for p in partes if p.startswith(titulo)), "")
+def _section(text: str, title: str) -> str:
+    """The body of the `## <title>` section of a markdown, up to the next section."""
+    parts = re.split(r"^## ", text, flags=re.M)
+    return next((p for p in parts if p.startswith(title)), "")
 
 
-def _requirements(plantilla: str) -> set[str]:
+def _requirements(template: str) -> set[str]:
     return set(
-        re.findall(r"\*\*(V\d+\.\d+\.\d+)\*\*", _text(RAIZ / ".claude" / "templates" / plantilla))
+        re.findall(r"\*\*(V\d+\.\d+\.\d+)\*\*", _text(ROOT / ".claude" / "templates" / template))
     )
 
 
-def test_la_matriz_asvs_de_nivel_2_responde_cada_requisito() -> None:
-    """la matriz ASVS de nivel 2 cubre cada requisito con su estado y evidencia @REV-07-S1"""
-    matriz = _text(RAIZ / "specs" / "asvs.md")
-    filas = {m.group(1): (m.group(2).strip("`"), m.group(3)) for m in FILA_ASVS.finditer(matriz)}
+def test_the_level_2_asvs_matrix_answers_every_requirement() -> None:
+    """the level 2 ASVS matrix covers every requirement with its status and evidence @REV-07-S1"""
+    matrix = _text(ROOT / "specs" / "asvs.md")
+    rows = {m.group(1): (m.group(2).strip("`"), m.group(3)) for m in ASVS_ROW.finditer(matrix)}
 
-    assert re.search(r"\blevel\s*2\b|\bL2\b", matriz, re.I)
-    assert set(filas) >= _requirements("asvs-level-1.md") | _requirements("asvs-level-2.md")
-    assert {estado for estado, _ in filas.values()} <= ESTADOS
-    assert all(len(evidencia) > 3 for _, evidencia in filas.values())
-    assert sum(estado == "meets" for estado, _ in filas.values()) >= 20
-    assert sum(estado == "fails" for estado, _ in filas.values()) >= 1
+    assert re.search(r"\blevel\s*2\b|\bL2\b", matrix, re.I)
+    assert set(rows) >= _requirements("asvs-level-1.md") | _requirements("asvs-level-2.md")
+    assert {status for status, _ in rows.values()} <= STATES
+    assert all(len(evidence) > 3 for _, evidence in rows.values())
+    assert sum(status == "meets" for status, _ in rows.values()) >= 20
+    assert sum(status == "fails" for status, _ in rows.values()) >= 1
 
 
-def test_el_diseno_del_sistema_tiene_amenazas_dependencias_entornos_y_objetivos() -> None:
-    """el diseño del sistema describe amenazas, dependencias, entornos y objetivos de servicio
+def test_the_system_design_has_threats_dependencies_environments_and_objectives() -> None:
+    """the system design describes threats, dependencies, environments and service objectives
     @REV-07-S2
     """
-    diseno = _text(DESIGN)
-    dependencias = _section(diseno, "External dependencies")
-    amenazas = _section(diseno, "Threat model")
+    design = _text(DESIGN)
+    dependencies = _section(design, "External dependencies")
+    threats = _section(design, "Threat model")
 
-    for externa in ("PostgreSQL", "Firebase Authentication", "Firebase Cloud Messaging", "SMTP"):
-        assert externa in dependencias, externa
-    for categoria in ("Spoofing", "Tampering", "Repudiation", "Information disclosure",
-                      "Denial of service", "Elevation of privilege"):  # fmt: skip
-        assert categoria in amenazas, categoria
-    for superficie in ("API", "app", "base"):
-        assert superficie in amenazas, superficie
-    assert re.search(r"\blocal\b", _section(diseno, "Infrastructure"), re.I)
-    assert "Render" in _section(diseno, "Infrastructure")
-    assert re.search(r"SLO[^\n]*\d+(?:[.,]\d+)? ?%", diseno)
-
-
-def test_las_decisiones_de_stack_y_hosting_estan_registradas() -> None:
-    """las decisiones de arquitectura de stack y hosting están registradas @REV-07-S3"""
-    registros = sorted((RAIZ / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
-    textos = [_text(r) for r in registros]
-
-    assert len(registros) >= 2
-    assert all(
-        _section(t, "Status").strip() and "accepted" in _section(t, "Status") for t in textos
-    )
-    assert any("FastAPI" in t and "Flutter" in t for t in textos)
-    assert any("Render" in t for t in textos)
+    for external in ("PostgreSQL", "Firebase Authentication", "Firebase Cloud Messaging", "SMTP"):
+        assert external in dependencies, external
+    for category in ("Spoofing", "Tampering", "Repudiation", "Information disclosure",
+                     "Denial of service", "Elevation of privilege"):  # fmt: skip
+        assert category in threats, category
+    for surface in ("API", "app", "base"):
+        assert surface in threats, surface
+    assert re.search(r"\blocal\b", _section(design, "Infrastructure"), re.I)
+    assert "Render" in _section(design, "Infrastructure")
+    assert re.search(r"SLO[^\n]*\d+(?:[.,]\d+)? ?%", design)
 
 
-def _dependencias_directas() -> list[str]:
-    proyecto = tomllib.loads(_text(API / "pyproject.toml"))["project"]["dependencies"]
-    pubspec = yaml.safe_load(_text(MOVIL / "pubspec.yaml"))["dependencies"]
-    python = [re.split(r"[\[<>=~! ;]", d, maxsplit=1)[0] for d in proyecto]
-    dart = [nombre for nombre, origen in pubspec.items() if not isinstance(origen, dict)]
+def test_the_stack_and_hosting_decisions_are_recorded() -> None:
+    """the stack and hosting architecture decisions are recorded @REV-07-S3"""
+    records = sorted((ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
+    texts = [_text(r) for r in records]
+
+    assert len(records) >= 2
+    assert all(_section(t, "Status").strip() and "accepted" in _section(t, "Status") for t in texts)
+    assert any("FastAPI" in t and "Flutter" in t for t in texts)
+    assert any("Render" in t for t in texts)
+
+
+def _direct_dependencies() -> list[str]:
+    project = tomllib.loads(_text(API / "pyproject.toml"))["project"]["dependencies"]
+    pubspec = yaml.safe_load(_text(MOBILE / "pubspec.yaml"))["dependencies"]
+    python = [re.split(r"[\[<>=~! ;]", d, maxsplit=1)[0] for d in project]
+    dart = [name for name, source in pubspec.items() if not isinstance(source, dict)]
     return python + dart
 
 
-def test_el_costo_de_operar_la_app_esta_calculado() -> None:
-    """el costo de operar la app está calculado @REV-07-S5"""
-    costos = _text(RAIZ / "docs" / "technical" / "infra-cost.md")
+def test_the_cost_of_running_the_app_is_calculated() -> None:
+    """the cost of running the app is calculated @REV-07-S5"""
+    costs = _text(ROOT / "docs" / "technical" / "infra-cost.md")
 
-    assert _section(costos, "Volume assumptions").strip()
-    assert "Render" in costos
-    assert re.search(r"USD ?[1-9]", costos)
-    assert "render.com/pricing" in costos
+    assert _section(costs, "Volume assumptions").strip()
+    assert "Render" in costs
+    assert re.search(r"USD ?[1-9]", costs)
+    assert "render.com/pricing" in costs
 
 
-def test_el_runbook_dice_como_volver_atras_rotar_secretos_y_atender_incidentes() -> None:
-    """el runbook dice cómo volver atrás, rotar secretos y atender un incidente @REV-07-S6"""
-    runbook = _text(RAIZ / "docs" / "technical" / "runbook.md")
+def test_the_runbook_says_how_to_roll_back_rotate_secrets_and_handle_incidents() -> None:
+    """the runbook says how to roll back, rotate secrets and handle an incident @REV-07-S6"""
+    runbook = _text(ROOT / "docs" / "technical" / "runbook.md")
 
-    for titulo in ("Deploy", "Roll back", "Incidents", "Secret rotation and revocation"):
-        seccion = _section(runbook, titulo)
-        assert len(seccion.split()) > 30, titulo
-        assert "TODO" not in seccion, titulo
+    for title in ("Deploy", "Roll back", "Incidents", "Secret rotation and revocation"):
+        section = _section(runbook, title)
+        assert len(section.split()) > 30, title
+        assert "TODO" not in section, title
     assert "render.yaml" in runbook
-    for secreto in ("FIREBASE_CREDENTIALS_JSON", "SMTP_PASSWORD"):
-        assert secreto in _section(runbook, "Secret rotation and revocation"), secreto
+    for secret in ("FIREBASE_CREDENTIALS_JSON", "SMTP_PASSWORD"):
+        assert secret in _section(runbook, "Secret rotation and revocation"), secret
 
 
-def test_la_declaracion_de_accesibilidad_y_el_registro_por_pantalla_estan_publicados() -> None:
-    """la declaración de accesibilidad y el registro por pantalla están publicados @REV-07-S7"""
-    declaracion = _text(RAIZ / "docs" / "business" / "accessibility.md")
-    pantallas = sorted(p.stem for p in (MOVIL / "lib").rglob("pantalla_*.dart"))
-    termino = re.compile(r"Supports|Partially Supports|Does Not Support|Not Applicable")
+def test_the_accessibility_statement_and_the_per_screen_register_are_published() -> None:
+    """the accessibility statement and the per-screen register are published @REV-07-S7"""
+    statement = _text(ROOT / "docs" / "business" / "accessibility.md")
+    screens = sorted(p.stem for p in (MOBILE / "lib").rglob("pantalla_*.dart"))
+    term = re.compile(r"Supports|Partially Supports|Does Not Support|Not Applicable")
 
-    assert termino.search(_section(declaracion, "Conformance status"))
-    sin_registro = [
+    assert term.search(_section(statement, "Conformance status"))
+    without_register = [
         p
-        for p in pantallas
-        if not any(
-            re.search(rf"\b{p}\b", f) and termino.search(f) for f in declaracion.splitlines()
-        )
+        for p in screens
+        if not any(re.search(rf"\b{p}\b", f) and term.search(f) for f in statement.splitlines())
     ]
-    assert sin_registro == []
+    assert without_register == []
 
 
 def _columns_by_table() -> dict[str, set[str]]:
-    migraciones = "".join(
-        _text(m) for m in sorted((API / "migrations" / "versions").glob("*.py"))
-    )
-    tablas: dict[str, set[str]] = {}
-    for tabla, cuerpo in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", migraciones, re.S):
-        tablas[tabla] = set(re.findall(rf"^\s*(\w+) (?:{TIPOS})\b", cuerpo, re.M))
-    for tabla, columna in re.findall(
-        rf"ALTER TABLE (\w+)\s+ADD COLUMN (\w+) (?:{TIPOS})", migraciones
+    migrations = "".join(_text(m) for m in sorted((API / "migrations" / "versions").glob("*.py")))
+    tables: dict[str, set[str]] = {}
+    for table, body in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", migrations, re.S):
+        tables[table] = set(re.findall(rf"^\s*(\w+) (?:{TYPES})\b", body, re.M))
+    for table, column in re.findall(
+        rf"ALTER TABLE (\w+)\s+ADD COLUMN (\w+) (?:{TYPES})", migrations
     ):
-        tablas.setdefault(tabla, set()).add(columna)
-    for migracion in sorted((API / "migrations" / "versions").glob("*.py")):
-        for tabla, vieja, nueva in re.findall(
-            r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", _subida(migracion)
+        tables.setdefault(table, set()).add(column)
+    for migration in sorted((API / "migrations" / "versions").glob("*.py")):
+        for table, old, new in re.findall(
+            r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", _upgrade(migration)
         ):
-            tablas.setdefault(tabla, set()).discard(vieja)
-            tablas[tabla].add(nueva)
-    return current(tablas)
+            tables.setdefault(table, set()).discard(old)
+            tables[table].add(new)
+    return current(tables)
 
 
-def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:
-    """el presupuesto de rendimiento y capacidad está escrito @REV-07-S9"""
-    diseno = _text(DESIGN)
+def test_the_performance_and_capacity_budget_is_written() -> None:
+    """the performance and capacity budget is written @REV-07-S9"""
+    design = _text(DESIGN)
 
-    assert re.search(r"p95[^\n]*\d+ ?ms", diseno)
-    assert re.search(r"capacity[^\n]*\d+", diseno, re.I)
-
-
-def _ids_registrados() -> set[str]:
-    textos = "".join(_text(a) for a in (RAIZ / "specs").rglob("*.md"))
-    return set(re.findall(r"\b[A-Z]+-[\d.]+[a-z]?-(?:SUP|ASM)-\d+\b", textos))
+    assert re.search(r"p95[^\n]*\d+ ?ms", design)
+    assert re.search(r"capacity[^\n]*\d+", design, re.I)
 
 
-def test_quien_opera_la_app_encuentra_los_supuestos_en_los_readme() -> None:
-    """quien opera la app encuentra los supuestos que la limitan en los README @REV-07-S10"""
-    raiz = _text(RAIZ / "README.md")
+def _registered_ids() -> set[str]:
+    texts = "".join(_text(a) for a in (ROOT / "specs").rglob("*.md"))
+    return set(re.findall(r"\b[A-Z]+-[\d.]+[a-z]?-(?:SUP|ASM)-\d+\b", texts))
+
+
+def test_whoever_operates_the_app_finds_the_assumptions_in_the_readmes() -> None:
+    """whoever operates the app finds the assumptions that limit it in the READMEs @REV-07-S10"""
+    root = _text(ROOT / "README.md")
     api = _text(API / "README.md")
-    movil = _text(MOVIL / "README.md")
-    supuesto = re.compile(r"^- ([A-Z]+-[\d.]+[a-z]?-(?:SUP|ASM)-\d+)", re.M)
-    listados = supuesto.findall(api) + supuesto.findall(movil)
+    mobile = _text(MOBILE / "README.md")
+    assumption = re.compile(r"^- ([A-Z]+-[\d.]+[a-z]?-(?:SUP|ASM)-\d+)", re.M)
+    listed = assumption.findall(api) + assumption.findall(mobile)
 
-    assert "apps/api/README.md" in raiz
-    assert "apps/mobile/README.md" in raiz
-    assert len(supuesto.findall(api)) >= 5
-    assert len(supuesto.findall(movil)) >= 3
-    assert set(listados) <= _ids_registrados()
+    assert "apps/api/README.md" in root
+    assert "apps/mobile/README.md" in root
+    assert len(assumption.findall(api)) >= 5
+    assert len(assumption.findall(mobile)) >= 3
+    assert set(listed) <= _registered_ids()
     for idea in ("4 hours", "7 days", "payments", "admin", "catalog"):
-        assert idea in api + movil, idea
+        assert idea in api + mobile, idea
 
 
-def test_las_licencias_mpl_lgpl_y_ofl_tienen_su_excepcion_o_su_texto() -> None:
-    """las licencias MPL, LGPL y OFL tienen su excepción o su texto @REV-07-S11"""
-    ofl = _text(MOVIL / "assets" / "fuentes" / "OFL.txt")
+def test_the_mpl_lgpl_and_ofl_licenses_have_their_exception_or_their_text() -> None:
+    """the MPL, LGPL and OFL licenses have their exception or their text @REV-07-S11"""
+    ofl = _text(MOBILE / "assets" / "fuentes" / "OFL.txt")
 
-    assert sorted((MOVIL / "assets" / "fuentes").glob("Inter-*.ttf"))
+    assert sorted((MOBILE / "assets" / "fuentes").glob("Inter-*.ttf"))
     assert "SIL OPEN FONT LICENSE VERSION 1.1" in ofl.upper()
     assert re.search(r"Copyright .*Inter", ofl)

@@ -1,4 +1,4 @@
-"""Datos: índices, historiales por tandas, avisos varados y migraciones seguras."""
+"""Data: indexes, batched histories, stranded notices and safe migrations."""
 
 import os
 import threading
@@ -17,13 +17,13 @@ from test_reminder import FakeChannel, Member, at_time, a_member
 from app.modules.notifications.use_cases import dispatch_pending, send_reminders
 from app.modules.notifications.repository import NotificationsSql
 from app.modules.notifications.push import push_channel
-from app.modules.users.seed_admin import main as sembrar
+from app.modules.users.seed_admin import main as seed_admin
 
 API_ROOT = Path(__file__).resolve().parents[2]
-# conftest.py deja acá la base de pruebas antes de importar los tests.
+# conftest.py leaves the test database here before importing the tests.
 TEST_DATABASE_URL = os.environ["DATABASE_URL"]
-CONTRASENA = "ClubNahuel1"
-URL_MIGRACIONES = TEST_DATABASE_URL.rsplit("/", 1)[0] + "/club_rev03_migraciones_test"
+PASSWORD = "ClubNahuel1"
+MIGRATIONS_URL = TEST_DATABASE_URL.rsplit("/", 1)[0] + "/club_rev03_migraciones_test"
 REVISIONS = ["0002", "0003", "0004", "0005", "0006", "0007", "0008"]
 
 
@@ -52,19 +52,19 @@ def admin_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
     s = unique()
-    monkeypatch.setenv("ADMIN_CONTRASENA", CONTRASENA)
-    argumentos = [
+    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    args = [
         "--correo", f"admin.{s}@club.com", "--nombre", "Ana", "--apellido", "Díaz",
         "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
     ]  # fmt: skip
-    assert sembrar(argumentos) == 0
-    token = sign_in(f"admin.{s}@club.com", CONTRASENA)
+    assert seed_admin(args) == 0
+    token = sign_in(f"admin.{s}@club.com", PASSWORD)
     assert token is not None
     return token
 
 
-def _past(member: Member, cantidad: int) -> None:
-    """[cantidad] reservas ya jugadas del socio, una por día hacia atrás."""
+def _past(member: Member, count: int) -> None:
+    """[count] already played bookings of the member, one per day going backwards."""
     with member.engine.begin() as conn:
         conn.execute(
             text(
@@ -74,29 +74,29 @@ def _past(member: Member, cantidad: int) -> None:
                 " FROM generate_series(1, :c) AS n,"
                 " (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires') AS h) AS t"
             ),
-            {"u": member.user_id, "e": member.space_id, "c": cantidad},
+            {"u": member.user_id, "e": member.space_id, "c": count},
         )
 
 
-def _indices(engine: Engine, tabla: str) -> list[str]:
+def _indexes(engine: Engine, table: str) -> list[str]:
     with engine.connect() as conn:
         return [
             str(f.indexdef)
             for f in conn.execute(
-                text("SELECT indexdef FROM pg_indexes WHERE tablename = :t"), {"t": tabla}
+                text("SELECT indexdef FROM pg_indexes WHERE tablename = :t"), {"t": table}
             )
         ]
 
 
-def test_el_historial_propio_tiene_un_indice_por_socio(engine: Engine) -> None:
-    """el historial propio se resuelve con un índice por socio @REV-03-S1"""
-    indices = _indices(engine, "booking")
+def test_the_own_history_has_an_index_per_member(engine: Engine) -> None:
+    """the own history is resolved with an index per member @REV-03-S1"""
+    indexes = _indexes(engine, "booking")
 
-    assert any("(user_id" in i for i in indices)
+    assert any("(user_id" in i for i in indexes)
 
 
 def _tie(member: Member) -> None:
-    """Una reserva más, en otra cancha de la misma sede, con el mismo inicio que la vigésima."""
+    """One more booking, on another court of the same venue, with the same start as the twentieth."""
     with member.engine.begin() as conn:
         conn.execute(
             text(
@@ -113,20 +113,20 @@ def _tie(member: Member) -> None:
         )
 
 
-MARCADORES_INVALIDOS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDowMDowMHxhYmM"]
+INVALID_MARKERS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDowMDowMHxhYmM"]
 
 
-def test_el_historial_global_tiene_un_indice_por_fecha(engine: Engine) -> None:
-    """el historial global se ordena por un índice de inicio @REV-03-S3"""
-    indices = _indices(engine, "booking")
+def test_the_global_history_has_an_index_per_date(engine: Engine) -> None:
+    """the global history is ordered by a start index @REV-03-S3"""
+    indexes = _indexes(engine, "booking")
 
-    assert any("(starts_at DESC, id DESC)" in i for i in indices)
+    assert any("(starts_at DESC, id DESC)" in i for i in indexes)
 
 
-def test_quien_cancelo_y_que_aviso_reemplazo_tienen_indice(engine: Engine) -> None:
-    """quién canceló y qué aviso reemplazó a otro se consultan por índice @REV-03-S4"""
-    assert any("(canceled_by" in i for i in _indices(engine, "booking"))
-    assert any("(replaced_by" in i for i in _indices(engine, "notification"))
+def test_who_cancelled_and_which_notice_replaced_another_have_an_index(engine: Engine) -> None:
+    """who cancelled and which notice replaced another are queried by index @REV-03-S4"""
+    assert any("(canceled_by" in i for i in _indexes(engine, "booking"))
+    assert any("(replaced_by" in i for i in _indexes(engine, "notification"))
 
 
 def _deliveries(member: Member) -> list[str]:
@@ -140,7 +140,7 @@ def _deliveries(member: Member) -> list[str]:
         ]
 
 
-def _strand(member: Member, hace: str, intentos: int = 1) -> None:
+def _strand(member: Member, ago: str, attempts: int = 1) -> None:
     with member.engine.begin() as conn:
         conn.execute(
             text(
@@ -148,13 +148,13 @@ def _strand(member: Member, hace: str, intentos: int = 1) -> None:
                 " tomada_en = now() - CAST(:hace AS interval), intentos = :i"
                 " WHERE usuario_id = :u"
             ),
-            {"u": member.user_id, "hace": hace, "i": intentos},
+            {"u": member.user_id, "hace": ago, "i": attempts},
         )
 
 
-def _cancel(member: Member, desde: str) -> None:
-    reserva = member.book(desde)
-    r = member.api.post(f"/bookings/{reserva['id']}/cancel", headers=member.session)
+def _cancel(member: Member, start: str) -> None:
+    booking = member.book(start)
+    r = member.api.post(f"/bookings/{booking['id']}/cancel", headers=member.session)
     assert r.status_code == 200
 
 
@@ -163,15 +163,15 @@ def _dispatch(member: Member, channel: FakeChannel) -> None:
         dispatch_pending(NotificationsSql(conn), channel, member.user_id)
 
 
-class _CanalQueSeCae(FakeChannel):
-    """El proceso muere justo después de tomar el aviso, antes de saber si salió."""
+class _ChannelThatCrashes(FakeChannel):
+    """The process dies right after taking the notice, before knowing whether it went out."""
 
     def send(self, tokens: list[str], aviso: Any) -> Any:
         raise SystemExit("el proceso se cayó")
 
 
-def _reminder(member: Member, envio: str, hace: str) -> None:
-    reserva: dict[str, Any] = member.book("20:00")
+def _reminder(member: Member, delivery: str, ago: str) -> None:
+    booking: dict[str, Any] = member.book("20:00")
     with member.engine.begin() as conn:
         conn.execute(
             text(
@@ -183,7 +183,7 @@ def _reminder(member: Member, envio: str, hace: str) -> None:
                 " CASE WHEN :envio = 'enviando' THEN 1 ELSE 0 END"
                 " FROM reserva WHERE id = :r"
             ),
-            {"u": member.user_id, "r": reserva["id"], "envio": envio, "hace": hace},
+            {"u": member.user_id, "r": booking["id"], "envio": delivery, "hace": ago},
         )
 
 
@@ -195,21 +195,23 @@ def _sweep(member: Member, channel: FakeChannel) -> None:
 
 @pytest.fixture
 def migrations_db(engine: Engine) -> Iterator[tuple[Engine, AlembicConfig]]:
-    """Una base aparte, vacía, para subir y bajar migraciones sin tocar la de la suite."""
-    admin = create_engine(TEST_DATABASE_URL.rsplit("/", 1)[0] + "/postgres", isolation_level="AUTOCOMMIT")
+    """A separate, empty database to migrate up and down without touching the suite's one."""
+    admin = create_engine(
+        TEST_DATABASE_URL.rsplit("/", 1)[0] + "/postgres", isolation_level="AUTOCOMMIT"
+    )
     with admin.connect() as conn:
         conn.execute(text("DROP DATABASE IF EXISTS club_rev03_migraciones_test WITH (FORCE)"))
         conn.execute(text("CREATE DATABASE club_rev03_migraciones_test"))
     admin.dispose()
-    base = create_engine(URL_MIGRACIONES)
+    db = create_engine(MIGRATIONS_URL)
     alembic = AlembicConfig(str(API_ROOT / "alembic.ini"))
-    alembic.set_main_option("sqlalchemy.url", URL_MIGRACIONES.replace("%", "%%"))
-    yield base, alembic
-    base.dispose()
+    alembic.set_main_option("sqlalchemy.url", MIGRATIONS_URL.replace("%", "%%"))
+    yield db, alembic
+    db.dispose()
 
 
-def _seed(base: Engine) -> None:
-    with base.begin() as conn:
+def _seed(db: Engine) -> None:
+    with db.begin() as conn:
         conn.execute(
             text(
                 "WITH u AS (INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
@@ -229,84 +231,84 @@ def _seed(base: Engine) -> None:
         )
 
 
-def _bookings(base: Engine) -> int:
-    with base.connect() as conn:
+def _bookings(db: Engine) -> int:
+    with db.connect() as conn:
         return int(conn.execute(text("SELECT count(*) FROM reserva")).scalar_one())
 
 
-def test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo(
+def test_the_new_migration_does_not_wait_on_a_lock(
     migrations_db: tuple[Engine, AlembicConfig],
 ) -> None:
-    """la migración nueva no bloquea las tablas mientras la versión anterior atiende @REV-03-S7"""
-    base, alembic = migrations_db
+    """the new migration does not lock the tables while the previous version serves @REV-03-S7"""
+    db, alembic = migrations_db
     command.upgrade(alembic, "0007")
-    _seed(base)
-    bloqueo = base.connect()
-    bloqueo.execute(text("LOCK TABLE reserva IN ACCESS EXCLUSIVE MODE"))
-    resultado: list[BaseException] = []
-    hilo = threading.Thread(
-        target=lambda: _capture(resultado, lambda: command.upgrade(alembic, "0008"))
+    _seed(db)
+    lock = db.connect()
+    lock.execute(text("LOCK TABLE reserva IN ACCESS EXCLUSIVE MODE"))
+    result: list[BaseException] = []
+    thread = threading.Thread(
+        target=lambda: _capture(result, lambda: command.upgrade(alembic, "0008"))
     )
 
-    hilo.start()
-    hilo.join(timeout=60)
-    bloqueo.rollback()
-    bloqueo.close()
+    thread.start()
+    thread.join(timeout=60)
+    lock.rollback()
+    lock.close()
 
-    assert not hilo.is_alive()
-    assert isinstance(resultado[0], OperationalError)
-    assert "lock timeout" in str(resultado[0])
+    assert not thread.is_alive()
+    assert isinstance(result[0], OperationalError)
+    assert "lock timeout" in str(result[0])
     command.upgrade(alembic, "0008")
-    with base.connect() as conn:
-        invalidos = conn.execute(
+    with db.connect() as conn:
+        invalid = conn.execute(
             text("SELECT count(*) FROM pg_index WHERE NOT indisvalid")
         ).scalar_one()
-    assert invalidos == 0
-    assert _bookings(base) == 1
+    assert invalid == 0
+    assert _bookings(db) == 1
 
 
-def _capture(resultado: list[BaseException], accion: Callable[[], None]) -> None:
+def _capture(result: list[BaseException], action: Callable[[], None]) -> None:
     try:
-        accion()
-    except BaseException as e:  # noqa: BLE001 — el test afirma sobre el error que se guarda
-        resultado.append(e)
+        action()
+    except BaseException as e:  # noqa: BLE001 — the test asserts on the error that is stored
+        result.append(e)
 
 
-def _schema(base: Engine) -> set[tuple[str, ...]]:
-    with base.connect() as conn:
-        columnas = conn.execute(
+def _schema(db: Engine) -> set[tuple[str, ...]]:
+    with db.connect() as conn:
+        columns = conn.execute(
             text(
                 "SELECT table_name, column_name, data_type, is_nullable"
                 " FROM information_schema.columns WHERE table_schema = 'public'"
             )
         )
-        indices = conn.execute(
+        indexes = conn.execute(
             text("SELECT tablename, indexdef, '', '' FROM pg_indexes WHERE schemaname = 'public'")
         )
-        return {tuple(str(c) for c in f) for f in [*columnas, *indices]}
+        return {tuple(str(c) for c in f) for f in [*columns, *indexes]}
 
 
 @pytest.mark.parametrize(
-    ("anterior", "revision"), list(zip(["0001", *REVISIONS], REVISIONS, strict=False))
+    ("previous", "revision"), list(zip(["0001", *REVISIONS], REVISIONS, strict=False))
 )
-def test_cada_migracion_va_y_vuelve_con_datos(
-    migrations_db: tuple[Engine, AlembicConfig], anterior: str, revision: str
+def test_each_migration_goes_up_and_back_with_data(
+    migrations_db: tuple[Engine, AlembicConfig], previous: str, revision: str
 ) -> None:
-    """la suite vigila la ida y vuelta de las migraciones con datos
+    """the suite watches the migrations' round trip with data
     @REV-03-S8 @assumption:REV-03-ASM-06
     """
-    base, alembic = migrations_db
+    db, alembic = migrations_db
     command.upgrade(alembic, "0001")
-    _seed(base)
-    command.upgrade(alembic, anterior)
-    antes = _schema(base)
+    _seed(db)
+    command.upgrade(alembic, previous)
+    before = _schema(db)
 
     command.upgrade(alembic, revision)
-    despues = _schema(base)
+    after = _schema(db)
     command.downgrade(alembic, "-1")
-    vuelta = _schema(base)
+    back = _schema(db)
     command.upgrade(alembic, revision)
 
-    assert vuelta == antes
-    assert _schema(base) == despues
-    assert _bookings(base) == 1
+    assert back == before
+    assert _schema(db) == after
+    assert _bookings(db) == 1

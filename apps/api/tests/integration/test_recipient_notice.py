@@ -1,4 +1,4 @@
-"""El destinatario del correo de un aviso, leído de la base real."""
+"""The recipient of a notice's email, read from the real database."""
 
 from collections.abc import Callable
 from uuid import UUID
@@ -9,7 +9,7 @@ from app.modules.notifications.repository import NotificationsSql
 from app.modules.notifications.rules import Recipient
 
 
-def _crear_usuario(engine: Engine, sufijo: str) -> UUID:
+def _create_user(engine: Engine, suffix: str) -> UUID:
     with engine.begin() as conn:
         return UUID(
             str(
@@ -20,30 +20,30 @@ def _crear_usuario(engine: Engine, sufijo: str) -> UUID:
                         " '1990-01-01') RETURNING id"
                     ),
                     {
-                        "uid": f"uid-{sufijo}",
-                        "email": f"ana-{sufijo}@correo.com",
-                        "dni": sufijo[-8:].rjust(8, "0"),
+                        "uid": f"uid-{suffix}",
+                        "email": f"ana-{suffix}@correo.com",
+                        "dni": suffix[-8:].rjust(8, "0"),
                     },
                 ).scalar_one()
             )
         )
 
 
-def test_el_destinatario_de_un_aviso_sale_de_la_base_y_una_cuenta_de_baja_no_tiene(
+def test_the_recipient_of_a_notice_comes_from_the_database_and_a_deactivated_account_has_none(
     engine: Engine, unique: Callable[[], str]
 ) -> None:
-    """el destinatario de un aviso sale de la base con su correo y nombre, y una cuenta dada
-    de baja no tiene destinatario @MAIL-03-S1 @assumption:MAIL-03-ASM-04"""
-    sufijo = "".join(c for c in unique() if c.isdigit()) or "1"
-    usuario = _crear_usuario(engine, sufijo)
+    """the recipient of a notice comes from the database with their email and name, and a
+    deactivated account has no recipient @MAIL-03-S1 @assumption:MAIL-03-ASM-04"""
+    suffix = "".join(c for c in unique() if c.isdigit()) or "1"
+    user = _create_user(engine, suffix)
     with engine.connect() as conn:
-        assert NotificationsSql(conn).recipient(usuario) == Recipient(
-            email=f"ana-{sufijo}@correo.com", name="Ana"
+        assert NotificationsSql(conn).recipient(user) == Recipient(
+            email=f"ana-{suffix}@correo.com", name="Ana"
         )
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE app_user SET active = false, deactivated_at = now() WHERE id = :u"),
-            {"u": usuario},
+            {"u": user},
         )
     with engine.connect() as conn:
-        assert NotificationsSql(conn).recipient(usuario) is None
+        assert NotificationsSql(conn).recipient(user) is None

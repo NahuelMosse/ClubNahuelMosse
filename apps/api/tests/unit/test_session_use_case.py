@@ -4,10 +4,10 @@ from uuid import UUID
 import pytest
 
 from app.modules.session.profile import Profile
-from app.modules.session.use_cases import authenticated_profile as perfil_autenticado
+from app.modules.session.use_cases import authenticated_profile
 from app.shared.errors import NotAuthenticated
 
-PERFIL = Profile(
+PROFILE = Profile(
     id=UUID(int=7),
     uid="u",
     first_name="Lucía",
@@ -20,40 +20,40 @@ PERFIL = Profile(
 
 
 class Tokens:
-    def __init__(self, validos: dict[str, str]) -> None:
-        self.validos = validos
-        self.consultados: list[str] = []
+    def __init__(self, valid: dict[str, str]) -> None:
+        self.valid = valid
+        self.queried: list[str] = []
 
     def uid_from_token(self, token: str) -> str | None:
-        self.consultados.append(token)
-        return self.validos.get(token)
+        self.queried.append(token)
+        return self.valid.get(token)
 
 
-class Perfiles:
-    def __init__(self, activos: dict[str, Profile]) -> None:
-        self.activos = activos
+class Profiles:
+    def __init__(self, active: dict[str, Profile]) -> None:
+        self.active = active
 
     def active_profile(self, uid: str) -> Profile | None:
-        return self.activos.get(uid)
+        return self.active.get(uid)
 
 
-def test_un_token_valido_de_una_cuenta_activa_da_su_perfil() -> None:
-    assert perfil_autenticado("t", Tokens({"t": "u"}), Perfiles({"u": PERFIL})) == PERFIL
+def test_a_valid_token_of_an_active_account_gives_its_profile() -> None:
+    assert authenticated_profile("t", Tokens({"t": "u"}), Profiles({"u": PROFILE})) == PROFILE
 
 
 @pytest.mark.parametrize("token", [None, ""])
-def test_sin_token_no_se_consulta_al_proveedor(token: str | None) -> None:
+def test_without_a_token_the_provider_is_not_queried(token: str | None) -> None:
     tokens = Tokens({})
     with pytest.raises(NotAuthenticated):
-        perfil_autenticado(token, tokens, Perfiles({}))
-    assert tokens.consultados == []
+        authenticated_profile(token, tokens, Profiles({}))
+    assert tokens.queried == []
 
 
-def test_un_token_invalido_no_autentica() -> None:
+def test_an_invalid_token_does_not_authenticate() -> None:
     with pytest.raises(NotAuthenticated):
-        perfil_autenticado("vencido", Tokens({}), Perfiles({"u": PERFIL}))
+        authenticated_profile("vencido", Tokens({}), Profiles({"u": PROFILE}))
 
 
-def test_una_cuenta_sin_perfil_activo_no_autentica() -> None:
+def test_an_account_without_an_active_profile_does_not_authenticate() -> None:
     with pytest.raises(NotAuthenticated):
-        perfil_autenticado("t", Tokens({"t": "u"}), Perfiles({}))
+        authenticated_profile("t", Tokens({"t": "u"}), Profiles({}))

@@ -5,15 +5,15 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 
-def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
+def test_a_user_without_the_admin_role_cannot_create_a_space(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """un usuario sin rol de administrador no puede dar de alta un espacio @CU-21-H01-03"""
+    """a user without the admin role cannot create a space @CU-21-H01-03"""
     s = unique()
-    correo = f"socio.{s}@correo.com"
+    email = f"socio.{s}@correo.com"
     assert (
         api.post(
             "/register",
@@ -22,7 +22,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
                 "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
                 "birth_date": "1994-07-21",
-                "email": correo,
+                "email": email,
                 "password": "ClubNahuel1",
             },
         ).status_code
@@ -37,7 +37,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
             ),
             {"n": f"Sede Haedo {s}"},
         ).scalar_one()
-    token = sign_in(correo, "ClubNahuel1")
+    token = sign_in(email, "ClubNahuel1")
 
     r = api.post(
         "/spaces",
@@ -52,9 +52,9 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
         },
     )
 
-    # Verifica: la API lo rechaza por falta de permisos.
+    # Verifies: the API rejects it for lack of permissions.
     assert r.status_code == 403
-    # Verifica: la sede sigue sin espacios.
+    # Verifies: the venue still has no spaces.
     with engine.connect() as conn:
         assert (
             conn.execute(

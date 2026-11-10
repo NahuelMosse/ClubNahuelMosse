@@ -1,30 +1,30 @@
-"""La ruta de pruebas se reconoce con el FastAPI instalado, que anida los routers incluidos."""
+"""The test route is recognized with the installed FastAPI, which nests the included routers."""
 
-# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+# ruff: noqa: E501  (test titles carry their tags and are not split)
 import json
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-RAIZ_API = Path(__file__).resolve().parents[2]
+API_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_el_contrato_la_salud_y_la_ruta_de_pruebas_responden_igual_que_en_main(
+def test_the_contract_health_and_test_route_answer_the_same_as_in_main(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """el contrato, la salud y la ruta de pruebas responden igual que en main @ENG-01-S3 @assumption:ENG-01-ASM-05"""
+    """the contract, health and test route answer the same as in main @ENG-01-S3 @assumption:ENG-01-ASM-05"""
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.setattr("app.shared.config.config.e2e_testing", True)
     from app import e2e_support
     from app.main import create_app
 
     app = create_app()
-    esperado = json.dumps(app.openapi(), indent=2, ensure_ascii=False) + "\n"
-    publicado = (RAIZ_API / "openapi.json").read_text(encoding="utf-8")
-    incluidos = [getattr(r, "original_router", None) for r in app.routes]
-    salud = TestClient(app).get("/health")
+    expected = json.dumps(app.openapi(), indent=2, ensure_ascii=False) + "\n"
+    published = (API_ROOT / "openapi.json").read_text(encoding="utf-8")
+    included = [getattr(r, "original_router", None) for r in app.routes]
+    health = TestClient(app).get("/health")
 
-    assert esperado == publicado
-    assert salud.json() == {"status": "ok", "version": salud.json()["version"]}
-    assert e2e_support.router in incluidos
+    assert expected == published
+    assert health.json() == {"status": "ok", "version": health.json()["version"]}
+    assert e2e_support.router in included

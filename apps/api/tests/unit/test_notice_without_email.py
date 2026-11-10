@@ -1,6 +1,6 @@
-"""Un aviso a una persona sin correo cargado sale sólo por push."""
+"""A notice to a person with no email on file goes out by push only."""
 
-# ruff: noqa: E501  (el título de la prueba lleva su etiqueta y no se parte)
+# ruff: noqa: E501  (the test title carries its tag and is not split)
 
 from typing import Any, cast
 from uuid import UUID
@@ -14,22 +14,22 @@ from app.shared.message import Message
 from tests.unit.test_notice_by_email import NOTICE, USER, _Channel, _Repository
 
 
-class _SinCorreo(_Repository):
+class _WithoutEmail(_Repository):
     def recipient(self, user_id: UUID) -> Recipient | None:
         return Recipient(email="", name="Ana")
 
 
-def test_un_aviso_a_una_persona_sin_correo_no_manda_correo_y_sale_por_push(
+def test_a_notice_to_a_person_without_email_sends_no_email_and_goes_out_by_push(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """un aviso a una persona sin correo cargado no manda correo y sale igual por push @MAIL-03-S2"""
-    enviados: list[Message] = []
-    monkeypatch.setattr(use_cases, "send", enviados.append)
-    repo = _SinCorreo(tokens=["t1"])
-    canal = _Channel()
+    """a notice to a person with no email on file sends no email and still goes out by push @MAIL-03-S2"""
+    sent: list[Message] = []
+    monkeypatch.setattr(use_cases, "send", sent.append)
+    repo = _WithoutEmail(tokens=["t1"])
+    channel = _Channel()
 
-    deliver(cast(Any, repo), canal, UUID(int=1), USER, NOTICE)
+    deliver(cast(Any, repo), channel, UUID(int=1), USER, NOTICE)
 
-    assert enviados == []
-    assert canal.avisos == [NOTICE]
-    assert repo.envios == ["sent"]
+    assert sent == []
+    assert channel.notices == [NOTICE]
+    assert repo.deliveries == ["sent"]

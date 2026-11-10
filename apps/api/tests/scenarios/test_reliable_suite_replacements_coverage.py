@@ -1,4 +1,4 @@
-"""Reemplazos de dos pruebas de la suite confiable que fallan igual en main (ver `replaces:` en el Log de la card ENG-14)."""
+"""Replacements of two tests of the reliable suite that fail the same on main (see `replaces:` in the Log of the card ENG-14)."""
 
 import ast
 import re
@@ -6,44 +6,44 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-UNITARIOS = RAIZ_API / "tests" / "unit" / "test_use_cases_bookings.py"
-CASOS_DE_USO = RAIZ_API / "app" / "modules" / "bookings" / "use_cases.py"
-PRUEBA_RNF = RAIZ_API / "tests" / "escenarios" / "test_non_functional_requirements.py"
+API_ROOT = Path(__file__).resolve().parents[2]
+UNIT_TESTS = API_ROOT / "tests" / "unit" / "test_use_cases_bookings.py"
+USE_CASES = API_ROOT / "app" / "modules" / "bookings" / "use_cases.py"
+NFR_TEST = API_ROOT / "tests" / "scenarios" / "test_non_functional_requirements.py"
 
 
-def _casos_de_uso() -> list[str]:
-    return re.findall(r"^def ([a-z]\w*)\(", CASOS_DE_USO.read_text(encoding="utf-8"), re.M)
+def _use_cases() -> list[str]:
+    return re.findall(r"^def ([a-z]\w*)\(", USE_CASES.read_text(encoding="utf-8"), re.M)
 
 
-def _cuerpo_de(fuente: str, nombre: str) -> str:
-    for nodo in ast.parse(fuente).body:
-        if isinstance(nodo, ast.FunctionDef) and nodo.name == nombre:
-            return ast.get_source_segment(fuente, nodo) or ""
+def _body_of(source: str, name: str) -> str:
+    for node in ast.parse(source).body:
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            return ast.get_source_segment(source, node) or ""
     return ""
 
 
-def test_cada_funcion_publica_de_reservas_tiene_su_unitario() -> None:
-    """cada función pública de aplicacion/reservas.py tiene su unitario
+def test_every_public_bookings_function_has_its_unit_test() -> None:
+    """every public function of bookings/use_cases.py has its unit test
     @REV-08-S7 @assumption:REV-08-ASM-09
     """
-    codigo = UNITARIOS.read_text(encoding="utf-8") if UNITARIOS.exists() else ""
+    code = UNIT_TESTS.read_text(encoding="utf-8") if UNIT_TESTS.exists() else ""
 
-    assert len(_casos_de_uso()) >= 7
-    assert [c for c in _casos_de_uso() if not re.search(rf"\b{c}\(", codigo)] == []
+    assert len(_use_cases()) >= 7
+    assert [c for c in _use_cases() if not re.search(rf"\b{c}\(", code)] == []
 
 
-def test_rnf_01_h04_01_se_prueba_contra_el_contrato_publicado(api: TestClient) -> None:
-    """RNF-01-H04-01 se prueba contra el contrato publicado y no leyendo el README
+def test_rnf_01_h04_01_is_tested_against_the_published_contract(api: TestClient) -> None:
+    """RNF-01-H04-01 is tested against the published contract and not by reading the README
     @REV-08-S4 @assumption:REV-08-ASM-08
     """
-    contrato = api.get("/openapi.json")
-    fuente = PRUEBA_RNF.read_text(encoding="utf-8")
-    prueba = _cuerpo_de(fuente, "test_la_api_publica_openapi_con_todos_los_endpoints_que_usa_la_app")
+    contract = api.get("/openapi.json")
+    source = NFR_TEST.read_text(encoding="utf-8")
+    test = _body_of(source, "test_the_api_publishes_openapi_with_every_endpoint_the_app_uses")
 
-    assert contrato.status_code == 200
-    assert len(contrato.json()["paths"]) >= 20
+    assert contract.status_code == 200
+    assert len(contract.json()["paths"]) >= 20
     assert "swagger" in api.get("/docs").text.lower()
-    assert "_operaciones(api)" in prueba
-    assert "README" not in prueba
-    assert "README" not in _cuerpo_de(fuente, "_endpoints_que_usa_la_app")
+    assert "_operations(api)" in test
+    assert "README" not in test
+    assert "README" not in _body_of(source, "_endpoints_the_app_uses")

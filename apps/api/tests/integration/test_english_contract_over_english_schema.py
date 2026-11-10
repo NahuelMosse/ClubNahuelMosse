@@ -53,7 +53,9 @@ def _new_space(api: TestClient, admin_token: str, venue_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _book(api: TestClient, token: str, space: str, day: int, since: str = "21:00") -> dict[str, Any]:
+def _book(
+    api: TestClient, token: str, space: str, day: int, since: str = "21:00"
+) -> dict[str, Any]:
     r = api.post(
         "/bookings",
         headers=_auth(token),
@@ -91,7 +93,9 @@ def test_the_api_answers_with_the_contract_values_of_main_while_the_database_sto
     assert _stored(engine, "SELECT status FROM booking WHERE id = :i", i=active["id"]) == "active"
     cancel = api.post(f"/bookings/{to_cancel['id']}/cancel", headers=_auth(user_token))
     assert cancel.json()["status"] == "canceled"
-    assert _stored(engine, "SELECT status FROM booking WHERE id = :i", i=to_cancel["id"]) == "canceled"
+    assert (
+        _stored(engine, "SELECT status FROM booking WHERE id = :i", i=to_cancel["id"]) == "canceled"
+    )
     void = api.post(
         f"/bookings/{to_void['id']}/void",
         headers=_auth(admin_token),
@@ -117,12 +121,28 @@ def test_the_api_answers_with_the_contract_values_of_main_while_the_database_sto
     notifications = api.get("/notifications", headers=_auth(user_token)).json()["notifications"]
     assert {"reminder", "forced_cancellation"} <= {n["kind"] for n in notifications}
     stored_kinds = {
-        k for (k,) in engine.connect().execute(text("SELECT kind FROM notification WHERE user_id = :u"), {"u": user_id})
+        k
+        for (k,) in engine.connect().execute(
+            text("SELECT kind FROM notification WHERE user_id = :u"), {"u": user_id}
+        )
     }
     assert {"reminder", "forced_cancellation"} <= stored_kinds
-    assert _stored(engine, "SELECT count(*) FROM notification WHERE user_id = :u AND delivery = 'sent'", u=user_id) >= 1
+    assert (
+        _stored(
+            engine,
+            "SELECT count(*) FROM notification WHERE user_id = :u AND delivery = 'sent'",
+            u=user_id,
+        )
+        >= 1
+    )
     listed = api.get("/bookings/all?q=" + venue[1], headers=_auth(admin_token)).json()
-    assert {b["notice_delivery"] for b in listed["bookings"]} <= {None, "sent", "no_channel", "no_permission", "failed"}
+    assert {b["notice_delivery"] for b in listed["bookings"]} <= {
+        None,
+        "sent",
+        "no_channel",
+        "no_permission",
+        "failed",
+    }
 
 
 def test_the_published_contract_is_the_same_as_mains() -> None:
@@ -159,7 +179,10 @@ def test_every_constraint_name_the_api_compares_exists_in_the_migrated_schema_an
     """every constraint name the API compares exists in the migrated schema and a duplicate that reaches it answers 409 @assumption:ENG-17-ASM-10"""
     with engine.connect() as conn:
         existing = {
-            n for (n,) in conn.execute(text("SELECT conname FROM pg_constraint UNION SELECT indexname FROM pg_indexes"))
+            n
+            for (n,) in conn.execute(
+                text("SELECT conname FROM pg_constraint UNION SELECT indexname FROM pg_indexes")
+            )
         }
     for module, names in CONSTRAINTS_BY_REPOSITORY.items():
         source = (MODULES / module / "repository.py").read_text(encoding="utf-8")
@@ -181,6 +204,12 @@ def test_every_constraint_name_the_api_compares_exists_in_the_migrated_schema_an
     again = api.post(
         "/venues",
         headers=_auth(admin_token),
-        json={"name": venue_name, "address": "Av. Vergara 1850", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1]},
+        json={
+            "name": venue_name,
+            "address": "Av. Vergara 1850",
+            "opens_at": "08:00",
+            "closes_at": "23:00",
+            "open_days": [1],
+        },
     )
     assert again.status_code == 409

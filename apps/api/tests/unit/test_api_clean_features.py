@@ -11,45 +11,45 @@ from app.shared.errors import Forbidden, InvalidData, NotFound
 
 API = Path(__file__).resolve().parents[2]
 APP = API / "app"
-MODULOS = APP / "modules"
+MODULES = APP / "modules"
 SHARED = APP / "shared"
 
 
-def _codigo(archivos: list[Path]) -> dict[str, str]:
-    return {a.relative_to(APP).as_posix(): a.read_text(encoding="utf-8") for a in sorted(archivos)}
+def _code(files: list[Path]) -> dict[str, str]:
+    return {a.relative_to(APP).as_posix(): a.read_text(encoding="utf-8") for a in sorted(files)}
 
 
-def _fuentes(carpeta: Path) -> list[Path]:
-    return [a for a in carpeta.rglob("*.py") if "__pycache__" not in a.parts]
+def _sources(folder: Path) -> list[Path]:
+    return [a for a in folder.rglob("*.py") if "__pycache__" not in a.parts]
 
 
-def _datos() -> dict[str, str]:
-    """Los archivos que hablan con la base: el de transacciones y los repositorios."""
-    return _codigo(
-        [SHARED / "db.py", *MODULOS.glob("*/repositorio.py"), *MODULOS.glob("*/repository.py")]
+def _data() -> dict[str, str]:
+    """The files that talk to the database: the transactions one and the repositories."""
+    return _code(
+        [SHARED / "db.py", *MODULES.glob("*/repositorio.py"), *MODULES.glob("*/repository.py")]
     )
 
 
-def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api() -> None:
-    """ninguna ruta atrapa los errores que se responden igual en toda la API
+def test_no_route_catches_the_errors_that_are_answered_the_same_across_the_api() -> None:
+    """no route catches the errors that are answered the same across the API
     @ARQ-02-S2 @assumption:ARQ-02-ASM-01"""
-    comunes = re.compile(
+    common = re.compile(
         r"sin_permiso\(|no_encontrado\(|datos_invalidos\("
         r"|HTTP_403_FORBIDDEN\)|HTTP_404_NOT_FOUND\)"
         r'|HTTP_422_UNPROCESSABLE_CONTENT,\s*content=\{"errors": e\.errors\}'
     )
-    rutas = [a for a in _fuentes(MODULOS) if a.name.startswith("routes")]
-    assert rutas
-    encontrados = [
-        f"{nombre}: {m.group(0)}"
-        for nombre, texto in _codigo(rutas).items()
-        for m in comunes.finditer(texto)
+    routes = [a for a in _sources(MODULES) if a.name.startswith("routes")]
+    assert routes
+    found = [
+        f"{name}: {m.group(0)}"
+        for name, text in _code(routes).items()
+        for m in common.finditer(text)
     ]
-    assert encontrados == []
+    assert found == []
 
 
 @pytest.mark.parametrize(
-    ("error", "codigo", "cuerpo"),
+    ("error", "code", "body"),
     [
         (
             InvalidData({"nombre": "Falta el nombre"}),
@@ -60,53 +60,53 @@ def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api()
         (NotFound(), 404, b""),
     ],
 )
-def test_cada_error_del_dominio_comun_se_responde_con_su_codigo_y_su_cuerpo(
-    error: Exception, codigo: int, cuerpo: bytes
+def test_each_common_domain_error_is_answered_with_its_code_and_its_body(
+    error: Exception, code: int, body: bytes
 ) -> None:
-    """datos inválidos responde 422 con sus errores, prohibido 403 y no encontrada 404, sin cuerpo
+    """invalid data answers 422 with its errors, forbidden 403 and not found 404, with no body
     @ARQ-02-S1 @assumption:ARQ-02-ASM-01"""
     app = create_app()
 
-    def falla() -> None:
+    def fails() -> None:
         raise error
 
-    app.add_api_route("/falla", falla)
+    app.add_api_route("/falla", fails)
 
-    respuesta = TestClient(app, base_url="http://localhost").get("/falla")
+    response = TestClient(app, base_url="http://localhost").get("/falla")
 
-    assert (respuesta.status_code, respuesta.content) == (codigo, cuerpo)
-
-
-def test_el_contrato_publicado_no_cambia() -> None:
-    """el contrato publicado no cambia @ARQ-02-S3 @assumption:ARQ-02-ASM-04"""
-    publicado = json.loads((API / "openapi.json").read_text(encoding="utf-8"))
-
-    assert create_app().openapi() == publicado
+    assert (response.status_code, response.content) == (code, body)
 
 
-def test_los_repositorios_confirman_y_deshacen_en_un_solo_lugar() -> None:
-    """los repositorios confirman y deshacen en un solo lugar @ARQ-02-S2"""
-    codigo = _datos()
-    con_rollback = {n for n, t in codigo.items() if "except BaseException" in t}
+def test_the_published_contract_does_not_change() -> None:
+    """the published contract does not change @ARQ-02-S3 @assumption:ARQ-02-ASM-04"""
+    published = json.loads((API / "openapi.json").read_text(encoding="utf-8"))
 
-    assert con_rollback == {"shared/db.py"}
-    assert codigo["shared/db.py"].count("except BaseException") == 1
+    assert create_app().openapi() == published
 
 
-def test_la_zona_del_club_el_lector_de_horas_y_el_identificador_se_definen_una_vez() -> None:
-    """la zona del club, el lector de horas y el identificador se definen una vez @ARQ-02-S2"""
-    codigo = _codigo(_fuentes(APP))
-    todo = "\n".join(codigo.values())
+def test_the_repositories_commit_and_roll_back_in_a_single_place() -> None:
+    """the repositories commit and roll back in a single place @ARQ-02-S2"""
+    code = _data()
+    with_rollback = {n for n, t in code.items() if "except BaseException" in t}
 
-    assert "timedelta(hours=-3)" not in todo
-    assert len(re.findall(r"^def _?parse_time\(", todo, flags=re.MULTILINE)) == 1
-    assert [n for n, t in codigo.items() if "Identifier = " in t] == ["shared/input_validation.py"]
+    assert with_rollback == {"shared/db.py"}
+    assert code["shared/db.py"].count("except BaseException") == 1
 
 
-def test_email_validator_deja_de_ser_dependencia_y_nadie_la_importa() -> None:
-    """email-validator deja de ser dependencia y nadie la importa @assumption:ARQ-02-ASM-03"""
-    proyecto = tomllib.loads((API / "pyproject.toml").read_text(encoding="utf-8"))
-    dependencias = " ".join(proyecto["project"]["dependencies"])
+def test_the_club_zone_the_time_reader_and_the_identifier_are_defined_once() -> None:
+    """the club zone, the time reader and the identifier are defined once @ARQ-02-S2"""
+    code = _code(_sources(APP))
+    everything = "\n".join(code.values())
 
-    assert "email-validator" not in dependencias
-    assert not any("email_validator" in t for t in _codigo(_fuentes(APP)).values())
+    assert "timedelta(hours=-3)" not in everything
+    assert len(re.findall(r"^def _?parse_time\(", everything, flags=re.MULTILINE)) == 1
+    assert [n for n, t in code.items() if "Identifier = " in t] == ["shared/input_validation.py"]
+
+
+def test_email_validator_is_no_longer_a_dependency_and_nobody_imports_it() -> None:
+    """email-validator is no longer a dependency and nobody imports it @assumption:ARQ-02-ASM-03"""
+    project = tomllib.loads((API / "pyproject.toml").read_text(encoding="utf-8"))
+    dependencies = " ".join(project["project"]["dependencies"])
+
+    assert "email-validator" not in dependencies
+    assert not any("email_validator" in t for t in _code(_sources(APP)).values())

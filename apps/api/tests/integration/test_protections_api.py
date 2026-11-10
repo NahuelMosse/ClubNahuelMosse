@@ -1,4 +1,4 @@
-"""El repaso de seguridad del borde de la API, probado contra la app real."""
+"""The security review of the API edge, tested against the real app."""
 
 from collections.abc import Callable
 from typing import Any
@@ -10,23 +10,21 @@ from sqlalchemy import create_engine, text
 from app.shared.config import config
 
 
-def test_json_roto_da_400(api: TestClient) -> None:
+def test_broken_json_gives_400(api: TestClient) -> None:
     r = api.post("/register", content=b"{roto", headers={"content-type": "application/json"})
     assert r.status_code == 400
 
 
 @pytest.mark.parametrize(
-    "cuerpo",
+    "body",
     [b"[]", b'{"nombre": 12, "dni": {"a": 1}}', b'"texto"', b""],
 )
-def test_tipos_equivocados_dan_422(api: TestClient, cuerpo: bytes) -> None:
-    r = api.post("/register", content=cuerpo, headers={"content-type": "application/json"})
+def test_wrong_types_give_422(api: TestClient, body: bytes) -> None:
+    r = api.post("/register", content=body, headers={"content-type": "application/json"})
     assert r.status_code == 422
 
 
-def test_un_campo_desconocido_no_llega_a_ningun_lado(
-    api: TestClient, unique: Callable[[], str]
-) -> None:
+def test_an_unknown_field_goes_nowhere(api: TestClient, unique: Callable[[], str]) -> None:
     s = unique()
     r = api.post(
         "/register",
@@ -41,18 +39,18 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
         },
     )
     assert r.status_code == 201
-    # El rol no se toma del pedido: la cuenta nueva siempre es de usuario.
+    # The role is not taken from the request: the new account is always a user.
     engine = create_engine(config.database_url)
     with engine.connect() as conn:
-        rol: Any = conn.execute(
+        role: Any = conn.execute(
             text("SELECT role FROM app_user WHERE email = :c"), {"c": f"rol.{s}@correo.com"}
         ).scalar_one()
     engine.dispose()
-    assert rol == "user"
+    assert role == "user"
 
 
-def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:
+def test_an_error_does_not_expose_internal_details(api: TestClient) -> None:
     r = api.post("/register", content=b"{roto", headers={"content-type": "application/json"})
-    texto = r.text.lower()
-    for fuga in ("traceback", "sqlalchemy", "psycopg", "firebase", 'file "'):
-        assert fuga not in texto
+    text_ = r.text.lower()
+    for leak in ("traceback", "sqlalchemy", "psycopg", "firebase", 'file "'):
+        assert leak not in text_

@@ -1,42 +1,42 @@
 import re
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[4]
-MODULOS = RAIZ / "apps" / "api" / "app" / "modules"
-MAPA = RAIZ / "docs" / "technical" / "code-map.md"
+ROOT = Path(__file__).resolve().parents[4]
+MODULES = ROOT / "apps" / "api" / "app" / "modules"
+CODE_MAP = ROOT / "docs" / "technical" / "code-map.md"
 
 
-def _filas() -> dict[str, set[str]]:
-    texto = MAPA.read_text(encoding="utf-8")
-    seccion = texto.split("### By feature", 1)[1].split("\n#", 1)[0]
-    filas: dict[str, set[str]] = {}
-    for linea in seccion.splitlines():
-        if not linea.startswith("| ") or linea.startswith("| Feature"):
+def _rows() -> dict[str, set[str]]:
+    text = CODE_MAP.read_text(encoding="utf-8")
+    section = text.split("### By feature", 1)[1].split("\n#", 1)[0]
+    rows: dict[str, set[str]] = {}
+    for line in section.splitlines():
+        if not line.startswith("| ") or line.startswith("| Feature"):
             continue
-        nombre, *celdas = [c.strip() for c in linea.strip("|").split("|")]
-        filas[nombre.strip("`")] = set(re.findall(r"`([\w.]+\.py)`", " ".join(celdas)))
-    return filas
+        name, *cells = [c.strip() for c in line.strip("|").split("|")]
+        rows[name.strip("`")] = set(re.findall(r"`([\w.]+\.py)`", " ".join(cells)))
+    return rows
 
 
-def test_el_mapa_del_codigo_lista_por_funcionalidad_un_archivo_de_cada_capa_que_existe() -> None:
-    """el mapa del código lista por funcionalidad un archivo de cada capa que existe
+def test_the_code_map_lists_one_file_per_existing_layer_for_each_feature() -> None:
+    """the code map lists one file per existing layer for each feature
     @ARQ-01-ASM-03"""
-    filas = _filas()
-    assert filas
-    for nombre, archivos in filas.items():
-        assert archivos, f"{nombre} no nombra ningún archivo"
-        for archivo in archivos:
-            assert (MODULOS / nombre / archivo).is_file(), f"{nombre}/{archivo}"
+    rows = _rows()
+    assert rows
+    for name, files in rows.items():
+        assert files, f"{name} names no file"
+        for file in files:
+            assert (MODULES / name / file).is_file(), f"{name}/{file}"
 
 
-def test_el_mapa_del_codigo_lista_cada_funcionalidad_con_sus_archivos() -> None:
-    """el mapa del código lista cada funcionalidad con sus archivos
+def test_the_code_map_lists_each_feature_with_its_files() -> None:
+    """the code map lists each feature with its files
     @ARQ-04-S1"""
-    filas = _filas()
-    existentes = {
-        carpeta.name: {a.name for a in carpeta.glob("*.py") if a.name != "__init__.py"}
-        for carpeta in MODULOS.iterdir()
-        if carpeta.is_dir() and carpeta.name != "__pycache__"
+    rows = _rows()
+    existing = {
+        folder.name: {a.name for a in folder.glob("*.py") if a.name != "__init__.py"}
+        for folder in MODULES.iterdir()
+        if folder.is_dir() and folder.name != "__pycache__"
     }
-    assert existentes
-    assert filas == existentes
+    assert existing
+    assert rows == existing

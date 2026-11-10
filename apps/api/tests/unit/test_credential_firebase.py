@@ -8,9 +8,9 @@ from firebase_admin import credentials
 from app.shared.firebase_credential import service_credential
 
 
-def _cuenta_de_servicio() -> str:
-    clave = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    pem = clave.private_bytes(
+def _service_account() -> str:
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = key.private_bytes(
         serialization.Encoding.PEM,
         serialization.PrivateFormat.PKCS8,
         serialization.NoEncryption(),
@@ -28,18 +28,18 @@ def _cuenta_de_servicio() -> str:
     )
 
 
-def test_el_json_de_la_cuenta_de_servicio_se_convierte_en_credencial() -> None:
-    credencial = service_credential(_cuenta_de_servicio())
+def test_the_service_account_json_becomes_a_credential() -> None:
+    credential = service_credential(_service_account())
 
-    assert isinstance(credencial, credentials.Certificate)
-    assert credencial.project_id == "demo"
+    assert isinstance(credential, credentials.Certificate)
+    assert credential.project_id == "demo"
 
 
-def test_sin_json_no_hay_credencial_propia() -> None:
+def test_without_json_there_is_no_own_credential() -> None:
     assert service_credential("") is None
 
 
-def test_un_json_roto_falla_sin_mostrar_su_contenido() -> None:
+def test_a_broken_json_fails_without_showing_its_content() -> None:
     with pytest.raises(RuntimeError) as error:
         service_credential('{"private_key": "secreto-123"')
 

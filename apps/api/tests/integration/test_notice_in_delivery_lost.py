@@ -1,4 +1,4 @@
-"""Un aviso que quedó `enviando` por una API caída pasa a fallida en el barrido."""
+"""A notice left `sending` by a downed API becomes failed in the sweep."""
 
 from collections.abc import Sequence
 from uuid import UUID
@@ -10,16 +10,16 @@ from app.modules.notifications.rules import DeliveryResult, Notice
 from app.modules.notifications.use_cases import dispatch_pending
 
 
-class _CanalQueCuenta:
+class _CountingChannel:
     def __init__(self) -> None:
-        self.llamadas = 0
+        self.calls = 0
 
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        self.llamadas += 1
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
+        self.calls += 1
         return DeliveryResult(sent=1, invalid=())
 
 
-def _enviando(engine: Engine, minutos: int) -> UUID:
+def _sending(engine: Engine, minutes: int) -> UUID:
     with engine.begin() as conn:
         id_: UUID = conn.execute(
             text(
@@ -28,28 +28,28 @@ def _enviando(engine: Engine, minutos: int) -> UUID:
                 " now() - make_interval(mins => :m) FROM app_user WHERE active LIMIT 1"
                 " RETURNING id"
             ),
-            {"m": minutos},
+            {"m": minutes},
         ).scalar_one()
     return id_
 
 
-def _envio(engine: Engine, id_: UUID) -> str:
+def _delivery(engine: Engine, id_: UUID) -> str:
     with engine.connect() as conn:
-        envio: str = conn.execute(
+        delivery: str = conn.execute(
             text("SELECT delivery FROM notification WHERE id = :id"), {"id": id_}
         ).scalar_one()
-    return envio
+    return delivery
 
 
-def test_un_aviso_con_mas_de_10_minutos_en_enviando_pasa_a_fallida_y_no_se_reenvia(
+def test_a_notice_over_10_minutes_in_sending_becomes_failed_and_is_not_resent(
     engine: Engine, user_token: str
 ) -> None:
-    """un aviso con más de 10 minutos en enviando pasa a fallida en el barrido y no se reenvía @SIM-01-S2 @assumption:SIM-01-ASM-10"""
-    viejo = _enviando(engine, 11)
-    reciente = _enviando(engine, 1)
-    canal = _CanalQueCuenta()
+    """a notice over 10 minutes in sending becomes failed in the sweep and is not resent @SIM-01-S2 @assumption:SIM-01-ASM-10"""
+    old = _sending(engine, 11)
+    recent = _sending(engine, 1)
+    channel = _CountingChannel()
     with engine.connect() as conn:
-        dispatch_pending(NotificationsSql(conn), canal)
-    assert _envio(engine, viejo) == "failed"
-    assert _envio(engine, reciente) == "sending"
-    assert canal.llamadas == 0
+        dispatch_pending(NotificationsSql(conn), channel)
+    assert _delivery(engine, old) == "failed"
+    assert _delivery(engine, recent) == "sending"
+    assert channel.calls == 0

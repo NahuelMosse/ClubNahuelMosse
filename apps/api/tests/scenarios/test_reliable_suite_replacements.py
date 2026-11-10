@@ -1,49 +1,45 @@
-"""Reemplazos de tests congelados de test_reliable_suite.py (ver `replaces:` en el Log de la card)."""
+"""Replacements of frozen tests of test_reliable_suite.py (see `replaces:` in the Log of the card)."""
 
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-RAIZ_API = Path(__file__).resolve().parents[2]
-ESCENARIO = "tests/scenarios/test_error_log.py"
+API_ROOT = Path(__file__).resolve().parents[2]
+SCENARIO = "tests/scenarios/test_error_log.py"
 
 
-def _correr(*argumentos: str, entorno: dict[str, str]) -> "subprocess.CompletedProcess[str]":
+def _run(*arguments: str, env: dict[str, str]) -> "subprocess.CompletedProcess[str]":
     return subprocess.run(
-        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *argumentos],
-        cwd=RAIZ_API, env=entorno, capture_output=True, text=True, timeout=300, check=False,
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *arguments],
+        cwd=API_ROOT, env=env, capture_output=True, text=True, timeout=300, check=False,
     )  # fmt: skip
 
 
-def _entorno(quitar: tuple[str, ...] = (), poner: dict[str, str] | None = None) -> dict[str, str]:
-    return {k: v for k, v in os.environ.items() if k not in quitar} | (poner or {})
+def _env(remove: tuple[str, ...] = (), add: dict[str, str] | None = None) -> dict[str, str]:
+    return {k: v for k, v in os.environ.items() if k not in remove} | (add or {})
 
 
-def _falla_por_falta_de_emulador(corrida: "subprocess.CompletedProcess[str]") -> None:
-    salida = corrida.stdout + corrida.stderr
-    assert corrida.returncode != 0
-    assert "hace falta el emulador de Firebase Auth" in salida
-    assert "error" in salida.lower()
+def _fails_for_lack_of_emulator(run: "subprocess.CompletedProcess[str]") -> None:
+    output = run.stdout + run.stderr
+    assert run.returncode != 0
+    assert "the Firebase Auth emulator is required" in output
+    assert "error" in output.lower()
 
 
-def test_con_la_variable_del_emulador_ausente_la_corrida_falla_con_el_mensaje_del_emulador() -> (
-    None
-):
-    """con la variable del emulador ausente la corrida sale distinta de cero y dice que hace falta el emulador
+def test_with_the_emulator_variable_missing_the_run_fails_with_the_emulator_message() -> None:
+    """with the emulator variable missing the run exits non-zero and says the emulator is required
     @REV-08-S5 @assumption:REV-08-ASM-10
     """
-    corrida = _correr(ESCENARIO, entorno=_entorno(quitar=("FIREBASE_AUTH_EMULATOR_HOST",)))
+    run = _run(SCENARIO, env=_env(remove=("FIREBASE_AUTH_EMULATOR_HOST",)))
 
-    _falla_por_falta_de_emulador(corrida)
+    _fails_for_lack_of_emulator(run)
 
 
-def test_con_el_emulador_apagado_la_corrida_falla_con_el_mensaje_del_emulador() -> None:
-    """con el emulador apagado la corrida sale distinta de cero y dice que hace falta el emulador
+def test_with_the_emulator_off_the_run_fails_with_the_emulator_message() -> None:
+    """with the emulator off the run exits non-zero and says the emulator is required
     @REV-08-S5 @assumption:REV-08-ASM-10
     """
-    corrida = _correr(
-        ESCENARIO, entorno=_entorno(poner={"FIREBASE_AUTH_EMULATOR_HOST": "127.0.0.1:9"})
-    )
+    run = _run(SCENARIO, env=_env(add={"FIREBASE_AUTH_EMULATOR_HOST": "127.0.0.1:9"}))
 
-    _falla_por_falta_de_emulador(corrida)
+    _fails_for_lack_of_emulator(run)

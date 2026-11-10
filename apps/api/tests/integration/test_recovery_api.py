@@ -1,4 +1,4 @@
-"""La recuperación de contraseña contra la base y el emulador reales, con el buzón."""
+"""Password recovery against the real database and emulator, with the mailbox."""
 
 import re
 import time
@@ -8,187 +8,188 @@ from typing import Any
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-VIEJA = "ClubNahuel1"
-NUEVA = "ClubNahuel2"
+OLD = "ClubNahuel1"
+NEW = "ClubNahuel2"
 
 
-def _registrar(api: TestClient, s: str) -> str:
-    correo = f"socia.{s}@correo.com"
-    pedido = {
+def _register(api: TestClient, s: str) -> str:
+    email = f"socia.{s}@correo.com"
+    payload = {
         "first_name": "Lucía",
         "last_name": "Gómez",
         "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
         "birth_date": "1998-11-02",
-        "email": correo,
-        "password": VIEJA,
+        "email": email,
+        "password": OLD,
     }
-    assert api.post("/register", json=pedido).status_code == 201
-    return correo
+    assert api.post("/register", json=payload).status_code == 201
+    return email
 
 
-def _codigos(engine: Engine, correo: str) -> list[str]:
+def _codes(engine: Engine, email: str) -> list[str]:
     with engine.connect() as conn:
-        cuerpos: Any = conn.execute(
-            text("SELECT body FROM outgoing_email WHERE recipient = :p ORDER BY id"), {"p": correo}
+        bodies: Any = conn.execute(
+            text("SELECT body FROM outgoing_email WHERE recipient = :p ORDER BY id"), {"p": email}
         ).scalars()
-        return [m.group(1) for c in cuerpos if (m := re.search(r"#code=([\w-]+)", c))]
+        return [m.group(1) for c in bodies if (m := re.search(r"#code=([\w-]+)", c))]
 
 
-def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
+def test_requesting_and_using_the_link_changes_the_password_only_once(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    correo = _registrar(api, unique())
-    token = sign_in(correo, VIEJA)
+    email = _register(api, unique())
+    token = sign_in(email, OLD)
     time.sleep(1.1)
-    assert api.post("/password-recovery", json={"email": correo.upper()}).status_code == 202
-    (codigo,) = _codigos(engine, correo)
+    assert api.post("/password-recovery", json={"email": email.upper()}).status_code == 202
+    (code,) = _codes(engine, email)
 
-    assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 204
+    assert api.post("/password-recovery/check", json={"code": code}).status_code == 204
     assert (
-        api.put("/password-recovery", json={"code": codigo, "new_password": NUEVA}).status_code
-        == 204
+        api.put("/password-recovery", json={"code": code, "new_password": NEW}).status_code == 204
     )
 
-    assert sign_in(correo, VIEJA) is None
-    assert sign_in(correo, NUEVA) is not None
-    # Las sesiones abiertas antes quedaron vencidas.
+    assert sign_in(email, OLD) is None
+    assert sign_in(email, NEW) is not None
+    # The sessions opened before expired.
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
-    assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 410
+    assert api.post("/password-recovery/check", json={"code": code}).status_code == 410
     assert (
         api.put(
-            "/password-recovery", json={"code": codigo, "new_password": "ClubNahuel3"}
+            "/password-recovery", json={"code": code, "new_password": "ClubNahuel3"}
         ).status_code
         == 410
     )
 
 
-def test_un_correo_sin_cuenta_recibe_la_misma_respuesta_y_ningun_mail(
+def test_an_email_without_an_account_gets_the_same_response_and_no_mail(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = f"nadie.{unique()}@correo.com"
-    r = api.post("/password-recovery", json={"email": correo})
+    email = f"nadie.{unique()}@correo.com"
+    r = api.post("/password-recovery", json={"email": email})
     assert (r.status_code, r.content) == (202, b"")
-    assert _codigos(engine, correo) == []
+    assert _codes(engine, email) == []
 
 
-def test_una_cuenta_dada_de_baja_no_recibe_enlace(
+def test_a_deactivated_account_gets_no_link(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    """Verifica CU-04b-SUP-01."""
-    correo = _registrar(api, unique())
+    """Checks CU-04b-SUP-01."""
+    email = _register(api, unique())
     with engine.begin() as conn:
         conn.execute(
             text("UPDATE app_user SET active = false, deactivated_at = now() WHERE email = :c"),
-            {"c": correo},
+            {"c": email},
         )
-    assert api.post("/password-recovery", json={"email": correo}).status_code == 202
-    assert _codigos(engine, correo) == []
+    assert api.post("/password-recovery", json={"email": email}).status_code == 202
+    assert _codes(engine, email) == []
 
 
-def test_reenviar_invalida_el_enlace_anterior_y_hay_tope_por_hora(
+def test_resending_invalidates_the_previous_link_and_there_is_an_hourly_cap(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unique())
+    email = _register(api, unique())
     for _ in range(4):
-        assert api.post("/password-recovery", json={"email": correo}).status_code == 202
-    codigos = _codigos(engine, correo)
-    assert len(codigos) == 3
-    assert [
-        api.post("/password-recovery/check", json={"code": c}).status_code for c in codigos
-    ] == [410, 410, 204]
+        assert api.post("/password-recovery", json={"email": email}).status_code == 202
+    codes = _codes(engine, email)
+    assert len(codes) == 3
+    assert [api.post("/password-recovery/check", json={"code": c}).status_code for c in codes] == [
+        410,
+        410,
+        204,
+    ]
 
 
-def test_cambiar_la_contrasena_por_otra_via_invalida_los_enlaces(
+def test_changing_the_password_another_way_invalidates_the_links(
     api: TestClient,
     engine: Engine,
     sign_in: Callable[[str, str], str | None],
     unique: Callable[[], str],
 ) -> None:
-    """Verifica CU-04b-SUP-03."""
-    correo = _registrar(api, unique())
-    api.post("/password-recovery", json={"email": correo})
-    (codigo,) = _codigos(engine, correo)
-    token = sign_in(correo, VIEJA)
+    """Checks CU-04b-SUP-03."""
+    email = _register(api, unique())
+    api.post("/password-recovery", json={"email": email})
+    (code,) = _codes(engine, email)
+    token = sign_in(email, OLD)
     r = api.put(
         "/me/password",
         headers={"Authorization": f"Bearer {token}"},
-        json={"current_password": VIEJA, "new_password": NUEVA},
+        json={"current_password": OLD, "new_password": NEW},
     )
     assert r.status_code == 204
-    assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 410
+    assert api.post("/password-recovery/check", json={"code": code}).status_code == 410
 
 
-def test_una_contrasena_debil_se_rechaza_y_el_enlace_sigue_sirviendo(
+def test_a_weak_password_is_rejected_and_the_link_still_works(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unique())
-    api.post("/password-recovery", json={"email": correo})
-    (codigo,) = _codigos(engine, correo)
-    r = api.put("/password-recovery", json={"code": codigo, "new_password": "ClubNahuel"})
+    email = _register(api, unique())
+    api.post("/password-recovery", json={"email": email})
+    (code,) = _codes(engine, email)
+    r = api.put("/password-recovery", json={"code": code, "new_password": "ClubNahuel"})
     assert r.status_code == 422
     assert r.json() == {"errors": {"new_password": "At least one number"}}
-    assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 204
+    assert api.post("/password-recovery/check", json={"code": code}).status_code == 204
 
 
-def test_un_codigo_inventado_no_sirve(api: TestClient) -> None:
+def test_an_invented_code_does_not_work(api: TestClient) -> None:
     assert api.post("/password-recovery/check", json={"code": "inventado"}).status_code == 410
     assert api.post("/password-recovery/check", json={}).status_code == 410
     assert (
-        api.put("/password-recovery", json={"code": "inventado", "new_password": NUEVA}).status_code
+        api.put("/password-recovery", json={"code": "inventado", "new_password": NEW}).status_code
         == 410
     )
 
 
-def test_un_correo_mal_escrito_se_rechaza(api: TestClient) -> None:
+def test_a_misspelled_email_is_rejected(api: TestClient) -> None:
     r = api.post("/password-recovery", json={"email": "lucia@correo"})
     assert r.status_code == 422
     assert r.json() == {"errors": {"email": "Check the email format"}}
 
 
-def test_sin_modo_pruebas_no_existe_el_buzon(api: TestClient) -> None:
+def test_without_test_mode_the_mailbox_does_not_exist(api: TestClient) -> None:
     assert api.get("/_testing/emails", params={"para": "x@y.com"}).status_code == 404
 
 
-def test_el_enlace_del_correo_es_https_y_el_codigo_no_llega_al_servidor(
+def test_the_email_link_is_https_and_the_code_does_not_reach_the_server(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
-    correo = _registrar(api, unique())
-    api.post("/password-recovery", json={"email": correo})
+    email = _register(api, unique())
+    api.post("/password-recovery", json={"email": email})
     with engine.connect() as conn:
-        cuerpo: Any = conn.execute(
-            text("SELECT body FROM outgoing_email WHERE recipient = :p"), {"p": correo}
+        body: Any = conn.execute(
+            text("SELECT body FROM outgoing_email WHERE recipient = :p"), {"p": email}
         ).scalar_one()
-    enlace = re.search(r"(\S+/link/recover)#code=", cuerpo)
-    assert enlace is not None and enlace.group(1).startswith("http")
-    pagina = api.get("/link/recover")
-    assert pagina.status_code == 200
-    assert "intent://app/recuperar?codigo=" in pagina.text
-    assert "package=ar.edu.unimoron.clubnahuelmosse" in pagina.text
-    assert pagina.headers["referrer-policy"] == "no-referrer"
+    link = re.search(r"(\S+/link/recover)#code=", body)
+    assert link is not None and link.group(1).startswith("http")
+    page = api.get("/link/recover")
+    assert page.status_code == 200
+    assert "intent://app/recuperar?codigo=" in page.text
+    assert "package=ar.edu.unimoron.clubnahuelmosse" in page.text
+    assert page.headers["referrer-policy"] == "no-referrer"
 
 
-def test_pedidos_simultaneos_no_dejan_dos_enlaces_vigentes(
+def test_simultaneous_requests_do_not_leave_two_valid_links(
     api: TestClient, engine: Engine, unique: Callable[[], str]
 ) -> None:
     from concurrent.futures import ThreadPoolExecutor
 
-    correo = _registrar(api, unique())
+    email = _register(api, unique())
     with ThreadPoolExecutor(max_workers=6) as pool:
-        codigos_http = list(
+        http_codes = list(
             pool.map(
-                lambda _: api.post("/password-recovery", json={"email": correo}).status_code,
+                lambda _: api.post("/password-recovery", json={"email": email}).status_code,
                 range(6),
             )
         )
-    assert codigos_http == [202] * 6
-    codigos = _codigos(engine, correo)
-    assert len(codigos) == 3
-    vigentes = [
+    assert http_codes == [202] * 6
+    codes = _codes(engine, email)
+    assert len(codes) == 3
+    valid = [
         c
-        for c in codigos
+        for c in codes
         if api.post("/password-recovery/check", json={"code": c}).status_code == 204
     ]
-    assert len(vigentes) == 1
+    assert len(valid) == 1

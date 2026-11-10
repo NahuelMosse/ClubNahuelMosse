@@ -1,5 +1,5 @@
 """The rename map from main's Spanish HTTP contract to the English one, taken from
-docs/technical/glosario-ingles.md («Rutas de la API» and «Campos JSON»).
+docs/technical/glossary.md («API routes» and «JSON fields»).
 
 It is the only copy of the map in the tests: a test that compares a frozen snapshot of the
 contract of main with the published one translates the snapshot through `comparable`.
