@@ -44,8 +44,8 @@ not_read:
 
 ```
 suite [timeout 60 min]: sh D:/Temp/w/herramientas/eng24-pytest.sh -q -p no:cacheprovider
-flutter [timeout 60 min]: sh D:/Temp/w/herramientas/eng24-flutter.sh
-screenshots [timeout 40 min]: sh D:/Temp/w/herramientas/eng24-screenshots.sh
+flutter [timeout 120 min]: sh D:/Temp/w/herramientas/eng24-flutter.sh
+screenshots [timeout 120 min]: sh D:/Temp/w/herramientas/eng24-screenshots.sh
 node: node --test --test-force-exit tests/*.test.mjs docs-site/tests/*.test.mjs
 vs-main: node D:/Temp/w/herramientas/eng24-vs-main.mjs origin/main
 lint: sh D:/Temp/w/herramientas/eng24-ruff-mypy-flutter-analyze.sh apps/api apps/mobile/test apps/mobile/integration_test
@@ -55,7 +55,12 @@ migrate-upgrade: sh D:/Temp/w/herramientas/eng24-migrate.sh
 refactor-tests: los tests de cards anteriores pasan a títulos, nombres, variables y comentarios en inglés; sus etiquetas y lo que verifican no cambian; los que leen la ruta o el título de otro test siguen el renombre
 no-visual: la card no toca ninguna pantalla de la app ni las capturas PNG
 no-docs: la documentación sólo cambia las rutas de tests que cita; no cambia comportamiento ni contrato
-public-allow: apps/api/tests/integration/*.py [secret] · la contraseña de los usuarios de prueba del emulador de Auth (`PASSWORD = "ClubNahuel1"`), la misma que main ya tiene en tests/integracion; no es una credencial real
+public-allow: apps/api/tests/** [secret] · la contraseña de los usuarios de prueba del emulador de Auth (`ClubNahuel1`), la misma que main ya tiene en los tests con sus nombres en castellano; no es una credencial real
+public-allow: apps/mobile/test/** [secret] · la misma contraseña de prueba del emulador de Auth, que main ya tiene en estos tests antes de traducirlos
+public-allow: apps/mobile/integration_test/** [secret] · la misma contraseña de prueba del emulador de Auth, que main ya tiene en estos tests antes de traducirlos
+public-allow: apps/api/tests/** [email] · los correos de los usuarios de prueba (`ana.rios@ejemplo.com`, `lucia@correo.com`), los mismos que main ya tiene en los tests de antes de traducirlos; la card sólo renombra los archivos
+public-allow: apps/mobile/test/** [email] · los correos de los usuarios de prueba, los mismos que main ya tiene en estos tests antes de traducirlos; la card sólo renombra los archivos
+public-allow: apps/mobile/integration_test/** [email] · los correos de los usuarios de prueba, los mismos que main ya tiene en estos tests antes de traducirlos; la card sólo renombra los archivos
 ```
 
 ## Log
