@@ -36,3 +36,5 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.45.1 a
 ## Log
 
 - L1 · Actualizar app-tp al kit 6.45.3.
+- L2 · 2026-11-10 · replaces: tests/kit.test.mjs "the installed kit is 6.45.1 @KIT-07-S1" · el kit pasa a 6.45.3 · by: tests/kit.test.mjs "the installed kit is 6.45.3 @KIT-08-S1"
+- L3 · 2026-11-10 · replaces: tests/kit.test.mjs "the install source is the kit-v6.45.1 tag commit @KIT-07-ASM-01" · la fuente pasa al tag kit-v6.45.3 · by: tests/kit.test.mjs "the install source is the kit-v6.45.3 tag commit @KIT-08-ASM-01"
