@@ -46,3 +46,5 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.44.1 a
 - L8 · 2026-11-10 · kit: la suite propia del kit (.claude/tests) no se instala en este repo; las novedades de 6.45.1 no tienen prueba acá más allá de tests/kit.test.mjs
 - L9 · 2026-11-10 · kit: el hook de commits exige Conventional Commits en una card nueva, aunque las cards KIT-01 a KIT-06 del repo usaron `KIT-NN: …`; el primer commit de la card no tiene convención propia que conservar
 - L10 · 2026-11-10 · kit: install.mjs --update --card-open escribe `kit updated …` en el Log de card.md, no `<ID>-KIT-NN` en ambiguities.md como dice su ayuda
+- L11 · 2026-11-10 · kit: close.mjs manda L1 a Could not run porque el texto del pedido cita `closing: could not run` (con dos puntos) dentro de la frase; además borra la cita del texto que copia
+- L12 · 2026-11-10 · kit: un replaces: que conserva la etiqueta vieja y suma la nueva (L3, @KIT-06-S2 → @KIT-06-S2 @KIT-07-S2, misma aserción) no cuenta como renombre y va a Needs a person
