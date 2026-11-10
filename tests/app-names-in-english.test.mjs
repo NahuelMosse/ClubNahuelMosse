@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { wordsOf } from '../.claude/tools/code-language.mjs';
-import { read, report, spanishWordsIn, walk } from './spanish-detector.mjs';
+import { read, report, spanishProse, spanishWordsIn, walk } from './spanish-detector.mjs';
 
 // Spanish words the shared list does not have, found in the names of the app.
 const MORE_SPANISH = new Set(
@@ -60,6 +60,19 @@ test('every file and name declared in apps/mobile/lib is English @ENG-23-S3', ()
     const file = path.split('/').pop().replace('.dart', '');
     const names = identifiersOf(read(path)).filter((name) => spanishParts(name).length > 0);
     return [...(spanishParts(file).length > 0 ? [`${path}: file name`] : []), ...names.map((name) => `${path}: ${name}`)];
+  });
+  assert.deepEqual(offenders, [], report(offenders));
+});
+
+// The text the person sees stays Spanish or English in the .arb; a comment or a message to the developer is English.
+const commentsOf = (text) => [...text.matchAll(/(?:^|[^:'"\w])\/\/+[ \t]*([^\n]*)/g)].map((m) => m[1]).concat([...text.matchAll(/\/\*([\s\S]*?)\*\//g)].map((m) => m[1].replace(/\s+/g, ' ')));
+const developerMessagesOf = (text) =>
+  [...text.matchAll(/\b(?:AssertionError|StateError|ArgumentError|UnsupportedError|UnimplementedError|FormatException|debugPrint|assert)\(\s*(?:[^'"()]*,\s*)?((?:r?(?:'(?:\.|[^'\\n])*'|"(?:\.|[^"\\n])*")\s*)+)/g)].map((m) => m[1]);
+
+test('every comment and developer message of apps/mobile/lib is English @ENG-23-S3', () => {
+  const offenders = libFiles().flatMap((path) => {
+    const text = read(path);
+    return [...commentsOf(text), ...developerMessagesOf(text)].filter(spanishProse).map((chunk) => `${path}: «${chunk.trim().slice(0, 90)}»`);
   });
   assert.deepEqual(offenders, [], report(offenders));
 });
