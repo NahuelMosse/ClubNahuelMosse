@@ -11,6 +11,7 @@ import { codeLanguageOf, spanishNames } from './code-language.mjs';
 import { active, isPoc, profileStates } from './kit.mjs';
 import { IS_SCREEN, SCREEN_MARKUP } from './signals.mjs';
 import { sectionOf } from './card-doc.mjs';
+import { addedLines, isPublic, publicDeclarations, publicFindings, trackedFiles, visibilityProblems } from './public-bar.mjs';
 
 // bot-wall.mjs and design-checks.mjs come with the web profile: the base alone installs without them, and their checks only run on visual cards.
 const optional = async (file) => { try { return await import(file); } catch { return null; } };
@@ -206,6 +207,11 @@ export const visualInstruments = (root, doc = null) => {
 // look to bring to a reference, so no `ref:`, no design rounds and no round.json; the states, a11y and screen checks still run on
 // what remains. This check holds it against the diff: the card's presentation files lose more lines than they gain.
 export const removeOnlyOf = (doc) => sectionOf(doc ?? '', 'Look')?.match(/^\s*(?:[-*]\s*)?remove-only:\s*(\S.*)$/im)?.[1].trim() ?? null;
+// `plain: <why>` in `## Look`: the requirement asks for a screen, not for a look (no reference, brand, design or landing in it).
+// The screen takes the repo's own styles, or plain semantic HTML when there are none: no `ref:`, no designer, no design rounds,
+// no brand sheet and no design line; the states, a11y and screen checks still run.
+export const plainOf = (doc) => sectionOf(doc ?? '', 'Look')?.match(/^\s*(?:[-*]\s*)?plain:\s*(\S.*)$/im)?.[1].trim() ?? null;
+export const noLookOf = (doc) => removeOnlyOf(doc) ?? plainOf(doc);
 export const removeOnlyCheck = (root, cardDir) => {
   const doc = readCard(cardDir) ?? '';
   if (!removeOnlyOf(doc)) return [];
@@ -261,7 +267,7 @@ export const atLevelEvidence = (line) => {
   return Boolean(m) && /\bref\/\S+\.(?:png|jpe?g|webp)/i.test(m[1]) && ASPECTS.filter((a) => a.test(m[1])).length >= 3;
 };
 export const roundsCheck = (cardDir) => {
-  if (!lensesOf(cardDir).includes('visual') || removeOnlyOf(readCard(cardDir))) return [];
+  if (!lensesOf(cardDir).includes('visual') || noLookOf(readCard(cardDir))) return [];
   // The rounds the grade asks (`designRounds` of its level, 1 at poc); strict when the level cannot be read.
   let minRounds = MIN_ROUNDS;
   try { minRounds = active(resolve(String(cardDir), '..', '..')).exempt.level?.designRounds ?? MIN_ROUNDS; } catch { minRounds = MIN_ROUNDS; }
@@ -321,10 +327,10 @@ export const lastRound = (cardDir) => {
   const folders = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && /^r\d+$/.test(e.name)).map((e) => e.name).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))) : [];
   try { return folders.length ? { name: folders.at(-1), round: JSON.parse(readFileSync(join(dir, folders.at(-1), 'round.json'), 'utf8')) } : null; } catch { return null; }
 };
-// The sweep reads a page in a browser: a Flutter screen or a remove-only card has no round.json.
+// The sweep reads a page in a browser: a Flutter screen, a remove-only or a plain card has no round.json.
 export const designRoundChecks = (cardDir, root) => {
   const doc = readCard(cardDir);
-  if (!lensesOf(cardDir).includes('visual') || removeOnlyOf(doc) || !visualInstruments(root, doc).probe) return [];
+  if (!lensesOf(cardDir).includes('visual') || noLookOf(doc) || !visualInstruments(root, doc).probe) return [];
   const last = lastRound(cardDir);
   const none = 'no rondas/r<k>/round.json: run `node .claude/tools/design-round.mjs <url> --out specs/<card>/rondas/r<k>`';
   if (!last) return [couldNot('dead-clicks', none), couldNot('brand', none)];
@@ -840,8 +846,34 @@ export const noVisualCheck = (root, cardDir) => {
   return [ok('no-visual')];
 };
 
+// The public bar (public-bar.mjs) over the lines the card's diff adds, outside specs/ and .claude/: blocking from mvp, where
+// verify runs. `public-allow:` lines exempt a file or a kind with its reason; `public-skip:` carries the user's order.
+export const publicCheck = (root, cardDir) => {
+  const { allow, skip } = publicDeclarations(readCard(cardDir) ?? '');
+  if (skip) return [ok('public', `skipped by the user: ${skip}`)];
+  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => !/^(?:specs|\.claude|\.validation)\//.test(f) && existsSync(join(root, f)));
+  if (!files.length) return [ok('public', 'no files outside specs/')];
+  const diff = spawnSync('git', ['diff', '-U0', '--no-color', ownBase(root, cardStart(root, cardDir)), '--', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  if (diff.status !== 0) return [couldNot('public', `git diff failed: ${(diff.stderr ?? '').trim().split('\n')[0]}`)];
+  // A file the card created and git does not track yet has no diff: its lines are all added.
+  const untracked = files.filter((f) => !diff.stdout.includes(`+++ b/${f}\n`) && !existedAt(root, ownBase(root, cardStart(root, cardDir)), f) &&
+    spawnSync('git', ['ls-files', '--error-unmatch', f], { cwd: root }).status !== 0);
+  const lines = [...addedLines(diff.stdout), ...untracked.flatMap((f) => { try { return readFileSync(join(root, f), 'utf8').split('\n').map((line) => ({ file: f, line })); } catch { return []; } })];
+  const found = publicFindings(lines, { allow });
+  return [found.length ? failed('public', `${found.length} line${found.length > 1 ? 's' : ''} a public repo does not carry: ${found.slice(0, 5).join('; ')}` +
+    ' · fix them, or declare in ## Gate `public-allow: <file> [<kind>] · <why>`; only the user skips the whole bar') : ok('public', `${lines.length} added lines, ready for a public repo`)];
+};
+
+// `Visibility: public` in CLAUDE.md: the files of an open-source project, a SemVer version and a CHANGELOG line per card.
+export const visibilityCheck = (root, cardDir) => {
+  if (!isPublic(root)) return [];
+  const read = (f) => { try { return readFileSync(join(root, f), 'utf8'); } catch { return ''; } };
+  const found = visibilityProblems({ tracked: trackedFiles(root), changed: cardFiles(root, cardStart(root, cardDir)), read });
+  return [found.length ? failed('visibility', `the repo is declared public: ${found.join('; ')}`) : ok('visibility', 'license, changelog, contributing, security, templates and README in place')];
+};
+
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...codeLanguageCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir), ...docsCheck(root, cardDir), ...tableShapeCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...codeLanguageCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir), ...docsCheck(root, cardDir), ...tableShapeCheck(root, cardDir), ...publicCheck(root, cardDir), ...visibilityCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 
@@ -909,7 +941,10 @@ export const screenChecks = (records) => {
   }).map((r) => `${r.file} drops the focus to the page (it was on ${records[records.indexOf(r) - 1].activeElement.tag})`);
   const noRing = records.filter((r) => r.activeElement?.ringDue && r.activeElement.ring === false).map((r) => `${r.file} focuses ${r.activeElement.tag}${r.activeElement.id ? `#${r.activeElement.id}` : ''} with no visible ring (no outline, no box-shadow)`);
   const alerts = records.filter((r) => (r.announcements ?? []).some((a) => a.role === 'alert'));
-  if (!alerts.length && !dropped.length && !noRing.length) out.push(couldNot('focus', 'no probe step leaves a role=alert on the page: there is no failed submit to look at'));
+  // A screen with nothing to submit has no failed submit to look at. Older records carry no `submits` and stay could not run.
+  const nothingToSubmit = records.every((r) => r.submits === 0);
+  if (!alerts.length && !dropped.length && !noRing.length && nothingToSubmit) out.push(ok('focus', 'no step shows a form or a submit control: no failed submit to look at'));
+  else if (!alerts.length && !dropped.length && !noRing.length) out.push(couldNot('focus','no probe step leaves a role=alert on the page: there is no failed submit to look at'));
   else {
     const lost = [...alerts.filter((r) => !r.activeElement).map((r) => `${r.file} shows an alert and the focus is on nothing`), ...dropped, ...noRing];
     out.push(lost.length ? failed('focus', [...new Set(lost)].slice(0, 5).join('; ')) : ok('focus', `${alerts.length} steps with an alert keep the focus on an element, and no step drops it`));

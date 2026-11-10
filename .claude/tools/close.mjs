@@ -21,7 +21,7 @@ import { NOT_PRODUCTION, cardFiles, oneRound, cardStart, copiedFromKit, currentC
 import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, rolesOf, sectionOf, specTagsIn } from './card-doc.mjs';
 import { closingCost } from './card-cost.mjs';
 import { FROZEN_TAG } from './guard-paths.mjs';
-import { specsCheck } from './gate-checks.mjs';
+import { noLookOf, specsCheck } from './gate-checks.mjs';
 import { active, isPoc } from './kit.mjs';
 import { readRecord } from './once.mjs';
 import { declaredUnmutated, missing, writeSessionLines } from './required.mjs';
@@ -53,7 +53,8 @@ export const sealed = (root, cardDir, text) => {
 };
 
 const PLAN_FILE = /^[\w@.-]+(?:\/[\w@.-]+)*\.(?:m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|dart|html?|s?css|vue|svelte|sql|md|json|ya?ml|sh|feature)$/;
-const TEST_SOURCE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|dart|feature)$/;
+const TEST_SOURCE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|dart|feature|c|cc|cpp|cxx|rs|swift)$/;
+const BINARY_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico', 'mp4', 'webm', 'mov', 'mp3', 'wav', 'pdf', 'zip', 'gz', 'woff', 'woff2', 'ttf', 'otf', 'glb', 'bin'];
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const textOf = (path) => (existsSync(path) ? readFileSync(path, 'utf8') : '');
 
@@ -65,15 +66,18 @@ const taggedFiles = (root, id, rev = null) => {
 };
 
 // What critique.md says: the lowest score it gives (`polish:`, `motion:`, the number after `→` in `Total:`) and its open blockers
-// (`Blocker: <text>` lines that are not «none» and do not say closed or resolved).
+// (`Blocker: <text>` lines that are not «none» and do not say closed or resolved), and the rubric lines it could not see
+// (`not inspected`), which the close names so the PR does not read them as passed.
 export const critiqueOf = (text) => {
+  const notInspected = text.split('\n').filter((l) => /\bnot inspected\b/i.test(l))
+    .map((l) => l.replace(/^[\s\-*#]+/, '').replace(/\*\*/g, '').trim());
   const scores = [
     ...[...text.matchAll(/^\W*(?:polish|motion)\W*:\s*(\d+(?:[.,]\d+)?)/gim)].map((m) => Number(m[1].replace(',', '.'))),
     ...[...text.matchAll(/^\W*Total\b[^\n]*?→\s*(\d+(?:[.,]\d+)?)/gim)].map((m) => Number(m[1].replace(',', '.'))),
   ];
   const blockers = [...text.matchAll(/^\W*Blockers?\W*:[ \t*_]*(.+)$/gim)].map((m) => m[1].trim())
     .filter((b) => !/^(?:none|ninguno|ninguna|no|-|—|n\/a)\b/i.test(b) && !/\b(?:closed|resolved|cerrado|resuelto)\b/i.test(b));
-  return { score: scores.length ? Math.min(...scores) : null, blockers };
+  return { score: scores.length ? Math.min(...scores) : null, blockers, notInspected };
 };
 
 const runOnce = (root, { write = true } = {}) => {
@@ -125,7 +129,11 @@ const runOnce = (root, { write = true } = {}) => {
   verdict(4, 'each ASM is tagged or declared uncovered', untagged.filter((a) => !new RegExp(`uncovered[^\\n]*${escape(a)}|${escape(a)}[^\\n]*uncovered`, 'i').test(log))
     .map((a) => `${a} has no \`@${a}\` test and no \`uncovered\` line in the Log`), `${asms.length - untagged.length} of ${asms.length} tagged${untagged.length ? `; declared uncovered: ${untagged.join(', ')}` : ''}`);
 
-  const red = id ? git(root, ['log', '--reverse', '--format=%H', '-G', `@${id}-S[0-9]+`, '--', '.', ':(exclude)specs', ':(exclude).claude']).stdout?.trim().split('\n').filter(Boolean)[0] : null;
+  // Searched only from the card's start and never in binaries: over a whole history of images the pickaxe took 4 min 47 s.
+  // A start without `~1` is the root commit, which a `<start>..HEAD` range would leave out: the whole history is searched then.
+  const start = id ? cardStart(root, cardDir) : 'HEAD';
+  const red = id ? git(root, ['log', '--reverse', '--format=%H', '-G', `@${id}-S[0-9]+`, ...(start.endsWith('~1') ? [`${start}..HEAD`] : []), '--', '.', ':(exclude)specs', ':(exclude).claude',
+    ...BINARY_EXTENSIONS.map((ext) => `:(exclude,glob)**/*.${ext}`)]).stdout?.trim().split('\n').filter(Boolean)[0] : null;
   if (exempt.level?.testsFrozen === false) add(5, 'no tagged test touched since RED', 'skipped', `the grade ${grade} leaves committed tests editable`);
   else if (!red) add(5, 'no tagged test touched since RED', 'could not run', 'no commit holds tests tagged for this card');
   else {
@@ -193,7 +201,7 @@ const runOnce = (root, { write = true } = {}) => {
 
   // 10. the critic of the look, when the card has a critique.md: a score under 7, an open blocker or a critique older than the screen is not a pass
   if (existsSync(join(cardDir, 'critique.md'))) {
-    const { score, blockers } = critiqueOf(textOf(join(cardDir, 'critique.md')));
+    const { score, blockers, notInspected } = critiqueOf(textOf(join(cardDir, 'critique.md')));
     const bad = [];
     if (score === null) bad.push(`${rel('critique.md')} gives no score (\`polish: N\`)`);
     else if (score < 7) bad.push(`score ${score} is under 7`);
@@ -207,9 +215,11 @@ const runOnce = (root, { write = true } = {}) => {
       const dirty = git(root, ['status', '--porcelain', '--', ...screens.map((f) => `:(literal)${f}`)]).stdout?.trim();
       if (after.length || dirty) bad.push(`the critique is stale: presentation files changed after ${at.slice(0, 9)} (${after.length ? `${after.length} commit${after.length === 1 ? '' : 's'}` : 'uncommitted changes'}); it cannot pass the card on that critique`);
     }
+    if (notInspected.length) note += `; not inspected: ${notInspected.map((l) => (l.length > 120 ? `${l.slice(0, 120)}…` : l)).join(' · ')}`;
     verdict(10, 'critique', bad, `score ${score}, no open blocker, no presentation change after ${at ? at.slice(0, 9) : 'it'}${note}`);
-  } else if (risk?.lenses?.includes('visual') && grade === 'production' && !exempt.without?.has('design-critic')) {
+  } else if (risk?.lenses?.includes('visual') && grade === 'production' && !exempt.without?.has('design-critic') && !noLookOf(doc)) {
     // METHOD step 3 launches the critic; a visual card at production without its critique.md is a look nobody judged.
+    // A remove-only or a plain card adds no look to judge.
     add(10, 'critique', 'could not run', `no ${rel('critique.md')}: the design-critic never looked at this screen; launch it with the path of card.md and the URL of the app before the close`);
   }
 
@@ -267,8 +277,21 @@ export const harvest = async (root, result) => {
   } catch { return 0; }
 };
 
+// The head of the PR a maintainer reads first: what the card changes (its title and specs), why (the requirement, cut at
+// 600 characters), and what breaks for whoever already uses it (`## Changes to existing behavior`).
+const bulletsOf = (text) => (text ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l)).map((l) => l.trim());
+export const prHead = (doc) => {
+  const title = doc.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? '';
+  const specs = bulletsOf(sectionOf(doc, 'Specs')).filter((l) => /^[-*]\s+S\d+\b/.test(l));
+  const why = requirementOf(doc).replace(/^\s*(?:[-*]\s*)?L1\s*·\s*/, '').replace(/\s+/g, ' ').trim();
+  // sectionOf matches a heading by its first word: `## Changes to existing behavior`.
+  const breaking = bulletsOf(sectionOf(doc, 'Changes')).filter((l) => !/^[-*]\s+none\b/i.test(l));
+  return ['## What', [title, ...specs].filter(Boolean).join('\n') || 'none', '', '## Why', why ? (why.length > 600 ? `${why.slice(0, 600)}…` : why) : 'none',
+    '', '## Breaking changes', breaking.length ? breaking.join('\n') : 'none', ''];
+};
+
 const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, grade, manifest, base, since }) => {
-  const parts = [BEGIN, '## Passed', bullets(checks, 'passed'), '', '## Failed', bullets(checks, 'failed'), '', '## Could not run', bullets(checks, 'could not run'),
+  const parts = [BEGIN, ...prHead(doc), '## Passed', bullets(checks, 'passed'), '', '## Failed', bullets(checks, 'failed'), '', '## Could not run', bullets(checks, 'could not run'),
     '', '## Judge', judgeSummary(risk, acts), '', '## Assumptions',
     asms.length ? [...untagged.map((a) => `- ${a} · untested`), `${asms.length - untagged.length} of ${asms.length} tagged`].join('\n') : 'none'];
   const notes = logNotes(doc);

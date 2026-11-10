@@ -23,17 +23,17 @@
    **Plan judge** (`high` only, never at `poc`): a `judge` with a prompt starting `PLAN` reads only `card.md`, writes `judge.md` with its ACT marked `plan`.
    Close each in the card before RED (a new `ASM-NN` with its planned test, a Gate line or `declared · <why>`); its `judge.md` line says `closed · <ASM-NN, T<n> or Gate line>`; rerun `risk.mjs`.
    **Ambiguities:** what the card does not say (empty case, duplicates, limits, permissions, states, errors, order, trail) is `<ID>-AMB-NN` in `ambiguities.md` (append-only, read by `publish`). With Jira, all go in **one** comment, posted without asking approval, each with the option assumed if nobody answers. The main thread reads answers once, before RED; the unanswered become `## Specs` ASM lines (cheapest reading to undo, with its test).
-   A later answer goes in the Log and the PR, never reopening RED. Never a second round. Without Jira: straight to ASM.
+   A later answer: Log and PR, never reopening RED. Never a second round. Without Jira: straight to ASM.
    Commit `card.md`.
 3. **Build.**
    - **small:** inline, no subagents. RED first: the planned tests, tag `@<ID>-S<n>` (assumption: `@<ID>-ASM-NN`) in the title,
      failing for the right reason, **committed before any code**; then the code, then the gate. Test names, locals and helpers in
      English from RED (unless `Code language:`): the `code-language` check reads test files too, and frozen tests cannot be renamed.
-   - **large:** one `builder` per group of `## Tasks`, in sequence, prompted with only the `card.md` path, its task IDs, `S#` and the gate command. A builder that is not the last runs its own tests and the `lint`/`mutate` lines of its files; only the last runs `verify.mjs`. Launch it in the
-     background; its notification wakes you (unattended or a subagent: `wait.mjs --agent <id>`).
-   - Visual lens: a `designer` captures `ref/` beside the builder; after tests pass a fresh one does the capture rounds per grade (`designer.md`), or the gate fails. At `production`, after those rounds and before `/close`, launch the `design-critic`; it commits `critique.md`. A blocker goes back to a designer that fixes only blockers, then the critic re-checks them (`RECHECK`).
-   - Validate outside input on the way in; a missing key of a closed enumeration is an error, not a default. Scope is the card's: an unasked control, endpoint or header is a Log line `OUT · <what>`, not built.
-4. **Gate.** `node .claude/tools/verify.mjs` runs each `## Gate` line once, checks every `S#` has a test and prints what fails. Formatters and generators run before it, committed: a line that changes versioned files fails. Fix and rerun until green, or log it and stop after two rounds without progress; the close lists it in `## Could not run`.
+   - **large:** one `builder` per group of `## Tasks`, in sequence, prompted with only the `card.md` path, its task IDs, `S#` and the gate command. A builder that is not the last runs its own tests and the `lint`/`mutate` lines of its files; only the last runs `verify.mjs`. In the
+     background (unattended or a subagent: `wait.mjs --agent <id>`).
+   - Visual lens: `plain:` or `remove-only:` in `## Look` means no designer or critic. Otherwise a `designer` captures `ref/` beside the builder; after tests pass a fresh one does the capture rounds per grade (`designer.md`), or the gate fails. At `production`, before `/close`, the `design-critic` commits `critique.md`; a designer fixes only its blockers and the critic re-checks them (`RECHECK`).
+   - Validate outside input on the way in; a missing key of a closed enumeration is an error, not a default. Scope is the card's: an unasked control, endpoint, header, error path or status code is a Log line `OUT · <what>`, not built; an ASM never widens the card.
+4. **Gate.** `node .claude/tools/verify.mjs` runs each `## Gate` line once, checks every `S#` has a test and prints what fails. Formatters and generators run before it, committed: a line that changes versioned files fails. Fix and rerun; two rounds without progress: log it, stop, `## Could not run`.
 5. **`/close`.** `node .claude/tools/close.mjs` runs its checks and writes `closing.md` (`## Passed`, `## Failed`, `## Could not run`,
    `## Judge`, `## Assumptions`, `Cost:`); a Log line `kit: <what>` where the kit hindered you. Then it publishes branch, PR, CI, card comment, merging once CI passed with nothing for a person; never main, `--force`, `--admin` unless ordered.
 
@@ -41,7 +41,8 @@
 
 - **The requirement is frozen and verbatim,** also as text. Never code from a summary.
 - **Never resolve an ambiguity on your own:** AMB asked once, else ASM with a test. *Silently filling a gap is the worst failure.*
-- **Tagged tests are frozen once committed (from mvp).** A wrong one is replaced, never edited: the fix goes in a new file with the same tag; the Log gets `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.- **Three states: passed · failed · could not run.** What did not run is never "passed"; a check that stops you is not turned off; an uncorrected finding stops the close.
+- **Tagged tests are frozen once committed (from mvp).** A wrong one is replaced, never edited: the fix goes in a new file with the same tag; the Log gets `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.
+- **Three states: passed · failed · could not run.** What did not run is never "passed"; a check that stops you is not turned off; an uncorrected finding stops the close.
 - **Nothing waits for a person.** Their call goes in `## Needs a person`, not yours (`.claude/AUTONOMY.md`).
 - **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). `poc` is a facade: cap, Specs and Look only, presentation with mock data (logic is blocked), one capture round, close ends at the push. **Modules** add lenses and gate lines, not steps; a **profile** (`web`, `backend`, `flutter`) brings screen or API instruments.
 
@@ -51,8 +52,8 @@
 - **Nothing over ~30 s runs in the foreground:** background, log, `Grep`; a `Monitor` runs `node .claude/tools/wait.mjs <log> --monitor --max 1790`
   (ends on `<tool>: exit <N>`); end the turn; unattended or in a subagent, `wait.mjs`.
 - **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
-- **Read in depth only what an `S#` touches;** the rest by `Grep`. To see the card again, `node .claude/tools/card-view.mjs specs/<card> [S<n> T<n>…]` (L1 folded); `Read` it only to edit. `bar.mjs <IDs>` prints the criteria rows. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
-- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those; CI runs whole suites. `node --test` always carries `--test-force-exit`.
+- **Read in depth only what an `S#` touches;** the rest by `Grep`. To see the card again, `node .claude/tools/card-view.mjs specs/<card> [S<n> T<n>…]`; `Read` it only to edit. `bar.mjs <IDs>` prints the criteria rows. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
+- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those; CI runs whole suites. `node --test` always carries `--test-force-exit`; a test server calls `closeAllConnections()` before `close()`.
 
 ## Who does what
 
@@ -71,7 +72,7 @@
 ## What does not depend on your good will
 
 Hooks block, even when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, migrations already in main, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (plan judge at high), `require-bar` (cap, Specs, Tasks, Gate before code),
-`time-cap` (warns at 70 % of `cap:`, stops at 100 %), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`; `close.mjs` checks the gate. If one stops you, read its message; do not go around it.
+`time-cap` (warns at 70 % of `cap:`, stops at 100 %, from card.md's first commit), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`; `close.mjs` checks the gate. If one stops you, read its message; do not go around it.
 What you open, you close. The main thread compacts at 200k.
 
 ## Where the scenario tests live

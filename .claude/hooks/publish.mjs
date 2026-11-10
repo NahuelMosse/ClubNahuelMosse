@@ -12,51 +12,10 @@
 // person. The order is read from the session transcript and has to be explicit: an imperative of the action ("mergealo",
 // "push it", "autorizo"), no question and no negation, and it names what made the call risky (main, force, admin, delete).
 // Contract: exit 0 lets it through, exit 2 blocks and Claude reads stderr. On its own error it blocks.
-import { appendFileSync, closeSync, existsSync, fstatSync, openSync, readFileSync, readSync, realpathSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-
-// The user's last message in the session: a typed prompt or one sent while the agent worked; tool results,
-// reminders, background-task notices (stored as user messages that start with `<`) and subagents are not theirs.
-const userTextOf = (line) => {
-  if (!line.includes('"user"') && !line.includes('queued_command')) return '';
-  let e;
-  try { e = JSON.parse(line); } catch { return ''; }
-  const own = e.type === 'user' && !e.isMeta && !e.isSidechain;
-  if (own && typeof e.message?.content === 'string') return e.message.content.startsWith('<') ? '' : e.message.content;
-  if (own && Array.isArray(e.message?.content) && e.message.content.length && e.message.content.every((c) => c.type === 'text')) {
-    return e.message.content.map((c) => c.text).filter((t) => !t.startsWith('<')).join('\n');
-  }
-  if (e.type === 'attachment' && e.attachment?.type === 'queued_command' && e.attachment.origin?.kind === 'human') return String(e.attachment.prompt ?? '');
-  return '';
-};
-// Read from the end in blocks: a long session's transcript passes the largest string Node can hold.
-const TAIL_BLOCK = 1 << 22;
-const lastUserText = (path) => {
-  if (!path || !existsSync(path)) return '';
-  const fd = openSync(path, 'r');
-  try {
-    let end = fstatSync(fd).size;
-    let rest = Buffer.alloc(0);
-    while (end > 0) {
-      const start = Math.max(0, end - TAIL_BLOCK);
-      const chunk = Buffer.alloc(end - start);
-      readSync(fd, chunk, 0, chunk.length, start);
-      const buf = Buffer.concat([chunk, rest]);
-      end = start;
-      // Bytes before the first newline may be the tail of a line that starts in an earlier block.
-      const cut = start === 0 ? -1 : buf.indexOf(10);
-      if (start > 0 && cut === -1) { rest = buf; continue; }
-      rest = cut === -1 ? Buffer.alloc(0) : buf.subarray(0, cut);
-      const lines = buf.subarray(cut + 1).toString('utf8').split('\n');
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const text = userTextOf(lines[i]);
-        if (text) return text;
-      }
-    }
-    return '';
-  } finally { closeSync(fd); }
-};
+import { lastUserText } from '../tools/transcript.mjs';
 // The order of an action: an imperative, never an infinitive or a remark ("deberían poder mergear" orders nothing).
 const AUTHORIZE = /\bautorizo\b|\bi authori[sz]e\b|\bgo ahead\b/i;
 const ORDERS = {
@@ -251,6 +210,9 @@ try {
       const head = flagValue(args, ['--head', '-H']);
       if (head !== null && head.split(':').pop() !== currentBranch()) block('You can open this card\'s PR; it is opened from the branch that is checked out. Switch to it, or drop --head.');
       checkBranch(currentBranch());
+      const { isPublic, looksSpanish } = await import('../tools/public-bar.mjs');
+      const title = flagValue(args, ['--title', '-t']) ?? '';
+      if (isPublic(root()) && looksSpanish(title)) block('You can open this card\'s PR; the repo is declared `Visibility: public`, so its title is in English. Write --title in English.');
     }
     if (verb === 'edit' && flagValue(args, ['--base', '-B']) !== null) block('You can edit this card\'s PR; its base stays the default branch. Drop --base.');
   };

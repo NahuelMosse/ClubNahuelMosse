@@ -20,7 +20,7 @@ export const isProductionPath = (root, path) => {
 };
 export const NOT_PRODUCTION = /^(specs|\.claude|\.specify|scripts|docs)\/|(^|\/)(e2e|tests?|__tests__|__mocks__|integration_test|cypress|fixtures|vendor)\/|\.(stories|min)\.[jt]sx?$|\.(md|json|ya?ml|lock)$|(^|\/)[^/]*\.(test|spec)\.|(^|\/)(test_[^/]*|[^/]*_test|conftest)\.py$|_test\.go$|^\.|(^|\/)(playwright|vitest|jest|eslint|tsconfig|jsconfig)[^/]*$|(^|\/)design\/components\/(serve\.mjs|gallery\.html)$/;
 export const IS_CODE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|dart)$/;
-export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.py$|_test\.(py|go|dart)$|Tests?\.(cs|java|kt)$|\.feature$/;
+export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.(py|c|cc|cpp|cxx)$|_(test|unittest)\.(py|go|dart|c|cc|cpp|cxx)$|Tests?\.(cs|java|kt)$|\.feature$/;
 
 // The configs of what gets verified: loosening them is approving without fixing.
 export const IS_VERIFICATION_CONFIG = /(^|\/)(eslint\.config\.[cm]?[jt]s|\.eslintrc(\.[a-z]+)?|playwright\.config\.[cm]?[jt]s|stryker\.conf(ig)?\.[a-z]+|\.c8rc(\.json)?|\.nycrc(\.json)?|jest\.config\.[cm]?[jt]s|vitest\.config\.[cm]?[jt]s|tsconfig[^/]*\.json|ruff\.toml|\.ruff\.toml|mypy\.ini|pytest\.ini|\.golangci\.[a-z]+|\.axerc[^/]*|\.prettierrc[^/]*|prettier\.config\.[cm]?[jt]s|biome\.jsonc?)$/;
@@ -165,6 +165,11 @@ const ABSOLUTE = /(?:^|[\s"'(])((?:[A-Za-z]:[\\/]|\/)[^\s"'`|;&<>()]+)/g;
 const LEADING_CD = /^\s*cd\s+(?:"([^"]+)"|'([^']+)'|([^\s;&|]+))\s*(?:&&|;)/;
 const CONFIG_OPTION = /--config(?:=|\s+)(?:"([^"]+)"|'([^']+)'|([^\s"'`|;&<>()]+))/g;
 const NOT_THE_WORK = /(?:^|[\\/])(?:node_modules|\.git|ms-playwright|\.cache)(?:[\\/]|$)/;
+// The directory a shell command moves to before anything else (`cd <dir> &&` or `;`), or null.
+export const leadingCd = (cwd, command) => {
+  const cd = String(command ?? '').match(LEADING_CD);
+  return cd ? resolve(cwd, native(cd[1] ?? cd[2] ?? cd[3])) : null;
+};
 const touchedBy = (cwd, { tool_name: tool, tool_input: data = {} } = {}) => {
   const direct = [data.file_path, data.notebook_path].filter((p) => typeof p === 'string' && p);
   if (direct.length) return direct.map((p) => resolve(cwd, native(p)));
@@ -355,9 +360,11 @@ export const capMinutes = (planText) => {
   return m ? Number(m[1].replace(',', '.')) * (/^h/i.test(m[2]) ? 60 : 1) : null;
 };
 
-// Minutes since the commit that froze the card's snapshot; null if that commit does not exist yet.
+// Minutes since the commit that added the card's snapshot; null if that commit does not exist yet. Not the last commit
+// that touched it: every Log line commits card.md again. Measured: a worktree whose Log was committed at 191 % of the cap
+// read 0 % and let new agents start.
 export const minutesSinceSnapshot = (cwd, cardDir) => {
-  const sec = git(cwd, ['log', '-1', '--format=%ct', '--', frozenOf(cardDir) ?? join(cardDir, 'card.md')]).stdout?.trim();
+  const sec = git(cwd, ['log', '--diff-filter=A', '--format=%ct', '--', frozenOf(cardDir) ?? join(cardDir, 'card.md')]).stdout?.trim().split('\n').filter(Boolean).at(-1);
   return sec ? (Date.now() / 1000 - Number(sec)) / 60 : null;
 };
 

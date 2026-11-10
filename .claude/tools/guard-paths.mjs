@@ -26,7 +26,7 @@ export const onDisk = (path, cwd = process.cwd()) => {
   try { return realpathSync.native(plain).replaceAll('\\', '/'); } catch { return plain; }
 };
 
-export const IS_TEST_FILE = /\.(spec|test)\.[cm]?[tj]sx?$|(^|\/)test_[^/]*\.py$|_test\.(py|go|dart)$|tests?\.(cs|java|kt)$|\.feature$/i;
+export const IS_TEST_FILE = /\.(spec|test)\.[cm]?[tj]sx?$|(^|\/)test_[^/]*\.(py|c|cc|cpp|cxx)$|_(test|unittest)\.(py|go|dart|c|cc|cpp|cxx)$|tests?\.(cs|java|kt)$|\.feature$/i;
 // A test is frozen once HEAD holds it with a tag of a Spec or of an assumption tied to it.
 export const FROZEN_TAG = /@[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+)(?!\d)/;
 export const GIT_TIMEOUT_MS = 20_000;

@@ -61,3 +61,10 @@ runs a card with no person deciding, enforces it: `node .claude/tools/kit.mjs of
 signal that came after a module was turned off is not the agent's to dismiss: it runs `kit.mjs on <module>` (the cheapest to
 undo) and records an ASM with its undo command; the extra time counts against the cap. `kit.mjs grade` exits 2 for `poc` and any
 grade below the repo's, because a lighter bar is a person's decision; raising it passes.
+
+**Every repo is treated as public** (K12): no commit carries a secret, a local path or a real email, at any grade; from mvp the
+`public` check of the gate also stops internal hosts, debug leftovers, commented-out code, a TODO without its issue and traces of
+the chat, and a card's commits are Conventional. `Visibility: public` in CLAUDE.md adds the files of an open-source project, a
+CHANGELOG line per card and English in commits and the PR title. A line that has to stay is declared, `public-allow: <file> [<kind>] · <why>`
+in `## Gate`. Skipping the whole bar is the user's: `public-skip: <their words>` enters the card only when
+their last message orders it.

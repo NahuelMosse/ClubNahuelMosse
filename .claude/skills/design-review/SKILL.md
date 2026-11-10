@@ -28,6 +28,21 @@ Only modify files when the user explicitly requests implement / fix / apply / re
 
 ## Process
 
+### Phase 0: Context and evidence
+
+Do not judge a screen in isolation. Before any finding:
+
+1. Name what the app is for, who uses the screen and the task it serves; find its route and the shell it sits in.
+2. Look at one or two sibling screens that do the same or a nearby job, and note what they share: header, toolbar, spacing,
+   density, states, narrow-width behavior. A pattern the app repeats on purpose is not a finding for differing from a generic
+   pattern; a screen that departs from its siblings is.
+3. Say what each piece of evidence can prove. A screenshot proves what is visible, not which component or style produced it;
+   the code proves how it is built, not how it renders at 320 px, in dark mode or after an interaction.
+
+Each section of the report is `good`, `needs work` or `not inspected`. Cite a file and line for every code finding and the
+rendered state (screen, width, theme, interaction) for every visual one. What you had no evidence for is `not inspected`,
+with what is missing: never a pass.
+
 ### Phase 1: Inventory (first-pass leads)
 
 This pass produces **candidates**, not findings. Treat counts as leads for deeper inspection in later phases. Do not report Phase 1 raw output as the final result.
@@ -119,6 +134,11 @@ Review interactive elements:
 ```markdown
 # Design Review Report
 
+## Context
+- Task and user: [what the screen is for]
+- Siblings compared: [routes or files]
+- Not inspected: [states, widths, themes or files with no evidence]
+
 ## Design System Health
 - Tokens defined: Yes/Partial/No
 - Consistency score: High/Medium/Low
@@ -147,9 +167,9 @@ Review interactive elements:
 ## Responsive Check
 | Breakpoint | Status | Issues |
 |------------|--------|--------|
-| Mobile (375px) | Pass/Fail | ... |
-| Tablet (768px) | Pass/Fail | ... |
-| Desktop (1280px) | Pass/Fail | ... |
+| Mobile (375px) | Pass/Fail/Not inspected | ... |
+| Tablet (768px) | Pass/Fail/Not inspected | ... |
+| Desktop (1280px) | Pass/Fail/Not inspected | ... |
 
 ## Positive Patterns
 [Well-implemented design decisions worth preserving]
