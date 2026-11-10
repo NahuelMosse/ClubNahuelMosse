@@ -47,3 +47,7 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.42.0 a
 - L8 · 2026-11-10 · replaces: tests/kit.test.mjs "the install source is the kit-v6.44.0 tag commit @KIT-06-ASM-01" · la fuente pasa al tag kit-v6.44.1 · by: tests/kit.test.mjs "the install source is the kit-v6.44.1 tag commit @KIT-06-ASM-01"
 - L9 · 2026-11-10 · kit updated a1b87003068b2cd329d26c589605466ea362bec5 → a1b87003068b2cd329d26c589605466ea362bec5 · la card KIT-06 es la actualización del kit
 - L10 · 2026-11-10 · kit updated a1b87003068b2cd329d26c589605466ea362bec5 → e5da1ab1db40bebc8d1852d6c104c4d79a1b87b3 · la card KIT-06 es la actualización del kit
+- L11 · 2026-11-10 · could not run · suite del kit (.claude/tests, KIT_PLAYWRIGHT_ROOT=D:/Temp/pw-root-eng21) · el time-cap (45 min) ya estaba vencido cuando se pudo instalar: el reloj contó la pausa pedida por el usuario y un clon de dev-kit que tardó por falta de memoria de la máquina; pasado el cap el hook no deja arrancar suites fuera del cierre
+- L12 · 2026-11-10 · L9 es la primera corrida de install.mjs --update sin --from: reinstaló la fuente guardada (6.42.0) y no cambió nada; L10 es la actualización real desde el clon del tag kit-v6.44.1
+- L13 · 2026-11-10 · kit: install.mjs --update sin --from reinstala la fuente guardada en kit.json en silencio de efecto (0 archivos) en vez de pedir --from cuando el pedido nombra otra versión
+- L14 · 2026-11-10 · kit: time-cap mide reloj de pared desde el commit de card.md, incluida una pausa pedida por el usuario; dejó la suite del kit sin correr
