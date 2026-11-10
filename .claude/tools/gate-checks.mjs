@@ -443,7 +443,28 @@ export const sheetOriginProblem = (root, cardDir, file) => {
   if (existsSync(templates) && readdirSync(templates).some((f) => { try { return sameText(readFileSync(join(templates, f), 'utf8'), text); } catch { return false; } })) return null;
   const base = ownBase(root, cardStart(root, cardDir));
   if (sameText(showAt(root, base, rel), text)) return null;
-  return `${rel} was written or edited during the card: the sheet is the dealt direction.json, a DESIGN.md of .claude/templates/design-md/ as is, the card's ## Brand, or a sheet the repo held before the card`;
+  const unseen = coloursUnseenBefore(root, base, text);
+  if (unseen && !unseen.length) return null;
+  const detail = unseen?.length ? ` (${unseen.slice(0, 4).join(', ')} not in the repo before the card)` : '';
+  return `${rel} was written or edited during the card${detail}: the sheet is the dealt direction.json, a DESIGN.md of .claude/templates/design-md/ as is, the card's ## Brand, a sheet the repo held before the card, or one whose every colour the repo's code already used`;
+};
+// A sheet written during the card that transcribes the palette the product already has (its theme tokens, its CSS) chooses no
+// colour of its own. The colours of the sheet missing from the tree at `base`, outside `.claude/` and `specs/` (the kit's
+// templates and the references of earlier cards are not the product), as `#rrggbb`, `#rgb` or a `0xAARRGGBB` literal.
+// Null when the sheet holds no colour or the tree cannot be read.
+const coloursUnseenBefore = (root, base, text) => {
+  const norm = (h) => (h.length === 4 ? `#${[...h.slice(1)].map((c) => c + c).join('')}` : h).toLowerCase();
+  const colours = [...new Set((String(text).match(HEX_COLOUR) ?? []).map(norm))];
+  if (!colours.length || !base) return null;
+  const unseen = [];
+  for (const c of colours) {
+    const six = c.slice(1);
+    const short = six[0] === six[1] && six[2] === six[3] && six[4] === six[5] ? `|#${six[0]}${six[2]}${six[4]}` : '';
+    const r = spawnSync('git', ['grep', '-q', '-i', '-E', `(#|0x[0-9a-f]{2})${six}\\b${short ? `${short}\\b` : ''}`, base, '--', '.', ':!.claude', ':!specs'], { cwd: root, encoding: 'utf8' });
+    if (r.status === 1) unseen.push(c);
+    else if (r.status !== 0) return null;
+  }
+  return unseen;
 };
 const brandCheck = (last, root, cardDir) => {
   const sheet = last.round.brand;

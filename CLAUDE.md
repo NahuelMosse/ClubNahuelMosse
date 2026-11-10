@@ -48,8 +48,8 @@ Commits, UI text, the PR and the Jira comments speak the team's language. Headin
 - **Nothing that can pass ~30 s goes in the foreground:** background with a log, watched by a `Monitor` (`wait.mjs --monitor`),
   so the person can talk meanwhile. The close does not end with a validation pending: the report carries its output, not the promise of it.
 - **What you open, you close:** servers, ports, subagents, shells. Kill by PID, never by process name. **Dedicated tools, not shell:** `Read`, `Grep`, `Glob`, `Edit`, `Write`; one `Write` per file instead of ten `Edit`s.
-- You touched the kit (`.claude/` or this file): `node --test --test-force-exit --test-concurrency=4 .claude/tests/*.test.mjs` passes, with `KIT_PLAYWRIGHT_ROOT` set to a
-  Playwright repo. You touched production code: `.claude/rules/architecture.md` loads by itself.
+- You touched the kit (`.claude/` or this file): where `.claude/tests/` exists (the kit's own repo), `node --test --test-force-exit --test-concurrency=4 .claude/tests/*.test.mjs`
+  passes, with `KIT_PLAYWRIGHT_ROOT` set to a Playwright repo; a repo that installed the kit has no kit tests, and its Log gets a `kit:` line. You touched production code: `.claude/rules/architecture.md` loads by itself.
 
 ## What does not depend on your good will
 

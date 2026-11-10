@@ -8,7 +8,7 @@
 //   card.md · 4 each ASM is tagged `@<ASM>` (or `@assumption:<ASM>`) or declared uncovered in the Log · 5 no tagged test touched since the RED
 //   commit · 6 the diff and the `## Tasks` agree · 7 the gate: every line of `## Gate` passed on this code (once.mjs records) and no check verify.mjs adds failed ·
 //   8 the judge: judge.md at risk high (the plan judge), every ACT closed or declared · 9 required.mjs (mutation, linter, scope).
-// closing.md carries `## Passed`, `## Failed`, `## Could not run`, `## Judge`, `## Assumptions`, `## Notes` (the `closing:` lines of the Log, when there are any), `## Needs a person` (the tests the Log declares replaced), `## Kit notes` (the `kit:` lines of the Log), `Cost: …` and the seal line publish checks before a merge between its begin
+// closing.md carries `## Passed`, `## Failed`, `## Could not run`, `## Judge`, `## Assumptions`, `## Notes` (the `closing:` lines of the Log, when there are any; `closing: could not run …` goes to `## Could not run`), `## Needs a person` (the tests the Log declares replaced), `## Kit notes` (the `kit:` lines of the Log), `Cost: …` and the seal line publish checks before a merge between its begin
 // and end markers; a second run regenerates the block and touches nothing outside it. A closing.md written by hand (no block) is
 // left as it is. `--check` prints and writes nothing. At poc only 1 and the capture round (7) run; the closing is `## Shown`, `## Assumptions`, `## Capture round`.
 // `## Assumptions` lists the untested ASMs and one line «N of N tagged» for the rest; modules off for the same reason are one line.
@@ -20,7 +20,7 @@ import { pathToFileURL } from 'node:url';
 import { NOT_PRODUCTION, cardFiles, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
 import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, rolesOf, sectionOf, specTagsIn } from './card-doc.mjs';
 import { closingCost } from './card-cost.mjs';
-import { FROZEN_TAG } from './guard-paths.mjs';
+import { FROZEN_TAG, IS_TEST_FILE } from './guard-paths.mjs';
 import { noLookOf, specsCheck } from './gate-checks.mjs';
 import { active, isPoc } from './kit.mjs';
 import { readRecord } from './once.mjs';
@@ -247,9 +247,13 @@ const judgeSummary = (risk, acts) => {
 // «modules a, b off by decision: <reason>»: the modules that share a reason go on one line.
 export const offLines = (offs) => [...Map.groupBy(offs, (o) => o.reason)].map(([reason, group]) => `module${group.length > 1 ? 's' : ''} ${group.map((o) => o.name).join(', ')} off by decision: ${reason}`);
 
-// The `closing:` lines of the Log, which the close carries into `## Notes`.
-const logNotes = (doc) => (doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').filter((l) => /^\s*[-*]\s*L\d+.*closing:/.test(l))
-  .map((l) => `- ${l.replace(/^\s*[-*]\s*/, '').replace(/closing:\s*/, '')}`);
+// The `closing:` lines of the Log, which the close carries into `## Notes`; a `closing: could not run …` line goes to
+// `## Could not run` instead.
+const closingLines = (doc) => (doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').filter((l) => /^\s*[-*]\s*L\d+.*closing:/.test(l));
+const NOT_RUN_NOTE = /closing:\s*could not run\b/i;
+const asNote = (l) => `- ${l.replace(/^\s*[-*]\s*/, '').replace(/closing:\s*/, '')}`;
+const logNotes = (doc) => closingLines(doc).filter((l) => !NOT_RUN_NOTE.test(l)).map(asNote);
+const logNotRun = (doc) => closingLines(doc).filter((l) => NOT_RUN_NOTE.test(l)).map((l) => asNote(l).replace(/could not run\b[\s,:·—-]*/i, ''));
 
 // The `kit:` lines of the Log: what the agent noted about the kit itself, carried into `## Kit notes` and the kit's notes.
 export const kitLines = (doc) => (doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').filter((l) => /^\s*[-*]\s*L\d+.*\bkit:\s*\S/.test(l))
@@ -297,14 +301,19 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
   const notes = logNotes(doc);
   if (notes.length) parts.push('', '## Notes', ...notes);
   parts.push(...kitSection(doc));
-  const swaps = replacementsOf(doc);
   const clones = [...declaredClones(cardDir)];
   const kept = [...declaredOverdesign(cardDir)];
   const unmutated = [...declaredUnmutated(cardDir)];
   // With `refactor-tests:`, every frozen test the card edited in place: it existed before the card and carries a spec tag.
   const refactor = gateBlock(doc)?.match(/^\s*refactor-tests\s*:\s*(\S.*)$/m)?.[1]?.trim();
+  // Under `refactor-tests:` a replacement whose new test carries exactly the old one's tags is a rename (file or title
+  // moved, same behavior): one line of decisions, not one confirmation per test. Loosened assertions still show as edits.
+  const tagSet = (s) => [...new Set(String(s).match(new RegExp(FROZEN_TAG.source, 'g')) ?? [])].sort().join(' ');
+  const isRename = (r) => refactor && tagSet(r.name) !== '' && tagSet(r.name) === tagSet(r.byName);
+  const swaps = replacementsOf(doc).filter((r) => !isRename(r));
+  const renames = replacementsOf(doc).filter(isRename);
   const edited = refactor ? git(root, ['diff', '--numstat', `${base}..HEAD`]).stdout.split('\n').filter(Boolean).map((l) => l.split('\t'))
-    .filter(([, , f]) => f && FROZEN_TAG.test(git(root, ['show', `${base}:${f}`]).stdout ?? '')) : [];
+    .filter(([, , f]) => f && IS_TEST_FILE.test(f) && !f.startsWith('.claude/') && FROZEN_TAG.test(git(root, ['show', `${base}:${f}`]).stdout ?? '')) : [];
   if (swaps.length || clones.length || kept.length || unmutated.length || edited.length) parts.push('', '## Needs a person',
     ...swaps.map((r) => `- replaced test: ${r.file} "${r.name}" by ${r.by} "${r.byName}" — ${r.why}; confirm the old test was wrong and the new one is not looser`),
     ...clones.map(([file, why]) => `- duplication left in place (K4): ${file} — ${why}; confirm the two copies must differ`),
@@ -312,11 +321,12 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
     ...unmutated.map(([file, why]) => `- left unmutated: ${file} — ${why}; confirm its tests are enough without mutation`),
     ...edited.map(([plus, minus, f]) => `- frozen test edited by the refactor (${refactor}): ${f} (+${plus} −${minus}); confirm no assertion was loosened: \`git diff ${base.slice(0, 9)}..HEAD -- ${f}\``));
   const decisions = offLines([...off].map(([name, o]) => ({ name, reason: o.reason }))).map((l) => `- ${l}`);
+  if (renames.length) decisions.push(`- tests renamed by the refactor (${refactor}): ${renames.length} replaced with the same tags — ${[...new Set(renames.map((r) => r.file))].join(', ')}`);
   if (grade !== 'production') decisions.push(`- grade: ${grade} — ${manifest?.grade?.reason ?? ''}`);
   if (decisions.length) parts.push('', '## Decisions of the repo', ...decisions);
   const cardPath = relativeTo(root, join(cardDir, 'card.md'));
   const cost = since ? closingCost(root, null, since) : `Cost: could not run: no commit that added ${cardPath} to date the start of the card`;
-  const notRun = [];
+  const notRun = [...logNotRun(doc)];
   if (!git(root, ['remote']).stdout?.trim()) notRun.push('- publication · no remote: no push, PR or CI');
   for (const l of risk?.lensesOff ?? []) notRun.push(`- ${l.lens} · profile ${l.profile} off: ${l.why}`);
   // A `no-visual:` declaration the gate verified is a result, not something that did not run.
@@ -343,7 +353,7 @@ const pocBlockOf = (root, { doc, checks, grade, manifest }) => {
   const asms = specs.filter((l) => /\bASM-\d+/.test(l));
   const shown = specs.filter((l) => !asms.includes(l));
   const round = checks.find((c) => c.n === 7);
-  const notRun = git(root, ['remote']).stdout?.trim() ? [] : ['- publication · no remote: no push, PR or CI'];
+  const notRun = [...logNotRun(doc), ...(git(root, ['remote']).stdout?.trim() ? [] : ['- publication · no remote: no push, PR or CI'])];
   const notes = logNotes(doc);
   return [BEGIN, '## Shown', shown.length ? shown.map((l) => `- ${l}`).join('\n') : 'none', '', '## Assumptions',
     asms.length ? asms.map((l) => `- ${l}`).join('\n') : 'none', '', '## Capture round', `${round.state}${round.detail ? ` — ${round.detail}` : ''}`,

@@ -11,8 +11,9 @@
 // `--update` with a card open needs `--card-open "<reason>"`: the card cannot close without a fix of the kit
 // and the kit cannot update without closing. It appends `<ID>-KIT-NN · kit <old> → <new> · reason: …` to the
 // card's ambiguities.md; grade and modules still change only between cards.
-// `--update` without `--from` uses the source saved in kit.json and prints which one it is; if that source
-// is of another kit version than the installed one and no file changes, it exits 2 instead of passing.
+// `--update` without `--from` uses the kit checkout whose install.mjs runs (the source saved in kit.json when it runs
+// from the repo's own copy) and prints which one it is; if that source is of another kit version than the installed
+// one and no file changes, it exits 2 instead of passing.
 // The person chooses the modules; the installer never chooses for them. `--plan` lists every module
 // with what it does, its estimated cost per card and, pre-marked `[x]`, the signal found in the repo.
 // With no terminal and no `--modules` it prints that list and exits 2, writing nothing. A module that
@@ -30,7 +31,7 @@
 // An update replaces only the files that are as installed (their sha256 is in kit.json); a file the
 // team edited is left alone and the new version goes to `.claude/.kit-incoming/<path>`.
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
@@ -275,7 +276,9 @@ const main = async () => {
   if (o.help || !o.target) fail('install.mjs --target <repo> [--plan | --modules … --off "<module>=<reason>" | --update | --adopt]');
   const target = join(o.target);
   if (!existsSync(target)) fail(`${target} does not exist.`);
-  const source = o.from ?? (o.update ? readManifest(target)?.source?.path : null) ?? SOURCE;
+  // An update takes the kit whose install.mjs runs; the source saved in kit.json only when that is the repo's own copy.
+  const same = (a, b) => { try { return realpathSync(a).toLowerCase() === realpathSync(b).toLowerCase(); } catch { return false; } };
+  const source = o.from ?? (o.update && same(SOURCE, target) ? readManifest(target)?.source?.path : null) ?? SOURCE;
   const map = readModules(source);
   if (!map) fail(`${source} is not a kit: no .claude/modules.json.`);
 
@@ -380,9 +383,8 @@ const update = (o, target, source, map) => {
     const list = Object.entries(map.breaking ?? {}).map(([k, v]) => `${k}: ${v}`);
     fail(`Kit ${manifest.kit} → ${map.kit} is a major change and may break what the repo has.${list.length ? `\nBreaking: ${list.join('; ')}` : ''}\nRun again with --major to apply it.`);
   }
-  // Without `--from` the source is the one saved in kit.json, which may be an old checkout: say which one
-  // it is before replacing anything.
-  console.log(`Updating from ${source} (kit ${map.kit}, commit ${commitOf(source)}${o.from ? '' : '; the source saved in kit.json, no --from'}); installed: kit ${manifest.kit}, commit ${manifest.source?.commit ?? 'unknown'}.`);
+  // The source is said before anything is replaced: the saved one may be an old checkout.
+  console.log(`Updating from ${source} (kit ${map.kit}, commit ${commitOf(source)}${o.from || source === SOURCE ? '' : '; the source saved in kit.json, no --from'}); installed: kit ${manifest.kit}, commit ${manifest.source?.commit ?? 'unknown'}.`);
   const state = { ...manifest, modules: { ...manifest.modules }, files: { ...manifest.files } };
   // A module the manifest does not know counts as on: a new version never turns one off in silence.
   const on = new Set(Object.entries(map.modules).filter(([n, m]) => m.installable !== false && state.modules[n]?.state !== 'off').map(([n]) => n));
