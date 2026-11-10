@@ -1,6 +1,6 @@
 import 'registration_rules.dart';
 
-/// Lo que la persona completó en el formulario de registro.
+/// What the person filled in on the registration form.
 class RegistrationData {
   const RegistrationData({
     required this.firstName,
@@ -18,7 +18,7 @@ class RegistrationData {
   final String email;
   final String password;
 
-  /// Los campos con el nombre que usa la API.
+  /// The fields with the name the API uses.
   Map<String, Object?> toJson() => {
     'first_name': firstName,
     'last_name': lastName,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// `Nota-Ocupados`: cuántos inicios de la grilla no se pueden elegir.
+/// `Nota-Ocupados`: how many starts of the grid cannot be chosen.
 class AvailabilityNote extends StatelessWidget {
   const AvailabilityNote({super.key, required this.text});
 

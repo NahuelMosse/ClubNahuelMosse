@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/tokens.dart';
 
-/// Dos columnas iguales, como las grillas del prototipo.
+/// Two equal columns, like the grids of the prototype.
 class PairedGrid extends StatelessWidget {
   const PairedGrid({super.key, required this.children, this.height});
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Un botón de la tarjeta, que dice de qué reserva es.
+/// A button of the card, which says which booking it belongs to.
 class BookingAction extends StatelessWidget {
   const BookingAction({
     super.key,

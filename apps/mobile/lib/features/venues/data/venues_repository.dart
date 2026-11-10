@@ -6,7 +6,7 @@ import '../../session/domain/token_source.dart';
 import '../domain/venue.dart';
 import '../domain/venue_exceptions.dart';
 
-/// Las sedes del club, leídas, dadas de alta y editadas en la API con la sesión abierta.
+/// The venues of the club, read, created and edited in the API with the open session.
 class VenuesRepository {
   VenuesRepository({required ApiClient api, required TokenSource session})
     : _api = api,
@@ -15,9 +15,9 @@ class VenuesRepository {
   final ApiClient _api;
   final TokenSource _session;
 
-  /// Las sedes activas, por nombre.
+  /// The active venues, by name.
   ///
-  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<List<Venue>> active() async {
     final r = await _api.get('/venues', token: await _session.token());
     if (r.code == 401) throw const SessionExpired();
@@ -29,9 +29,9 @@ class VenuesRepository {
     throw ServerError(r.code);
   }
 
-  /// Da de alta la sede y devuelve la que quedó guardada.
+  /// Creates the venue and returns the one that was saved.
   ///
-  /// Lanza [VenueRejected], [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [VenueRejected], [SessionExpired], [NoConnection] or [ServerError].
   Future<Venue> create({
     required String name,
     required String address,
@@ -49,11 +49,11 @@ class VenuesRepository {
     return _saved(r, 201);
   }
 
-  /// Guarda los datos nuevos de la sede [id] y devuelve cómo quedó. Con [confirm], el
-  /// horario se guarda aunque deje afuera reservas futuras.
+  /// Saves the new data of the venue [id] and returns how it ended up. With [confirm],
+  /// the schedule is saved even if it leaves future bookings outside.
   ///
-  /// Lanza [BookingsOutsideHours], [VenueUnavailable], [VenueRejected], [SessionExpired],
-  /// [NoConnection] o [ServerError].
+  /// Throws [BookingsOutsideHours], [VenueUnavailable], [VenueRejected],
+  /// [SessionExpired], [NoConnection] or [ServerError].
   Future<Venue> update(
     String id, {
     required String name,
@@ -78,9 +78,9 @@ class VenuesRepository {
     return _saved(r, 200);
   }
 
-  /// Da de baja la sede [id] y sus espacios.
+  /// Deactivates the venue [id] and its spaces.
   ///
-  /// Lanza [VenueUnavailable], [VenueHasBookings], [SessionExpired], [NoConnection] o
+  /// Throws [VenueUnavailable], [VenueHasBookings], [SessionExpired], [NoConnection] or
   /// [ServerError].
   Future<void> deactivate(String id) async {
     final r = await _api.delete('/venues/$id', token: await _session.token());

@@ -9,12 +9,13 @@ import '../../../theme/tokens.dart';
 import 'account_card.dart';
 import 'session.dart';
 
-/// Quien pide una sección de administrador sin serlo (CU-14 FA4), por un enlace al panel o
-/// por un 403 de la API. Toda ruta bajo `/admin` sin el rol llega acá.
+/// Whoever asks for an admin section without being one (CU-14 FA4), through a link to the
+/// panel or through a 403 from the API. Every route under `/admin` without the role
+/// arrives here.
 ///
-/// Un 403 puede venir de un rol que cambió después de iniciar la sesión: la pantalla vuelve a
-/// leer el perfil y recién entonces lleva a Mis reservas, para que el rol guardado no la
-/// devuelva al panel. «Cerrar sesión» es la salida de quien no tiene adónde ir.
+/// A 403 may come from a role that changed after signing in: the screen reads the profile
+/// again and only then leads to «Mis reservas», so the stored role does not send it back
+/// to the panel. «Cerrar sesión» is the exit for whoever has nowhere to go.
 class AccessDeniedScreen extends StatefulWidget {
   const AccessDeniedScreen({super.key, required this.session});
 
@@ -30,7 +31,7 @@ class _AccessDeniedScreenState extends State<AccessDeniedScreen> {
   @override
   void initState() {
     super.initState();
-    // Fuera de la construcción: releer el perfil avisa a quien escucha la sesión.
+    // Outside the build: re-reading the profile notifies whoever listens to the session.
     _profile = Future.microtask(_reread);
   }
 
@@ -38,8 +39,8 @@ class _AccessDeniedScreenState extends State<AccessDeniedScreen> {
     try {
       await widget.session.refresh();
     } on Exception {
-      // Sin red o con la sesión vencida se sigue con el perfil que había; lo que falle
-      // después lo atiende la pantalla a la que se llegue.
+      // Without network or with the session expired it continues with the profile it had;
+      // what fails afterwards is handled by the screen that is reached.
     }
   }
 

@@ -24,7 +24,7 @@ class AdminBookingCard extends StatelessWidget {
   final Catalog? catalog;
   final VoidCallback onTap;
 
-  /// `null` disables ANULAR RESERVA (another voiding is on its way).
+  /// `null` disables «ANULAR RESERVA» (another voiding is on its way).
   final VoidCallback? onVoid;
 
   String get _schedule => timeRange(booking.startsAt, booking.endsAt);

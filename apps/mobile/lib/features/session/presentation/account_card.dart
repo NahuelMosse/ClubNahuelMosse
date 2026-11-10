@@ -9,7 +9,7 @@ import '../../../theme/tokens.dart';
 import 'account_panel.dart';
 import 'session.dart';
 
-/// El avatar de la cabecera: abre la tarjeta de la cuenta.
+/// The avatar of the header: opens the account card.
 class AccountButton extends StatelessWidget {
   const AccountButton({super.key, required this.session});
 
@@ -17,7 +17,7 @@ class AccountButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    // Las iniciales siguen al perfil, también cuando se edita.
+    // The initials follow the profile, also when it is edited.
     listenable: session,
     builder: (context, _) => _avatar(context),
   );
@@ -30,7 +30,7 @@ class AccountButton extends StatelessWidget {
       container: true,
       button: true,
       label: AppLocalizations.of(context).accountTitle,
-      // Con los hijos excluidos, el toque del lector de pantalla tiene que declararse acá.
+      // With the children excluded, the screen reader's tap has to be declared here.
       onTap: open,
       excludeSemantics: true,
       child: InkResponse(
@@ -51,8 +51,8 @@ class AccountButton extends StatelessWidget {
   }
 }
 
-/// Cierra la sesión; si Firebase no la pudo borrar del dispositivo, la persona queda adentro
-/// y se le avisa, en vez de mostrarle el login con la sesión todavía guardada.
+/// Signs out; if Firebase could not delete the session from the device, the person stays
+/// in and is told, instead of being shown the login with the session still stored.
 Future<void> signOut(BuildContext context, Session session) async {
   try {
     await session.close();
@@ -63,10 +63,11 @@ Future<void> signOut(BuildContext context, Session session) async {
   }
 }
 
-/// `Sheet-Perfil` del prototipo: quién tiene la sesión abierta y sus accesos. Se cierra al
-/// tocar afuera sin hacer nada.
+/// `Sheet-Perfil` of the prototype: who has the session open and their shortcuts. It
+/// closes on tapping outside without doing anything.
 ///
-/// Un administrador sólo ve «Cerrar sesión»: no tiene perfil ni reservas propias.
+/// An administrator only sees «Cerrar sesión»: they have no profile or bookings of their
+/// own.
 Future<void> showAccountCard(BuildContext context, Session session) {
   final profile = session.profile;
   if (profile == null) return Future.value();
@@ -77,7 +78,7 @@ Future<void> showAccountCard(BuildContext context, Session session) {
     barrierLabel: AppLocalizations.of(context).accountCloseCard,
     barrierColor: context.palette.bgScrim,
     pageBuilder: (context, _, _) {
-      // Perfil y reservas se apilan sobre el inicio: el atrás del teléfono vuelve a él.
+      // Profile and bookings stack on top of the home: the phone's back returns to it.
       void goTo(String route) {
         Navigator.of(context).pop();
         GoRouter.of(origin).push(route);

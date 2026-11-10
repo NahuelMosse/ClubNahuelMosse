@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// El degradado oscuro de la parte de arriba de la foto, para que se lea el saludo.
+/// The dark gradient at the top of the photo, so the greeting can be read.
 class HeroVeil extends StatelessWidget {
   const HeroVeil({super.key});
 

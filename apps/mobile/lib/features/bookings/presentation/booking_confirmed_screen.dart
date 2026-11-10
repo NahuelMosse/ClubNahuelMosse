@@ -10,7 +10,7 @@ import 'booking_photo_background.dart';
 import 'booking_receipt.dart';
 import 'booking_steps.dart';
 
-/// El comprobante: la reserva quedó hecha. Espera a que la persona elija adónde ir.
+/// The receipt: the booking is made. It waits for the person to choose where to go.
 class BookingConfirmedScreen extends StatelessWidget {
   const BookingConfirmedScreen({super.key, required this.booking});
 

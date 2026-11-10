@@ -26,7 +26,7 @@ import 'my_bookings_header.dart';
 
 export 'booking_card.dart' show BookingCard;
 
-/// «Mis reservas»: las próximas y el historial de quien inició sesión.
+/// «Mis reservas»: the upcoming ones and the history of whoever signed in.
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({
     super.key,
@@ -41,10 +41,12 @@ class MyBookingsScreen extends StatefulWidget {
   final Spaces spaces;
   final Session session;
 
-  /// La reserva que se resalta y se trae a la vista, si se llegó desde un aviso.
+  /// The booking that is highlighted and brought into view, if it was reached from a
+  /// notice.
   final String? bookingId;
 
-  /// Abre en el historial: para los avisos de una reserva que ya no está entre las próximas.
+  /// Opens on the history: for the notices of a booking that is no longer among the
+  /// upcoming ones.
   final bool inHistory;
 
   @override
@@ -56,10 +58,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   (List<Booking>, Catalog)? _data;
   bool _failure = false;
 
-  /// Sube con cada lectura: la respuesta de una pestaña que ya no se mira se descarta.
+  /// Goes up with each read: the response of a tab that is no longer looked at is
+  /// discarded.
   int _request = 0;
 
-  /// La tarjeta resaltada, para traerla a la vista.
+  /// The highlighted card, to bring it into view.
   final _highlighted = GlobalKey();
 
   @override
@@ -75,7 +78,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         widget.inHistory == previous.inHistory) {
       return;
     }
-    // Un aviso nuevo con la pantalla ya abierta: se va a la pestaña del aviso y se lee de nuevo.
+    // A new notice with the screen already open: goes to the notice's tab and reads
+    // again.
     if (_history != widget.inHistory) {
       setState(() => _history = widget.inHistory);
       _load();
@@ -94,8 +98,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     });
   }
 
-  /// Con [fromScratch] (otra pestaña) la lista se vacía mientras llega la nueva; al refrescar
-  /// queda la que había hasta que llega la nueva, y se quita si la lectura falla.
+  /// With [fromScratch] (another tab) the list is emptied while the new one arrives; on
+  /// refresh the existing one stays until the new one arrives, and is removed if the read
+  /// fails.
   Future<void> _load({bool fromScratch = true}) async {
     final request = ++_request;
     setState(() {
@@ -131,12 +136,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
-  /// La reserva que se está cancelando: su botón muestra que espera y los demás quedan
-  /// deshabilitados.
+  /// The booking being cancelled: its button shows that it waits and the others are
+  /// disabled.
   String? _cancelling;
 
-  /// Pide confirmación y cancela [r]. Al terminar, bien o porque la reserva ya había
-  /// cambiado, la lista se vuelve a leer.
+  /// Asks for confirmation and cancels [r]. When done, well or because the booking had
+  /// already changed, the list is read again.
   Future<void> _cancel(Booking r, Catalog catalog) async {
     if (_cancelling != null) return;
     final confirmed = await confirmCancellation(
@@ -151,7 +156,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       booking: r,
       toleratesOutage: true,
       mark: (id) => setState(() => _cancelling = id),
-      // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
+      // Leaves «Próximas» at once, so it cannot be touched again while the list arrives.
       onCancel: () => setState(() {
         if (_data case (final items, final catalog)) {
           _data = ([...items.where((x) => x.id != r.id)], catalog);
@@ -163,12 +168,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
-  /// Abre la grilla para cambiar [r] de horario y, al volver, lee la lista de nuevo.
+  /// Opens the grid to change the time of [r] and, on returning, reads the list again.
   Future<void> _modify(Booking r) async {
     if (await openModify(context, r)) await _reloadQuietly();
   }
 
-  /// Vuelve a leer la lista sin avisos: si no se puede, queda la que había.
+  /// Reads the list again without notices: if it cannot, the existing one stays.
   Future<void> _reloadQuietly() async {
     final request = ++_request;
     try {
@@ -178,7 +183,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         setState(() => _data = (items, catalog));
       }
     } on Exception {
-      // Sin red o con el servidor caído, la lista vieja sigue siendo lo mejor que hay.
+      // Without network or with the server down, the old list is still the best there is.
     }
   }
 
@@ -264,7 +269,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 }
 
-/// Lo que se le pide confirmar a quien va a cancelar [r].
+/// What is asked to be confirmed from whoever is going to cancel [r].
 String cancellationText(AppLocalizations l, Booking r, Catalog catalog) =>
     l.bookingCancelNotice(
       shortDay(r.startsAt),

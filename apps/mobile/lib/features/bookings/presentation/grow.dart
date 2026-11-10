@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../common/motion.dart';
 
-/// Grow de 0,88 a 1 con rebote cada vez que [active] pasa de falso a verdadero.
+/// Grows from 0.88 to 1 with a bounce each time [active] goes from false to true.
 class Grow extends StatefulWidget {
   const Grow({super.key, required this.active, required this.child});
 

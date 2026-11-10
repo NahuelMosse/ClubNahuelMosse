@@ -3,8 +3,9 @@ import '../../../common/club_timezone.dart';
 import '../../../common/dates.dart';
 import 'notification_kind.dart';
 
-/// A dónde lleva tocar un aviso: Mis reservas con la reserva resaltada. Las cancelaciones —del
-/// club o de la propia persona— dejaron la reserva en el historial, así que abren esa pestaña.
+/// Where tapping a notice leads: «Mis reservas» with the booking highlighted. The
+/// cancellations —by the club or by the person themself— left the booking in the history,
+/// so they open that tab.
 String noticeRoute(NotificationKind? kind, String? bookingId) {
   final history =
       kind == NotificationKind.forcedCancellation ||
@@ -16,7 +17,7 @@ String noticeRoute(NotificationKind? kind, String? bookingId) {
   return parameters.isEmpty ? '/bookings' : '/bookings?${parameters.join('&')}';
 }
 
-/// Una entrada del centro de notificaciones.
+/// An entry of the notification center.
 class AppNotification {
   const AppNotification({
     required this.id,
@@ -34,7 +35,7 @@ class AppNotification {
   final String body;
   final String? bookingId;
 
-  /// En la hora del club.
+  /// In the club's time.
   final DateTime createdAt;
   final bool read;
 
@@ -76,17 +77,17 @@ class AppNotification {
   }
 }
 
-/// Los días se cuentan en el club, sea cual sea la zona del teléfono.
+/// Days are counted at the club, whatever the phone's zone.
 DateTime inClubTime(DateTime moment) => toClubTime(moment);
 
-/// Cuándo llegó un aviso, sin texto: la pantalla lo escribe en el idioma de la app.
+/// When a notice arrived, without text: the screen writes it in the language of the app.
 enum ArrivalWhen { today, yesterday, date, now, minutesAgo, hoursAgo }
 
-/// [amount] cuenta los minutos u horas de `minutesAgo` y `hoursAgo`; [date] (`dd/mm`) sólo
-/// la lleva `date`.
+/// [amount] counts the minutes or hours of `minutesAgo` and `hoursAgo`; [date] (`dd/mm`)
+/// is only carried by `date`.
 typedef Arrival = ({ArrivalWhen when, int amount, String date});
 
-/// Las notificaciones de un mismo día, con su rótulo: hoy, ayer o `dd/mm`.
+/// The notifications of the same day, with their label: today, yesterday or `dd/mm`.
 class DayGroup {
   const DayGroup(this.arrival, this.notifications);
   final Arrival arrival;
@@ -95,7 +96,7 @@ class DayGroup {
 
 DateTime _day(DateTime d) => DateTime.utc(d.year, d.month, d.day);
 
-/// Hoy, ayer o `dd/mm`, según [now] en la hora del club.
+/// Today, yesterday or `dd/mm`, according to [now] in the club's time.
 Arrival dayOf(DateTime createdAt, DateTime now) {
   final days = _day(now).difference(_day(createdAt)).inDays;
   return switch (days) {
@@ -105,7 +106,7 @@ Arrival dayOf(DateTime createdAt, DateTime now) {
   };
 }
 
-/// Cuándo llegó: ahora, hace 2 minutos, hace 3 horas, ayer o `dd/mm`.
+/// When it arrived: now, 2 minutes ago, 3 hours ago, yesterday or `dd/mm`.
 Arrival arrivalOf(DateTime createdAt, DateTime now) {
   final elapsed = now.difference(createdAt);
   final day = dayOf(createdAt, now);
@@ -119,7 +120,7 @@ Arrival arrivalOf(DateTime createdAt, DateTime now) {
   return (when: ArrivalWhen.hoursAgo, amount: elapsed.inHours, date: '');
 }
 
-/// Agrupa por día conservando el orden de [list], de la más nueva a la más vieja.
+/// Groups by day keeping the order of [list], from newest to oldest.
 List<DayGroup> groupByDay(List<AppNotification> list, DateTime now) {
   final groups = <DayGroup>[];
   for (final n in list) {

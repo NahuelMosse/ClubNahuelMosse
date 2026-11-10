@@ -6,8 +6,8 @@ import '../../session/domain/token_source.dart';
 import '../domain/space.dart';
 import '../domain/space_exceptions.dart';
 
-/// Los espacios deportivos, leídos, dados de alta, editados y dados de baja en la API
-/// con la sesión abierta.
+/// The sports spaces, read, created, edited and deactivated in the API with the open
+/// session.
 class SpacesRepository {
   SpacesRepository({required ApiClient api, required TokenSource session})
     : _api = api,
@@ -23,9 +23,9 @@ class SpacesRepository {
     return r;
   }
 
-  /// El catálogo de deportes y tipos; se pide una vez por sesión de la app.
+  /// The catalog of sports and types; it is requested once per app session.
   ///
-  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<Catalog> catalog() async {
     final cached = _catalog;
     if (cached != null) return cached;
@@ -35,10 +35,10 @@ class SpacesRepository {
     return _catalog = parsed;
   }
 
-  /// Los espacios activos por sede, deporte, tipo y número; sólo los de [venueId],
-  /// [sport] y [kind] si se piden.
+  /// The active spaces by venue, sport, type and number; only those of [venueId], [sport]
+  /// and [kind] if requested.
   ///
-  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<List<Space>> active({
     String? venueId,
     String? sport,
@@ -55,9 +55,9 @@ class SpacesRepository {
     throw ServerError(r.code);
   }
 
-  /// El nombre y el número que tendría el próximo espacio de ese tipo en esa sede.
+  /// The name and the number the next space of that type at that venue would have.
   ///
-  /// Lanza [SpaceRejected], [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [SpaceRejected], [SessionExpired], [NoConnection] or [ServerError].
   Future<(String, int)> suggestedName({
     required String venueId,
     required String sport,
@@ -78,9 +78,9 @@ class SpacesRepository {
     throw ServerError(r.code);
   }
 
-  /// Da de alta el espacio con el [number] que vio el administrador.
+  /// Creates the space with the [number] the administrator saw.
   ///
-  /// Lanza [NameTaken], [SpaceRejected], [SessionExpired], [NoConnection] o
+  /// Throws [NameTaken], [SpaceRejected], [SessionExpired], [NoConnection] or
   /// [ServerError].
   Future<Space> create({
     required String venueId,
@@ -117,9 +117,9 @@ class SpacesRepository {
     return space;
   }
 
-  /// Guarda lo que cambió de la condición, la iluminación y el precio del espacio [id].
+  /// Saves what changed of the condition, the lighting and the price of the space [id].
   ///
-  /// Lanza [SpaceUnavailable], [SpaceRejected], [SessionExpired], [NoConnection] o
+  /// Throws [SpaceUnavailable], [SpaceRejected], [SessionExpired], [NoConnection] or
   /// [ServerError].
   Future<Space> update(
     String id, {
@@ -127,7 +127,7 @@ class SpacesRepository {
     bool? lit,
     int? pricePerHour,
   }) async {
-    // Sólo lo que cambió: lo demás queda como lo haya guardado quien guardó último.
+    // Only what changed: the rest stays as whoever saved last left it.
     final r = await _api.put('/spaces/$id', {
       'covered': ?covered,
       'lit': ?lit,
@@ -144,9 +144,9 @@ class SpacesRepository {
     return space;
   }
 
-  /// Da de baja el espacio [id].
+  /// Deactivates the space [id].
   ///
-  /// Lanza [SpaceUnavailable], [SpaceHasBookings], [SessionExpired], [NoConnection] o
+  /// Throws [SpaceUnavailable], [SpaceHasBookings], [SessionExpired], [NoConnection] or
   /// [ServerError].
   Future<void> deactivate(String id) async {
     final r = await _api.delete('/spaces/$id', token: await _session.token());

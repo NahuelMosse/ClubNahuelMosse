@@ -17,7 +17,7 @@ import 'profile_header.dart';
 import 'profile_row.dart';
 import 'small_button.dart';
 
-/// Las tarjetas de Mi perfil: datos, seguridad, apariencia y las acciones de la cuenta.
+/// The cards of «Mi perfil»: data, security, appearance and the account actions.
 class MyProfileContent extends StatelessWidget {
   const MyProfileContent({
     super.key,
@@ -43,7 +43,7 @@ class MyProfileContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    // Una pantalla corta y fija: todo queda armado aunque salga de la vista.
+    // A short, fixed screen: everything stays built even if it leaves the view.
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

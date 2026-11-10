@@ -36,7 +36,8 @@ class VenueContent extends StatelessWidget {
 
   final Venue venue;
 
-  /// Las que pasan el filtro; [todas] son las de la sede, de donde salen los deportes.
+  /// The ones that pass the filter; [allSpaces] are those of the venue, where the sports
+  /// come from.
   final List<Space> spaces;
   final List<Space> allSpaces;
   final Catalog catalog;
@@ -45,7 +46,7 @@ class VenueContent extends StatelessWidget {
   final List<String> sportKinds;
   final bool enabled;
 
-  /// Mientras llega la lista filtrada, en su lugar se ve la carga.
+  /// While the filtered list arrives, the loading is seen in its place.
   final bool filtering;
   final ValueChanged<String> onSportSelected;
   final ValueChanged<String?> onKindSelected;
@@ -59,7 +60,7 @@ class VenueContent extends StatelessWidget {
           ?.name ??
       key;
 
-  /// «4 CANCHAS · FÚTBOL · TODOS LOS TIPOS», como el prototipo.
+  /// «4 CANCHAS · FÚTBOL · TODOS LOS TIPOS», like the prototype.
   String _counter(AppLocalizations l) {
     final count = l.venueSpaceCount(spaces.length);
     final d = sport;

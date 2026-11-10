@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// El ícono de cada deporte del catálogo, en las tarjetas y en los filtros.
+/// The icon of each sport of the catalog, on the cards and in the filters.
 IconData sportIcon(String sport) => switch (sport) {
   'Futbol' => Icons.sports_soccer_rounded,
   'Tenis' || 'Padel' => Icons.sports_tennis_rounded,

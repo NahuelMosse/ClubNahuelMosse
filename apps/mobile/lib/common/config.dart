@@ -23,7 +23,7 @@ class AppConfig {
     const apiUrl = String.fromEnvironment('API_URL');
     if (apiUrl.isEmpty) {
       throw StateError(
-        'Falta --dart-define=API_URL con la dirección de la API',
+        'Missing --dart-define=API_URL with the address of the API',
       );
     }
     const authEmulator = String.fromEnvironment('AUTH_EMULADOR');
@@ -86,8 +86,8 @@ class FirebaseProject {
     const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
     if ([apiKey, appId, senderId, projectId].any((v) => v.isEmpty)) {
       throw StateError(
-        'Faltan --dart-define FIREBASE_API_KEY, FIREBASE_APP_ID, '
-        'FIREBASE_SENDER_ID y FIREBASE_PROJECT_ID, o AUTH_EMULADOR',
+        'Missing --dart-define FIREBASE_API_KEY, FIREBASE_APP_ID, '
+        'FIREBASE_SENDER_ID and FIREBASE_PROJECT_ID, or AUTH_EMULADOR',
       );
     }
     return const FirebaseProject(

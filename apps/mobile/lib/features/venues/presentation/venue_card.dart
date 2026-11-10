@@ -7,8 +7,8 @@ import 'venue_card_cover.dart';
 import 'venue_card_footer.dart';
 import 'venue_texts.dart';
 
-/// `Card-Sede`: portada con nombre, dirección, horario y canchas; abajo, los deportes y
-/// «Ver canchas». Se toca entera.
+/// `Card-Sede`: cover with name, address, schedule and courts; below, the sports and
+/// «Ver canchas». The whole card is tappable.
 class VenueCard extends StatelessWidget {
   const VenueCard({
     super.key,

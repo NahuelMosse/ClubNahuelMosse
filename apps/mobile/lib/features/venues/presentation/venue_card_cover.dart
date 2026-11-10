@@ -8,7 +8,8 @@ import 'photos.dart';
 import 'venue_space_count.dart';
 import 'venue_texts.dart';
 
-/// La portada de la sede con su cantidad de canchas, el nombre, la dirección y el horario.
+/// The cover of the venue with its number of courts, the name, the address and the
+/// schedule.
 class VenueCardCover extends StatelessWidget {
   const VenueCardCover({super.key, required this.venue});
 
@@ -19,7 +20,7 @@ class VenueCardCover extends StatelessWidget {
     final p = context.palette;
     final l = AppLocalizations.of(context);
     return ConstrainedBox(
-      // Un nombre largo pasa a dos líneas y la portada crece con él.
+      // A long name goes onto two lines and the cover grows with it.
       constraints: const BoxConstraints(minHeight: 158),
       child: PhotoWithScrim(
         image: venueCover(venue.id),
@@ -52,7 +53,7 @@ class VenueCardCover extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          // El rango no se parte entre líneas.
+                          // The range is not split between lines.
                           l.venueDaysHours(
                             venue.closing,
                             weekdaysText(l, venue.daysLabel),

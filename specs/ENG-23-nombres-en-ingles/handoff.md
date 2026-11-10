@@ -1,0 +1,12 @@
+# Handoff T1 + T2 (builder 1)
+
+Done (committed in one commit, test + code together, RED was verified on HEAD in a throwaway worktree: 3 fail there, pass here):
+- `tests/app-names-in-english.test.mjs`: 3 tests (S1 routes/params/query keys, S1 recovery link, S3 names of apps/mobile/lib). Local extra Spanish word list `MORE_SPANISH` (detector blind spots: enHistorial, volverA, eleccion, historial, ...).
+- apps/mobile/lib: all Spanish identifiers renamed (code only, not strings/comments) with generator scripts in D:/Temp/w/herramientas (eng23-rename-dart.mjs, eng23-rename-dart2.mjs, eng23-rename-routes.mjs, eng23-rename-test-routes.mjs); `api/rutas.dart` -> `api/api_routes.dart` (git mv); routes, path params, query keys and `clubnahuelmosse://app/recover?code=` in router.dart, redirect.dart, bottom_bar, profile, notifications, screens, AndroidManifest comment, API link page (`apps/api/app/modules/password_recovery/routes.py`).
+- apps/mobile/test and integration_test: same identifier/route renames applied in place (refactor-tests).
+- `flutter analyze` (apps/mobile): No issues found. `dart format` run on lib, test, integration_test.
+
+Left / open:
+- `flutter test` run log: .validation/flutter-test.log (+524 -49 when I stopped reading; was still running). Compile errors seen in tests that are NOT caused by my renames (missing `arrivedLabel`, `dayLabel`, `DayGroup.label`, `linkSentNotice`, `requiredMessage` in notifications_test.dart, recovery_test.dart, layers_test.dart): compare against main before treating as mine. Other red tests (bilingual_*, keyboard_in_login, loading_skeletons, cleanup, architecture, contract_in_english, navigation_documented, modify_booking) need a look: check whether they were red on main first, then whether they cite a renamed name/route/literal (architecture_test, cleanup_test, navigation_documented_test, contract_in_english_test read lib sources by name or route).
+- `grep` leftovers by design: device keys `permiso_notificaciones_simulado`/`token_notificaciones_simulado` (T4), asset folder `assets/imagenes/sedes` and widget key strings like 'borde-reserva-activa' / PageStorageKey('sedes') (not in card list), Spanish comments (T3), integration_test legacy API paths `/registro`, `/sedes`, `/reservas?cuando=` (T8).
+- Not done: log lines (`node .claude/tools/log.mjs`), `node tests/app-names-in-english.test.mjs` full run after any later edit, `dart format` after later edits.

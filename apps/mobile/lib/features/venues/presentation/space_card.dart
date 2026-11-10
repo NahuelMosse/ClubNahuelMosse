@@ -12,8 +12,8 @@ import '../../spaces/presentation/space_texts.dart';
 import 'labels_and_price.dart';
 import 'space_photo.dart';
 
-/// `Card-Cancha`: la foto de su deporte con el tipo y el nombre, sus datos, el precio y
-/// «VER HORARIOS / RESERVAR».
+/// `Card-Cancha`: the photo of its sport with the type and the name, its data, the price
+/// and «VER HORARIOS / RESERVAR».
 class SpaceCard extends StatelessWidget {
   const SpaceCard({
     super.key,
@@ -46,7 +46,6 @@ class SpaceCard extends StatelessWidget {
               space.name,
               price.replaceFirst(RegExp(r'^\$\s'), ''),
             ),
-            //                '${price.replaceFirst('\$ ', '')} pesos por hora',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -79,7 +78,7 @@ class SpaceCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(Spacing.s16),
-            // Sin esto, el lector de pantalla oye el mismo botón en cada cancha.
+            // Without this, the screen reader hears the same button on every court.
             child: Semantics(
               label: l.spaceBookLabel(kind, space.number),
               child: PrimaryButton(

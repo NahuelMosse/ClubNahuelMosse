@@ -10,7 +10,7 @@ import '../../venues/presentation/photos.dart';
 import '../domain/tile_animation.dart';
 import 'home_sports_section.dart';
 
-/// Los deportes del club. Cada uno abre «Buscar cancha» con ese deporte elegido.
+/// The sports of the club. Each one opens «Buscar cancha» with that sport chosen.
 class HomeSports extends StatelessWidget {
   const HomeSports({
     super.key,
@@ -59,7 +59,7 @@ class HomeSports extends StatelessWidget {
   }
 }
 
-/// El emoji de un deporte del catálogo; uno que la app no conoce lleva 🏅.
+/// The emoji of a sport of the catalog; one the app does not know carries 🏅.
 String sportEmoji(String key) => switch (key) {
   'Futbol' => '⚽',
   'Tenis' => '🎾',

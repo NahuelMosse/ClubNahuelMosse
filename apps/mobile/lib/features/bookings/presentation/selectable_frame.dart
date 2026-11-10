@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/tokens.dart';
 
-/// El marco de un control que se elige, con el estilo de los del prototipo: lima el
-/// elegido. El contenido es libre.
+/// The frame of a control that is chosen, in the style of the prototype's: lime for the
+/// chosen one. The content is free.
 class SelectableFrame extends StatelessWidget {
   const SelectableFrame({
     super.key,

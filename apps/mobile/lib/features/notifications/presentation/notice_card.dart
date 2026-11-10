@@ -8,8 +8,7 @@ import '../domain/app_notification.dart';
 import '../domain/notification_kind.dart';
 import 'arrival_text.dart';
 
-/// `Push-Notification` del prototipo: el ícono del tipo, «CLUBNAHUELMOSSE · cuándo», el título
-/// y el cuerpo. Sin leer lleva un punto de acento.
+/// `Push-Notification` of the prototype: the icon of the type, the title and the body. Unread carries an accent dot.
 class NoticeCard extends StatelessWidget {
   const NoticeCard({
     super.key,
@@ -20,7 +19,7 @@ class NoticeCard extends StatelessWidget {
 
   final AppNotification notification;
 
-  /// La hora del club con la que se cuenta el «hace cuánto».
+  /// The club's time with which the «how long ago» is counted.
   final DateTime now;
   final VoidCallback onTap;
 
@@ -97,7 +96,7 @@ class NoticeCard extends StatelessWidget {
   }
 }
 
-/// El ícono del tipo: lima el recordatorio, verde la confirmación, rojo la alerta.
+/// The icon of the type: lime the reminder, green the confirmation, red the alert.
 class _Icon extends StatelessWidget {
   const _Icon({required this.kind});
 

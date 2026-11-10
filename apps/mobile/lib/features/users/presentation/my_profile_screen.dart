@@ -16,8 +16,8 @@ import 'confirm_deactivation.dart';
 import 'my_profile_content.dart';
 import 'my_profile_skeleton.dart';
 
-/// Mi perfil: todos los datos de la cuenta, pedidos a la API cada vez que se abre, y los
-/// accesos a lo que se puede hacer con ella.
+/// «Mi perfil»: all the account data, requested from the API every time it is opened, and
+/// the shortcuts to what can be done with it.
 class MyProfileScreen extends StatefulWidget {
   const MyProfileScreen({
     super.key,
@@ -58,12 +58,12 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       return;
     } on SessionExpired {
       if (!mounted) {
-        // Salió del perfil mientras cargaba: igual se cierra la sesión que ya no vale, y
-        // las rutas lo llevan al login.
+        // It left the profile while loading: the session that no longer applies is closed
+        // anyway, and the routes take it to the login.
         try {
           await widget.session.close();
         } on Exception {
-          // Si Firebase no la pudo cerrar, el próximo pedido vuelve a encontrarla vencida.
+          // If Firebase could not close it, the next request finds it expired again.
         }
         return;
       }
@@ -74,7 +74,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       failure = e;
     }
     if (!mounted) return;
-    // Sin datos frescos no se muestra nada: ni parciales ni viejos.
+    // Without fresh data nothing is shown: neither partial nor old.
     setState(() => _loading = false);
     final outcome = await handleNetworkError(context, failure);
     if (!mounted) return;
@@ -94,7 +94,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     if (confirmed == true && mounted) await _deactivate();
   }
 
-  /// Si el intento anterior se cortó por la red, el servidor pudo haber terminado la baja.
+  /// If the previous attempt was cut by the network, the server may have finished the
+  /// deletion.
   bool _hadCutoff = false;
 
   Future<void> _deactivate() async {
@@ -103,7 +104,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     Object? failure;
     var expired = false;
     try {
-      // Si sale bien, la sesión se cierra y las rutas llevan al login.
+      // If it goes well, the session closes and the routes lead to the login.
       await widget.session.deactivate();
       return;
     } on SessionExpired {
@@ -114,12 +115,13 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       if (mounted) setState(() => _deactivating = false);
     }
     if (expired && (_hadCutoff || !mounted)) {
-      // Un 401 después de un corte es la baja que ya se hizo; y si la persona salió de la
-      // pantalla, la sesión que no vale se cierra igual. En los dos casos, al login.
+      // A 401 after an outage is the deletion that was already done; and if the person
+      // left the screen, the session that does not apply is closed anyway. In both cases,
+      // to the login.
       try {
         await widget.session.close();
       } on Exception {
-        // El próximo arranque la encuentra vencida y la cierra.
+        // The next startup finds it expired and closes it.
       }
       return;
     }

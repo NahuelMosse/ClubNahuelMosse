@@ -5,7 +5,7 @@ import '../../../common/skeleton.dart';
 import '../../../common/skeleton_card_frame.dart';
 import '../../../theme/tokens.dart';
 
-/// Height of a booking card of the admin history with its ANULAR RESERVA button.
+/// Height of a booking card of the admin history with its «ANULAR RESERVA» button.
 const adminBookingCardHeight = 190.0;
 
 /// A booking card of the history while it loads: the frame, the lines of the booking and

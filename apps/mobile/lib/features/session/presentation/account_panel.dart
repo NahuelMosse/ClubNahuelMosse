@@ -8,7 +8,7 @@ import '../domain/role.dart';
 import 'account_header.dart';
 import 'account_option.dart';
 
-/// El panel flotante de la cuenta: la cabecera y sus accesos.
+/// The floating panel of the account: the header and its shortcuts.
 class AccountPanel extends StatelessWidget {
   const AccountPanel({
     super.key,
@@ -47,7 +47,7 @@ class AccountPanel extends StatelessWidget {
             side: BorderSide(color: p.borderDefault),
           ),
           clipBehavior: Clip.antiAlias,
-          // Con el teléfono apaisado o el texto grande no entra en el alto.
+          // With the phone in landscape or large text it does not fit the height.
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,

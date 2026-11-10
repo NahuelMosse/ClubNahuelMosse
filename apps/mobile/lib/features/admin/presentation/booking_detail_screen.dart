@@ -21,10 +21,10 @@ import 'deactivation_notice.dart';
 import 'traceability.dart';
 import 'void_booking.dart';
 
-/// El detalle de una reserva del historial global (CU-14): datos y trazabilidad, y si la
-/// reserva se puede anular (CU-15), la acción de anularla. Muestra lo que el servidor dice al
-/// abrirla, no lo que el listado tenía. Mientras la anulación está en camino no se puede salir.
-/// Al volver avisa con `true` que la reserva cambió.
+/// The detail of a booking of the global history (CU-14): data and traceability, and if
+/// the booking can be voided (CU-15), the action to void it. It shows what the server
+/// says when it is opened, not what the list had. While the voiding is on its way it
+/// cannot be left. On returning it reports with `true` that the booking changed.
 class BookingDetailScreen extends StatefulWidget {
   const BookingDetailScreen({
     super.key,
@@ -36,13 +36,13 @@ class BookingDetailScreen extends StatefulWidget {
     required this.pending,
   });
 
-  /// La reserva como la mostraba el listado, hasta que llegue la vigente.
+  /// The booking as the list showed it, until the current one arrives.
   final BookingHistoryEntry booking;
   final BookingHistory history;
   final Session session;
   final Spaces spaces;
 
-  /// Los filtros del listado de donde se vino y dónde se guardan si la sesión vence.
+  /// The filters of the list it came from and where they are kept if the session expires.
   final HistoryFilters filters;
   final PendingPanelFilters pending;
 

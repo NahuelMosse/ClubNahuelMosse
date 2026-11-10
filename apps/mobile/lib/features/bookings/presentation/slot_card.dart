@@ -20,7 +20,7 @@ class SlotCard extends StatelessWidget {
   final bool chosen;
   final VoidCallback? onTap;
 
-  /// Es el horario de la reserva que se modifica.
+  /// It is the time of the booking being modified.
   final bool actual;
 
   @override

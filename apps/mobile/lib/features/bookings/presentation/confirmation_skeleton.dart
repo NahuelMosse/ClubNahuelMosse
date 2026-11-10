@@ -5,8 +5,8 @@ import '../../../common/top_bar.dart';
 import '../../../theme/tokens.dart';
 import 'booking_steps.dart';
 
-/// La estructura común de «Confirmá…»: la barra, los pasos, la tarjeta y el pie con la
-/// acción principal y la secundaria.
+/// The common structure of «Confirmá…»: the bar, the steps, the card and the footer with
+/// the primary and the secondary action.
 class ConfirmationSkeleton extends StatelessWidget {
   const ConfirmationSkeleton({
     super.key,

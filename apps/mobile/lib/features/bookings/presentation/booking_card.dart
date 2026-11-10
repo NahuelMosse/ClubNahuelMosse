@@ -17,8 +17,8 @@ import 'booking_header.dart';
 import 'booking_price_and_status.dart';
 import 'booking_status_text.dart';
 
-/// `Card-Reserva`: deporte, sede y dirección, precio y estado arriba; el espacio, la fecha
-/// y el horario abajo, con el porqué si se canceló o se anuló.
+/// `Card-Reserva`: sport, venue and address, price and status on top; the space, the date
+/// and the time below, with the reason if it was cancelled or voided.
 class BookingCard extends StatelessWidget {
   const BookingCard({
     super.key,
@@ -35,22 +35,22 @@ class BookingCard extends StatelessWidget {
   final Booking booking;
   final Catalog catalog;
 
-  /// Suma «HOY», «MAÑANA» o «FALTAN N DÍAS» a una reserva activa.
+  /// Adds «HOY», «MAÑANA» or «FALTAN N DÍAS» to an active booking.
   final bool countdown;
 
-  /// Viene de un aviso: se marca con el borde de acento.
+  /// Comes from a notice: it is marked with the accent border.
   final bool highlighted;
 
-  /// Muestra CANCELAR: una próxima que todavía no empezó.
+  /// Shows «CANCELAR»: an upcoming one that has not started yet.
   final bool cancelable;
 
-  /// La cancelación de esta reserva está en camino.
+  /// The cancellation of this booking is on its way.
   final bool cancelling;
 
-  /// `null` deshabilita CANCELAR (hay otra cancelación en camino).
+  /// `null` disables «CANCELAR» (another cancellation is on its way).
   final VoidCallback? onCancel;
 
-  /// `null` deshabilita MODIFICAR.
+  /// `null` disables «MODIFICAR».
   final VoidCallback? onModify;
 
   String get _schedule => scheduleOf(booking);
@@ -67,7 +67,7 @@ class BookingCard extends StatelessWidget {
     _ => null,
   };
 
-  /// Los días de calendario del club que faltan para el inicio, sin mirar la hora.
+  /// The club's calendar days left before the start, without looking at the time.
   String? _countdown(AppLocalizations l) {
     if (!countdown || booking.status != BookingStatus.active) {
       return null;
@@ -86,8 +86,8 @@ class BookingCard extends StatelessWidget {
     };
   }
 
-  /// La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
-  /// botones propios.
+  /// The card is read whole as one piece of data; «MODIFICAR» and «CANCELAR» stay
+  /// outside, as buttons of their own.
   String _label(AppLocalizations l, String? reason, String? account) {
     final r = booking;
     return [

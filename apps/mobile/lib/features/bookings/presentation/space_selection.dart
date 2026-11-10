@@ -7,7 +7,7 @@ import 'availability_space_card.dart';
 import 'paired_grid.dart';
 import 'slots_section.dart';
 
-/// SELECCIONÁ CANCHA: las canchas del mismo tipo, con la elegida marcada.
+/// «SELECCIONÁ CANCHA»: the courts of the same type, with the chosen one marked.
 class SpaceSelection extends StatelessWidget {
   const SpaceSelection({
     super.key,

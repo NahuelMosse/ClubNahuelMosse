@@ -3,7 +3,7 @@ import '../../../common/selectable_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// `Segmented-Tab`: Próximas o Historial.
+/// `Segmented-Tab`: «Próximas» or «Historial».
 class BookingsTabBar extends StatelessWidget {
   const BookingsTabBar({
     super.key,

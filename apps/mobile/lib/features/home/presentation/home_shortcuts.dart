@@ -8,7 +8,7 @@ import '../domain/tile_animation.dart';
 import 'home_shortcut.dart';
 import 'home_title.dart';
 
-/// ACCESOS RÁPIDOS: buscar una cancha o recorrer las sedes.
+/// «ACCESOS RÁPIDOS»: search for a court or browse the venues.
 class HomeShortcuts extends StatelessWidget {
   const HomeShortcuts({
     super.key,
@@ -16,7 +16,7 @@ class HomeShortcuts extends StatelessWidget {
     required this.alreadyEntered,
   });
 
-  /// Cuándo entra el primer acceso; el otro, un paso después.
+  /// When the first shortcut enters; the other, one step later.
   final Duration first;
   final bool alreadyEntered;
 

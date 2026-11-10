@@ -1,13 +1,14 @@
 import 'app_notification.dart';
 import 'notification_kind.dart';
 
-/// Qué avisó el aviso que la persona tocó en la bandeja del sistema: lo que hace falta para
-/// abrir la pantalla que corresponde.
+/// What the notice the person tapped in the system tray announced: what is needed to open
+/// the corresponding screen.
 class NoticeTapped {
   const NoticeTapped({this.kind, this.bookingId, this.legacy = false});
 
-  /// Lee los datos del mensaje push. Un `booking_id` que no es un UUID (un aviso numérico
-  /// anterior a los UUID) marca el aviso como [legacy]: no se puede resaltar esa reserva.
+  /// Reads the data of the push message. A `booking_id` that is not a UUID (a numeric
+  /// notice prior to UUIDs) marks the notice as [legacy]: that booking cannot be
+  /// highlighted.
   factory NoticeTapped.fromData(Map<String, Object?> data) {
     final id = data['booking_id']?.toString() ?? '';
     final isUuid = _uuid.hasMatch(id);
@@ -26,36 +27,36 @@ class NoticeTapped {
   final String? bookingId;
   final bool legacy;
 
-  /// A dónde abre tocarlo: el centro de notificaciones si es un aviso antiguo.
+  /// Where tapping it opens: the notification center if it is an old notice.
   String get route => legacy ? '/notifications' : noticeRoute(kind, bookingId);
 }
 
-/// El sistema de notificaciones del teléfono: el permiso, el token del dispositivo y lo que
-/// llega mientras la app está abierta o se abre tocando un aviso de la bandeja.
+/// The notification system of the phone: the permission, the device token and what
+/// arrives while the app is open or is opened by tapping a notice in the tray.
 abstract interface class NotificationSystem {
-  /// `ios` o `android`, como lo registra la API.
+  /// `ios` or `android`, as the API registers it.
   String get platform;
 
   Future<bool> isAllowed();
 
-  /// Si el sistema operativo ya le preguntó a la persona por las notificaciones.
+  /// Whether the operating system already asked the person about notifications.
   Future<bool> wasAsked();
 
-  /// Pide el permiso al sistema operativo y dice si quedó concedido.
+  /// Asks the operating system for the permission and says whether it was granted.
   Future<bool> requestPermission();
 
   Future<String?> token();
 
-  /// Borra el token del dispositivo: lo que la API todavía le mande a ese token deja de llegar.
-  /// El próximo [token] es otro.
+  /// Deletes the device token: whatever the API still sends to that token stops arriving.
+  /// The next [token] is another one.
   Future<void> forgetToken();
 
-  /// Un aviso llegó con la app abierta.
+  /// A notice arrived with the app open.
   Stream<void> get onArrive;
 
-  /// La persona tocó un aviso de la bandeja y la app se abrió (o volvió al frente).
+  /// The person tapped a notice in the tray and the app opened (or came to the front).
   Stream<NoticeTapped> get onTap;
 
-  /// El aviso que abrió la app desde cero, si la abrió uno.
+  /// The notice that opened the app from scratch, if one opened it.
   Future<NoticeTapped?> openedBy();
 }

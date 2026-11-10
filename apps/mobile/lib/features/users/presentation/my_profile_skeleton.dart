@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import '../../../common/skeleton.dart';
 import '../../../theme/tokens.dart';
 
-/// Mi perfil mientras llega: la cabecera y las tres tarjetas, con la forma que tendrán.
+/// «Mi perfil» while it arrives: the header and the three cards, with the shape they will
+/// have.
 class MyProfileSkeleton extends StatelessWidget {
   const MyProfileSkeleton({super.key});
 
   static const _avatar = 72.0;
 
-  /// Lo que mide el contenido de `ProfileHeader` sin sus márgenes.
+  /// What the content of `ProfileHeader` measures without its margins.
   static const _headerContent = 166.0;
 
-  /// Lo que miden DATOS PERSONALES, SEGURIDAD y APARIENCIA una vez cargadas.
+  /// What «DATOS PERSONALES», «SEGURIDAD» and «APARIENCIA» measure once loaded.
   static const _dataHeight = 320.0;
   static const _securityHeight = 108.0;
   static const _appearanceHeight = 100.0;
@@ -98,7 +99,7 @@ class _Card extends StatelessWidget {
   final double height;
   final Color border;
 
-  /// Alto de una fila de dato con su separación.
+  /// Height of a data row with its spacing.
   static const _row = 32.0;
   static const _titleSpace = 60.0;
 

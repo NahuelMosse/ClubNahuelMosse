@@ -4,7 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// `Card-Error` del prototipo: la consulta falló y los filtros siguen cargados.
+/// `Card-Error` of the prototype: the query failed and the filters stay loaded.
 class SearchErrorCard extends StatelessWidget {
   const SearchErrorCard({
     super.key,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// Una tarjeta de ACCESOS RÁPIDOS: ícono, título y para qué sirve.
+/// A card of «ACCESOS RÁPIDOS»: icon, title and what it is for.
 class HomeShortcut extends StatelessWidget {
   const HomeShortcut({
     super.key,

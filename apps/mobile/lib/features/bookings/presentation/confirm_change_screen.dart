@@ -22,23 +22,23 @@ import 'change_slot.dart';
 import 'confirmation_skeleton.dart';
 import 'detail_row.dart';
 
-/// Cómo terminó la modificación, para los horarios y Mis reservas, que quedan debajo.
+/// How the modification ended, for the times and «Mis reservas», which stay below.
 enum ModifyResult {
-  /// Se guardó el horario nuevo.
+  /// The new time was saved.
   modified,
 
-  /// El horario nuevo se ocupó o dejó de valer: se vuelve a la grilla releída.
+  /// The new time was taken or stopped being valid: goes back to the re-read grid.
   taken,
 
-  /// La reserva ya no se puede modificar: se vuelve a Mis reservas.
+  /// The booking can no longer be modified: goes back to «Mis reservas».
   change,
 
-  /// Se desistió: la reserva queda como estaba.
+  /// The person gave up: the booking stays as it was.
   abandoned,
 }
 
-/// «Confirmá el cambio»: el horario de antes, el de ahora y el total nuevo, y GUARDAR EL
-/// CAMBIO, que mueve la reserva.
+/// «Confirmá el cambio»: the previous time, the current one and the new total, and
+/// «GUARDAR EL CAMBIO», which moves the booking.
 class ConfirmChangeScreen extends StatefulWidget {
   const ConfirmChangeScreen({
     super.key,
@@ -125,7 +125,7 @@ class _ConfirmChangeScreenState extends State<ConfirmChangeScreen> {
     final before =
         '${shortDay(r.startsAt)} · ${timeRange(r.startsAt, r.endsAt)}';
     final now = '${shortDay(e.date)} · ${e.start} – ${e.end}';
-    // Mientras se guarda no se sale: el cambio podría quedar hecho sin que se vea.
+    // It cannot be left while saving: the change could be made without being seen.
     return ConfirmationSkeleton(
       title: l.bookingChangeTitle,
       sending: _sending,

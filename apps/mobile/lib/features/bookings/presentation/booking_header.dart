@@ -9,8 +9,8 @@ import '../../venues/presentation/photos.dart';
 import '../domain/booking.dart';
 import 'booking_price_and_status.dart';
 
-/// La foto del deporte, el tipo de cancha con la sede y, si la letra no es grande, el
-/// precio y el estado a la derecha.
+/// The photo of the sport, the court type with the venue and, if the font is not large,
+/// the price and the status on the right.
 class BookingHeader extends StatelessWidget {
   const BookingHeader({
     super.key,

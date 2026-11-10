@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// Un dato de la reserva: el nombre a la izquierda y el valor a la derecha.
+/// A datum of the booking: the name on the left and the value on the right.
 class DetailRow extends StatelessWidget {
   const DetailRow({
     super.key,
@@ -16,8 +16,8 @@ class DetailRow extends StatelessWidget {
   final String value;
   final bool emphasized;
 
-  /// Un código largo sin espacios (el nombre compuesto del espacio): va debajo del dato,
-  /// en la fuente mono, para no partirse a mitad de palabra.
+  /// A long code without spaces (the composed name of the space): goes below the datum,
+  /// in the mono font, so it is not split in the middle of a word.
   final bool code;
 
   @override

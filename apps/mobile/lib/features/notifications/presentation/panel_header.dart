@@ -4,7 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// La fila de arriba del panel de avisos: el título y «MARCAR TODAS».
+/// The top row of the notices panel: the title and «MARCAR TODAS».
 class PanelHeader extends StatelessWidget {
   const PanelHeader({super.key, required this.onMarkAll});
 
@@ -17,7 +17,7 @@ class PanelHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          // Un lector de pantalla anuncia el panel cuando aparece.
+          // A screen reader announces the panel when it appears.
           child: Semantics(
             header: true,
             liveRegion: true,

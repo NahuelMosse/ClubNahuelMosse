@@ -17,7 +17,7 @@ import 'venue_content.dart';
 import 'venue_skeleton.dart';
 import 'venues.dart';
 
-/// Una sede con todas sus canchas, cada una con sus datos y el paso a los horarios.
+/// A venue with all its courts, each with its data and the step to the times.
 class VenueScreen extends StatefulWidget {
   const VenueScreen({
     super.key,
@@ -40,22 +40,22 @@ class _VenueScreenState extends State<VenueScreen> {
   (Venue, List<Space>, Catalog)? _data;
   bool _loading = true;
 
-  /// El filtro de CU-20: el deporte y el tipo elegidos, las canchas que quedan y los tipos
-  /// que ofrece ese deporte en la sede.
+  /// The filter of CU-20: the chosen sport and type, the courts that remain and the types
+  /// that sport offers at the venue.
   String? _sport;
   String? _kind;
   List<Space>? _filtered;
   List<String> _sportKinds = const [];
   bool _filtering = false;
 
-  /// Cada lectura o filtro toma un número; la respuesta de uno que ya no es el último se
-  /// descarta, así una recarga vieja no pisa un filtro nuevo.
+  /// Each read or filter takes a number; the response of one that is no longer the last
+  /// is discarded, so an old reload does not overwrite a new filter.
   int _request = 0;
 
   @override
   void initState() {
     super.initState();
-    // Los horarios de una cancha pueden avisar que ya no está: se vuelve a leer.
+    // The times of a court may report that it is gone: it is read again.
     widget.spaces.addListener(_load);
     _load();
   }
@@ -68,7 +68,7 @@ class _VenueScreenState extends State<VenueScreen> {
 
   Future<void> _load() async {
     final request = ++_request;
-    // El filtro que se vuelve a pedir es el que había al empezar.
+    // The filter that is requested again is the one there was at the start.
     final sportBefore = _sport;
     final kindBefore = _kind;
     setState(() => _loading = true);
@@ -88,7 +88,7 @@ class _VenueScreenState extends State<VenueScreen> {
         return;
       }
       final spaces = await widget.spaces.repository.active(venueId: venue.id);
-      // El filtro elegido sigue, salvo que su deporte o su tipo ya no tengan canchas.
+      // The chosen filter stays, unless its sport or type no longer have courts.
       final sport = spaces.any((c) => c.sport == sportBefore)
           ? sportBefore
           : null;
@@ -125,7 +125,7 @@ class _VenueScreenState extends State<VenueScreen> {
       failure = e;
     }
     if (!mounted || request != _request) return;
-    // Sin datos frescos no se muestra nada: ni parciales ni viejos.
+    // Without fresh data nothing is shown: neither partial nor old.
     setState(() {
       _data = null;
       _loading = false;
@@ -144,7 +144,7 @@ class _VenueScreenState extends State<VenueScreen> {
     }
   }
 
-  /// Los tipos de [sport] que tienen canchas, en el orden del catálogo.
+  /// The types of [sport] that have courts, in the order of the catalog.
   static List<String> _kindsInOrder(
     List<Space> spaces,
     Catalog catalog,
@@ -157,8 +157,8 @@ class _VenueScreenState extends State<VenueScreen> {
     ];
   }
 
-  /// Pide a la API las canchas con ese [sport] y [kind]; si falla, avisa y todo queda
-  /// como estaba.
+  /// Asks the API for the courts with that [sport] and [kind]; if it fails, it reports
+  /// and everything stays as it was.
   Future<void> _applyFilter({
     required String? sport,
     required String? kind,
@@ -170,7 +170,7 @@ class _VenueScreenState extends State<VenueScreen> {
     Object? failure;
     var expired = false;
     try {
-      // Sin deporte también se pregunta: la sede pudo sumar canchas o deportes.
+      // It is also asked without a sport: the venue may have added courts or sports.
       final spaces = await widget.spaces.repository.active(
         venueId: data.$1.id,
         sport: sport,
@@ -186,7 +186,8 @@ class _VenueScreenState extends State<VenueScreen> {
           _sportKinds = const [];
         } else {
           _filtered = spaces;
-          // Sin tipo elegido la respuesta trae todos los del deporte, nuevos incluidos.
+          // Without a chosen type the response brings all those of the sport, new ones
+          // included.
           if (kind == null) {
             _sportKinds = _kindsInOrder(spaces, data.$3, sport);
           }
@@ -233,7 +234,7 @@ class _VenueScreenState extends State<VenueScreen> {
               sportKinds: _sportKinds,
               enabled: !_filtering && !_loading,
               filtering: _filtering,
-              // Tocar el deporte elegido lo quita; «Todos» quita el tipo.
+              // Tapping the chosen sport removes it; «Todos» removes the type.
               onSportSelected: (d) =>
                   _applyFilter(sport: d == _sport ? null : d, kind: null),
               onKindSelected: (t) => _applyFilter(sport: _sport, kind: t),

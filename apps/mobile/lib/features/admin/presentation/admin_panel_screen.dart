@@ -26,7 +26,7 @@ import 'paginated_history.dart';
 import 'panel_filter_options.dart';
 import 'void_booking.dart';
 
-/// El panel de administración: el historial global de reservas (CU-14), pestaña «Reservas».
+/// The admin panel: the global booking history (CU-14), «Reservas» tab.
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({
     super.key,
@@ -42,8 +42,8 @@ class AdminPanelScreen extends StatefulWidget {
   final Spaces spaces;
   final Session session;
 
-  /// Los filtros que quedaron aplicados si la sesión venció mientras se miraba esta
-  /// pantalla (FA5): se restauran una sola vez.
+  /// The filters that were applied if the session expired while this screen was being
+  /// looked at (FA5): they are restored only once.
   final PendingPanelFilters pending;
 
   @override
@@ -85,8 +85,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     super.dispose();
   }
 
-  /// Filtra en vivo mientras se escribe (paso 7), con una pausa corta para no pedir una
-  /// página por letra.
+  /// Filters live while typing (step 7), with a short pause so as not to ask for a page
+  /// per letter.
   void _onType() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
@@ -130,8 +130,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _openFilters() async {
-    // Se precargan al abrir la pantalla: si el servidor falla ahora, el panel abre igual
-    // con lo que ya se tenía.
+    // They are preloaded when the screen opens: if the server fails now, the panel opens
+    // anyway with what it already had.
     final (venues, catalog) = await panelFilterOptions(
       widget.venues,
       widget.spaces,
@@ -164,7 +164,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     if (mounted) unawaited(_load());
   }
 
-  /// La anulación de una reserva está en camino: el listado no responde hasta que termine.
+  /// The voiding of a booking is on its way: the list does not respond until it ends.
   bool _voiding = false;
 
   Future<void> _void(BookingHistoryEntry booking) async {

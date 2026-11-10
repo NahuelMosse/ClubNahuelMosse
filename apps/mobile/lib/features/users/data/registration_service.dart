@@ -1,13 +1,13 @@
 import '../../../api/api_client.dart';
 import '../domain/registration_data.dart';
 
-/// El pedido de registro a la API (`POST /registro`).
+/// The registration request to the API (`POST /registro`).
 class RegistrationService {
   const RegistrationService(this._api);
 
   final ApiClient _api;
 
-  /// Lanza [NoConnection] o [ServerError] si el pedido no llega a tener respuesta.
+  /// Throws [NoConnection] or [ServerError] if the request never gets a response.
   Future<ApiResponse> register(RegistrationData data) =>
       _api.post('/register', data.toJson());
 }

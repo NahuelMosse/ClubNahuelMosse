@@ -43,8 +43,8 @@ import 'slot_card.dart';
 import 'slots_section.dart';
 import 'space_selection.dart';
 
-/// «Horarios disponibles» de una cancha: elige cancha de ese tipo, fecha y duración, y la
-/// franja que después se confirma. Consultar no reserva nada.
+/// «Horarios disponibles» of a court: choose a court of that type, date and duration, and
+/// the slot that is confirmed afterwards. Querying books nothing.
 class AvailabilityScreen extends StatefulWidget {
   const AvailabilityScreen({
     super.key,
@@ -68,17 +68,18 @@ class AvailabilityScreen extends StatefulWidget {
   final AvailabilityApi availability;
   final Session session;
 
-  /// Lo que ya viene elegido desde la consulta de canchas: el día, la duración y la hora
-  /// de inicio (`HH:MM`). La hora queda elegida si está disponible.
+  /// What already comes chosen from the court query: the day, the duration and the start
+  /// time (`HH:MM`). The time stays chosen if it is available.
   final DateTime? date;
   final int? hours;
   final String? start;
 
-  /// La reserva que se está modifying: se mantiene su duración, su franja se ve libre y
-  /// marcada, y CONTINUAR CON EL CAMBIO lleva a «Confirmá el cambio».
+  /// The booking being modified: its duration is kept, its slot is shown free and marked,
+  /// and «CONTINUAR CON EL CAMBIO» leads to «Confirmá el cambio».
   final Booking? modifying;
 
-  /// Cómo se llama la pantalla a la que vuelve la modificación; «Mis reservas» si no se dice.
+  /// The name of the screen the modification goes back to; «Mis reservas» if none is
+  /// given.
   final String? backLabel;
 
   @override
@@ -99,12 +100,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   };
   AvailabilityGrid? _grid;
 
-  /// La cancha y la duración con que se pidió la grilla que está en pantalla: mientras
-  /// llega otra, el resumen y la nota siguen hablando de esa.
+  /// The court and the duration with which the grid on screen was requested: while
+  /// another arrives, the summary and the note keep talking about that one.
   (String, int)? _gridQuery;
 
-  /// El día de hoy en el club, según la última grilla: FECHA sigue a la vista aunque la
-  /// consulta siguiente falle.
+  /// Today's date at the club, according to the last grid: «FECHA» stays in view even if
+  /// the next query fails.
   DateTime? _today;
   late String? _start = switch (widget.modifying) {
     final r? => shortTime(r.startsAt),
@@ -113,10 +114,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   bool _searching = false;
   bool _failure = false;
 
-  /// La cancha ya no está y se está avisando: no queda nada cargando detrás del aviso.
+  /// The court is gone and the notice is being shown: nothing is left loading behind the
+  /// notice.
   bool _change = false;
 
-  /// Sube con cada consulta: la respuesta de una que ya no es la última se descarta.
+  /// Goes up with each query: the response of one that is no longer the last is
+  /// discarded.
   int _request = 0;
 
   @override
@@ -127,8 +130,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   Space? get _space => _data?.$2.where((c) => c.id == _chosen).firstOrNull;
 
-  /// La franja de [start] en la cancha y el día elegidos es la de la reserva que se
-  /// modifica.
+  /// The slot of [start] on the chosen court and day is the one of the booking being
+  /// modified.
   bool _isCurrent(String start) => switch (widget.modifying) {
     final r? =>
       r.spaceId == _chosen &&
@@ -181,8 +184,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     await _notify(vencida: vencida, failure: failure, retry: _load);
   }
 
-  /// Pide la grilla de la cancha, la fecha y la duración elegidas. La hora de inicio
-  /// elegida queda si sigue disponible.
+  /// Asks for the grid of the chosen court, date and duration. The chosen start time
+  /// stays if it is still available.
   Future<void> _search() async {
     final request = ++_request;
     setState(() {
@@ -216,7 +219,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       if (mounted && request == _request) await _handleGone(false);
       return;
     } on DateExpired {
-      // El día elegido ya pasó (la pantalla quedó abierta de un día para otro): vuelve a hoy.
+      // The chosen day has passed (the screen was left open from one day to the next):
+      // goes back to today.
       if (!mounted || request != _request || _date == null) return;
       _date = null;
       _start = null;
@@ -237,8 +241,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     await _notify(vencida: vencida, failure: failure, retry: _search);
   }
 
-  /// Un error de la API: sin horarios en pantalla y REINTENTAR, salvo que la persona
-  /// reintente desde el aviso.
+  /// An API error: no times on screen and «REINTENTAR», unless the person retries from
+  /// the notice.
   Future<void> _notify({
     required bool vencida,
     required Object? failure,
@@ -260,7 +264,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       _searching = false;
       _change = true;
     });
-    // La reserva que se modifica ya no se puede pasar a esta cancha: vuelve a Mis reservas.
+    // The booking being modified can no longer be moved to this court: goes back to
+    // «Mis reservas».
     if (widget.modifying != null) {
       await showChangedMeanwhile(context);
       if (mounted) _leave(ModifyResult.change);
@@ -334,7 +339,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     }
   }
 
-  /// Vuelve a la pantalla de la que vino con cómo terminó la modificación.
+  /// Goes back to the screen it came from with how the modification ended.
   void _leave([ModifyResult? result]) {
     if (context.canPop()) {
       context.pop(result);
@@ -515,7 +520,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  /// Mientras llega otra grilla, sus lugares se muestran como bloques.
+  /// While another grid arrives, its places are shown as blocks.
   Widget _gridContent(AvailabilityGrid grid, int hours) {
     if (_searching) return const AvailabilityGridSkeleton();
     final l = AppLocalizations.of(context);
@@ -561,8 +566,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  /// Una celda por hora, de la apertura a la última antes del cierre: libre si alguna
-  /// franja libre la cubre, elegida si la cubre la franja elegida.
+  /// One cell per hour, from opening to the last one before closing: free if some free
+  /// slot covers it, chosen if the chosen slot covers it.
   Widget _dayLine(Venue venue, AvailabilityGrid grid, int hours) {
     int hour(String hhmm) => int.parse(hhmm.split(':').first);
     final from = hour(venue.opening);
@@ -596,6 +601,6 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 }
 
-/// El día de [moment], en la hora del club.
+/// The day of [moment], in the club's time.
 DateTime _dayOf(DateTime moment) =>
     DateTime.utc(moment.year, moment.month, moment.day);

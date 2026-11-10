@@ -13,14 +13,16 @@ import '../domain/booking_exceptions.dart';
 import 'bookings.dart';
 import 'confirm_change_screen.dart';
 
-/// Cancela [booking] con los avisos de cada desenlace; la repite mientras la persona
-/// elija reintentar tras un corte. Las pantallas que la usan ya pidieron confirmación.
+/// Cancels [booking] with the notices of each outcome; repeats it while the person
+/// chooses to retry after an outage. The screens that use it already asked for
+/// confirmation.
 ///
-/// - [mark] pone la reserva que espera (o `null` al soltarla) en el estado de la pantalla.
-/// - [onCancel] quita la reserva de lo que se ve y suelta la espera.
-/// - [reload] vuelve a leer con avisos; [reread] sin ellos.
-/// - [toleratesOutage]: tras un corte, que la reserva ya esté cancelada es que el pedido
-///   cortado la canceló.
+/// - [mark] puts the booking that is waiting (or `null` when released) in the state of
+///   the screen.
+/// - [onCancel] removes the booking from what is seen and releases the wait.
+/// - [reload] reads again with notices; [reread] without them.
+/// - [toleratesOutage]: after an outage, the booking already being cancelled means the
+///   cut request cancelled it.
 Future<void> cancelWithNotices(
   BuildContext context, {
   required Session session,
@@ -69,7 +71,7 @@ Future<void> cancelWithNotices(
     final again = await askRetry(context, failure);
     if (!context.mounted) return;
     if (!again) {
-      // Si el corte llegó después de que el servidor la canceló, la lectura lo muestra.
+      // If the outage came after the server cancelled it, the read shows it.
       await reread();
       return;
     }
@@ -77,8 +79,8 @@ Future<void> cancelWithNotices(
   }
 }
 
-/// Abre la grilla para cambiar [r] de horario y, al volver, avisa si se modificó.
-/// Devuelve `false` si la pantalla ya no está.
+/// Opens the grid to change the time of [r] and, on returning, reports whether it was
+/// modified. Returns `false` if the screen is gone.
 Future<bool> openModify(
   BuildContext context,
   Booking r, {

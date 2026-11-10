@@ -17,6 +17,6 @@ class Profile {
   final String dni;
   final DateTime birthDate;
 
-  /// La ruta a la que entra cada rol después de iniciar sesión.
+  /// The route each role enters after signing in.
   String get home => role == Role.admin ? '/admin' : '/home';
 }

@@ -21,12 +21,12 @@ import 'bookings.dart';
 import 'confirmation_skeleton.dart';
 import 'detail_row.dart';
 
-/// Lo que la confirmación le devuelve a los horarios al cerrarse: si el horario se ocupó,
-/// la grilla se vuelve a leer.
+/// What the confirmation returns to the times when it closes: if the time was taken, the
+/// grid is read again.
 enum ConfirmResult { taken }
 
-/// «Confirmá tu reserva»: la cancha, la fecha, el horario y el total que se eligieron, y
-/// CONFIRMAR RESERVA, que la guarda.
+/// «Confirmá tu reserva»: the court, the date, the time and the total that were chosen,
+/// and «CONFIRMAR RESERVA», which saves it.
 class ConfirmBookingScreen extends StatefulWidget {
   const ConfirmBookingScreen({
     super.key,
@@ -48,8 +48,9 @@ class ConfirmBookingScreen extends StatefulWidget {
 class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   bool _sending = false;
 
-  /// Vuelve a los horarios tal como quedaron. Sin nada debajo (se llegó al volver a
-  /// iniciar sesión), a los horarios de esa cancha si hay que elegir otro, o a la sede.
+  /// Goes back to the times as they were left. With nothing below (it arrived after
+  /// signing in again), to the times of that court if another must be chosen, or to the
+  /// venue.
   void _goBack([ConfirmResult? result]) {
     if (_sending) return;
     final e = widget.choice;
@@ -120,7 +121,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   Widget build(BuildContext context) {
     final e = widget.choice;
     final l = AppLocalizations.of(context);
-    // Mientras se guarda no se sale: la reserva podría quedar hecha sin comprobante.
+    // It cannot be left while saving: the booking could be made without a receipt.
     return ConfirmationSkeleton(
       title: l.bookingConfirmTitle,
       sending: _sending,

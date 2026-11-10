@@ -7,7 +7,7 @@ import '../../../theme/tokens.dart';
 import '../../session/presentation/account_card.dart';
 import '../../session/presentation/session.dart';
 
-/// El título «Mis reservas» con el botón de la cuenta.
+/// The title «Mis reservas» with the account button.
 class MyBookingsHeader extends StatelessWidget {
   const MyBookingsHeader({super.key, required this.session});
 

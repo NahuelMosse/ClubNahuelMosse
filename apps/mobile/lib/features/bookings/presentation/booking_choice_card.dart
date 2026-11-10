@@ -8,7 +8,8 @@ import '../../venues/presentation/photos.dart';
 import '../domain/booking_choice.dart';
 import 'total_row.dart';
 
-/// La tarjeta de la elección: la foto con el tipo y la sede, las [rows] y el total.
+/// The card of the choice: the photo with the type and the venue, the [rows] and the
+/// total.
 class BookingChoiceCard extends StatelessWidget {
   const BookingChoiceCard({
     super.key,

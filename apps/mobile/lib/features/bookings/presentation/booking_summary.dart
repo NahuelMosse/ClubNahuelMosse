@@ -8,7 +8,7 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/slot.dart';
 
-/// La tarjeta de resumen: el precio, y el total con el horario y la fecha elegidos.
+/// The summary card: the price, and the total with the chosen time and date.
 class BookingSummary extends StatelessWidget {
   const BookingSummary({
     super.key,
@@ -40,7 +40,7 @@ class BookingSummary extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Con el texto grande, cada dato baja a su propia línea en vez de cortarse.
+            // With large text, each datum drops to its own line instead of being cut off.
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               spacing: Spacing.s8,

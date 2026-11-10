@@ -5,7 +5,7 @@ import '../../session/domain/token_source.dart';
 import '../domain/app_notification.dart';
 import '../domain/center_reading.dart';
 
-/// Las notificaciones y los dispositivos de quien inició sesión, en la API.
+/// The notifications and the devices of whoever signed in, in the API.
 class NotificationsRepository {
   NotificationsRepository({
     required ApiClient api,
@@ -54,10 +54,10 @@ class NotificationsRepository {
     _expect204(r);
   }
 
-  /// Le dice a la API que este teléfono recibe los avisos de la cuenta, con el permiso que
-  /// le dio al sistema operativo.
+  /// Tells the API that this phone receives the account's notices, with the permission it
+  /// gave the operating system.
   ///
-  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<void> registerDevice({
     required String token,
     required String platform,
@@ -71,11 +71,11 @@ class NotificationsRepository {
     _expect204(r);
   }
 
-  /// Este teléfono deja de recibir los avisos de la cuenta.
+  /// This phone stops receiving the account's notices.
   ///
-  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   ///
-  /// [session] es el token de la sesión que se está cerrando, tomado antes de que se cierre.
+  /// [session] is the token of the session being closed, taken before it closes.
   Future<void> unregisterDevice(String token, {required String session}) async {
     final r = await _api.post('/devices/unregister', {
       'token': token,

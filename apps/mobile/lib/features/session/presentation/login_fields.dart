@@ -6,7 +6,7 @@ import '../../../common/text_field.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// Correo y contraseña, con el enlace para recuperarla.
+/// Email and password, with the link to recover it.
 class LoginFields extends StatelessWidget {
   const LoginFields({
     super.key,

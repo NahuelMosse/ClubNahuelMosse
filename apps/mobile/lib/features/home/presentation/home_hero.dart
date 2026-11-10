@@ -14,8 +14,8 @@ import '../../venues/presentation/photos.dart';
 import 'hero_veil.dart';
 import 'home_greeting.dart';
 
-/// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
-/// colores son los `on-media`, iguales en los dos modos.
+/// The cover: the greeting, the account and the request of the day. It goes over a photo,
+/// so its colors are the `on-media` ones, the same in both modes.
 class HomeHero extends StatelessWidget {
   const HomeHero({
     super.key,
@@ -30,7 +30,7 @@ class HomeHero extends StatelessWidget {
 
   final NotificationCenter? center;
 
-  /// `null` mientras se lee.
+  /// `null` while it is being read.
   final List<MarkerCell>? cells;
 
   @override
@@ -89,7 +89,8 @@ class HomeHero extends StatelessWidget {
                     ),
                   ),
                 ] else
-                  // El lugar del marcador mientras llega, para que lo de abajo no salte.
+                  // The place of the marker while it arrives, so that what is below does
+                  // not jump.
                   const SizedBox(height: _markerSpace),
               ],
             ),
@@ -100,5 +101,5 @@ class HomeHero extends StatelessWidget {
   }
 }
 
-/// Lo que ocupa el marcador con su separación: lo reserva mientras no hay datos.
+/// What the marker takes up with its spacing: it reserves it while there is no data.
 const _markerSpace = 136.0;

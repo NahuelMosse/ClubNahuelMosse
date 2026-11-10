@@ -5,12 +5,12 @@ import 'account_card.dart';
 import 'request_failure.dart';
 import 'session.dart';
 
-/// Avisa el fallo de una carga de pantalla: la sesión vencida cierra la sesión; un error
-/// de red ofrece reintentar con [retry].
+/// Reports the failure of a screen load: an expired session signs out; a network error
+/// offers to retry with [retry].
 ///
-/// Tapada por otra pantalla no avisa: al volver, el listado ofrece REINTENTAR.
-/// [onExpired] corre antes del aviso de sesión vencida; [onGiveUp], si la persona no
-/// reintenta.
+/// Covered by another screen it does not report: on return, the list offers «REINTENTAR».
+/// [onExpired] runs before the expired-session notice; [onGiveUp], if the person does not
+/// retry.
 Future<void> notifyLoadFailure(
   BuildContext context, {
   required Session session,
@@ -53,11 +53,12 @@ Future<void> loadOrNotify(
   );
 }
 
-/// Avisa el fallo de un pedido: la sesión vencida cierra la sesión; un error de red
-/// ofrece reintentar con [retry]. Sin fallo ni vencimiento no hace nada.
+/// Reports the failure of a request: an expired session signs out; a network error offers
+/// to retry with [retry]. Without a failure or expiry it does nothing.
 ///
-/// Con [onlyWhenFront], tapada por otra pantalla no avisa. [onExpired] corre antes del aviso
-/// de sesión vencida; [onGiveUp], si la persona no reintenta y la pantalla sigue.
+/// With [onlyWhenFront], covered by another screen it does not report. [onExpired] runs
+/// before the expired-session notice; [onGiveUp], if the person does not retry and the
+/// screen remains.
 Future<void> notifySendFailure(
   BuildContext context, {
   required Session session,
@@ -80,7 +81,7 @@ Future<void> notifySendFailure(
   }
 }
 
-/// Avisa que la sesión venció y la cierra; [before] corre antes del aviso.
+/// Reports that the session expired and closes it; [before] runs before the notice.
 Future<void> notifySessionExpired(
   BuildContext context,
   Session session, {
@@ -91,6 +92,6 @@ Future<void> notifySessionExpired(
   if (context.mounted) await signOut(context, session);
 }
 
-/// Avisa el error de red de [error] y devuelve si la persona eligió reintentar.
+/// Reports the network error of [error] and returns whether the person chose to retry.
 Future<bool> askRetry(BuildContext context, Object error) =>
     showNetworkError(context, error);

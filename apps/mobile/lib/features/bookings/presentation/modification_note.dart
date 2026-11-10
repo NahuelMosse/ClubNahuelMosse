@@ -5,7 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../domain/booking.dart';
 import 'availability_note.dart';
 
-/// El aviso de que se está modifying [booking], con la duración que se mantiene.
+/// The notice that [booking] is being modified, with the duration that is kept.
 class ModificationNote extends StatelessWidget {
   const ModificationNote({
     super.key,

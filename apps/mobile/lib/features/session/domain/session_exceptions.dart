@@ -1,24 +1,26 @@
 // kit-shape: a screen or error family kept with its private parts.
-/// Correo o contraseña que no corresponden a una cuenta activa. No dice cuál de los dos.
+/// An email or password that does not match an active account. It does not say which of
+/// the two.
 class InvalidCredentials implements Exception {
   const InvalidCredentials();
 }
 
-/// La API ya no reconoce la sesión: venció o se cerró desde otro dispositivo.
+/// The API no longer recognizes the session: it expired or was closed from another
+/// device.
 class SessionExpired implements Exception {
   const SessionExpired();
 }
 
-/// La API rechazó los datos personales: cada campo con su mensaje.
+/// The API rejected the personal data: each field with its message.
 class DataRejected implements Exception {
   const DataRejected(this.errors, {this.duplicate = false});
   final Map<String, String> errors;
 
-  /// Otra cuenta ya tiene ese dato (409), no es un problema de formato.
+  /// Another account already has that datum (409), it is not a format problem.
   final bool duplicate;
 }
 
-/// La API rechazó el cambio: cada campo con su mensaje.
+/// The API rejected the change: each field with its message.
 class PasswordRejected implements Exception {
   const PasswordRejected(this.errors);
   final Map<String, String> errors;

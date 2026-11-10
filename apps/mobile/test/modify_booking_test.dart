@@ -92,7 +92,7 @@ void main() {
       expect(query.queryParameters['hours'], '1');
       expect(
         find.textContaining(
-          'Estás modifying tu reserva del Jue 12, 21:00 – 22:00',
+          'Estás modificando tu reserva del Jue 12, 21:00 – 22:00',
         ),
         findsOneWidget,
       );
@@ -161,7 +161,7 @@ void main() {
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
     await tap(tester, find.text('VER LO ACTUALIZADO'));
 
-    expect(find.textContaining('Estás modifying tu reserva'), findsOneWidget);
+    expect(find.textContaining('Estás modificando tu reserva'), findsOneWidget);
     expect(
       requests.where((p) => p.url.path.endsWith('/slots')).length,
       before + 1,
@@ -185,7 +185,7 @@ void main() {
       await tap(tester, find.text('VER LO ACTUALIZADO'));
 
       expect(find.text('Próximas'), findsOneWidget);
-      expect(find.textContaining('Estás modifying'), findsNothing);
+      expect(find.textContaining('Estás modificando'), findsNothing);
     },
   );
 

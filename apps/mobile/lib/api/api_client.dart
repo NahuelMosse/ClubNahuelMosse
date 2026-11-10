@@ -7,31 +7,31 @@ import 'package:http/http.dart' as http;
 
 import 'api_routes.dart';
 
-/// Un pedido a la API que falló sin que la persona tenga la culpa: [NoConnection] o
-/// [ServerError]. Se atrapa con `on FalloDeRed` donde ambos se tratan igual.
+/// A request to the API that failed through no fault of the person: [NoConnection] or
+/// [ServerError]. Caught with `on NetworkFailure` where both are treated the same.
 abstract interface class NetworkFailure implements Exception {}
 
-/// No se llegó a la API: sin red, o la API no responde a tiempo.
+/// The API was not reached: no network, or the API does not answer in time.
 class NoConnection implements NetworkFailure {
   const NoConnection();
 }
 
-/// La API respondió con un error propio (5xx) o con algo que no es la API.
+/// The API answered with an error of its own (5xx) or with something that is not the API.
 class ServerError implements NetworkFailure {
   const ServerError(this.code, {this.message});
   final int code;
 
-  /// Lo que el servidor dice a la persona: sólo viene con un 429 (demasiados intentos).
+  /// What the server tells the person: it only comes with a 429 (too many attempts).
   final String? message;
 }
 
-/// El pedido salió pero la API no contestó dentro del límite. Es un error del servidor, no
-/// de la red de la persona: lo atrapan donde se atrapa [ServerError].
+/// The request went out but the API did not answer within the limit. It is a server
+/// error, not one of the person's network: it is caught where [ServerError] is caught.
 class ServerNotResponding extends ServerError {
   const ServerNotResponding() : super(0);
 }
 
-/// Una respuesta de la API con su código y su cuerpo JSON ya leído.
+/// A response of the API with its status code and its JSON body already read.
 class ApiResponse {
   const ApiResponse(this.code, this.body);
   final int code;
@@ -50,19 +50,19 @@ class ApiClient {
   final Uri _base;
   final http.Client _client;
 
-  /// Si pedir una ruta que la app no declara en [apiRoutes] falla. Es así en debug,
-  /// así lo vigilan todos los tests; en release el pedido sale igual.
+  /// Whether asking for a route the app does not declare in [apiRoutes] fails. It does in
+  /// debug, so every test watches it; in release the request goes out anyway.
   final bool verifyRoutes;
 
   void _declared(String method, String route) {
     if (verifyRoutes && !isRouteDeclared(method, route)) {
       throw AssertionError(
-        'La app no declara pedir $method $route (lib/api/api_routes.dart)',
+        'The app does not declare asking for $method $route (lib/api/api_routes.dart)',
       );
     }
   }
 
-  /// Cuánto espera una respuesta antes de rendirse.
+  /// How long it waits for a response before giving up.
   final Duration limit;
 
   Future<ApiResponse> post(
@@ -108,7 +108,7 @@ class ApiClient {
     ),
   );
 
-  /// [token] es el ID token de Firebase de quien inició sesión.
+  /// [token] is the Firebase ID token of whoever signed in.
   Future<ApiResponse> get(String route, {String? token}) => _send(
     'GET',
     route,
@@ -130,7 +130,7 @@ class ApiClient {
     } on TimeoutException {
       throw const ServerNotResponding();
     } on Exception {
-      // Sin red, DNS, TLS o la conexión cortada.
+      // No network, DNS, TLS or the connection was cut.
       throw const NoConnection();
     }
     if (r.statusCode >= 500) throw ServerError(r.statusCode);
@@ -139,7 +139,7 @@ class ApiClient {
       final text = utf8.decode(r.bodyBytes);
       data = text.isEmpty ? null : jsonDecode(text);
     } on FormatException {
-      // Respondió algo que no es la API (un proxy, un portal cautivo).
+      // It answered something that is not the API (a proxy, a captive portal).
       throw ServerError(r.statusCode);
     }
     final Map<String, Object?> body = data is Map<String, Object?>

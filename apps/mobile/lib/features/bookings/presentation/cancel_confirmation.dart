@@ -4,8 +4,8 @@ import '../../../common/error_dialog.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// La confirmación de cancelar una reserva ([text] dice cuál). Devuelve `true` si la
-/// persona confirmó.
+/// The confirmation of cancelling a booking ([text] says which). Returns `true` if the
+/// person confirmed.
 Future<bool> confirmCancellation(BuildContext context, String text) async {
   final l = AppLocalizations.of(context);
   return await showDialog<bool>(

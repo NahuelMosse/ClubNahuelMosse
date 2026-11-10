@@ -1,13 +1,13 @@
 import 'open_days.dart';
 
-/// Los días que abre una sede: una de las [OpenDays] si son exactamente esos, o los
-/// días sueltos (de 1 a 7) si no lo son. Dos sedes con los mismos días dan valores iguales.
+/// The days a venue opens: one of the [OpenDays] if they are exactly those, or the single
+/// days (1 to 7) if not. Two venues with the same days give equal values.
 class WeekdaysLabel {
   const WeekdaysLabel(this.option, this.days);
 
   final OpenDays? option;
 
-  /// Los días sueltos, ordenados y sin repetir; vacío si hay [option].
+  /// The single days, sorted and without repeats; empty if there is [option].
   final List<int> days;
 
   @override

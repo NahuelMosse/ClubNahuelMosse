@@ -3,15 +3,15 @@ import 'package:flutter/foundation.dart';
 import '../data/venues_repository.dart';
 import '../domain/venue.dart';
 
-/// Las sedes del club, vistas desde las pantallas. Avisa a quien escucha cada vez que una
-/// cambia.
+/// The venues of the club, seen from the screens. Notifies whoever listens each time one
+/// changes.
 class Venues extends ChangeNotifier {
   Venues({required this.repository});
 
-  /// Los pedidos de lectura (`active`) se hacen directo sobre el repositorio.
+  /// The read requests (`active`) are made directly on the repository.
   final VenuesRepository repository;
 
-  /// Da de alta la sede y devuelve la que quedó guardada.
+  /// Creates the venue and returns the one that was saved.
   Future<Venue> create({
     required String name,
     required String address,
@@ -30,7 +30,7 @@ class Venues extends ChangeNotifier {
     return venue;
   }
 
-  /// Guarda los datos nuevos de la sede [id] y devuelve cómo quedó.
+  /// Saves the new data of the venue [id] and returns how it ended up.
   Future<Venue> update(
     String id, {
     required String name,
@@ -53,13 +53,13 @@ class Venues extends ChangeNotifier {
     return venue;
   }
 
-  /// Da de baja la sede [id] y sus espacios.
+  /// Deactivates the venue [id] and its spaces.
   Future<void> deactivate(String id) async {
     await repository.deactivate(id);
     notifyListeners();
   }
 
-  /// Avisa que lo que se vio de las sedes ya no vale (por ejemplo, una que se dio de baja):
-  /// quien las muestra las vuelve a pedir.
+  /// Reports that what was seen of the venues no longer applies (for example, one that
+  /// was deactivated): whoever shows them requests them again.
   void notifyChange() => notifyListeners();
 }

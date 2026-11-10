@@ -6,7 +6,7 @@ import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
 import 'selectable_frame.dart';
 
-/// Los próximos siete días desde hoy, en una fila que se desliza.
+/// The next seven days from today, in a row that slides.
 class DateStrip extends StatelessWidget {
   const DateStrip({
     super.key,

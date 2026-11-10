@@ -34,8 +34,9 @@ import 'search_time_range.dart';
 import 'space_search_bar.dart';
 import 'space_search_skeleton.dart';
 
-/// «Consultar canchas»: las canchas de una sede y un deporte libres en todo un rango de un
-/// día. Consultar no reserva nada; cada cancha lleva a sus horarios con el rango elegido.
+/// «Consultar canchas»: the courts of a venue and a sport that are free over a whole
+/// range of a day. Querying books nothing; each court leads to its times with the chosen
+/// range.
 class SpaceSearchScreen extends StatefulWidget {
   const SpaceSearchScreen({
     super.key,
@@ -51,14 +52,14 @@ class SpaceSearchScreen extends StatefulWidget {
   final AvailabilityApi availability;
   final Session session;
 
-  /// El deporte con el que abre el formulario, el que se tocó en el inicio.
+  /// The sport the form opens with, the one that was tapped on the home.
   final String? sport;
 
   @override
   State<SpaceSearchScreen> createState() => _SpaceSearchScreenState();
 }
 
-/// Lo que se consultó, para el encabezado y para seguir a los horarios.
+/// What was queried, for the header and to continue to the times.
 typedef _Query = ({
   Venue venue,
   String sport,
@@ -77,13 +78,13 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   String? _kind;
   final _date = TextEditingController();
 
-  /// El texto de FECHA la última vez que cambió: el controlador avisa también cuando
-  /// cambian el cursor o el foco, y eso no es cambiar el filtro.
+  /// The text of «FECHA» the last time it changed: the controller also notifies when the
+  /// cursor or the focus change, and that is not a change of the filter.
   String _dateText = '';
   int _from = 18;
   int _to = 19;
 
-  /// Errores que devolvió la API para el último rango consultado.
+  /// Errors the API returned for the last queried range.
   Map<String, String> _rejection = const {};
 
   bool _searching = false;
@@ -142,8 +143,9 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     null => null,
   };
 
-  /// Los errores de los filtros que ya se pueden juzgar: una fecha completa que no existe,
-  /// la fecha fuera de los próximos días, y las reglas del rango cuando hay sede.
+  /// The errors of the filters that can already be judged: a complete date that does not
+  /// exist, the date outside the next days, and the rules of the range when there is a
+  /// venue.
   Map<String, String> get _errors {
     final l = AppLocalizations.of(context);
     final errors = <String, String>{};
@@ -173,8 +175,9 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   bool get _isComplete =>
       _venue != null && _sport != null && _day != null && _errors.isEmpty;
 
-  /// Otro filtro ya no es la búsqueda que se ve: el resultado se quita hasta consultar de
-  /// nuevo, para no mostrar canchas de otra consulta como si fueran de ésta.
+  /// Another filter is no longer the search that is seen: the result is removed until
+  /// queried again, so as not to show courts of another query as if they were of this
+  /// one.
   void _onFilterChanged() {
     setState(() {
       _rejection = const {};
@@ -275,7 +278,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     if (chosen == null || !mounted || chosen.id == _venue?.id) return;
     _applyChange(() {
       _venue = chosen;
-      // La sede nueva puede no tener ese deporte.
+      // The new venue may not have that sport.
       if (!chosen.sports.contains(_sport)) {
         _sport = null;
         _kind = null;
@@ -588,7 +591,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         'start': hhmm(query.from),
       },
     );
-    // Encima de la búsqueda: al volver, los filtros y el resultado siguen ahí.
+    // On top of the search: on returning, the filters and the result are still there.
     context.push(route.toString());
   }
 }

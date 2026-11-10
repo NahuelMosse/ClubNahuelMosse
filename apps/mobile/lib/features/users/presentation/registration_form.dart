@@ -6,7 +6,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/registration_field.dart';
 
-/// Los seis campos del registro, uno debajo del otro.
+/// The six registration fields, one below the other.
 class RegistrationForm extends StatelessWidget {
   const RegistrationForm({
     super.key,
@@ -19,7 +19,7 @@ class RegistrationForm extends StatelessWidget {
     required this.onToggleVisibility,
   });
 
-  /// Uno por campo, en el orden de [RegistrationField].
+  /// One per field, in the order of [RegistrationField].
   final List<TextEditingController> controllers;
   final List<FocusNode> focusNodes;
   final String? Function(RegistrationField field) errorOf;

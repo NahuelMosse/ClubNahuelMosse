@@ -4,7 +4,7 @@ import '../../../common/selectable_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// Los chips Todas / Al aire libre / Techada con cuántas canchas trae cada uno.
+/// The «Todas» / «Al aire libre» / «Techada» chips with how many courts each brings.
 class CoveredFilter extends StatelessWidget {
   const CoveredFilter({
     super.key,

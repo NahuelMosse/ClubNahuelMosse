@@ -4,7 +4,7 @@ import '../../../common/motion.dart';
 import '../../../common/snackbar.dart';
 import '../../../theme/tokens.dart';
 
-/// El aviso de error al pie de la pantalla; tiembla cada vez que [notices] sube.
+/// The error notice at the foot of the screen; it shakes each time [notices] goes up.
 class LoginNotice extends StatelessWidget {
   const LoginNotice({
     super.key,

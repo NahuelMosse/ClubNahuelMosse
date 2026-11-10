@@ -10,7 +10,7 @@ import '../../bookings/presentation/booking_card.dart';
 import '../../spaces/domain/space.dart';
 import 'home_title.dart';
 
-/// «Tu próxima reserva»: la tarjeta de Mis reservas, con sus dos acciones.
+/// «Tu próxima reserva»: the card of «Mis reservas», with its two actions.
 class NextBooking extends StatelessWidget {
   const NextBooking({
     super.key,

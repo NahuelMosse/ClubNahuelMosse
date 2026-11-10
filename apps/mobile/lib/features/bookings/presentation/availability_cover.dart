@@ -5,7 +5,7 @@ import '../../venues/domain/venue.dart';
 import '../../venues/presentation/cover_with_title.dart';
 import '../../venues/presentation/photos.dart';
 
-/// La foto del deporte con el camino de vuelta, el tipo y la sede.
+/// The photo of the sport with the way back, the type and the venue.
 class AvailabilityCover extends StatelessWidget {
   const AvailabilityCover({
     super.key,
@@ -20,7 +20,7 @@ class AvailabilityCover extends StatelessWidget {
   final String kind;
   final String sport;
 
-  /// El nombre de la pantalla a la que se vuelve.
+  /// The name of the screen it goes back to.
   final String backLabel;
   final VoidCallback onBack;
 

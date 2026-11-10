@@ -25,7 +25,7 @@ class RegistrationScreen extends StatefulWidget {
 
   final RegistrationService registration;
 
-  /// Para fijar el día en los tests de widgets; en la app es el día de hoy.
+  /// To fix the day in widget tests; in the app it is today.
   final DateTime Function()? today;
 
   @override
@@ -43,10 +43,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _createAttempted = false;
   String? _notice;
 
-  /// Un pedido anterior se cortó sin respuesta: la API pudo haber creado la cuenta igual.
+  /// A previous request was cut without a response: the API may have created the account
+  /// anyway.
   bool _hadCutoff = false;
 
-  /// El 409 llegó después de un corte: la cuenta que se mandó crear ya existe.
+  /// The 409 arrived after an outage: the account that was sent to be created already
+  /// exists.
   bool _alreadyExists = false;
   bool _submitting = false;
   bool _passwordVisible = false;
@@ -58,7 +60,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.initState();
     for (final field in RegistrationField.values) {
       _focusNodes[field.index].addListener(() {
-        // Salir de un campo vacío no marca nada: eso lo hace el intento de crear la cuenta.
+        // Leaving an empty field marks nothing: the attempt to create the account does
+        // that.
         if (!_focusNodes[field.index].hasFocus && _valueOf(field).isNotEmpty) {
           setState(() => _touched.add(field));
         }
@@ -67,7 +70,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
-  /// Sólo un cambio de texto invalida lo que dijo la API; mover el cursor, no.
+  /// Only a text change invalidates what the API said; moving the cursor does not.
   void _onChanged(RegistrationField field) {
     final text = _controllers[field.index].text;
     if (text == _texts[field.index]) return;

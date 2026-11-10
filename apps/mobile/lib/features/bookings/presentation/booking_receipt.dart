@@ -10,7 +10,8 @@ import '../domain/booking.dart';
 import 'detail_row.dart';
 import 'total_row.dart';
 
-/// El aviso de la hora y el troquel con espacio, fecha, horario y total de la reserva.
+/// The notice of the time and the die-cut with space, date, time and total of the
+/// booking.
 class BookingReceipt extends StatelessWidget {
   const BookingReceipt({super.key, required this.booking});
 

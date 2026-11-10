@@ -7,7 +7,8 @@ import '../../../theme/tokens.dart';
 import '../../session/presentation/account_card.dart';
 import '../../session/presentation/session.dart';
 
-/// «Cerrar sesión» y «Eliminar cuenta»; con la baja en curso, ninguno responde.
+/// «Cerrar sesión» and «Eliminar cuenta»; with the deletion in progress, neither
+/// responds.
 class AccountActions extends StatelessWidget {
   const AccountActions({
     super.key,

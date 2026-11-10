@@ -2,12 +2,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/notification_system.dart';
 
-/// El sistema de un dispositivo de prueba, sin Firebase Cloud Messaging.
+/// The system of a test device, without Firebase Cloud Messaging.
 ///
-/// La respuesta al permiso la guarda la app en el dispositivo (los escenarios la fijan); sin
-/// respuesta guardada, todavía no preguntó. Pedirlo guarda y devuelve la respuesta fijada,
-/// concedido si no hay otra. Nada llega por acá: con la app abierta la lista se entera
-/// consultando la API.
+/// The answer to the permission is kept by the app on the device (the scenarios set it);
+/// with no stored answer, it has not asked yet. Asking stores and returns the set answer,
+/// granted if there is no other. Nothing arrives through here: with the app open the list
+/// finds out by querying the API.
 class SimulatedNotificationSystem implements NotificationSystem {
   static const _permissionKey = 'permiso_notificaciones_simulado';
   static const _tokenKey = 'token_notificaciones_simulado';

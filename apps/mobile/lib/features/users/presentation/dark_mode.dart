@@ -18,7 +18,7 @@ class DarkMode extends StatelessWidget {
       listenable: appearance,
       builder: (context, _) {
         void toggle() => appearance.change(dark: !appearance.dark);
-        // Toda la fila alterna el tema, no sólo el interruptor.
+        // The whole row toggles the theme, not just the switch.
         return Semantics(
           container: true,
           label: l10n.profileDarkMode,

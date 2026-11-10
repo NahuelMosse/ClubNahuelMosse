@@ -52,7 +52,7 @@ import 'features/venues/presentation/venues_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'redirect.dart';
 
-/// Las rutas de la app, con lo que cada pantalla recibe.
+/// The routes of the app, with what each screen receives.
 class AppRouter {
   const AppRouter({
     required ValueGetter<ApiClient> api,
@@ -72,8 +72,8 @@ class AppRouter {
        _appearance = appearance,
        _center = center;
 
-  // Se leen de la app en cada uso: si el widget se reemplaza con la misma `State`,
-  // las rutas siguen con lo que trae el widget nuevo.
+  // They are read from the app on each use: if the widget is replaced with the same
+  // `State`, the routes continue with what the new widget brings.
   final ValueGetter<ApiClient> _api;
   final ValueGetter<Session> _session;
   final ValueGetter<Appearance> _appearance;
@@ -92,8 +92,8 @@ class AppRouter {
   Appearance get appearance => _appearance();
   NotificationCenter? get center => _center();
 
-  /// El router de la app: arranca en [initialLocation] y, al iniciar o cerrar la sesión, vuelve
-  /// a evaluar a quién deja pasar adónde.
+  /// The app's router: starts at [initialLocation] and, on signing in or out, evaluates
+  /// again who is let in where.
   GoRouter router({
     required GlobalKey<NavigatorState> navigatorKey,
     required String initialLocation,
@@ -112,7 +112,7 @@ class AppRouter {
     ],
   );
 
-  /// `AAAA-MM-DD` de un enlace como día del club; `null` si no viene o no es una fecha.
+  /// `YYYY-MM-DD` of a link as a club day; `null` if it is missing or not a date.
   static DateTime? _day(String? iso) => switch (DateTime.tryParse(iso ?? '')) {
     final d? => DateTime.utc(d.year, d.month, d.day),
     null => null,
@@ -150,12 +150,12 @@ class AppRouter {
         ),
       ],
     ),
-    // Adonde abre el enlace del correo: clubnahuelmosse://app/recover?code=…
+    // Where the link of the email opens: clubnahuelmosse://app/recover?code=…
     GoRoute(
       path: '/recover',
       pageBuilder: (context, state) {
         final code = state.uri.queryParameters['code'] ?? '';
-        // Un enlace nuevo con la pantalla ya abierta es otra pantalla, no la misma.
+        // A new link with the screen already open is another screen, not the same one.
         return forwardPage(
           context,
           state,
@@ -293,7 +293,7 @@ class AppRouter {
     ),
   ];
 
-  /// La confirmación de una reserva nueva; sin la elección, nada que mostrar.
+  /// The confirmation of a new booking; without the choice, nothing to show.
   Widget _confirmBooking(GoRouterState state) => switch (state.extra) {
     final BookingChoice choice => ConfirmBookingScreen(
       choice: choice,
@@ -335,7 +335,7 @@ class AppRouter {
         ),
       ],
     ),
-    // La reserva que quedó pendiente cuando venció la sesión, al volver a entrar.
+    // The booking that was pending when the session expired, on signing in again.
     GoRoute(
       path: '/book',
       redirect: (context, state) =>
@@ -347,7 +347,7 @@ class AppRouter {
 
   GoRoute _changeBookingRoute() => GoRoute(
     path: ':booking/modify',
-    // La confirmación está anidada acá y trae su propio extra.
+    // The confirmation is nested here and brings its own extra.
     redirect: (context, state) => switch (state.extra) {
       Booking() || (Booking(), BookingChoice()) => null,
       _ => '/bookings',
@@ -416,8 +416,8 @@ class AppRouter {
       routes: [
         GoRoute(
           path: 'booking/:id',
-          // Sin la reserva y los filtros del listado de donde se vino (un enlace, la app
-          // reabierta), vuelve al listado.
+          // Without the booking and the filters of the list it came from (a link, the app
+          // reopened), it goes back to the list.
           redirect: (context, state) =>
               state.extra is (BookingHistoryEntry, HistoryFilters)
               ? null
@@ -459,8 +459,8 @@ class AppRouter {
         ),
         GoRoute(
           path: ':venue/edit',
-          // Sin la sede que se tocó en el listado (un enlace, la app reabierta), vuelve al
-          // listado.
+          // Without the venue that was tapped in the list (a link, the app reopened), it
+          // goes back to the list.
           redirect: (context, state) =>
               state.extra is Venue ? null : '/admin/venues',
           pageBuilder: (context, state) =>
@@ -475,8 +475,8 @@ class AppRouter {
         ),
         GoRoute(
           path: 'created',
-          // Sin la sede recién guardada (un enlace, la app reabierta) no hay éxito que
-          // mostrar: va al listado, donde está.
+          // Without the venue just saved (a link, the app reopened) there is no success
+          // to show: it goes to the list, where it is.
           redirect: (context, state) =>
               state.extra is Venue ? null : '/admin/venues',
           pageBuilder: (context, state) =>
@@ -500,8 +500,8 @@ class AppRouter {
       routes: [
         GoRoute(
           path: ':space/edit',
-          // Sin el espacio que se tocó en el listado (un enlace, la app reabierta), vuelve
-          // al listado.
+          // Without the space that was tapped in the list (a link, the app reopened), it
+          // goes back to the list.
           redirect: (context, state) =>
               state.extra is Space ? null : '/admin/spaces',
           pageBuilder: (context, state) =>
@@ -524,7 +524,8 @@ class AppRouter {
         ),
         GoRoute(
           path: 'created',
-          // Sin el espacio recién guardado no hay éxito que mostrar: va al listado.
+          // Without the space just saved there is no success to show: it goes to the
+          // list.
           redirect: (context, state) =>
               state.extra is Space ? null : '/admin/spaces',
           pageBuilder: (context, state) =>

@@ -8,8 +8,8 @@ import '../../../theme/tokens.dart';
 import '../domain/profile.dart';
 import '../domain/role.dart';
 
-/// El avatar de quien tiene la sesión abierta, con su nombre, su correo y, si es usuario,
-/// la insignia de miembro.
+/// The avatar of whoever has the session open, with their name, their email and, if a
+/// user, the member badge.
 class AccountHeader extends StatelessWidget {
   const AccountHeader({super.key, required this.profile});
 

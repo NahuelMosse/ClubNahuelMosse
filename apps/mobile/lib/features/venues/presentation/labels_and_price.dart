@@ -8,8 +8,8 @@ import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import '../../spaces/presentation/space_texts.dart';
 
-/// Condición e iluminación a la izquierda y el precio a la derecha; con el texto grande el
-/// precio baja debajo de las etiquetas en vez de cortarse.
+/// Condition and lighting on the left and the price on the right; with large text the
+/// price drops below the labels instead of being cut off.
 class LabelsAndPrice extends StatelessWidget {
   const LabelsAndPrice({super.key, required this.space, required this.price});
 

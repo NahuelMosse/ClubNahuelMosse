@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// El horario de antes, con una cruz, o el de ahora, con un tilde y en lima.
+/// The previous time, with a cross, or the current one, with a tick and in lime.
 class ChangeSlot extends StatelessWidget {
   const ChangeSlot({
     super.key,

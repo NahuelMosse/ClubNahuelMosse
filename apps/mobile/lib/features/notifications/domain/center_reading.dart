@@ -1,6 +1,6 @@
 import 'app_notification.dart';
 
-/// Lo que devuelve el centro: las últimas notificaciones y cuántas hay sin leer en total.
+/// What the center returns: the latest notifications and how many are unread in total.
 class CenterReading {
   const CenterReading(this.notifications, this.unread);
   final List<AppNotification> notifications;

@@ -5,7 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
 
-/// Los selectores DESDE y HASTA del formulario de consulta de canchas.
+/// The «DESDE» and «HASTA» selectors of the court query form.
 class SearchTimeRange extends StatelessWidget {
   const SearchTimeRange({
     super.key,

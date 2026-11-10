@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../common/skeleton.dart';
 import '../../../theme/tokens.dart';
 
-/// Las tarjetas de aviso mientras llegan: una etiqueta de día y marcos con la forma de
-/// `NoticeCard`, tantos como llenan la pantalla.
+/// The notice cards while they arrive: a day label and frames shaped like `NoticeCard`,
+/// as many as fill the screen.
 class NoticeCardSkeleton extends StatelessWidget {
   const NoticeCardSkeleton({super.key});
 

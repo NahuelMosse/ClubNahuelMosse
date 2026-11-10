@@ -18,8 +18,9 @@ import 'sport_filter.dart';
 import 'status_filter.dart';
 import 'venue_filter.dart';
 
-/// El panel de Filtros del historial global (CU-14, paso 5): sede, deporte, estado y rango
-/// de fechas, más el buscador. Abre con lo ya aplicado y sólo devuelve algo al confirmar.
+/// The Filters panel of the global history (CU-14, step 5): venue, sport, status and date
+/// range, plus the search box. It opens with what is already applied and only returns
+/// something on confirm.
 Future<HistoryFilters?> openBookingFilters(
   BuildContext context, {
   required HistoryFilters filters,
@@ -85,7 +86,7 @@ class _FiltersPanelState extends State<_FiltersPanel> {
   DateTime? get _untilDate =>
       _until.text.trim().isEmpty ? null : readDate(_until.text);
 
-  /// Hay texto en el campo y no es una fecha que exista.
+  /// There is text in the field and it is not a date that exists.
   bool _isNotDate(TextEditingController c) =>
       c.text.trim().isNotEmpty && readDate(c.text) == null;
 
@@ -172,8 +173,8 @@ class _FiltersPanelState extends State<_FiltersPanel> {
                   const SizedBox(height: Spacing.s20),
                   FilterTitle(l10n.adminDateRangeUpper),
                   const SizedBox(height: Spacing.s8),
-                  // En un teléfono chico dos campos lado a lado no dejan ver la fecha
-                  // entera; se apilan.
+                  // On a small phone two fields side by side do not let the whole date be
+                  // seen; they are stacked.
                   FilterDateRange(
                     since: _since,
                     until: _until,

@@ -8,7 +8,8 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/session.dart';
 
-/// El saludo de la hora del club y el nombre del socio, que se actualiza con la [session].
+/// The greeting of the club's time and the member's name, which updates with the
+/// [session].
 class HomeGreeting extends StatelessWidget {
   const HomeGreeting({super.key, required this.session});
 

@@ -38,8 +38,8 @@ typedef _Loaded = ({
   List<Venue> venues,
 });
 
-/// El Home de quien inicia sesión como usuario: su próxima reserva, cuánto hay para
-/// reservar y los atajos a lo que hace todos los días.
+/// The Home of whoever signs in as a user: their next booking, how much there is to book
+/// and the shortcuts to what they do every day.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -55,7 +55,7 @@ class HomeScreen extends StatefulWidget {
   final Spaces spaces;
   final Venues venues;
 
-  /// Sin él no hay campana: la pantalla no avisa de notificaciones.
+  /// Without it there is no bell: the screen does not report notifications.
   final NotificationCenter? center;
 
   @override
@@ -66,14 +66,14 @@ class _HomeScreenState extends State<HomeScreen> {
   _Loaded? _data;
   bool _failure = false;
 
-  /// Sube con cada lectura: la respuesta de una lectura que ya no vale se descarta.
+  /// Goes up with each read: the response of a read that no longer applies is discarded.
   int _request = 0;
 
-  /// La reserva que se está cancelando: su botón muestra que espera.
+  /// The booking being cancelled: its button shows that it waits.
   String? _cancelling;
 
-  /// Ya se vieron los bloques con datos: los que se vuelven a armar al recargar nacen
-  /// terminados, sin repetir la entrada.
+  /// The blocks with data were already seen: the ones rebuilt on reload are born
+  /// finished, without repeating the entrance.
   bool _alreadyEntered = false;
 
   @override
@@ -103,8 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Una reserva cambió desde otra pantalla: la próxima puede ser otra. Las que cambian
-  /// desde acá se releen al terminar.
+  /// A booking changed from another screen: the next one may be another. The ones that
+  /// change from here are read again when done.
   void _onBookingsChanged() {
     if (_cancelling == null) _reloadQuietly();
   }
@@ -121,8 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Con [fromScratch] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
-  /// había hasta que llega lo nuevo, y se quita si la lectura falla.
+  /// With [fromScratch] the screen is emptied while the read arrives; on refresh what
+  /// there was stays until the new arrives, and is removed if the read fails.
   Future<void> _load({bool fromScratch = true}) async {
     final request = ++_request;
     setState(() {
@@ -154,20 +154,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Vuelve a leer sin avisos: si no se puede, queda lo que había.
+  /// Reads again without notices: if it cannot, what there was stays.
   Future<void> _reloadQuietly() async {
     final request = ++_request;
     try {
       final data = await _read();
       if (mounted && request == _request) setState(() => _data = data);
     } on Exception catch (e, stack) {
-      // Sin red o con el servidor caído, lo que había sigue siendo lo mejor que hay.
+      // Without network or with the server down, what there was is still the best there
+      // is.
       logError(e, stack);
     }
   }
 
-  /// Pide confirmación y cancela [r]. Al terminar, bien o porque la reserva ya había
-  /// cambiado, el Home se vuelve a leer.
+  /// Asks for confirmation and cancels [r]. When done, well or because the booking had
+  /// already changed, the Home is read again.
   Future<void> _cancel(Booking r, Catalog catalog) async {
     if (_cancelling != null) return;
     final confirmed = await confirmCancellation(
@@ -175,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
       cancellationText(AppLocalizations.of(context), r, catalog),
     );
     if (!confirmed || !mounted) return;
-    // Una lectura que venía en camino (deslizar para refrescar) ya no vale.
+    // A read that was on its way (pull to refresh) no longer applies.
     _request++;
     await cancelWithNotices(
       context,
@@ -199,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Abre la grilla para cambiar [r] de horario y, al volver, lee el Home de nuevo.
+  /// Opens the grid to change the time of [r] and, on returning, reads the Home again.
   Future<void> _modify(Booking r) async {
     if (await openModify(context, r, route: '?from=home')) {
       await _reloadQuietly();

@@ -61,13 +61,13 @@ void main() {
       }
       final templates = apiRoutes.map((r) => r.route).toSet();
       for (final old in [
-        '/venues',
+        '/sedes',
         '/espacios',
-        '/bookings',
+        '/reservas',
         '/yo',
-        '/notifications',
+        '/notificaciones',
         '/dispositivos',
-        '/register',
+        '/registro',
         '/recuperacion',
       ]) {
         expect(

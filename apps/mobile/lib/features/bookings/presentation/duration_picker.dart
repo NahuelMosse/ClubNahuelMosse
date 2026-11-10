@@ -6,7 +6,7 @@ import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
 import 'round_button.dart';
 
-/// `Stepper-Duracion`: una hora menos, la duración y una hora más.
+/// `Stepper-Duracion`: one hour less, the duration and one hour more.
 class DurationSelector extends StatelessWidget {
   const DurationSelector({
     super.key,

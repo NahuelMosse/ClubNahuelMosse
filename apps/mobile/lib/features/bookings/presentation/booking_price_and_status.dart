@@ -6,7 +6,7 @@ import '../../../theme/tokens.dart';
 import '../domain/booking.dart';
 import 'status_label.dart';
 
-/// El total de la reserva y su estado, uno sobre el otro.
+/// The total of the booking and its status, one above the other.
 class BookingPriceAndStatus extends StatelessWidget {
   const BookingPriceAndStatus({
     super.key,
@@ -16,7 +16,7 @@ class BookingPriceAndStatus extends StatelessWidget {
 
   final Booking booking;
 
-  /// Con la letra grande se alinea a la izquierda en vez de a la derecha.
+  /// With a large font it is aligned left instead of right.
   final bool large;
 
   @override

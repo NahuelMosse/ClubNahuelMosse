@@ -1,24 +1,24 @@
 // kit-shape: a screen or error family kept with its private parts.
-/// La API rechazó la sede: cada campo con su mensaje.
+/// The API rejected the venue: each field with its message.
 class VenueRejected implements Exception {
   const VenueRejected(this.errors, {this.duplicate = false});
   final Map<String, String> errors;
 
-  /// Otra sede activa ya tiene ese nombre (409), no es un problema de formato.
+  /// Another active venue already has that name (409), it is not a format problem.
   final bool duplicate;
 }
 
-/// La sede ya no está activa: la dio de baja otra sesión.
+/// The venue is no longer active: another session deactivated it.
 class VenueUnavailable implements Exception {
   const VenueUnavailable();
 }
 
-/// La sede tiene reservas activas que todavía no terminaron: no se da de baja.
+/// The venue has active bookings that have not ended yet: it is not deactivated.
 class VenueHasBookings implements Exception {
   const VenueHasBookings();
 }
 
-/// El horario nuevo deja afuera [count] reservas futuras: hay que confirmarlo.
+/// The new schedule leaves [count] future bookings outside: it has to be confirmed.
 class BookingsOutsideHours implements Exception {
   const BookingsOutsideHours(this.count);
   final int count;

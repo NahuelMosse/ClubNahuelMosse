@@ -7,7 +7,7 @@ import '../domain/search_rules.dart';
 import 'duration_picker.dart';
 import 'slots_section.dart';
 
-/// DURACIÓN: el selector de horas y lo que se puede elegir en la sede.
+/// «DURACIÓN»: the hours selector and what can be chosen at the venue.
 class DurationSection extends StatelessWidget {
   const DurationSection({
     super.key,
@@ -18,7 +18,7 @@ class DurationSection extends StatelessWidget {
 
   final int hours;
 
-  /// La hora de cierre de la sede, tal como se muestra.
+  /// The closing time of the venue, as it is shown.
   final String closing;
   final ValueChanged<int> onChanged;
 

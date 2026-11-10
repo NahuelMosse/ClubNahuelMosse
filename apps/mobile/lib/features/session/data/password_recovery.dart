@@ -3,14 +3,15 @@ import '../../../common/field_errors.dart';
 import '../domain/recovery_exceptions.dart';
 import '../domain/session_exceptions.dart';
 
-/// Recuperar la contraseña sin sesión: pedir el enlace y crear la nueva con él.
+/// Recovering the password without a session: asking for the link and creating the new
+/// one with it.
 class PasswordRecovery {
   const PasswordRecovery(this._api);
 
   final ApiClient _api;
 
-  /// Lanza [EmailRejected], [NoConnection] o [ServerError]. La respuesta es la misma
-  /// tenga o no cuenta el correo.
+  /// Throws [EmailRejected], [NoConnection] or [ServerError]. The answer is the same
+  /// whether or not the email has an account.
   Future<void> requestLink(String email) async {
     final r = await _api.post('/password-recovery', {'email': email});
     if (r.code == 202) return;
@@ -22,7 +23,7 @@ class PasswordRecovery {
     throw ServerError(r.code);
   }
 
-  /// Si el enlace todavía sirve. Lanza [NoConnection] o [ServerError].
+  /// Whether the link still works. Throws [NoConnection] or [ServerError].
   Future<bool> isValid(String code) async {
     if (code.isEmpty) return false;
     final r = await _api.post('/password-recovery/check', {'code': code});

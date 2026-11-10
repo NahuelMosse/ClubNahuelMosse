@@ -3,7 +3,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// Los tres pasos de la reserva, con [actual] contado desde cero.
+/// The three steps of the booking, with [actual] counted from zero.
 class BookingSteps extends StatelessWidget {
   const BookingSteps({super.key, required this.actual});
 

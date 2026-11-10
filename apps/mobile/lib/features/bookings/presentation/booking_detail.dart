@@ -8,8 +8,8 @@ import '../domain/booking.dart';
 import '../domain/booking_status.dart';
 import 'booking_card.dart';
 
-/// Lo de abajo de la tarjeta: la cuenta regresiva, el espacio, la fecha y el horario, con
-/// el porqué si la reserva se canceló o se anuló.
+/// What is below the card: the countdown, the space, the date and the time, with the
+/// reason if the booking was cancelled or voided.
 class BookingDetail extends StatelessWidget {
   const BookingDetail({
     super.key,
