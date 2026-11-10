@@ -20,8 +20,8 @@ import 'support/mount.dart';
 void main() {
   group('price', () {
     test('is written in pesos with a thousands dot', () {
-      expect(formatPesos(38000), '\$ 38.000');
-      expect(formatPesos(1500000), '\$ 1.500.000');
+      expect(formatPesos(38000), '\$\u00A038.000');
+      expect(formatPesos(1500000), '\$\u00A01.500.000');
     });
 
     test('the field keeps only digits and groups them', () {
@@ -30,45 +30,45 @@ void main() {
         TextEditingValue.empty,
         TextEditingValue(text: text),
       );
-      expect(type('38000').text, '\$ 38.000');
-      expect(type('\$ 3a8.0 00').text, '\$ 38.000');
+      expect(type('38000').text, '\$\u00A038.000');
+      expect(type('\$\u00A03a8.0 00').text, '\$\u00A038.000');
       expect(type('').text, '');
-      expect(readPrice('\$ 38.000'), 38000);
+      expect(readPrice('\$\u00A038.000'), 38000);
       expect(readPrice('\$ '), isNull);
     });
 
     test('typing in the middle leaves the cursor where it was typed', () {
       const formatter = PriceInputFormatter();
       const before = TextEditingValue(
-        text: '\$ 38.000',
+        text: '\$ 38.000',
         selection: TextSelection.collapsed(offset: 3),
       );
       // A 5 between the 3 and the 8.
       final after = formatter.formatEditUpdate(
         before,
         const TextEditingValue(
-          text: '\$ 358.000',
+          text: '\$ 358.000',
           selection: TextSelection.collapsed(offset: 4),
         ),
       );
-      expect(after.text, '\$ 358.000');
+      expect(after.text, '\$ 358.000');
       expect(after.selection.extentOffset, 4);
     });
 
     test('deleting over the thousands dot deletes the previous digit', () {
       const formatter = PriceInputFormatter();
       const before = TextEditingValue(
-        text: '\$ 38.000',
+        text: '\$ 38.000',
         selection: TextSelection.collapsed(offset: 5),
       );
       final after = formatter.formatEditUpdate(
         before,
         const TextEditingValue(
-          text: '\$ 38000',
+          text: '\$ 38000',
           selection: TextSelection.collapsed(offset: 4),
         ),
       );
-      expect(after.text, '\$ 3.000');
+      expect(after.text, '\$ 3.000');
     });
 
     test('pasted text with cents is cut at the comma', () {
@@ -77,15 +77,15 @@ void main() {
         TextEditingValue.empty,
         const TextEditingValue(text: '1.500,00'),
       );
-      expect(after.text, '\$ 1.500');
+      expect(after.text, '\$ 1.500');
     });
 
     test('more than seven digits do not go in', () {
       const formatter = PriceInputFormatter();
-      const before = TextEditingValue(text: '\$ 9.999.999');
+      const before = TextEditingValue(text: '\$\u00A09.999.999');
       final after = formatter.formatEditUpdate(
         before,
-        const TextEditingValue(text: '\$ 9.999.9990'),
+        const TextEditingValue(text: '\$\u00A09.999.9990'),
       );
       expect(after.text, before.text);
     });
@@ -114,7 +114,7 @@ void main() {
       if (space == null || c == null) return;
       expect(
         spaceDescription(lookupAppLocalizations(const Locale('es')), space, c),
-        'Tenis · Polvo de ladrillo · Al aire libre · \$ 32.000 por hora',
+        'Tenis · Polvo de ladrillo · Al aire libre · \$\u00A032.000 por hora',
       );
     });
   });
@@ -244,7 +244,7 @@ void main() {
       expect(find.text('3 ESPACIOS ACTIVOS · 2 SEDES'), findsOneWidget);
       expect(
         find.bySemanticsLabel(
-          'Tenis · Polvo de ladrillo · Al aire libre · \$ 32.000 por hora, '
+          'Tenis · Polvo de ladrillo · Al aire libre · \$\u00A032.000 por hora, '
           'Sede Morón, Moron_Rivadavia_19850_Tenis_PDL_1',
         ),
         findsOneWidget,
