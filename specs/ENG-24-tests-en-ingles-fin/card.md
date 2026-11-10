@@ -48,7 +48,7 @@ flutter [timeout 60 min]: sh D:/Temp/w/herramientas/eng24-flutter.sh
 screenshots [timeout 40 min]: sh D:/Temp/w/herramientas/eng24-screenshots.sh
 node: node --test --test-force-exit tests/*.test.mjs docs-site/tests/*.test.mjs
 vs-main: node D:/Temp/w/herramientas/eng24-vs-main.mjs origin/main
-lint: sh D:/Temp/w/herramientas/eng24-lint.sh apps/api apps/mobile/test apps/mobile/integration_test
+lint: sh D:/Temp/w/herramientas/eng24-ruff-mypy-flutter-analyze.sh apps/api apps/mobile/test apps/mobile/integration_test
 app: sh D:/Temp/w/herramientas/eng24-app.sh eng24_app
 attacks: sh D:/Temp/w/herramientas/eng24-attacks.sh eng24_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --item-path "/bookings/all/{id}" --openapi apps/api/openapi.json
 migrate-upgrade: sh D:/Temp/w/herramientas/eng24-migrate.sh
