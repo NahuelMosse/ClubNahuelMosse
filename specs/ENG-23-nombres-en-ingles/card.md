@@ -80,6 +80,7 @@ public-allow: apps/mobile/integration_test/** [email] · los correos de los usua
 public-allow: apps/mobile/README.md [host] · 10.0.2.2 es la dirección con la que el emulador de Android llega a la máquina que lo corre; no es una red interna
 public-allow: apps/mobile/lib/features/home/presentation/home_shortcuts.dart [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
 public-allow: apps/mobile/lib/features/home/presentation/home_sports.dart [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
+public-allow: apps/mobile/test/** [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
 public-allow: apps/mobile/lib/common/unhandled_errors.dart [debug] · `debugPrint` es el registro de errores no manejados de la app, el mismo que main ya tiene; sólo se tradujo su mensaje
 ```
 
@@ -148,3 +149,8 @@ public-allow: apps/mobile/lib/common/unhandled_errors.dart [debug] · `debugPrin
 - L62 · 2026-11-10 · declared · mutate · apps/mobile/lib/features/venues/domain/venue_summary.dart · la card sólo cambió comentarios, nombres o literales en este archivo; mutate.mjs no halla operador aplicable (exit 3, .validation/mut-dart-venue_summary.log)
 - L63 · 2026-11-10 · declared · mutate · apps/mobile/lib/features/venues/domain/weekdays_label.dart · la card sólo cambió comentarios, nombres o literales en este archivo; mutate.mjs no halla operador aplicable (exit 3, .validation/mut-dart-weekdays_label.log)
 - L64 · 2026-11-10 · gate · mutate Dart: redirect.dart 0 survivors with redirect_by_role_test (exit 0); profile.dart 1/1 and app_notification.dart 1/1 detected with passing test sets; lint exit 0 (analyze no issues)
+- L65 · 2026-11-10 · declared · mutate · apps/api/app/modules/notifications/rules.py · la card sólo cambió nombres y comentarios; mutate.mjs no halla operador aplicable (exit 3, .validation/mut-n-rules.log)
+- L66 · 2026-11-10 · declared · mutate · apps/api/app/modules/notifications/use_cases.py · la card sólo cambió nombres y comentarios; mutate.mjs no halla operador aplicable (exit 3, .validation/mut-n-use_cases.log)
+- L67 · 2026-11-10 · declared · mutate · apps/mobile/lib/redirect.dart · mutada con la suite de Flutter (el comando de la línea pide pytest, que no ejercita Dart): 0 sobrevivientes con test/redirect_by_role_test.dart (.validation/mut-redirect2.log)
+- L68 · 2026-11-10 · declared · mutate · apps/mobile/lib/features/session/domain/profile.dart · mutada con la suite de Flutter: 1/1 detectado (.validation/mut-profile2.log)
+- L69 · 2026-11-10 · declared · mutate · apps/mobile/lib/features/notifications/domain/app_notification.dart · mutada con la suite de Flutter: 1/1 detectado (.validation/mut-appn2.log)
