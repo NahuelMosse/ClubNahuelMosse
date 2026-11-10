@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// The `lib/` files that, in a chain, are imported by name (from its folder) from [screen].
 Map<String, String> _withPieces(String screen) {
   final folder = screen.substring(0, screen.lastIndexOf('/'));
-  final folderImport = RegExp(r"^import '([a-z_]+/.dart)'", multiLine: true);
+  final folderImport = RegExp(r"^import '([a-z_]+\.dart)'", multiLine: true);
   final seen = <String, String>{};
   final pending = [screen];
   while (pending.isNotEmpty) {

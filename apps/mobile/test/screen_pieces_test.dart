@@ -15,7 +15,7 @@ String _code(String path) => File(
 /// A screen and the pieces of its folder that it imports, directly or indirectly.
 Map<String, String> _withPieces(String screen) {
   final folder = screen.substring(0, screen.lastIndexOf('/'));
-  final folderImport = RegExp(r"^import '([a-z_]+/.dart)'", multiLine: true);
+  final folderImport = RegExp(r"^import '([a-z_]+\.dart)'", multiLine: true);
   final seen = <String, String>{};
   final pending = [screen];
   while (pending.isNotEmpty) {
