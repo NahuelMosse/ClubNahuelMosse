@@ -27,7 +27,7 @@ not_read:
 
 ## Tasks
 
-- T1 · S1,S4,ENG-22-ASM-01,ENG-22-ASM-02,ENG-22-ASM-05 · tests/tests-in-english.test.mjs, apps/api/tests/**, apps/mobile/test/**, apps/mobile/integration_test/**, apps/api/pyproject.toml, apps/mobile/analysis_options.yaml, apps/mobile/test/analysis_options.yaml, scripts/e2e.sh, docs/technical/system-design.md (presentation), docs/technical/code-map.md (presentation), docs/technical/architecture.md (presentation), docs/technical/data-model.md (presentation), docs/getting-started.md (presentation), docs/business/accessibility.md (presentation), apps/mobile/README.md (presentation), apps/api/README.md (presentation), .claude/STACK.md, .claude/rules/interfaz.md · las carpetas y archivos de tests pasan a su nombre en inglés (`git mv`) y lo que los cita sigue la ruta nueva · tests: tests/tests-in-english.test.mjs "every test folder and file of the apps has an English name @ENG-22-S1 @assumption:ENG-22-ASM-05"; tests/tests-in-english.test.mjs "every repo path to a test that a doc, a kit rule, a config or a script cites exists @ENG-22-S4 @assumption:ENG-22-ASM-01 @assumption:ENG-22-ASM-02"
+- T1 · S1,S4,ENG-22-ASM-01,ENG-22-ASM-02,ENG-22-ASM-05 · tests/tests-in-english.test.mjs, apps/api/tests/**, apps/mobile/test/**, apps/mobile/integration_test/**, apps/api/pyproject.toml, apps/mobile/analysis_options.yaml, apps/mobile/test/analysis_options.yaml, scripts/e2e.sh, docs/technical/system-design.md (presentation), docs/technical/code-map.md (presentation), docs/technical/architecture.md (presentation), docs/technical/data-model.md (presentation), docs/getting-started.md (presentation), docs/business/accessibility.md (presentation), apps/mobile/README.md (presentation), apps/api/README.md (presentation), .claude/STACK.md, .claude/rules/interfaz.md, tests/docs-in-english.test.mjs · las carpetas y archivos de tests pasan a su nombre en inglés (`git mv`) y lo que los cita sigue la ruta nueva · tests: tests/tests-in-english.test.mjs "every test folder and file of the apps has an English name @ENG-22-S1 @assumption:ENG-22-ASM-05"; tests/tests-in-english.test.mjs "every repo path to a test that a doc, a kit rule, a config or a script cites exists @ENG-22-S4 @assumption:ENG-22-ASM-01 @assumption:ENG-22-ASM-02"
   new: no escribe lógica de producción
 - T2 · S3,ENG-22-ASM-04 · apps/api/tests/** · títulos (docstrings y nombres de las funciones de test), fixtures, helpers, variables y comentarios de los tests de la API en inglés · tests: tests/tests-in-english.test.mjs "every title, declared name and comment of the API tests is English @ENG-22-S3 @assumption:ENG-22-ASM-04"
   new: no escribe lógica de producción
@@ -46,7 +46,8 @@ not_read:
 
 - las carpetas y archivos de tests de `apps/api/tests`, `apps/mobile/test` y `apps/mobile/integration_test` cambian de nombre; `scripts/e2e.sh` toma las áreas de `integration_test` con sus nombres en inglés
 - los títulos de los tests cambian (traducidos); sus etiquetas `@<ID>-S<n>`, `@<ID>-H<n>` y `@assumption:<ID>-ASM-NN` quedan, y lo que cada test verifica no cambia
-- los tests que leen la ruta o el nombre de otro test (`test_ci_suite_green.py`, `test_docs_follow_the_app.py`, `test_suite_confiable*.py`, `codigo_legible_test.dart`, `account_in_english*_test.dart`) siguen el renombre (refactor-tests)
+- los tests que leen la ruta o el nombre de otro test (`test_ci_suite_green.py`, `test_docs_follow_the_app.py`, `test_suite_confiable*.py`, `codigo_legible_test.dart`, `account_in_english*_test.dart`, `tests/docs-in-english.test.mjs`) siguen el renombre (refactor-tests)
+- `.claude/kit.json` (`rules.interfaz`) sigue citando `apps/mobile/test/capturas/**`: el guard protege el archivo y `kit.mjs` no tiene comando para las rutas de una regla; queda para una persona
 
 ## Gate
 
@@ -55,6 +56,7 @@ suite [timeout 60 min]: sh D:/Temp/w/herramientas/eng22-pytest.sh -q -p no:cache
 flutter [timeout 60 min]: sh D:/Temp/w/herramientas/eng22-flutter.sh
 screenshots [timeout 40 min]: sh D:/Temp/w/herramientas/eng22-screenshots.sh
 node: node --test --test-force-exit tests/*.test.mjs docs-site/tests/*.test.mjs
+vs-main: node D:/Temp/w/herramientas/eng22-vs-main.mjs origin/main
 lint: sh D:/Temp/w/herramientas/eng22-lint.sh
 app: sh D:/Temp/w/herramientas/eng22-app.sh eng22_app
 attacks: sh D:/Temp/w/herramientas/eng22-attacks.sh eng22_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --item-path "/bookings/all/{id}" --openapi apps/api/openapi.json
@@ -69,3 +71,5 @@ no-docs: la documentación sólo cambia las rutas de tests que cita; no cambia c
 - L2 · 2026-11-09 · sin Jira: las dudas van directo a ASM (ENG-22-ASM-01..07), sin ronda de preguntas
 - L3 · 2026-11-10 · uncovered · ENG-22-ASM-08 · lo cubre el ataque HTTP de la línea attacks: del Gate (la fila head-unsupported ignorada con su motivo en http-attack.config.json), no un test etiquetado: la card no toca rutas
 - L4 · 2026-11-10 · declared · restart · la card sólo renombra y traduce tests: no guarda nada que un reinicio de la app pueda perder
+- L5 · 2026-11-10 · ACT-05 · ENG-22-ASM-08 sí tiene test etiquetado: apps/api/tests/unit/test_head_not_allowed.py (T7), además de la fila ignorada del ataque; L3 queda corregida por esta línea
+- L6 · 2026-11-10 · ACT-03, ACT-04, ACT-06 · línea vs-main: del Gate (D:/Temp/w/herramientas/eng22-vs-main.mjs contra origin/main): las etiquetas de los tests y su cantidad son las de main más las de ENG-22, los PNG de capturas son los blobs de main byte por byte, y cada literal de los tests de main que es un texto castellano de la app (un valor de app_es.arb) sigue apareciendo igual cantidad de veces
