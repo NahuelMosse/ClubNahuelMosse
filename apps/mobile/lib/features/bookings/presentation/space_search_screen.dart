@@ -110,14 +110,14 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   Future<void> _load() async {
     setState(() => _loadFailed = false);
     Object? failure;
-    var vencida = false;
+    var expired = false;
     try {
       final venues = await widget.venues.repository.active();
       final catalog = await widget.spaces.repository.catalog();
       if (mounted) setState(() => _options = (venues, catalog));
       return;
     } on SessionExpired {
-      vencida = true;
+      expired = true;
     } on NetworkFailure catch (e) {
       failure = e;
     }
@@ -126,7 +126,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     await notifySendFailure(
       context,
       session: widget.session,
-      expired: vencida,
+      expired: expired,
       error: failure,
       retry: _load,
     );
@@ -213,7 +213,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       _searchFailure = null;
       _indoor = null;
     });
-    var vencida = false;
+    var expired = false;
     try {
       final free = await widget.availability.freeSpaces(
         venueId: venue.id,
@@ -242,7 +242,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       }
       return;
     } on SessionExpired {
-      vencida = true;
+      expired = true;
     } on NetworkFailure catch (e) {
       _searchFailure = e;
     }
@@ -251,7 +251,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       _searching = false;
       _query = query;
     });
-    if (vencida) await notifySessionExpired(context, widget.session);
+    if (expired) await notifySessionExpired(context, widget.session);
   }
 
   void _clear() {

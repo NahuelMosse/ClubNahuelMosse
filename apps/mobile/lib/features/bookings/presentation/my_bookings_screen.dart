@@ -108,7 +108,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       _failure = false;
     });
     Object? failure;
-    var vencida = false;
+    var expired = false;
     try {
       final catalog = await widget.spaces.repository.catalog();
       final items = await widget.bookings.mine(history: _history);
@@ -118,7 +118,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       }
       return;
     } on SessionExpired {
-      vencida = true;
+      expired = true;
     } on NetworkFailure catch (e) {
       failure = e;
     }
@@ -130,7 +130,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     await notifyLoadFailure(
       context,
       session: widget.session,
-      expired: vencida,
+      expired: expired,
       error: failure,
       retry: _load,
     );

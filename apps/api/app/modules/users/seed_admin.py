@@ -1,7 +1,7 @@
 """Creates the first admin account, or promotes an existing one.
 
     ADMIN_PASSWORD=... uv run python -m app.modules.users.seed_admin \\
-        --email admin@club.com --first-name Ana --last-name Díaz --dni 30111222 \\
+        --email admin@example.com --first-name Ana --last-name Díaz --dni 30111222 \\
         --birth-date 1985-06-01
 
 The password arrives through an environment variable so it does not stay in the terminal history.

@@ -120,7 +120,7 @@ def test_the_english_recovery_email_links_to_link_recover_with_code_and_the_page
     assert api.post("/password-recovery/check", json={"code": code.group(1)}).status_code == 204
     page = api.get("/link/recover")
     assert page.status_code == 200
-    assert 'get("code")' in page.text and "intent://app/recuperar?codigo=" in page.text
+    assert 'get("code")' in page.text and "intent://app/recover?code=" in page.text
 
 
 def test_the_catalog_keeps_mains_keys_with_english_names_and_the_seed_keeps_its_options(

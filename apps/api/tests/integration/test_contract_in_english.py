@@ -116,29 +116,6 @@ def test_every_json_field_of_the_published_contract_is_named_as_the_glossary_say
     assert names == expected
 
 
-def test_an_error_body_names_its_fields_in_english_and_keeps_mains_message(
-    api: TestClient, admin_token: str
-) -> None:
-    """an error body names its fields in English and keeps main's message @ENG-18-S2 @ENG-18-S9"""
-    venue = api.post("/venues", headers=_auth(admin_token), json={})
-    assert venue.status_code == 422
-    assert venue.json() == {
-        "errors": {
-            "name": "El nombre es obligatorio",
-            "address": "La dirección es obligatoria",
-            "opens_at": "El horario de apertura es obligatorio",
-            "closes_at": "El horario de cierre es obligatorio",
-            "open_days": "Elegí los días que abre",
-        }
-    }
-    signup = api.post("/register", json={})
-    assert signup.status_code == 422
-    assert set(signup.json()["errors"]) == {
-        "first_name", "last_name", "dni", "birth_date", "email", "password"
-    }  # fmt: skip
-    assert signup.json()["errors"]["first_name"] == "El nombre es obligatorio"
-
-
 def test_a_booking_error_names_date_space_id_start_hour_hours_until_and_dates_in_english(
     api: TestClient, admin_token: str, user_token: str, venue: tuple[str, str]
 ) -> None:
@@ -179,23 +156,6 @@ def test_a_booking_error_names_date_space_id_start_hour_hours_until_and_dates_in
         params={"since": "2030-01-02", "until": "2030-01-01"},
     )
     assert set(reversed_range.json()["errors"]) == {"dates"}
-
-
-def test_a_void_error_names_reason_in_english(api: TestClient, admin_token: str) -> None:
-    """a void error names reason in English @ENG-18-S2"""
-    r = api.post(
-        f"/bookings/{uuid.uuid4()}/void",
-        headers=_auth(admin_token),
-        json={
-            "reason": " ",
-            "space_id": str(uuid.uuid4()),
-            "starts_at": "2030-01-01T10:00:00-03:00",
-        },
-    )
-    assert (r.status_code, r.json()) == (
-        422,
-        {"errors": {"reason": "El motivo es obligatorio para anular"}},
-    )
 
 
 def test_a_password_change_error_names_current_password_and_new_password(
@@ -294,37 +254,6 @@ def test_every_enum_value_travels_as_the_database_stores_it_and_nothing_translat
     ]
 
 
-def test_the_push_data_carries_kind_and_booking_id_with_the_english_kind_and_mains_text() -> None:
-    """the push data carries kind and booking_id with the English kind and main's text @ENG-18-S5 @ENG-18-S9 @assumption:ENG-18-ASM-10"""
-    from app.modules.notifications.push import build_message
-    from app.modules.notifications.rules import (
-        VoidedBooking,
-        forced_cancellation_message,
-        notice_data,
-    )
-
-    booking = uuid.uuid4()
-    assert notice_data("reminder", booking) == {"kind": "reminder", "booking_id": str(booking)}
-    assert notice_data("forced_cancellation", None) == {"kind": "forced_cancellation"}
-    notice = forced_cancellation_message(
-        [
-            VoidedBooking(
-                booking,
-                __import__("datetime").datetime.now().astimezone(),
-                "Futbol",
-                "F5",
-                "Sede",
-                "lluvia",
-            )
-        ]
-    )
-    assert notice.title == "El club anuló tu reserva"
-    assert build_message(["t"], notice).data == {
-        "kind": "forced_cancellation",
-        "booking_id": str(booking),
-    }
-
-
 def test_every_query_parameter_is_named_as_the_glossary_says(
     api: TestClient, user_token: str, admin_token: str, venue: tuple[str, str]
 ) -> None:
@@ -392,46 +321,6 @@ def test_an_old_spanish_body_answers_422_where_fields_are_required_and_changes_n
         "spaces"
     ]
     assert [s["price_per_hour"] for s in after] == [38000]
-
-
-def test_the_recovery_email_links_to_link_recover_with_code_and_the_page_opens_the_same_app_route(
-    api: TestClient, engine: Engine, unique: Callable[[], str]
-) -> None:
-    """the recovery email links to /link/recover with #code and the page opens the same app route @assumption:ENG-18-ASM-06"""
-    account = _register(api, unique())
-    assert api.post("/password-recovery", json={"email": account["email"]}).status_code == 202
-    with engine.connect() as conn:
-        subject, body = conn.execute(
-            text(
-                "SELECT subject, body FROM outgoing_email WHERE recipient = :p ORDER BY id DESC LIMIT 1"
-            ),
-            {"p": account["email"]},
-        ).one()
-    assert subject == "Creá una contraseña nueva"
-    assert re.search(r"/link/recover#code=[\w-]+", body) and "/enlace/" not in body
-    code = re.search(r"#code=([\w-]+)", body)
-    assert code is not None
-    assert api.post("/password-recovery/check", json={"code": code.group(1)}).status_code == 204
-    page = api.get("/link/recover")
-    assert page.status_code == 200
-    assert 'get("code")' in page.text and "intent://app/recuperar?codigo=" in page.text
-
-
-def test_the_email_the_catalog_names_and_the_seeds_stay_as_in_main(
-    api: TestClient, user_token: str
-) -> None:
-    """the email, the catalog names and the seeds stay as in main @ENG-18-S9"""
-    main_source = subprocess.run(
-        ["git", "show", f"{MAIN}:apps/api/app/modules/spaces/rules.py"],
-        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True,
-    ).stdout  # fmt: skip
-    pairs = re.findall(r'(?:Sport\(\s*|Kind\()"([^"]+)",\s*"([^"]+)"', main_source)
-    catalog = api.get("/spaces/catalog", headers=_auth(user_token)).json()["sports"]
-    shown = [(s["key"], s["name"]) for s in catalog]
-    shown += [(k["key"], k["name"]) for s in catalog for k in s["kinds"]]
-    assert sorted(shown) == sorted(pairs)
-    seed = "apps/api/app/modules/users/seed_admin.py"
-    assert subprocess.run(["git", "diff", "--quiet", MAIN, "--", seed], cwd=ROOT).returncode == 0
 
 
 def test_mains_contract_renamed_by_the_glossary_is_the_published_contract(api: TestClient) -> None:

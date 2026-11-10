@@ -130,13 +130,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _failure = false;
     });
     Object? failure;
-    var vencida = false;
+    var expired = false;
     try {
       final data = await _read();
       if (mounted && request == _request) setState(() => _data = data);
       return;
     } on SessionExpired {
-      vencida = true;
+      expired = true;
     } on NetworkFailure catch (e) {
       failure = e;
     }
@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await notifyLoadFailure(
       context,
       session: widget.session,
-      expired: vencida,
+      expired: expired,
       error: failure,
       retry: _load,
     );

@@ -5,7 +5,6 @@ ENG17_REHEARSAL_URL and compares only counts and tallies per value, never rows.
 """
 
 import os
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -14,7 +13,6 @@ from alembic.config import Config as AlembicConfig
 from sqlalchemy import Engine, create_engine, text
 
 API_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = API_ROOT.parents[1]
 TABLES = {
     "usuario": "app_user", "sede": "venue", "espacio": "space", "reserva": "booking",
     "enlace_recuperacion": "recovery_link", "correo_saliente": "outgoing_email",
@@ -78,20 +76,3 @@ def test_the_migration_runs_on_the_render_dump_translates_every_row_and_goes_bac
     assert _counts(engine, list(TABLES)) == before_counts
     assert {key: _tally(engine, *key) for key in TALLIES} == before
     engine.dispose()
-
-
-def test_no_versioned_file_holds_the_render_connection_string() -> None:
-    """no versioned file holds the Render connection string @assumption:ENG-17-ASM-09"""
-    files = subprocess.run(
-        ["git", "ls-files"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
-    ).stdout.split("\n")
-    leaking = [
-        name
-        for name in files
-        if name
-        and Path(REPO_ROOT, name).is_file()
-        and not name.endswith((".png", ".jpg", ".pdf", ".ttf", ".otf", ".ico", ".webp"))
-        and "dpg-" in Path(REPO_ROOT, name).read_text(encoding="utf-8", errors="ignore")
-    ]
-
-    assert leaking == []

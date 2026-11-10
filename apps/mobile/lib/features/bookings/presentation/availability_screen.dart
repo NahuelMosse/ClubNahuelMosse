@@ -148,7 +148,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   Future<void> _load() async {
     setState(() => _failure = false);
     Object? failure;
-    var vencida = false;
+    var expired = false;
     try {
       final catalog = await widget.spaces.repository.catalog();
       final venues = await widget.venues.repository.active();
@@ -177,11 +177,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       await _search();
       return;
     } on SessionExpired {
-      vencida = true;
+      expired = true;
     } on NetworkFailure catch (e) {
       failure = e;
     }
-    await _notify(vencida: vencida, failure: failure, retry: _load);
+    await _notify(expired: expired, failure: failure, retry: _load);
   }
 
   /// Asks for the grid of the chosen court, date and duration. The chosen start time
@@ -193,7 +193,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       _failure = false;
     });
     Object? failure;
-    var vencida = false;
+    var expired = false;
     final query = (_chosen, _hours);
     try {
       final grid = await widget.availability.grid(
@@ -227,7 +227,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       await _search();
       return;
     } on SessionExpired {
-      vencida = true;
+      expired = true;
     } on NetworkFailure catch (e) {
       failure = e;
     }
@@ -238,13 +238,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       _gridQuery = null;
       _start = null;
     });
-    await _notify(vencida: vencida, failure: failure, retry: _search);
+    await _notify(expired: expired, failure: failure, retry: _search);
   }
 
   /// An API error: no times on screen and «REINTENTAR», unless the person retries from
   /// the notice.
   Future<void> _notify({
-    required bool vencida,
+    required bool expired,
     required Object? failure,
     required Future<void> Function() retry,
   }) async {
@@ -253,7 +253,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     await notifyLoadFailure(
       context,
       session: widget.session,
-      expired: vencida,
+      expired: expired,
       error: failure,
       retry: retry,
     );

@@ -102,7 +102,7 @@ breaks it.
 | Add a business rule (for example, a maximum of hours) | `rules.py` of the feature in `apps/api/app/modules/` and its test in `apps/api/tests/unit/` |
 | Add a field to a table | A new migration in `apps/api/migrations/versions/` (copy the shape of the last one), the SQL of `repository.py` and the route in `routes.py`, both in the feature folder |
 | Add a screen | A `*_screen.dart` file in the feature folder and its route in `apps/mobile/lib/router.dart` |
-| Add an API route | The function in `app/modules/<feature>/routes.py`, register it in `apps/mobile/lib/api/rutas.dart` of the app and regenerate `openapi.json` (see the API README) |
+| Add an API route | The function in `app/modules/<feature>/routes.py`, register it in `apps/mobile/lib/api/api_routes.dart` of the app and regenerate `openapi.json` (see the API README) |
 
 ## How to try it on your machine
 
