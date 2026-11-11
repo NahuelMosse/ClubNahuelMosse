@@ -23,14 +23,14 @@ class AppConfig {
     const apiUrl = String.fromEnvironment('API_URL');
     if (apiUrl.isEmpty) {
       throw StateError(
-        'Falta --dart-define=API_URL con la dirección de la API',
+        'Missing --dart-define=API_URL with the address of the API',
       );
     }
-    const authEmulator = String.fromEnvironment('AUTH_EMULADOR');
+    const authEmulator = String.fromEnvironment('AUTH_EMULATOR');
     // With the emulator there is no Firebase project: notifications are simulated and the
     // app polls often, so the scenarios do not wait.
     const seconds = int.fromEnvironment(
-      'AVISOS_SEGUNDOS',
+      'NOTIFICATION_POLL_SECONDS',
       defaultValue: authEmulator == '' ? 20 : 2,
     );
     const push = String.fromEnvironment('PUSH');
@@ -46,7 +46,7 @@ class AppConfig {
     return AppConfig(
       apiUrl: apiUrl,
       firebase: FirebaseProject.fromEnvironment(),
-      push: push == 'simulado' ? Push.simulated : Push.fcm,
+      push: push == 'simulated' ? Push.simulated : Push.fcm,
       notificationPollInterval: const Duration(seconds: seconds),
     );
   }
@@ -86,8 +86,8 @@ class FirebaseProject {
     const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
     if ([apiKey, appId, senderId, projectId].any((v) => v.isEmpty)) {
       throw StateError(
-        'Faltan --dart-define FIREBASE_API_KEY, FIREBASE_APP_ID, '
-        'FIREBASE_SENDER_ID y FIREBASE_PROJECT_ID, o AUTH_EMULADOR',
+        'Missing --dart-define FIREBASE_API_KEY, FIREBASE_APP_ID, '
+        'FIREBASE_SENDER_ID and FIREBASE_PROJECT_ID, or AUTH_EMULATOR',
       );
     }
     return const FirebaseProject(

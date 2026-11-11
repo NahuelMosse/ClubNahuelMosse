@@ -4,43 +4,43 @@ import '../../../theme/tokens.dart';
 class RoundButton extends StatelessWidget {
   const RoundButton({
     super.key,
-    required this.icono,
-    required this.etiqueta,
-    required this.alTocar,
+    required this.icon,
+    required this.label,
+    required this.onTap,
   });
 
-  final IconData icono;
-  final String etiqueta;
-  final VoidCallback? alTocar;
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final activo = alTocar != null;
+    final active = onTap != null;
     return Semantics(
       container: true,
       button: true,
-      enabled: activo,
-      label: etiqueta,
+      enabled: active,
+      label: label,
       excludeSemantics: true,
-      onTap: alTocar,
+      onTap: onTap,
       child: SizedBox(
         width: Spacing.s48,
         height: Spacing.s48,
         child: Material(
-          color: activo ? p.bgSurface : Colors.transparent,
+          color: active ? p.bgSurface : Colors.transparent,
           shape: CircleBorder(
             side: BorderSide(
-              color: activo ? p.borderControl : Colors.transparent,
+              color: active ? p.borderControl : Colors.transparent,
             ),
           ),
           child: InkWell(
-            onTap: alTocar,
+            onTap: onTap,
             customBorder: const CircleBorder(),
             child: Icon(
-              icono,
+              icon,
               size: 22,
-              color: activo ? p.textPrimary : p.stateDisabled,
+              color: active ? p.textPrimary : p.stateDisabled,
             ),
           ),
         ),

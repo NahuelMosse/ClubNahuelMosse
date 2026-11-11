@@ -6,7 +6,7 @@ import '../../session/domain/token_source.dart';
 import '../domain/venue.dart';
 import '../domain/venue_exceptions.dart';
 
-/// Las sedes del club, leídas, dadas de alta y editadas en la API con la sesión abierta.
+/// The venues of the club, read, created and edited in the API with the open session.
 class VenuesRepository {
   VenuesRepository({required ApiClient api, required TokenSource session})
     : _api = api,
@@ -15,23 +15,23 @@ class VenuesRepository {
   final ApiClient _api;
   final TokenSource _session;
 
-  /// Las sedes activas, por nombre.
+  /// The active venues, by name.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<List<Venue>> active() async {
     final r = await _api.get('/venues', token: await _session.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
-    if (r.cuerpo case {'venues': final List<Object?> venues}) {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code != 200) throw ServerError(r.code);
+    if (r.body case {'venues': final List<Object?> venues}) {
       final parsed = [for (final s in venues) Venue.fromJson(s)];
       if (!parsed.contains(null)) return [...parsed.nonNulls];
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 
-  /// Da de alta la sede y devuelve la que quedó guardada.
+  /// Creates the venue and returns the one that was saved.
   ///
-  /// Lanza [VenueRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Throws [VenueRejected], [SessionExpired], [NoConnection] or [ServerError].
   Future<Venue> create({
     required String name,
     required String address,
@@ -49,11 +49,11 @@ class VenuesRepository {
     return _saved(r, 201);
   }
 
-  /// Guarda los datos nuevos de la sede [id] y devuelve cómo quedó. Con [confirm], el
-  /// horario se guarda aunque deje afuera reservas futuras.
+  /// Saves the new data of the venue [id] and returns how it ended up. With [confirm],
+  /// the schedule is saved even if it leaves future bookings outside.
   ///
-  /// Lanza [BookingsOutsideHours], [VenueUnavailable], [VenueRejected], [SessionExpired],
-  /// [SinConexion] o [ErrorDelServidor].
+  /// Throws [BookingsOutsideHours], [VenueUnavailable], [VenueRejected],
+  /// [SessionExpired], [NoConnection] or [ServerError].
   Future<Venue> update(
     String id, {
     required String name,
@@ -71,37 +71,35 @@ class VenuesRepository {
       'open_days': days,
       'confirm': confirm,
     }, token: await _session.token());
-    if (r.codigo == 404) throw const VenueUnavailable();
-    if (r.cuerpo case {
-      'bookings_outside': final int count,
-    } when r.codigo == 409) {
+    if (r.code == 404) throw const VenueUnavailable();
+    if (r.body case {'bookings_outside': final int count} when r.code == 409) {
       throw BookingsOutsideHours(count);
     }
     return _saved(r, 200);
   }
 
-  /// Da de baja la sede [id] y sus espacios.
+  /// Deactivates the venue [id] and its spaces.
   ///
-  /// Lanza [VenueUnavailable], [VenueHasBookings], [SessionExpired], [SinConexion] o
-  /// [ErrorDelServidor].
+  /// Throws [VenueUnavailable], [VenueHasBookings], [SessionExpired], [NoConnection] or
+  /// [ServerError].
   Future<void> deactivate(String id) async {
     final r = await _api.delete('/venues/$id', token: await _session.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 404) throw const VenueUnavailable();
-    if (r.codigo == 409) throw const VenueHasBookings();
-    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 404) throw const VenueUnavailable();
+    if (r.code == 409) throw const VenueHasBookings();
+    if (r.code != 204) throw ServerError(r.code);
   }
 
-  Venue _saved(Respuesta r, int success) {
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 409 || r.codigo == 422) {
-      final errors = fieldErrors(r.cuerpo);
+  Venue _saved(ApiResponse r, int success) {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 409 || r.code == 422) {
+      final errors = fieldErrors(r.body);
       if (errors.isNotEmpty) {
-        throw VenueRejected(errors, duplicate: r.codigo == 409);
+        throw VenueRejected(errors, duplicate: r.code == 409);
       }
     }
-    final venue = r.codigo == success ? Venue.fromJson(r.cuerpo) : null;
-    if (venue == null) throw ErrorDelServidor(r.codigo);
+    final venue = r.code == success ? Venue.fromJson(r.body) : null;
+    if (venue == null) throw ServerError(r.code);
     return venue;
   }
 }

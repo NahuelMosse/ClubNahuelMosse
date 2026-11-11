@@ -3,28 +3,28 @@ import '../../../common/selectable_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// `Segmented-Tab`: Próximas o Historial.
+/// `Segmented-Tab`: «Próximas» or «Historial».
 class BookingsTabBar extends StatelessWidget {
   const BookingsTabBar({
     super.key,
-    required this.historial,
-    required this.alElegir,
+    required this.history,
+    required this.onSelect,
   });
 
-  final bool historial;
-  final ValueChanged<bool> alElegir;
+  final bool history;
+  final ValueChanged<bool> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    Widget pestana(String texto, {required bool esHistorial}) {
-      final elegida = historial == esHistorial;
+    Widget tab(String text, {required bool isHistory}) {
+      final chosen = history == isHistory;
       return Expanded(
         child: SelectableChip(
-          text: texto,
-          selected: elegida,
-          onTap: () => alElegir(esHistorial),
+          text: text,
+          selected: chosen,
+          onTap: () => onSelect(isHistory),
           minHeight: Spacing.s48,
           padding: EdgeInsets.zero,
           unselectedBackground: Colors.transparent,
@@ -41,9 +41,9 @@ class BookingsTabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          pestana(l.bookingTabUpcoming, esHistorial: false),
+          tab(l.bookingTabUpcoming, isHistory: false),
           const SizedBox(width: Spacing.s4),
-          pestana(l.bookingTabHistory, esHistorial: true),
+          tab(l.bookingTabHistory, isHistory: true),
         ],
       ),
     );

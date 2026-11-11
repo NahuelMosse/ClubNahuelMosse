@@ -142,7 +142,7 @@ class ProxyApi {
 }
 
 Uri _identity(String method) {
-  const emulator = String.fromEnvironment('AUTH_EMULADOR');
+  const emulator = String.fromEnvironment('AUTH_EMULATOR');
   return Uri.parse(
     'http://$emulator/identitytoolkit.googleapis.com/v1/accounts:$method'
     '?key=clave-del-emulador',
@@ -272,8 +272,8 @@ Future<List<String>> spacesAUserSees() async {
 /// The session of the administrator that `scripts/e2e.sh` seeds, like that of another phone.
 Future<String> _adminToken() async {
   final token = await _token(
-    const String.fromEnvironment('ADMIN_CORREO'),
-    const String.fromEnvironment('ADMIN_CONTRASENA'),
+    const String.fromEnvironment('ADMIN_EMAIL'),
+    const String.fromEnvironment('ADMIN_PASSWORD'),
   );
   if (token == null) throw StateError('the administrator cannot sign in');
   return token;
@@ -739,7 +739,7 @@ Future<void> cancelUpcomingOf(
   if (token == null) throw StateError('the account $email cannot sign in');
   for (final id in await bookingNumbers(email, password: password)) {
     final r = await http.post(
-      Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas/$id/cancelar'),
+      Uri.parse('${AppConfig.fromEnvironment().apiUrl}/bookings/$id/cancelar'),
       headers: {'authorization': 'Bearer $token'},
     );
     if (r.statusCode != 200) throw StateError('cancel: ${r.statusCode}');
@@ -798,7 +798,7 @@ Future<void> cancelFromAnotherPhone(
   }
   final r = await http.post(
     Uri.parse(
-      '${AppConfig.fromEnvironment().apiUrl}/reservas/${numbers.single}/cancelar',
+      '${AppConfig.fromEnvironment().apiUrl}/bookings/${numbers.single}/cancelar',
     ),
     headers: {'authorization': 'Bearer $token'},
   );
@@ -836,7 +836,7 @@ Future<int> voidFromAdmin(
 }) async {
   final r = await http.post(
     Uri.parse(
-      '${AppConfig.fromEnvironment().apiUrl}/reservas/${booking.id}/anular',
+      '${AppConfig.fromEnvironment().apiUrl}/bookings/${booking.id}/anular',
     ),
     headers: {
       'content-type': 'application/json',

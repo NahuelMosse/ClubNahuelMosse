@@ -36,10 +36,10 @@ void main() {
           builder: (_, _) =>
               LoginScreen(session: session, pending: PendingBooking()),
         ),
-        GoRoute(path: '/inicio', builder: (_, _) => const Text('HOME')),
+        GoRoute(path: '/home', builder: (_, _) => const Text('HOME')),
         GoRoute(path: '/admin', builder: (_, _) => const Text('PANEL')),
         GoRoute(
-          path: '/recuperar-contrasena',
+          path: '/password-recovery',
           builder: (_, _) => const Text('RECUPERAR'),
         ),
       ],
@@ -192,7 +192,7 @@ void main() {
       var shouldFail = true;
       final credentials = FakeCredentials(
         onSignIn: (_, _) async {
-          if (shouldFail) throw const SinConexion();
+          if (shouldFail) throw const NoConnection();
         },
       );
       await mountLogin(tester, credentials);

@@ -5,40 +5,40 @@ import '../../../common/top_bar.dart';
 import '../../../theme/tokens.dart';
 import 'booking_steps.dart';
 
-/// La estructura común de «Confirmá…»: la barra, los pasos, la tarjeta y el pie con la
-/// acción principal y la secundaria.
+/// The common structure of «Confirmá…»: the bar, the steps, the card and the footer with
+/// the primary and the secondary action.
 class ConfirmationSkeleton extends StatelessWidget {
   const ConfirmationSkeleton({
     super.key,
-    required this.titulo,
-    required this.enviando,
-    required this.alVolver,
-    required this.textoPrimario,
-    required this.alPrimario,
-    required this.textoSecundario,
-    required this.alSecundario,
-    required this.tarjeta,
-    this.peligro = false,
+    required this.title,
+    required this.sending,
+    required this.onBack,
+    required this.primaryText,
+    required this.onPrimary,
+    required this.secondaryText,
+    required this.onSecondary,
+    required this.card,
+    this.danger = false,
   });
 
-  final String titulo;
-  final bool enviando;
-  final VoidCallback alVolver;
-  final String textoPrimario;
-  final VoidCallback alPrimario;
-  final String textoSecundario;
-  final VoidCallback alSecundario;
-  final bool peligro;
-  final Widget tarjeta;
+  final String title;
+  final bool sending;
+  final VoidCallback onBack;
+  final String primaryText;
+  final VoidCallback onPrimary;
+  final String secondaryText;
+  final VoidCallback onSecondary;
+  final bool danger;
+  final Widget card;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return PopScope(
-      canPop: !enviando,
+      canPop: !sending,
       child: Scaffold(
         backgroundColor: p.bgBase,
-        appBar: TopBar(title: titulo, onBack: alVolver),
+        appBar: TopBar(title: title, onBack: onBack),
         bottomNavigationBar: DecoratedBox(
           decoration: BoxDecoration(
             color: p.bgSurface,
@@ -53,15 +53,15 @@ class ConfirmationSkeleton extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PrimaryButton(
-                    label: textoPrimario,
-                    onTap: alPrimario,
-                    loading: enviando,
+                    label: primaryText,
+                    onTap: onPrimary,
+                    loading: sending,
                   ),
                   const SizedBox(height: Spacing.s12),
                   OutlineButton(
-                    label: textoSecundario,
-                    onTap: enviando ? null : alSecundario,
-                    danger: peligro,
+                    label: secondaryText,
+                    onTap: sending ? null : onSecondary,
+                    danger: danger,
                   ),
                 ],
               ),
@@ -78,7 +78,7 @@ class ConfirmationSkeleton extends StatelessWidget {
           children: [
             const BookingSteps(actual: 1),
             const SizedBox(height: Spacing.s24),
-            tarjeta,
+            card,
           ],
         ),
       ),

@@ -120,11 +120,11 @@ void main() {
       for (final (name, open) in [
         (
           'error_connection',
-          (BuildContext c) => showNetworkError(c, const SinConexion()),
+          (BuildContext c) => showNetworkError(c, const NoConnection()),
         ),
         (
           'error_server',
-          (BuildContext c) => showNetworkError(c, const ErrorDelServidor(500)),
+          (BuildContext c) => showNetworkError(c, const ServerError(500)),
         ),
         ('session_expired', showSessionExpired),
       ]) {

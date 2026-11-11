@@ -232,7 +232,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
-        start: '/admin/espacios',
+        start: '/admin/spaces',
         api: apiRoutes({
           ...spaceRoutes(),
           'GET /spaces': (
@@ -255,7 +255,7 @@ void main() {
     testWidgets('says so when there are no spaces', (tester) async {
       await mountAdmin(
         tester,
-        start: '/admin/espacios',
+        start: '/admin/spaces',
         api: apiRoutes({
           ...spaceRoutes(),
           'GET /spaces': (200, '{"spaces": []}'),
@@ -274,7 +274,7 @@ void main() {
       final requests = <http.Request>[];
       await mountAdmin(
         tester,
-        start: '/admin/espacios/nuevo',
+        start: '/admin/spaces/new',
         api: apiRoutes(routes ?? spaceRoutes(), requests: requests),
       );
       return requests;
@@ -453,7 +453,7 @@ void main() {
     ) async {
       await mountAdmin(
         tester,
-        start: '/admin/espacios/creado',
+        start: '/admin/spaces/created',
         api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('¡Espacio deportivo creado!'), findsNothing);
@@ -470,7 +470,7 @@ void main() {
         api: apiRoutes({}),
         session: FakeSession(userProfile),
         appearance: Appearance.inMemory(),
-        initialLocation: '/admin/espacios/nuevo',
+        initialLocation: '/admin/spaces/new',
       ),
     );
     await tester.pumpAndSettle();

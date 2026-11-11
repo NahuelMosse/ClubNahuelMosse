@@ -6,19 +6,20 @@ import '../domain/profile.dart';
 import '../domain/session_exceptions.dart';
 import '../domain/token_source.dart';
 
-/// La sesión de la app: inicia, retoma la que quedó guardada y la cierra.
+/// The app's session: signs in, resumes the one that was stored and closes it.
 class Session extends ChangeNotifier implements TokenSource {
   Session({required SessionRepository repository}) : _repository = repository;
 
   final SessionRepository _repository;
 
-  /// Lo que hay que empezar con la sesión todavía abierta al cerrarla, como avisarle a la API
-  /// que este teléfono deja de recibir avisos: recibe el token de la sesión que se cierra. Si
-  /// algo falla, la sesión se cierra igual.
+  /// What must be started with the session still open when closing it, like telling the
+  /// API that this phone stops receiving notices: it receives the token of the session
+  /// being closed. If something fails, the session closes anyway.
   final onClose = <Future<void> Function(String)>[];
 
-  /// Lo que hay que hacer cada vez que el teléfono sale de una sesión, sea cual sea el camino:
-  /// cerrarla, una cuenta que ya no vale o una baja. Si algo falla, se sigue igual.
+  /// What must be done every time the phone leaves a session, whatever the path: closing
+  /// it, an account that no longer applies or a deletion. If something fails, it goes on
+  /// anyway.
   final onExit = <Future<void> Function()>[];
 
   Profile? _profile;
@@ -30,8 +31,8 @@ class Session extends ChangeNotifier implements TokenSource {
     notifyListeners();
   }
 
-  /// Lanza [InvalidCredentials], [SinConexion] o [ErrorDelServidor]. Si falla después
-  /// de que Firebase aceptó la contraseña, no deja una sesión a medias.
+  /// Throws [InvalidCredentials], [NoConnection] or [ServerError]. If it fails after
+  /// Firebase accepted the password, it does not leave a half-open session.
   Future<Profile> signIn(String email, String password) async {
     await _repository.credentials.signIn(email.trim().toLowerCase(), password);
     try {
@@ -44,10 +45,11 @@ class Session extends ChangeNotifier implements TokenSource {
     }
   }
 
-  /// La sesión que quedó abierta en el dispositivo, si todavía vale.
+  /// The session left open on the device, if it still applies.
   ///
-  /// Sólo la cierra si la cuenta ya no es válida. Sin red o con la API caída conserva la
-  /// sesión y lanza [SinConexion] o [ErrorDelServidor] para que el arranque ofrezca reintentar.
+  /// It only closes it if the account is no longer valid. Without network or with the API
+  /// down it keeps the session and throws [NoConnection] or [ServerError] so the startup
+  /// offers to retry.
   Future<Profile?> resume() async {
     if (!_repository.hasAccount) return null;
     try {
@@ -60,9 +62,9 @@ class Session extends ChangeNotifier implements TokenSource {
     }
   }
 
-  /// Vuelve a pedir el perfil a la API: los datos no se guardan en el dispositivo.
+  /// Asks the API for the profile again: the data is not stored on the device.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<Profile> refresh() async {
     final before = _profile;
     final Profile profile;
@@ -75,16 +77,17 @@ class Session extends ChangeNotifier implements TokenSource {
     return profile;
   }
 
-  /// Guarda [profile] sólo si la sesión es la misma que cuando salió el pedido: si mientras
-  /// tanto se cerró o entró otra cuenta, la respuesta ya no le corresponde.
+  /// Stores [profile] only if the session is the same as when the request went out: if in
+  /// the meantime it closed or another account signed in, the response no longer belongs
+  /// to it.
   void _ifStillSame(Profile? before, Profile profile) {
     if (!identical(_profile, before)) throw const SessionExpired();
     _current = profile;
   }
 
-  /// Guarda los datos personales y devuelve el perfil que quedó en la API.
+  /// Saves the personal data and returns the profile that stayed in the API.
   ///
-  /// Lanza [DataRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Throws [DataRejected], [SessionExpired], [NoConnection] or [ServerError].
   Future<Profile> updateProfile({
     required String firstName,
     required String lastName,
@@ -104,7 +107,7 @@ class Session extends ChangeNotifier implements TokenSource {
     return profile;
   }
 
-  /// Lanza [PasswordRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [PasswordRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<void> changePassword(String current, String newPassword) async {
     final profile = _profile;
     final token = await this.token();
@@ -117,32 +120,34 @@ class Session extends ChangeNotifier implements TokenSource {
     );
   }
 
-  /// Da de baja la cuenta y cierra la sesión del dispositivo.
+  /// Deletes the account and closes the session of the device.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor]; en esos casos la cuenta
-  /// sigue igual.
+  /// Throws [SessionExpired], [NoConnection] or [ServerError]; in those cases the account
+  /// stays as it was.
   Future<void> deactivate() async {
     final token = await this.token();
     final before = _profile;
     await _repository.deactivate(token);
-    // Si mientras tanto se cerró la sesión o entró otra cuenta, no se la toca.
+    // If in the meantime the session closed or another account signed in, it is not
+    // touched.
     if (!identical(_profile, before)) return;
     try {
       await _leave();
     } on Exception {
-      // La cuenta ya no existe en la API: el próximo arranque encuentra vencida la sesión
-      // de Firebase que haya quedado y la cierra.
+      // The account no longer exists in the API: the next startup finds the Firebase
+      // session that was left expired and closes it.
     }
     _current = null;
   }
 
-  /// El ID token de quien tiene la sesión, para los pedidos de otras pantallas.
+  /// The ID token of whoever has the session, for the requests of other screens.
   ///
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Throws [SessionExpired], [NoConnection] or [ServerError].
   @override
   Future<String> token() => _repository.token();
 
-  /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
+  /// If Firebase cannot delete the session from the device, it throws and the session
+  /// stays open.
   Future<void> close() async {
     final deactivations = <Future<void>>[];
     if (onClose.isNotEmpty) {
@@ -152,11 +157,11 @@ class Session extends ChangeNotifier implements TokenSource {
           const Duration(seconds: 2),
         );
       } on Exception {
-        // Sin token no hay nada que avisarle a la API: la sesión se cierra igual.
+        // Without a token there is nothing to tell the API: the session closes anyway.
       }
       if (token != null) {
-        // El error se engancha al crear cada pedido: si falla antes de que termine de cerrarse
-        // la sesión, no queda un error sin atrapar.
+        // The error is hooked up when each request is created: if it fails before the
+        // session finishes closing, no uncaught error is left.
         for (final f in onClose) {
           deactivations.add(
             f(token)
@@ -168,13 +173,15 @@ class Session extends ChangeNotifier implements TokenSource {
     }
     await _repository.credentials.signOut();
     _current = null;
-    // La pantalla ya muestra el login: lo que queda se hace sin hacer esperar a la persona.
+    // The screen already shows the login: what remains is done without making the person
+    // wait.
     await _notifyExit();
     await Future.wait(deactivations);
   }
 
-  /// Borra la sesión de Firebase del dispositivo y le avisa a quien lo necesite que el teléfono
-  /// ya no es de esa cuenta. Lo que falle después de salir no cambia que se salió.
+  /// Deletes the Firebase session from the device and tells whoever needs it that the
+  /// phone is no longer of that account. What fails after leaving does not change that it
+  /// was left.
   Future<void> _leave() async {
     await _repository.credentials.signOut();
     await _notifyExit();
@@ -185,7 +192,7 @@ class Session extends ChangeNotifier implements TokenSource {
       try {
         await f().timeout(const Duration(seconds: 3));
       } on Exception {
-        // Sin red o con el servicio caído, la persona igual salió.
+        // Without network or with the service down, the person left anyway.
       }
     }
   }

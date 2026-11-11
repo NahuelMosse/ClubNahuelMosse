@@ -54,7 +54,7 @@ void main() {
         await tester.pumpWidget(const SizedBox());
         await mountAdmin(
           tester,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tap(tester, save);

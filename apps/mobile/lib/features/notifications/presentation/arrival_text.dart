@@ -1,7 +1,7 @@
 import '../../../l10n/app_localizations.dart';
 import '../domain/app_notification.dart';
 
-/// El rótulo de cuándo llegó un aviso, en el idioma de la app.
+/// The label of when a notice arrived, in the language of the app.
 String arrivalText(AppLocalizations l10n, Arrival arrival) =>
     switch (arrival.when) {
       ArrivalWhen.today => l10n.arrivalToday,

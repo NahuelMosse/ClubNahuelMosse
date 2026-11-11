@@ -101,7 +101,7 @@ void main() {
     (tester) async {
       final api = HeldApi({});
       final session = _HeldSession();
-      await _open(tester, api, '/perfil', session: session);
+      await _open(tester, api, '/profile', session: session);
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.byType(Skeleton), findsWidgets);
@@ -135,13 +135,13 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       final screens = <(String, HeldApi, Session?)>[
-        ('/inicio', HeldApi(_homeAnswers), null),
+        ('/home', HeldApi(_homeAnswers), null),
         (
-          '/notificaciones',
+          '/notifications',
           HeldApi(_noticeAnswers, held: {'GET /notifications'}),
           null,
         ),
-        ('/perfil', HeldApi({}), _HeldSession()),
+        ('/profile', HeldApi({}), _HeldSession()),
       ];
 
       for (final (route, api, session) in screens) {

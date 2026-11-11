@@ -5,7 +5,7 @@ import '../../../common/button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// VER MIS RESERVAS y «Volver al inicio», al pie del comprobante.
+/// «VER MIS RESERVAS» and «Volver al inicio», at the foot of the receipt.
 class BookingExitBar extends StatelessWidget {
   const BookingExitBar({super.key});
 
@@ -26,13 +26,13 @@ class BookingExitBar extends StatelessWidget {
           children: [
             PrimaryButton(
               label: l.bookingSeeMine,
-              onTap: () => context.go('/reservas'),
+              onTap: () => context.go('/bookings'),
             ),
             const SizedBox(height: Spacing.s8),
             Center(
               child: TextActionButton(
                 label: l.bookingBackHome,
-                onTap: () => context.go('/inicio'),
+                onTap: () => context.go('/home'),
               ),
             ),
           ],

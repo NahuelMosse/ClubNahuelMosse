@@ -174,17 +174,17 @@ void main() {
       final halfOpacity = _opacity(tester, find.byType(FadeIn));
 
       await tester.pumpAndSettle();
-      final fin = _position(tester, find.byKey(child));
+      final end = _position(tester, find.byKey(child));
 
-      expect(initial.dx - fin.dx, closeTo(30, 0.01));
-      expect(initial.dy - fin.dy, closeTo(20, 0.01));
+      expect(initial.dx - end.dx, closeTo(30, 0.01));
+      expect(initial.dy - end.dy, closeTo(20, 0.01));
       final progress = Curves.easeOut.transform(0.5);
-      expect(middle.dx - fin.dx, closeTo(30 * (1 - progress), 0.05));
-      expect(middle.dy - fin.dy, closeTo(20 * (1 - progress), 0.05));
+      expect(middle.dx - end.dx, closeTo(30 * (1 - progress), 0.05));
+      expect(middle.dy - end.dy, closeTo(20 * (1 - progress), 0.05));
       expect(halfOpacity, allOf(greaterThan(0), lessThan(1)));
       expect(_opacity(tester, find.byType(FadeIn)), _one);
-      expect(fin.dx, _zero);
-      expect(fin.dy, _zero);
+      expect(end.dx, _zero);
+      expect(end.dy, _zero);
 
       await _mount(tester, const SizedBox.shrink());
       await _mount(

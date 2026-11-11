@@ -117,9 +117,9 @@ Future<void> _mountHome(
   return mountScreen(
     tester,
     HomeScreen(
-      sesion: session,
-      reservas: Bookings(BookingsApi(api: api, sesion: session)),
-      espacios: Spaces(
+      session: session,
+      bookings: Bookings(BookingsApi(api: api, session: session)),
+      spaces: Spaces(
         repository: SpacesRepository(api: api, session: session),
       ),
       venues: Venues(
@@ -134,8 +134,8 @@ Future<void> _mountHome(
 Future<void> _mountMyBookings(
   WidgetTester tester, {
   String upcoming = '[]',
-  String historial = '[]',
-  String startRoute = '/reservas',
+  String history = '[]',
+  String startRoute = '/bookings',
   bool dark = true,
 }) {
   final routes = venueRoutes();
@@ -146,11 +146,11 @@ Future<void> _mountMyBookings(
     size: const Size(393, 1600),
     api: ApiClient(
       'http://api.falsa',
-      cliente: MockClient((request) async {
+      client: MockClient((request) async {
         final (c, body) = request.url.path == '/bookings'
             ? (
                 200,
-                '{"bookings": ${request.url.queryParameters['when'] == 'history' ? historial : upcoming}}',
+                '{"bookings": ${request.url.queryParameters['when'] == 'history' ? history : upcoming}}',
               )
             : routes['${request.method} ${request.url.path}'] ?? (404, '{}');
         return http.Response.bytes(
@@ -456,11 +456,11 @@ void main() {
     ) async {
       await _mountMyBookings(
         tester,
-        historial:
+        history:
             '[${_booking(id: '00000000-0000-7000-8000-000000000001', state: 'canceled', startsAt: _atClub(14, 12))}, '
             '${_booking(id: '00000000-0000-7000-8000-000000000002', state: 'voided', reason: 'lluvia', startsAt: _atClub(14, 12))}, '
             '${_booking(id: '00000000-0000-7000-8000-000000000003', state: 'completed', startsAt: _atClub(10, 12))}]',
-        startRoute: '/reservas?historial=1',
+        startRoute: '/bookings?history=1',
       );
 
       expect(find.byType(BookingCard), findsNWidgets(3));
@@ -548,7 +548,7 @@ void main() {
           upcoming:
               '[${_booking(id: '00000000-0000-7000-8000-000000000001', startsAt: _atClub(13, 10))}, '
               '${_booking(id: '00000000-0000-7000-8000-000000000002', startsAt: _atClub(14, 10))}]',
-          startRoute: '/reservas?reserva=00000000-0000-7000-8000-000000000002',
+          startRoute: '/bookings?booking=00000000-0000-7000-8000-000000000002',
         );
 
         final common = find.byType(BookingCard).at(0);
@@ -587,7 +587,7 @@ void main() {
     Future<void> mountProfile(WidgetTester tester, {bool dark = true}) =>
         mountUser(
           tester,
-          start: '/perfil',
+          start: '/profile',
           dark: dark,
           api: apiRoutes(venueRoutes()),
         );
@@ -681,7 +681,7 @@ void main() {
     Future<void> openSchedule(WidgetTester tester, {String? grid}) => mountUser(
       tester,
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       size: const Size(393, 2400),
       api: apiRoutes(venueRoutes(grid: grid)),
     );

@@ -12,14 +12,14 @@ class Sport {
   final List<SpaceKind> kinds;
 }
 
-/// Los deportes y sus tipos de cancha, como los define la API.
+/// The sports and their court types, as the API defines them.
 class Catalog {
   const Catalog(this.sports);
   final List<Sport> sports;
 
   Sport? sport(String key) => sports.where((d) => d.key == key).firstOrNull;
 
-  /// «Fútbol 5», o «Tenis · Polvo de ladrillo» si el tipo no nombra al deporte.
+  /// «Fútbol 5», or «Tenis · Polvo de ladrillo» if the type does not name the sport.
   String readableKind(String sport, String kind) {
     final d = this.sport(sport);
     final t = d?.kinds.where((t) => t.key == kind).firstOrNull;
@@ -27,8 +27,8 @@ class Catalog {
     return t.name.startsWith(d.name) ? t.name : '${d.name} · ${t.name}';
   }
 
-  /// La etiqueta de la cancha: «Fútbol 5», o sólo «Tenis» si el tipo no nombra al
-  /// deporte («Polvo de ladrillo»).
+  /// The label of the court: «Fútbol 5», or just «Tenis» if the type does not name the
+  /// sport («Polvo de ladrillo»).
   String shortKind(String sport, String kind) {
     final d = this.sport(sport);
     final t = d?.kinds.where((t) => t.key == kind).firstOrNull;
@@ -57,7 +57,7 @@ class Catalog {
   }
 }
 
-/// Un espacio deportivo activo, como lo devuelve la API.
+/// An active sports space, as the API returns it.
 class Space {
   const Space({
     required this.id,
@@ -74,14 +74,14 @@ class Space {
 
   final String id;
 
-  /// El nombre compuesto del enunciado, por ejemplo `Moron_Rivadavia_19850_Futbol_F5_1`.
+  /// The composed name of the statement, for example `Moron_Rivadavia_19850_Futbol_F5_1`.
   final String name;
   final String venueId;
   final String venue;
   final String sport;
   final String kind;
 
-  /// El número correlativo de ese tipo en esa sede: «Cancha 2».
+  /// The sequential number of that type at that venue: «Cancha 2».
   final int number;
   final bool covered;
   final bool lit;
@@ -116,9 +116,9 @@ class Space {
     return null;
   }
 
-  /// Los espacios de un cuerpo `{'spaces': [...]}`, o `null` si alguno no se puede leer.
-  static List<Space>? listFromBody(Map<String, Object?> cuerpo) {
-    if (cuerpo case {'spaces': final List<Object?> items}) {
+  /// The spaces of a body `{'spaces': [...]}`, or `null` if one cannot be read.
+  static List<Space>? listFromBody(Map<String, Object?> body) {
+    if (body case {'spaces': final List<Object?> items}) {
       final parsed = [for (final e in items) Space.fromJson(e)];
       if (!parsed.contains(null)) return [...parsed.nonNulls];
     }

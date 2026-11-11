@@ -76,7 +76,7 @@ def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
         # The outside service can fail in any way; the notice is already in the center and
         # one delivery must not cut off another person's. The error type is logged and not
         # its text, which may carry the phone token.
-        _log.error("aviso_sin_enviar notificacion=%s error=%s", notification_id, type(e).__name__)
+        _log.error("notice_not_sent notification=%s error=%s", notification_id, type(e).__name__)
         notifications.mark_delivery(notification_id, "failed")
         return
     notifications.deactivate_tokens(result.invalid)
@@ -93,11 +93,11 @@ def dispatch_pending(
     for any reason becomes `failed` without cutting the ones that follow. Before taking, the
     ones that will not go out (a reminder that no longer applies, or a notice more than 10
     minutes in `sending` because the API crashed mid-send) become `failed`, are not resent
-    and are reported in the log as `aviso_sin_enviar`.
+    and are reported in the log as `notice_not_sent`.
     """
     for lost in notifications.fail_stranded(user_id):
         # Only the id and the kind: nothing about the person or the notice text.
-        _log.error("aviso_sin_enviar notificacion_id=%s tipo=%s", lost.notification_id, lost.kind)
+        _log.error("notice_not_sent notification_id=%s kind=%s", lost.notification_id, lost.kind)
     dispatched = 0
     while (p := notifications.take_next(user_id)) is not None:
         dispatched += 1
@@ -105,7 +105,7 @@ def dispatch_pending(
             deliver(notifications, channel, p.notification_id, p.user_id, p.notice)
         except Exception as e:
             _log.error(
-                "aviso_sin_enviar notificacion=%s error=%s", p.notification_id, type(e).__name__
+                "notice_not_sent notification=%s error=%s", p.notification_id, type(e).__name__
             )
             notifications.mark_delivery(p.notification_id, "failed")
     return dispatched

@@ -34,7 +34,7 @@ ApiClient fakeApi({
   String body = '{"id": "00000000-0000-7000-8000-000000000001"}',
 }) => ApiClient(
   'http://api.falsa',
-  cliente: MockClient(
+  client: MockClient(
     (_) async => http.Response.bytes(
       utf8.encode(body),
       status,
@@ -50,7 +50,7 @@ ApiClient apiRoutes(
   List<http.Request>? requests,
 }) => ApiClient(
   'http://api.falsa',
-  cliente: MockClient((request) async {
+  client: MockClient((request) async {
     requests?.add(request);
     final (status, body) =
         responses['${request.method} ${request.url.path}'] ?? (404, '{}');
@@ -114,9 +114,9 @@ Widget fakeHome(
 }) {
   final api = homeApi(withBooking: withBooking, oneVenue: oneVenue);
   return HomeScreen(
-    sesion: session,
-    reservas: Bookings(BookingsApi(api: api, sesion: session)),
-    espacios: Spaces(
+    session: session,
+    bookings: Bookings(BookingsApi(api: api, session: session)),
+    spaces: Spaces(
       repository: SpacesRepository(api: api, session: session),
     ),
     venues: Venues(

@@ -63,7 +63,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await capture(tester, 'admin/create_empty_${width}_$mode.png');
@@ -75,7 +75,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await fill(tester);
@@ -91,7 +91,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.enterText(
@@ -111,7 +111,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.tap(find.bySemanticsLabel('Horario de cierre'));
@@ -205,7 +205,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/admin/espacios',
+          start: '/admin/spaces',
           api: apiRoutes({
             'GET /spaces': (200, '{"spaces": [$spaceF5Json]}'),
             'GET /spaces/catalog': (200, catalogJson),
@@ -227,7 +227,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({
             'POST /venues': (201, venueHaedoJson),
             'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),

@@ -25,11 +25,11 @@ enum _Field {
 
   const _Field(this.key);
 
-  /// El nombre del campo en la API.
+  /// The name of the field in the API.
   final String key;
 }
 
-/// Los datos personales en modo edición. Todo se puede cambiar menos el correo (RF 2).
+/// The personal data in edit mode. Everything can be changed except the email (RF 2).
 class ProfileEditor extends StatefulWidget {
   const ProfileEditor({
     super.key,
@@ -87,8 +87,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
 
   String _valueOf(_Field field) => _controllers[field.index].text;
 
-  /// Los campos que no pasan las reglas del registro. El prototipo los marca todos con el
-  /// mismo mensaje.
+  /// The fields that do not pass the registration rules. The prototype marks them all
+  /// with the same message.
   Set<_Field> _invalidFields() {
     final today = clubNow();
     return {
@@ -132,7 +132,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
             for (final field in _Field.values) {
               final message = e.errors[field.key];
               if (message == null) continue;
-              // El dato de otra cuenta tiene su propio mensaje; lo demás es de formato.
+              // The datum of another account has its own message; the rest is about
+              // format.
               _errors[field] = e.duplicate ? message : invalidMessage;
             }
           });
@@ -142,22 +143,22 @@ class _ProfileEditorState extends State<ProfileEditor> {
     if (mounted) setState(() => _submitting = false);
     if (saved) return;
     if (!mounted) {
-      // Salió de la pantalla mientras guardaba: la sesión vencida se cierra igual.
+      // It left the screen while saving: the expired session is closed anyway.
       if (outcome.expired) {
         try {
           await widget.session.close();
         } on Exception {
-          // El próximo pedido la vuelve a encontrar vencida.
+          // The next request finds it expired again.
         }
       }
       return;
     }
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: outcome.expired,
       error: outcome.error,
-      reintentar: _save,
+      retry: _save,
     );
   }
 
@@ -229,7 +230,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
           ),
         ),
         const SizedBox(height: Spacing.s12),
-        // El correo se ve pero no se edita.
+        // The email is shown but not edited.
         Opacity(
           opacity: 0.4,
           child: FormTextField(

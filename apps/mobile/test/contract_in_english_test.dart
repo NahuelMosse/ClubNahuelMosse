@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/rutas.dart';
+import 'package:clubnahuelmosse/api/api_routes.dart';
 import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'package:clubnahuelmosse/features/bookings/domain/booking_status.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/notification_kind.dart';
@@ -49,17 +49,17 @@ void main() {
       expect(paths, isNotEmpty);
       for (final path in paths) {
         final segments = path.split('/');
-        final known = rutasDeLaApi.any(
+        final known = apiRoutes.any(
           (r) => [
             'GET',
             'POST',
             'PUT',
             'DELETE',
-          ].any((method) => r.coincideCon(method, segments)),
+          ].any((method) => r.matches(method, segments)),
         );
         expect(known, isTrue, reason: path);
       }
-      final templates = rutasDeLaApi.map((r) => r.ruta).toSet();
+      final templates = apiRoutes.map((r) => r.route).toSet();
       for (final old in [
         '/sedes',
         '/espacios',
@@ -124,7 +124,7 @@ void main() {
       });
       expect(tapped.kind, NotificationKind.forcedCancellation);
       expect(tapped.bookingId, _bookingId);
-      expect(tapped.route, '/reservas?historial=1&reserva=$_bookingId');
+      expect(tapped.route, '/bookings?history=1&booking=$_bookingId');
 
       final reminder = NoticeTapped.fromData({
         'kind': 'five_minute_reminder',

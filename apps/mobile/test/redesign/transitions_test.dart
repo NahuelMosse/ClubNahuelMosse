@@ -252,16 +252,16 @@ class _Child {
 final _children = <_Child>[
   _Child(
     'sede',
-    (t) => _userAt(t, '/sedes'),
-    (t) => _go(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _userAt(t, '/venues'),
+    (t) => _go(t, '/venues/00000000-0000-7000-8000-000000000001'),
     VenueScreen,
   ),
   _Child(
     'horarios',
-    (t) => _userAt(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _userAt(t, '/venues/00000000-0000-7000-8000-000000000001'),
     (t) => _go(
       t,
-      '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
     ),
     AvailabilityScreen,
   ),
@@ -270,7 +270,7 @@ final _children = <_Child>[
     (t) async {
       await _userAt(
         t,
-        '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+        '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       );
       await _tapAndWait(t, find.text('18:00 – 19:00'));
     },
@@ -279,14 +279,14 @@ final _children = <_Child>[
   ),
   _Child(
     'modificar',
-    (t) => _userAt(t, '/reservas'),
+    (t) => _userAt(t, '/bookings'),
     (t) => _tap(t, find.text('MODIFICAR').first),
     AvailabilityScreen,
   ),
   _Child(
     'confirmar cambio',
     (t) async {
-      await _userAt(t, '/reservas');
+      await _userAt(t, '/bookings');
       await _tapAndWait(t, find.text('MODIFICAR').first);
       await _tapAndWait(t, find.text('19:00 – 20:00'));
     },
@@ -295,7 +295,7 @@ final _children = <_Child>[
   ),
   _Child(
     'contraseña',
-    (t) => _userAt(t, '/perfil'),
+    (t) => _userAt(t, '/profile'),
     (t) => _tap(t, find.text('Cambiar contraseña')),
     ChangePasswordScreen,
     withBar: true,
@@ -316,14 +316,14 @@ final _children = <_Child>[
   ),
   _Child(
     'notificaciones',
-    (t) => _userWithCenter(t, '/inicio'),
+    (t) => _userWithCenter(t, '/home'),
     (t) => _tap(t, find.byIcon(Icons.notifications_none_rounded)),
     NotificationsScreen,
     withBar: true,
   ),
   _Child(
     'buscar cancha',
-    (t) => _userAt(t, '/inicio'),
+    (t) => _userAt(t, '/home'),
     (t) => _tap(t, find.text('Buscar cancha')),
     SpaceSearchScreen,
     withBar: true,
@@ -336,25 +336,25 @@ final _children = <_Child>[
   ),
   _Child(
     'alta de sede',
-    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _adminAt(t, '/admin/venues'),
     (t) => _tap(t, find.text('AGREGAR SEDE')),
     VenueFormScreen,
   ),
   _Child(
     'edición de sede',
-    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _adminAt(t, '/admin/venues'),
     (t) => _tap(t, find.text('Editar sede').first),
     VenueFormScreen,
   ),
   _Child(
     'alta de espacio',
-    (t) => _adminAt(t, '/admin/espacios'),
+    (t) => _adminAt(t, '/admin/spaces'),
     (t) => _tap(t, find.text('ALTA ESPACIO')),
     NewSpaceScreen,
   ),
   _Child(
     'edición de espacio',
-    (t) => _adminAt(t, '/admin/espacios'),
+    (t) => _adminAt(t, '/admin/spaces'),
     (t) => _tap(t, find.text('Editar').first),
     EditSpaceScreen,
   ),
@@ -374,39 +374,34 @@ class _Root {
 final _roots = <_Root>[
   _Root(
     'inicio',
-    (t) => _userAt(t, '/sedes/00000000-0000-7000-8000-000000000001'),
-    '/inicio',
+    (t) => _userAt(t, '/venues/00000000-0000-7000-8000-000000000001'),
+    '/home',
     HomeScreen,
   ),
-  _Root('sedes', (t) => _userAt(t, '/inicio'), '/sedes', VenuesScreen),
-  _Root(
-    'reservas',
-    (t) => _userAt(t, '/inicio'),
-    '/reservas',
-    MyBookingsScreen,
-  ),
-  _Root('perfil', (t) => _userAt(t, '/inicio'), '/perfil', MyProfileScreen),
+  _Root('sedes', (t) => _userAt(t, '/home'), '/venues', VenuesScreen),
+  _Root('reservas', (t) => _userAt(t, '/home'), '/bookings', MyBookingsScreen),
+  _Root('perfil', (t) => _userAt(t, '/home'), '/profile', MyProfileScreen),
   _Root(
     'panel del admin',
-    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _adminAt(t, '/admin/venues'),
     '/admin',
     AdminPanelScreen,
   ),
   _Root(
     'sedes del admin',
     (t) => _adminAt(t, '/admin'),
-    '/admin/sedes',
+    '/admin/venues',
     AdminVenuesScreen,
   ),
   _Root(
     'espacios del admin',
     (t) => _adminAt(t, '/admin'),
-    '/admin/espacios',
+    '/admin/spaces',
     AdminSpacesScreen,
   ),
   _Root(
     'login',
-    (t) => _userAt(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _userAt(t, '/venues/00000000-0000-7000-8000-000000000001'),
     '/',
     LoginScreen,
   ),
@@ -432,32 +427,32 @@ Booking _confirmedBooking() {
 final _results = <_Result>[
   _Result(
     'registro exitoso',
-    (t) => _userAt(t, '/registro'),
-    (t) => _go(t, '/registro/exitoso'),
+    (t) => _userAt(t, '/register'),
+    (t) => _go(t, '/register/success'),
     RegistrationDoneScreen,
   ),
   _Result(
     'reserva confirmada',
-    (t) => _userAt(t, '/reservas'),
-    (t) => _go(t, '/reservas/confirmada', extra: _confirmedBooking()),
+    (t) => _userAt(t, '/bookings'),
+    (t) => _go(t, '/bookings/confirmed', extra: _confirmedBooking()),
     BookingConfirmedScreen,
   ),
   _Result(
     'sede creada',
-    (t) => _adminAt(t, '/admin/sedes'),
+    (t) => _adminAt(t, '/admin/venues'),
     (t) => _go(
       t,
-      '/admin/sedes/creada',
+      '/admin/venues/created',
       extra: Venue.fromJson(jsonDecode(venueMoronJson)),
     ),
     VenueCreatedScreen,
   ),
   _Result(
     'espacio creado',
-    (t) => _adminAt(t, '/admin/espacios'),
+    (t) => _adminAt(t, '/admin/spaces'),
     (t) => _go(
       t,
-      '/admin/espacios/creado',
+      '/admin/spaces/created',
       extra: Space.fromJson(jsonDecode(spaceF5Json)),
     ),
     SpaceCreatedScreen,
@@ -569,8 +564,8 @@ void main() {
       _reduceMotion(tester);
 
       // Forward: the child is already in place.
-      await _userAt(tester, '/sedes');
-      await _go(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _userAt(tester, '/venues');
+      await _go(tester, '/venues/00000000-0000-7000-8000-000000000001');
       await _start(tester);
       _noPushTransition(tester, VenueScreen);
 
@@ -582,16 +577,16 @@ void main() {
       await _restart(tester);
 
       // Result: the fade has finished.
-      await _userAt(tester, '/reservas');
-      await _go(tester, '/reservas/confirmada', extra: _confirmedBooking());
+      await _userAt(tester, '/bookings');
+      await _go(tester, '/bookings/confirmed', extra: _confirmedBooking());
       await _start(tester);
       expect(find.byType(BookingConfirmedScreen), findsOneWidget);
       expect(_opacitiesOf(tester, BookingConfirmedScreen), everyElement(1));
       await _restart(tester);
 
       // Tab root.
-      await _userAt(tester, '/sedes/00000000-0000-7000-8000-000000000001');
-      await _go(tester, '/inicio');
+      await _userAt(tester, '/venues/00000000-0000-7000-8000-000000000001');
+      await _go(tester, '/home');
       await _start(tester);
       await _still(tester, HomeScreen);
       await _restart(tester);
@@ -608,7 +603,7 @@ void main() {
     'tapping the active tab inside a venue or «VER TODAS» and «Ver sedes» on home arrive without animation @RED-04-ASM-05',
     (tester) async {
       // The active tab, from inside a venue, leads to the listing.
-      await _userAt(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _userAt(tester, '/venues/00000000-0000-7000-8000-000000000001');
       await _tap(
         tester,
         find.descendant(
@@ -623,14 +618,14 @@ void main() {
       expect(find.byType(VenueScreen), findsNothing);
       await _restart(tester);
 
-      await _userAt(tester, '/inicio');
+      await _userAt(tester, '/home');
       await _tap(tester, find.text('VER TODAS →'));
       await _start(tester);
       await _still(tester, MyBookingsScreen, reason: 'VER TODAS');
       expect(find.byType(HomeScreen), findsNothing);
       await _restart(tester);
 
-      await _userAt(tester, '/inicio');
+      await _userAt(tester, '/home');
       await _tap(tester, find.text('Ver sedes'));
       await _start(tester);
       await _still(tester, VenuesScreen, reason: 'Ver sedes');
@@ -641,7 +636,7 @@ void main() {
   testWidgets('signing out shows the login without animation @RED-04-ASM-06', (
     tester,
   ) async {
-    await _userAt(tester, '/inicio');
+    await _userAt(tester, '/home');
     await _tapAndWait(tester, find.byType(AccountButton));
     await _tap(tester, find.text('Cerrar sesión'));
     for (var i = 0; i < 5 && find.byType(LoginScreen).evaluate().isEmpty; i++) {
@@ -651,7 +646,7 @@ void main() {
     await _restart(tester);
 
     // Going back from password recovery to the login.
-    await _userAt(tester, '/recuperar-contrasena');
+    await _userAt(tester, '/password-recovery');
     await _go(tester, '/');
     await _start(tester);
     await _still(tester, LoginScreen, reason: 'recuperar → login');

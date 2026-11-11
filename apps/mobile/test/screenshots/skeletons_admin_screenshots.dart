@@ -68,11 +68,11 @@ void main() {
   };
 
   testWidgets('admin spaces loading and loaded', (tester) async {
-    await loadingAndLoaded(tester, '/admin/espacios', spaces, 'admin_spaces');
+    await loadingAndLoaded(tester, '/admin/spaces', spaces, 'admin_spaces');
   });
 
   testWidgets('admin venues loading and loaded', (tester) async {
-    await loadingAndLoaded(tester, '/admin/sedes', spaces, 'admin_venues');
+    await loadingAndLoaded(tester, '/admin/venues', spaces, 'admin_venues');
   });
 
   testWidgets('admin history loading and loaded', (tester) async {
@@ -85,7 +85,7 @@ void main() {
   testWidgets('new space loading and loaded', (tester) async {
     await loadingAndLoaded(
       tester,
-      '/admin/espacios/nuevo',
+      '/admin/spaces/new',
       spaceRoutes(),
       'admin_new_space',
     );

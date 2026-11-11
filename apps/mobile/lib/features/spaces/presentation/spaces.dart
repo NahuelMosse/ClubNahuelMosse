@@ -3,22 +3,22 @@ import 'package:flutter/foundation.dart';
 import '../data/spaces_repository.dart';
 import '../domain/space.dart';
 
-/// Los espacios deportivos, vistos desde las pantallas. Avisa a quien escucha cada vez que
-/// uno cambia.
+/// The sports spaces, seen from the screens. Notifies whoever listens each time one
+/// changes.
 class Spaces extends ChangeNotifier {
   Spaces({required this.repository});
 
-  /// Las lecturas (`catalog`, `active`) se piden directo al repositorio.
+  /// The reads (`catalog`, `active`) are requested directly from the repository.
   final SpacesRepository repository;
 
-  /// El nombre y el número que tendría el próximo espacio de ese tipo en esa sede.
+  /// The name and the number the next space of that type at that venue would have.
   Future<(String, int)> suggestedName({
     required String venueId,
     required String sport,
     required String kind,
   }) => repository.suggestedName(venueId: venueId, sport: sport, kind: kind);
 
-  /// Da de alta el espacio con el [number] que vio el administrador.
+  /// Creates the space with the [number] the administrator saw.
   Future<Space> create({
     required String venueId,
     required String sport,
@@ -41,7 +41,7 @@ class Spaces extends ChangeNotifier {
     return space;
   }
 
-  /// Guarda lo que cambió de la condición, la iluminación y el precio del espacio [id].
+  /// Saves what changed of the condition, the lighting and the price of the space [id].
   Future<Space> update(
     String id, {
     bool? covered,
@@ -58,13 +58,13 @@ class Spaces extends ChangeNotifier {
     return space;
   }
 
-  /// Da de baja el espacio [id].
+  /// Deactivates the space [id].
   Future<void> deactivate(String id) async {
     await repository.deactivate(id);
     notifyListeners();
   }
 
-  /// Avisa que lo que se vio de los espacios ya no vale (por ejemplo, uno que se dio de
-  /// baja): quien los muestra los vuelve a pedir.
+  /// Reports that what was seen of the spaces no longer applies (for example, one that
+  /// was deactivated): whoever shows them requests them again.
   void notifyChange() => notifyListeners();
 }

@@ -7,14 +7,14 @@ import 'booking_status_text.dart';
 
 /// `Badge-Estado`.
 class StatusLabel extends StatelessWidget {
-  const StatusLabel({super.key, required this.estado});
+  const StatusLabel({super.key, required this.status});
 
-  final BookingStatus estado;
+  final BookingStatus status;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final (fondo, tinta) = switch (estado) {
+    final (background, ink) = switch (status) {
       BookingStatus.active => (p.bgSurface, p.stateSuccessInk),
       BookingStatus.voided => (p.stateDangerMuted, p.stateDangerInk),
       _ => (p.bgSurface, p.textSecondary),
@@ -22,10 +22,10 @@ class StatusLabel extends StatelessWidget {
     return StatusBadge(
       label: bookingStatusText(
         AppLocalizations.of(context),
-        estado,
+        status,
       ).toUpperCase(),
-      background: fondo,
-      ink: tinta,
+      background: background,
+      ink: ink,
     );
   }
 }

@@ -6,22 +6,22 @@ import '../domain/session_exceptions.dart';
 import '../domain/token_source.dart';
 import 'credentials.dart';
 
-/// Los pedidos de la sesión a la API y a Firebase. Los que necesitan el token lo reciben
-/// ya resuelto: quién lo pide decide el orden.
+/// The session's requests to the API and to Firebase. The ones that need the token
+/// receive it already resolved: whoever asks decides the order.
 class SessionRepository implements TokenSource {
   SessionRepository({required this.credentials, required ApiClient api})
     : _api = api;
 
-  /// Entrar y salir de la cuenta de Firebase: quien lo necesita llama directo.
+  /// Signing in and out of the Firebase account: whoever needs it calls directly.
   final Credentials credentials;
   final ApiClient _api;
 
   bool get hasAccount => credentials.hasAccount;
 
-  /// El token tal como lo entrega Firebase, sin traducir; `null` si no hay cuenta.
+  /// The token as Firebase delivers it, untranslated; `null` if there is no account.
   Future<String?> currentToken() => credentials.token();
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   @override
   Future<String> token() async {
     final String? token;
@@ -34,14 +34,14 @@ class SessionRepository implements TokenSource {
     return token;
   }
 
-  /// Lanza [InvalidCredentials], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [InvalidCredentials], [NoConnection] o [ServerError].
   Future<Profile> fetchProfile() async {
     final token = await credentials.token();
     if (token == null) throw const InvalidCredentials();
     return _profileFrom(await _api.get('/me', token: token));
   }
 
-  /// Lanza [DataRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [DataRejected], [SessionExpired], [NoConnection] o [ServerError].
   Future<Profile> updateProfile(
     String token, {
     required String firstName,
@@ -55,20 +55,20 @@ class SessionRepository implements TokenSource {
       'dni': dni,
       'birth_date': birthDate,
     }, token: token);
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 409 || r.codigo == 422) {
-      final errors = fieldErrors(r.cuerpo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 409 || r.code == 422) {
+      final errors = fieldErrors(r.body);
       if (errors.isNotEmpty) {
-        throw DataRejected(errors, duplicate: r.codigo == 409);
+        throw DataRejected(errors, duplicate: r.code == 409);
       }
     }
     return _profileFrom(r);
   }
 
-  /// Cambia la contraseña y vuelve a entrar con la nueva: la API invalida todas las
-  /// sesiones abiertas de la cuenta, esta incluida.
+  /// Changes the password and signs in again with the new one: the API invalidates all
+  /// the open sessions of the account, this one included.
   ///
-  /// Lanza [PasswordRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Throws [PasswordRejected], [SessionExpired], [NoConnection] or [ServerError].
   Future<void> changePassword(
     String token,
     String email,
@@ -79,37 +79,37 @@ class SessionRepository implements TokenSource {
       'current_password': current,
       'new_password': newPassword,
     }, token: token);
-    switch (r.codigo) {
+    switch (r.code) {
       case 204:
         try {
           await credentials.signIn(email, newPassword);
         } on Exception {
-          // La contraseña ya cambió. Si no se pudo volver a entrar, el próximo pedido a la
-          // API avisa que la sesión venció.
+          // The password already changed. If signing in again was not possible, the next
+          // request to the API reports that the session expired.
         }
       case 401:
         throw const SessionExpired();
       case 422:
-        final errors = fieldErrors(r.cuerpo);
-        if (errors.isEmpty) throw ErrorDelServidor(r.codigo);
+        final errors = fieldErrors(r.body);
+        if (errors.isEmpty) throw ServerError(r.code);
         throw PasswordRejected(errors);
       default:
-        // 429: Firebase frena por demasiados intentos con la contraseña actual.
-        throw ErrorDelServidor(r.codigo);
+        // 429: Firebase throttles for too many attempts with the current password.
+        throw ServerError(r.code);
     }
   }
 
-  /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [SessionExpired], [NoConnection] o [ServerError].
   Future<void> deactivate(String token) async {
     final r = await _api.delete('/me', token: token);
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code != 204) throw ServerError(r.code);
   }
 
-  Profile _profileFrom(Respuesta r) {
-    if (r.codigo == 401) throw const InvalidCredentials();
-    if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
-    if (r.cuerpo case {
+  Profile _profileFrom(ApiResponse r) {
+    if (r.code == 401) throw const InvalidCredentials();
+    if (r.code != 200) throw ServerError(r.code);
+    if (r.body case {
       'first_name': final String firstName,
       'last_name': final String lastName,
       'email': final String email,
@@ -130,6 +130,6 @@ class SessionRepository implements TokenSource {
         );
       }
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 }

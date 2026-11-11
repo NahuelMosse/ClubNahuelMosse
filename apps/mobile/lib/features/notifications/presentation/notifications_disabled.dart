@@ -5,7 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// La franja de arriba cuando hay avisos pero el sistema no deja mostrarlos.
+/// The strip on top when there are notices but the system does not let them be shown.
 class NotificationsDisabled extends StatelessWidget {
   const NotificationsDisabled({super.key, required this.onEnable});
 

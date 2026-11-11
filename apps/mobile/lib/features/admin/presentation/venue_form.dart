@@ -236,10 +236,10 @@ class VenueForm extends ChangeNotifier {
       if (!_closed) _showErrors(e.errors);
     } on SessionExpired {
       expired = true;
-    } on SinConexion catch (e) {
+    } on NoConnection catch (e) {
       hadCutoff = true;
       failure = e;
-    } on ErrorDelServidor catch (e) {
+    } on ServerError catch (e) {
       failure = e;
     } finally {
       if (!_closed) {

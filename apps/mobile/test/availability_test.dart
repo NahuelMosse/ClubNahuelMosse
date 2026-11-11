@@ -26,7 +26,7 @@ void main() {
     await mountUser(
       tester,
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       api: apiRoutes({
         ...venueRoutes(spaces: spaces),
         'GET /spaces/00000000-0000-7000-8000-000000000011/slots': (
@@ -222,7 +222,7 @@ void main() {
     await mountUser(
       tester,
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009/reservar',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009/book',
       api: apiRoutes(venueRoutes(spaces: spaces)),
     );
 
@@ -260,10 +260,10 @@ void main() {
     await mountUser(
       tester,
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           requests.add(request);
           final routes = venueRoutes(spaces: spaces);
           final expired =
@@ -300,7 +300,7 @@ void main() {
       tester,
       size: const Size(360, 800),
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       api: apiRoutes(venueRoutes(spaces: spaces)),
     );
 

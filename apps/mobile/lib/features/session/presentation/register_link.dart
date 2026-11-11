@@ -6,7 +6,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// «¿No tenés cuenta? COMENZAR», sobre la foto del inicio de sesión.
+/// «¿No tenés cuenta? COMENZAR», over the photo of the sign-in.
 class RegisterLink extends StatelessWidget {
   const RegisterLink({super.key, required this.submitting});
 
@@ -28,7 +28,7 @@ class RegisterLink extends StatelessWidget {
           label: l10n.loginStart,
           icon: Icons.arrow_forward_rounded,
           overPhoto: true,
-          onTap: submitting ? null : () => context.go('/registro'),
+          onTap: submitting ? null : () => context.go('/register'),
         ),
       ],
     );

@@ -17,106 +17,106 @@ import 'booking_header.dart';
 import 'booking_price_and_status.dart';
 import 'booking_status_text.dart';
 
-/// `Card-Reserva`: deporte, sede y dirección, precio y estado arriba; el espacio, la fecha
-/// y el horario abajo, con el porqué si se canceló o se anuló.
+/// `Card-Reserva`: sport, venue and address, price and status on top; the space, the date
+/// and the time below, with the reason if it was cancelled or voided.
 class BookingCard extends StatelessWidget {
   const BookingCard({
     super.key,
-    required this.reserva,
-    required this.catalogo,
-    this.resaltada = false,
+    required this.booking,
+    required this.catalog,
+    this.highlighted = false,
     this.cancelable = false,
-    this.cancelando = false,
-    this.cuentaRegresiva = false,
-    this.alCancelar,
-    this.alModificar,
+    this.cancelling = false,
+    this.countdown = false,
+    this.onCancel,
+    this.onModify,
   });
 
-  final Booking reserva;
-  final Catalog catalogo;
+  final Booking booking;
+  final Catalog catalog;
 
-  /// Suma «HOY», «MAÑANA» o «FALTAN N DÍAS» a una reserva activa.
-  final bool cuentaRegresiva;
+  /// Adds «HOY», «MAÑANA» or «FALTAN N DÍAS» to an active booking.
+  final bool countdown;
 
-  /// Viene de un aviso: se marca con el borde de acento.
-  final bool resaltada;
+  /// Comes from a notice: it is marked with the accent border.
+  final bool highlighted;
 
-  /// Muestra CANCELAR: una próxima que todavía no empezó.
+  /// Shows «CANCELAR»: an upcoming one that has not started yet.
   final bool cancelable;
 
-  /// La cancelación de esta reserva está en camino.
-  final bool cancelando;
+  /// The cancellation of this booking is on its way.
+  final bool cancelling;
 
-  /// `null` deshabilita CANCELAR (hay otra cancelación en camino).
-  final VoidCallback? alCancelar;
+  /// `null` disables «CANCELAR» (another cancellation is on its way).
+  final VoidCallback? onCancel;
 
-  /// `null` deshabilita MODIFICAR.
-  final VoidCallback? alModificar;
+  /// `null` disables «MODIFICAR».
+  final VoidCallback? onModify;
 
-  String get _horario => horarioDe(reserva);
+  String get _schedule => scheduleOf(booking);
 
-  String? _porque(AppLocalizations l) => switch (reserva.status) {
-    BookingStatus.canceled => switch (reserva.reason) {
+  String? _reason(AppLocalizations l) => switch (booking.status) {
+    BookingStatus.canceled => switch (booking.reason) {
       final m? when m.trim().isNotEmpty => l.bookingCanceledByYouWithReason(m),
       _ => l.bookingCanceledByYou,
     },
-    BookingStatus.voided => switch (reserva.reason) {
+    BookingStatus.voided => switch (booking.reason) {
       final m? when m.trim().isNotEmpty => l.bookingVoidedByAdminWithReason(m),
       _ => l.bookingVoidedByAdmin,
     },
     _ => null,
   };
 
-  /// Los días de calendario del club que faltan para el inicio, sin mirar la hora.
-  String? _cuenta(AppLocalizations l) {
-    if (!cuentaRegresiva || reserva.status != BookingStatus.active) {
+  /// The club's calendar days left before the start, without looking at the time.
+  String? _countdown(AppLocalizations l) {
+    if (!countdown || booking.status != BookingStatus.active) {
       return null;
     }
-    final hoy = clubNow();
-    final i = reserva.startsAt;
-    final dias = DateTime(
+    final today = clubNow();
+    final i = booking.startsAt;
+    final days = DateTime(
       i.year,
       i.month,
       i.day,
-    ).difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
-    return switch (dias) {
+    ).difference(DateTime(today.year, today.month, today.day)).inDays;
+    return switch (days) {
       <= 0 => l.bookingToday,
       1 => l.bookingTomorrow,
-      _ => l.bookingInDays(dias),
+      _ => l.bookingInDays(days),
     };
   }
 
-  /// La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
-  /// botones propios.
-  String _etiqueta(AppLocalizations l, String? porque, String? account) {
-    final r = reserva;
+  /// The card is read whole as one piece of data; «MODIFICAR» and «CANCELAR» stay
+  /// outside, as buttons of their own.
+  String _label(AppLocalizations l, String? reason, String? account) {
+    final r = booking;
     return [
-      catalogo.shortKind(r.sport, r.kind),
+      catalog.shortKind(r.sport, r.kind),
       '${r.venue}, ${r.address}',
       bookingStatusText(l, r.status).toLowerCase(),
       longDate(r.startsAt),
-      _horario,
+      _schedule,
       l.bookingSpokenPrice(formatPesos(r.total).replaceFirst('\$ ', '')),
       r.space,
-      ?porque,
+      ?reason,
       ?account?.toLowerCase(),
     ].join(', ');
   }
 
-  Widget _datos(AppLocalizations l, Palette p, bool grande) {
-    final r = reserva;
-    final porque = _porque(l);
-    final account = _cuenta(l);
+  Widget _data(AppLocalizations l, Palette p, bool large) {
+    final r = booking;
+    final reason = _reason(l);
+    final account = _countdown(l);
     return Semantics(
       container: true,
-      selected: resaltada,
+      selected: highlighted,
       excludeSemantics: true,
-      label: _etiqueta(l, porque, account),
+      label: _label(l, reason, account),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BookingHeader(reserva: r, catalogo: catalogo, grande: grande),
-          if (grande)
+          BookingHeader(booking: r, catalog: catalog, large: large),
+          if (large)
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 Spacing.s16,
@@ -124,10 +124,10 @@ class BookingCard extends StatelessWidget {
                 Spacing.s16,
                 Spacing.s16,
               ),
-              child: BookingPriceAndStatus(reserva: r, grande: grande),
+              child: BookingPriceAndStatus(booking: r, large: large),
             ),
           DieCut(background: p.bgBase),
-          BookingDetail(reserva: r, account: account, porque: porque),
+          BookingDetail(booking: r, account: account, reason: reason),
         ],
       ),
     );
@@ -137,25 +137,25 @@ class BookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final r = reserva;
-    final activa = r.status == BookingStatus.active;
-    final grande = MediaQuery.textScalerOf(context).scale(10) > 13;
-    final deQue =
-        '${catalogo.shortKind(r.sport, r.kind)}, '
-        '${shortDay(r.startsAt)}, $_horario';
-    final data = _datos(l, p, grande);
-    final borde = resaltada ? 2.0 : 1.0;
+    final r = booking;
+    final active = r.status == BookingStatus.active;
+    final large = MediaQuery.textScalerOf(context).scale(10) > 13;
+    final subject =
+        '${catalog.shortKind(r.sport, r.kind)}, '
+        '${shortDay(r.startsAt)}, $_schedule';
+    final data = _data(l, p, large);
+    final border = highlighted ? 2.0 : 1.0;
     return Container(
       decoration: BoxDecoration(
         color: p.bgSurfaceRaised,
         borderRadius: BorderRadius.circular(Spacing.radiusLg),
         border: Border.all(
-          color: resaltada ? p.borderFocus : p.borderDefault,
-          width: borde,
+          color: highlighted ? p.borderFocus : p.borderDefault,
+          width: border,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(Spacing.radiusLg - borde),
+        borderRadius: BorderRadius.circular(Spacing.radiusLg - border),
         child: Stack(
           children: [
             Column(
@@ -170,18 +170,18 @@ class BookingCard extends StatelessWidget {
                       Spacing.s16,
                       Spacing.s16,
                     ),
-                    child: cancelando
+                    child: cancelling
                         ? InProgress(l.bookingCanceling)
                         : BookingActions(
-                            deQue: deQue,
-                            grande: grande,
-                            alModificar: alModificar,
-                            alCancelar: alCancelar,
+                            subject: subject,
+                            large: large,
+                            onModify: onModify,
+                            onCancel: onCancel,
                           ),
                   ),
               ],
             ),
-            if (activa)
+            if (active)
               Positioned(
                 left: 0,
                 top: 0,
@@ -200,4 +200,4 @@ class BookingCard extends StatelessWidget {
 }
 
 /// «21:00 – 22:00».
-String horarioDe(Booking r) => timeRange(r.startsAt, r.endsAt);
+String scheduleOf(Booking r) => timeRange(r.startsAt, r.endsAt);

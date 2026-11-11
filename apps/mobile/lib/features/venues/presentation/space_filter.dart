@@ -4,9 +4,9 @@ import '../../../common/selectable_chip.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// Una fila de chips para elegir una opción: la elegida en lima. [prefijo] va en la
-/// etiqueta accesible de cada chip («Deporte Fútbol»), porque el mismo nombre aparece en
-/// la portada y en las tarjetas.
+/// A row of chips to choose an option: the chosen one in lime. [prefix] goes in the
+/// accessible label of each chip («Deporte Fútbol»), because the same name appears on the
+/// cover and on the cards.
 class SpaceFilter extends StatelessWidget {
   const SpaceFilter({
     super.key,

@@ -29,9 +29,9 @@ Firebase; the API verifies the token of each request and checks passwords with t
 **Variables.**
 - API: `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_CREDENTIALS_JSON`, `FIREBASE_AUTH_EMULATOR_HOST`.
 - App (`--dart-define`): `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_SENDER_ID`, `FIREBASE_PROJECT_ID`,
-  `AUTH_EMULADOR`.
+  `AUTH_EMULATOR`.
 
-Locally: the Auth emulator (`npm run emuladores`) replaces Firebase and the app is started with `AUTH_EMULADOR`.
+Locally: the Auth emulator (`npm run emulators`) replaces Firebase and the app is started with `AUTH_EMULATOR`.
 
 ## Firebase Cloud Messaging
 

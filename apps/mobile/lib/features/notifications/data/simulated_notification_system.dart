@@ -2,15 +2,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/notification_system.dart';
 
-/// El sistema de un dispositivo de prueba, sin Firebase Cloud Messaging.
+/// The system of a test device, without Firebase Cloud Messaging.
 ///
-/// La respuesta al permiso la guarda la app en el dispositivo (los escenarios la fijan); sin
-/// respuesta guardada, todavía no preguntó. Pedirlo guarda y devuelve la respuesta fijada,
-/// concedido si no hay otra. Nada llega por acá: con la app abierta la lista se entera
-/// consultando la API.
+/// The answer to the permission is kept by the app on the device (the scenarios set it);
+/// with no stored answer, it has not asked yet. Asking stores and returns the set answer,
+/// granted if there is no other. Nothing arrives through here: with the app open the list
+/// finds out by querying the API.
 class SimulatedNotificationSystem implements NotificationSystem {
-  static const _permissionKey = 'permiso_notificaciones_simulado';
-  static const _tokenKey = 'token_notificaciones_simulado';
+  static const _permissionKey = 'simulated_notification_permission';
+  static const _tokenKey = 'simulated_notification_token';
 
   @override
   String get platform => 'android';
@@ -18,7 +18,7 @@ class SimulatedNotificationSystem implements NotificationSystem {
   @override
   Future<bool> isAllowed() async =>
       (await SharedPreferences.getInstance()).getString(_permissionKey) ==
-      'concedido';
+      'granted';
 
   @override
   Future<bool> wasAsked() async =>
@@ -27,9 +27,9 @@ class SimulatedNotificationSystem implements NotificationSystem {
   @override
   Future<bool> requestPermission() async {
     final prefs = await SharedPreferences.getInstance();
-    final answer = prefs.getString(_permissionKey) ?? 'concedido';
+    final answer = prefs.getString(_permissionKey) ?? 'granted';
     await prefs.setString(_permissionKey, answer);
-    return answer == 'concedido';
+    return answer == 'granted';
   }
 
   @override
@@ -37,7 +37,7 @@ class SimulatedNotificationSystem implements NotificationSystem {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_tokenKey);
     if (saved != null) return saved;
-    final fresh = 'simulado-${DateTime.now().microsecondsSinceEpoch}';
+    final fresh = 'simulated-${DateTime.now().microsecondsSinceEpoch}';
     await prefs.setString(_tokenKey, fresh);
     return fresh;
   }

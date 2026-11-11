@@ -62,7 +62,7 @@ void main() {
     testWidgets('outside «Mis reservas» it opens the panel with the notice', (
       tester,
     ) async {
-      final (api, center) = await open(tester, location: '/inicio');
+      final (api, center) = await open(tester, location: '/home');
 
       await arrives(tester, api, center, [canceled]);
 
@@ -78,7 +78,7 @@ void main() {
     testWidgets(
       'in «Mis reservas» it does not open the panel but counts as unread @assumption:CU-24.3-SUP-03',
       (tester) async {
-        final (api, center) = await open(tester, location: '/reservas');
+        final (api, center) = await open(tester, location: '/bookings');
 
         await arrives(tester, api, center, [canceled]);
 
@@ -92,7 +92,7 @@ void main() {
     testWidgets(
       'what was silenced does not return to the panel when another notice arrives @assumption:CU-24.3-SUP-07',
       (tester) async {
-        final (api, center) = await open(tester, location: '/reservas');
+        final (api, center) = await open(tester, location: '/bookings');
         await arrives(tester, api, center, [canceled]);
 
         await arrives(tester, api, center, [
@@ -115,7 +115,7 @@ void main() {
         (tester) async {
           final (api, center) = await open(
             tester,
-            location: '/inicio',
+            location: '/home',
             size: Size(width, 800),
             scale: 2,
           );
@@ -142,7 +142,7 @@ void main() {
           ..unread = 1;
         await mountUser(
           tester,
-          start: '/notificaciones',
+          start: '/notifications',
           api: api.client,
           center: (session) => centerOf(api, session),
         );
@@ -165,7 +165,7 @@ void main() {
         ..unread = 1;
       await mountUser(
         tester,
-        start: '/notificaciones',
+        start: '/notifications',
         api: api.client,
         center: (session) => centerOf(api, session),
       );

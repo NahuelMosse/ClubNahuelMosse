@@ -11,7 +11,7 @@ from app.shared.config import config
 from app.shared.db import engine
 from app.shared.message import Message
 
-email_log = logging.getLogger("clubnahuelmosse.correo")
+email_log = logging.getLogger("clubnahuelmosse.email")
 
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 SENDER_NAME = "Club Nahuel Mosse"
@@ -30,7 +30,7 @@ def _to_outbox(message: Message) -> None:
 
 def _by_smtp(message: Message) -> None:
     if not config.smtp_host or not config.email_sender:
-        raise RuntimeError("SMTP_HOST and CORREO_REMITENTE are missing to send emails")
+        raise RuntimeError("SMTP_HOST and EMAIL_SENDER are missing to send emails")
     email_message = EmailMessage()
     email_message["From"] = config.email_sender
     email_message["To"] = message.recipient

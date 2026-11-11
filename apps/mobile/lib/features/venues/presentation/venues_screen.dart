@@ -22,7 +22,7 @@ import 'venues.dart';
 
 export 'venue_card.dart' show VenueCard;
 
-/// «Todas las sedes»: el catálogo del club, desde la pestaña SEDES.
+/// «Todas las sedes»: the catalog of the club, from the «SEDES» tab.
 class VenuesScreen extends StatefulWidget {
   const VenuesScreen({
     super.key,
@@ -46,7 +46,8 @@ class _VenuesScreenState extends State<VenuesScreen> {
   @override
   void initState() {
     super.initState();
-    // La sede o la cancha que se abrió puede avisar que ya no está: se vuelve a leer.
+    // The venue or the court that was opened may report that it is gone: it is read
+    // again.
     widget.venues.addListener(_load);
     widget.spaces.addListener(_load);
     _load();
@@ -74,22 +75,23 @@ class _VenuesScreenState extends State<VenuesScreen> {
       return;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (!mounted) return;
-    // Sin datos frescos no se muestra nada: ni parciales ni viejos.
+    // Without fresh data nothing is shown: neither partial nor old.
     setState(() {
       _data = null;
       _loading = false;
     });
-    // Tapado por la sede o los horarios no avisa: la pantalla de arriba ya avisa lo suyo.
-    await avisarFalloDeCarga(
+    // Covered by the venue or the times it does not report: the screen above already
+    // reports its own.
+    await notifyLoadFailure(
       context,
       session: widget.session,
       expired: expired,
       error: failure,
-      reintentar: _load,
+      retry: _load,
     );
   }
 
@@ -143,7 +145,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                     VenueCard(
                       venue: venue,
                       sports: sportsOf(venue, data.$2),
-                      onTap: () => context.go('/sedes/${venue.id}'),
+                      onTap: () => context.go('/venues/${venue.id}'),
                     ),
                     const SizedBox(height: Spacing.s16),
                   ],

@@ -8,7 +8,7 @@ import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import 'space_card.dart';
 
-/// Las canchas de la sede, o el aviso de que no hay ninguna o ninguna pasa el filtro.
+/// The courts of the venue, or the notice that there are none or none passes the filter.
 class SpaceList extends StatelessWidget {
   const SpaceList({
     super.key,
@@ -37,7 +37,7 @@ class SpaceList extends StatelessWidget {
           SpaceCard(
             space: space,
             catalog: catalog,
-            onBook: () => context.go('/sedes/$venueId/canchas/${space.id}'),
+            onBook: () => context.go('/venues/$venueId/spaces/${space.id}'),
           ),
           const SizedBox(height: Spacing.s16),
         ],

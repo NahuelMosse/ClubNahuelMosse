@@ -4,22 +4,22 @@ import '../../../common/selectable_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// Los chips Todas / Al aire libre / Techada con cuántas canchas trae cada uno.
+/// The «Todas» / «Al aire libre» / «Techada» chips with how many courts each brings.
 class CoveredFilter extends StatelessWidget {
   const CoveredFilter({
     super.key,
     required this.total,
-    required this.aireLibre,
-    required this.elegida,
-    required this.alElegir,
+    required this.outdoor,
+    required this.chosen,
+    required this.onSelect,
   });
 
   final int total;
-  final int aireLibre;
+  final int outdoor;
 
   /// `null` es «Todas».
-  final bool? elegida;
-  final ValueChanged<bool?> alElegir;
+  final bool? chosen;
+  final ValueChanged<bool?> onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -30,20 +30,20 @@ class CoveredFilter extends StatelessWidget {
       clipBehavior: Clip.none,
       child: Row(
         children: [
-          for (final (valor, cuantas) in [
+          for (final (value, count) in [
             (null, total),
-            (false, aireLibre),
-            (true, total - aireLibre),
+            (false, outdoor),
+            (true, total - outdoor),
           ]) ...[
             SelectableChip(
               text:
-                  '${switch (valor) {
+                  '${switch (value) {
                     null => l.spaceSearchAll,
                     false => l.spaceOpenAir,
                     true => l.spaceCovered,
-                  }} ($cuantas)',
-              selected: elegida == valor,
-              onTap: cuantas == 0 ? null : () => alElegir(valor),
+                  }} ($count)',
+              selected: chosen == value,
+              onTap: count == 0 ? null : () => onSelect(value),
               minHeight: Spacing.s48,
               bordered: true,
               disabledInk: p.textMuted,

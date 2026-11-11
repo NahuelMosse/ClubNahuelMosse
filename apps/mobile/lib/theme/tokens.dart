@@ -194,7 +194,7 @@ abstract final class Spacing {
 extension ContextPalette on BuildContext {
   Palette get palette {
     final palette = Theme.of(this).extension<Palette>();
-    if (palette == null) throw StateError('El tema no tiene Paleta');
+    if (palette == null) throw StateError('The theme has no Palette');
     return palette;
   }
 }

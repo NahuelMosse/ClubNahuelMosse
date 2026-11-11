@@ -14,7 +14,7 @@ void main() {
   ) async {
     tester.platformDispatcher.localesTestValue = _english;
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
-    await mountUser(tester, start: '/sedes', api: apiRoutes(venueRoutes()));
+    await mountUser(tester, start: '/venues', api: apiRoutes(venueRoutes()));
     void expectTexts(Iterable<String> texts) {
       for (final text in texts) {
         expect(find.text(text), findsWidgets, reason: text);

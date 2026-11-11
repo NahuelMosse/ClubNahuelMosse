@@ -62,14 +62,14 @@ class _AppState extends State<App> {
   );
   late final _availability = AvailabilityApi(
     api: widget.api,
-    sesion: widget.session,
+    session: widget.session,
   );
   late final _bookings = Bookings(
-    BookingsApi(api: widget.api, sesion: widget.session),
+    BookingsApi(api: widget.api, session: widget.session),
   );
   late final _adminHistory = BookingHistory(
     api: widget.api,
-    sesion: widget.session,
+    session: widget.session,
   );
   final _pending = PendingBooking<BookingChoice>();
   final _pendingFilters = PendingPanelFilters();
@@ -120,7 +120,7 @@ class _AppState extends State<App> {
   void dispose() {
     unawaited(_onNotificationTapped?.cancel());
     widget.notificationCenter?.dispose();
-    widget.api.cerrar();
+    widget.api.close();
     _venues.dispose();
     _spaces.dispose();
     _bookings.dispose();

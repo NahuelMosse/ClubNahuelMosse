@@ -184,40 +184,42 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('if Firebase no longer refreshes the session, it warns it expired', (
-    tester,
-  ) async {
-    final semantics = tester.ensureSemantics();
-    final session = await sessionWith((204, ''));
-    credentials.tokenFails = true;
-    await mountChangeScreen(tester, session);
-    await fill(tester);
-    await tester.tap(find.text('GUARDAR CONTRASEÑA'));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'if Firebase no longer refreshes the session, it warns it expired',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final session = await sessionWith((204, ''));
+      credentials.tokenFails = true;
+      await mountChangeScreen(tester, session);
+      await fill(tester);
+      await tester.tap(find.text('GUARDAR CONTRASEÑA'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Tu sesión expiró'), findsOneWidget);
-    semantics.dispose();
-  });
+      expect(find.text('Tu sesión expiró'), findsOneWidget);
+      semantics.dispose();
+    },
+  );
 
-  testWidgets('tapping the field without typing does not clear the server error', (
-    tester,
-  ) async {
-    final semantics = tester.ensureSemantics();
-    await mountChangeScreen(
-      tester,
-      await sessionWith((
-        422,
-        '{"errors": {"current_password": "La contraseña actual no coincide"}}',
-      )),
-    );
-    await fill(tester, current: 'OtraClave9');
-    await tester.tap(find.text('GUARDAR CONTRASEÑA'));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'tapping the field without typing does not clear the server error',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mountChangeScreen(
+        tester,
+        await sessionWith((
+          422,
+          '{"errors": {"current_password": "La contraseña actual no coincide"}}',
+        )),
+      );
+      await fill(tester, current: 'OtraClave9');
+      await tester.tap(find.text('GUARDAR CONTRASEÑA'));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.bySemanticsLabel('Contraseña actual'));
-    await tester.pumpAndSettle();
-    expect(find.text('La contraseña actual no coincide'), findsOneWidget);
-    expect(enabled(tester), isFalse);
-    semantics.dispose();
-  });
+      await tester.tap(find.bySemanticsLabel('Contraseña actual'));
+      await tester.pumpAndSettle();
+      expect(find.text('La contraseña actual no coincide'), findsOneWidget);
+      expect(enabled(tester), isFalse);
+      semantics.dispose();
+    },
+  );
 }

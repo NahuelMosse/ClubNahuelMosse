@@ -8,21 +8,22 @@ import '../../venues/presentation/photos.dart';
 import '../domain/booking_choice.dart';
 import 'total_row.dart';
 
-/// La tarjeta de la elección: la foto con el tipo y la sede, las [filas] y el total.
+/// The card of the choice: the photo with the type and the venue, the [rows] and the
+/// total.
 class BookingChoiceCard extends StatelessWidget {
   const BookingChoiceCard({
     super.key,
-    required this.eleccion,
-    required this.filas,
+    required this.choice,
+    required this.rows,
   });
 
-  final BookingChoice eleccion;
-  final List<Widget> filas;
+  final BookingChoice choice;
+  final List<Widget> rows;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final e = eleccion;
+    final e = choice;
     return CardFrame(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,7 +57,7 @@ class BookingChoiceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ...filas,
+                ...rows,
                 Divider(height: 1, color: p.borderDefault),
                 const SizedBox(height: Spacing.s16),
                 TotalRow(total: e.total),

@@ -56,5 +56,5 @@ def test_a_notice_that_was_not_sent_is_left_visible(
         dispatch_pending(NotificationsSql(conn), _FailingChannel())
 
     errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
-    assert any("aviso_sin_enviar" in r.getMessage() for r in errors)
+    assert any("notice_not_sent" in r.getMessage() for r in errors)
     assert not any("fcm-" in r.getMessage() for r in caplog.records)

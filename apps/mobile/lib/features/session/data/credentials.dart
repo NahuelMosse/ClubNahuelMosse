@@ -3,11 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../api/api_client.dart';
 import '../domain/session_exceptions.dart';
 
-/// Quién comprueba el correo y la contraseña, y guarda la sesión en el dispositivo.
+/// Who checks the email and the password, and keeps the session on the device.
 abstract interface class Credentials {
   bool get hasAccount;
 
-  /// Lanza [InvalidCredentials], [SinConexion] o [ErrorDelServidor].
+  /// Lanza [InvalidCredentials], [NoConnection] o [ServerError].
   Future<void> signIn(String email, String password);
 
   Future<String?> token();
@@ -20,8 +20,8 @@ class FirebaseCredentials implements Credentials {
 
   final FirebaseAuth _auth;
 
-  // Firebase no distingue correo inexistente de contraseña incorrecta
-  // (`invalid-credential`) cuando la protección contra enumeración está activa.
+  // Firebase does not tell a nonexistent email from a wrong password
+  // (`invalid-credential`) when enumeration protection is on.
   static const _rejections = {
     'invalid-credential',
     'invalid-email',
@@ -40,13 +40,13 @@ class FirebaseCredentials implements Credentials {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'network-request-failed') throw const SinConexion();
+      if (e.code == 'network-request-failed') throw const NoConnection();
       if (_rejections.contains(e.code)) throw const InvalidCredentials();
-      throw const ErrorDelServidor(0);
+      throw const ServerError(0);
     }
   }
 
-  // La cuenta ya no vale: no hay token que refrescar.
+  // The account no longer applies: there is no token to refresh.
   static const _deadAccount = {
     'user-token-expired',
     'user-disabled',
@@ -59,9 +59,9 @@ class FirebaseCredentials implements Credentials {
     try {
       return await _auth.currentUser?.getIdToken();
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'network-request-failed') throw const SinConexion();
+      if (e.code == 'network-request-failed') throw const NoConnection();
       if (_deadAccount.contains(e.code)) throw const InvalidCredentials();
-      throw const ErrorDelServidor(0);
+      throw const ServerError(0);
     }
   }
 

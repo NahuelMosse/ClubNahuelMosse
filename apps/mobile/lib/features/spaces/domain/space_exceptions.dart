@@ -1,21 +1,22 @@
 // kit-shape: a screen or error family kept with its private parts.
-/// El espacio o su sede ya no están activos: los dio de baja otra sesión.
+/// The space or its venue are no longer active: another session deactivated them.
 class SpaceUnavailable implements Exception {
   const SpaceUnavailable();
 }
 
-/// El espacio tiene reservas activas que todavía no terminaron: no se da de baja.
+/// The space has active bookings that have not ended yet: it is not deactivated.
 class SpaceHasBookings implements Exception {
   const SpaceHasBookings();
 }
 
-/// La API rechazó el espacio: cada campo con su mensaje.
+/// The API rejected the space: each field with its message.
 class SpaceRejected implements Exception {
   const SpaceRejected(this.errors);
   final Map<String, String> errors;
 }
 
-/// El número que se mostraba ya lo tomó otro alta; [name] y [number] son los siguientes.
+/// The number that was shown was already taken by another creation; [name] and [number]
+/// are the next ones.
 class NameTaken implements Exception {
   const NameTaken(this.message, this.name, this.number);
   final String message;

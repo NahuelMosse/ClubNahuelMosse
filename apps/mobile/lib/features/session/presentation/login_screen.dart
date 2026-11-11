@@ -5,14 +5,14 @@ import '../../../theme/theme.dart';
 import 'login_form.dart';
 import 'session.dart';
 
-/// Inicio de sesión sobre la foto del club. Va siempre en oscuro: el texto se apoya en la
-/// foto oscurecida, no en el fondo del tema.
+/// Sign-in over the photo of the club. It is always dark: the text rests on the darkened
+/// photo, not on the theme's background.
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key, required this.session, required this.pending});
 
   final Session session;
 
-  /// La reserva que se estaba confirmando cuando venció la sesión.
+  /// The booking that was being confirmed when the session expired.
   final PendingBooking pending;
 
   @override

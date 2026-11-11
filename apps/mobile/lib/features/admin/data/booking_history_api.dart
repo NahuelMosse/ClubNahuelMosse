@@ -30,16 +30,16 @@ String _query(HistoryFilters filters) {
 
 /// The global booking history (CU-14), for an administrator only.
 class BookingHistory {
-  BookingHistory({required ApiClient api, required TokenSource sesion})
+  BookingHistory({required ApiClient api, required TokenSource session})
     : _api = api,
-      _session = sesion;
+      _session = session;
 
   final ApiClient _api;
   final TokenSource _session;
 
   /// The page [page] (starts at 1) that satisfies [filters].
   ///
-  /// Throws [SesionVencida], [SinConexion] or [ErrorDelServidor].
+  /// Throws [SesionVencida], [NoConnection] or [ServerError].
   Future<HistoryPage> page(HistoryFilters filters, {int page = 1}) async {
     final query = [
       _query(filters),
@@ -49,9 +49,9 @@ class BookingHistory {
       '/bookings/all?$query',
       token: await _session.token(),
     );
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 200) {
-      if (r.cuerpo case {
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 200) {
+      if (r.body case {
         'bookings': final List<Object?> list,
         'total': final int total,
         'page': final int pageNumber,
@@ -71,32 +71,32 @@ class BookingHistory {
         }
       }
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 
   /// The detail of any booking by [id]. `null` if it no longer exists.
   ///
-  /// Throws [SesionVencida], [SinConexion] or [ErrorDelServidor].
+  /// Throws [SesionVencida], [NoConnection] or [ServerError].
   Future<BookingHistoryEntry?> detail(String id) async {
     final r = await _api.get(
       '/bookings/all/$id',
       token: await _session.token(),
     );
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 404) return null;
-    if (r.codigo == 200) {
-      final parsed = parseBookingHistoryEntry(r.cuerpo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 404) return null;
+    if (r.code == 200) {
+      final parsed = parseBookingHistoryEntry(r.body);
       if (parsed != null) return parsed;
     }
-    throw ErrorDelServidor(r.codigo);
+    throw ServerError(r.code);
   }
 
   /// Voids [booking] with [reason], as the administrator saw it (court and time); the
   /// time slot becomes free again. Repeating a request that was already made answers
   /// the same.
   ///
-  /// Throws [BookingChanged], [ReservaRechazada], [SesionVencida], [SinConexion] or
-  /// [ErrorDelServidor].
+  /// Throws [BookingChanged], [ReservaRechazada], [SesionVencida], [NoConnection] or
+  /// [ServerError].
   Future<BookingHistoryEntry> voidBooking(
     BookingHistoryEntry booking,
     String reason,
@@ -106,12 +106,12 @@ class BookingHistory {
       'space_id': booking.spaceId,
       'starts_at': fromClubTime(booking.startsAt).toIso8601String(),
     }, token: await _session.token());
-    if (r.codigo == 401) throw const SessionExpired();
-    if (r.codigo == 404 || r.codigo == 409) throw const BookingChanged();
-    final errors = fieldErrors(r.cuerpo);
-    if (r.codigo == 422 && errors.isNotEmpty) throw BookingRejected(errors);
-    final voided = r.codigo == 200 ? parseBookingHistoryEntry(r.cuerpo) : null;
-    if (voided == null) throw ErrorDelServidor(r.codigo);
+    if (r.code == 401) throw const SessionExpired();
+    if (r.code == 404 || r.code == 409) throw const BookingChanged();
+    final errors = fieldErrors(r.body);
+    if (r.code == 422 && errors.isNotEmpty) throw BookingRejected(errors);
+    final voided = r.code == 200 ? parseBookingHistoryEntry(r.body) : null;
+    if (voided == null) throw ServerError(r.code);
     return voided;
   }
 }

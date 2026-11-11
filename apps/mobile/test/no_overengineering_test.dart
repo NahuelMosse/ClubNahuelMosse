@@ -33,7 +33,7 @@ void main() {
     (tester) async {
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient(
+        client: MockClient(
           (_) => Future.delayed(
             const Duration(seconds: 90),
             () => http.Response('{}', 200),
@@ -52,7 +52,7 @@ void main() {
       await tester.pump(const Duration(seconds: 29));
       expect(error, isNull);
       await tester.pump(const Duration(seconds: 2));
-      expect(error, isA<ServidorSinRespuesta>());
+      expect(error, isA<ServerNotResponding>());
       await tester.pump(const Duration(seconds: 90));
     },
   );
@@ -60,9 +60,9 @@ void main() {
   testWidgets('offline the app says so @SIM-01-S4', (tester) async {
     final api = ApiClient(
       'http://api.falsa',
-      cliente: MockClient((_) async => throw http.ClientException('sin red')),
+      client: MockClient((_) async => throw http.ClientException('sin red')),
     );
-    await expectLater(api.get('/spaces'), throwsA(isA<SinConexion>()));
+    await expectLater(api.get('/spaces'), throwsA(isA<NoConnection>()));
   });
 
   test(

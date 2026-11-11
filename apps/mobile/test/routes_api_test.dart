@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:clubnahuelmosse/api/api_client.dart';
-import 'package:clubnahuelmosse/api/rutas.dart';
+import 'package:clubnahuelmosse/api/api_routes.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -21,10 +21,10 @@ void main() {
           '${method.toUpperCase()} $route',
     };
 
-    expect(rutasDeLaApi, isNotEmpty);
+    expect(apiRoutes, isNotEmpty);
     expect(
       [
-        for (final r in rutasDeLaApi) '${r.metodo} ${r.ruta}',
+        for (final r in apiRoutes) '${r.method} ${r.route}',
       ].where((r) => !published.contains(r)),
       isEmpty,
     );
@@ -36,7 +36,7 @@ void main() {
     () async {
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((_) async => http.Response('{}', 200)),
+        client: MockClient((_) async => http.Response('{}', 200)),
       );
 
       await expectLater(
@@ -59,8 +59,8 @@ void main() {
       final requests = <http.Request>[];
       final api = ApiClient(
         'http://api.falsa',
-        verificarRutas: false,
-        cliente: MockClient((p) async {
+        verifyRoutes: false,
+        client: MockClient((p) async {
           requests.add(p);
           return http.Response('{}', 200);
         }),
@@ -68,7 +68,7 @@ void main() {
 
       final r = await api.get('/ruta-inventada');
 
-      expect(r.codigo, 200);
+      expect(r.code, 200);
       expect(requests.single.url.path, '/ruta-inventada');
     },
   );
@@ -76,24 +76,24 @@ void main() {
   test('the manifest is compared by method and by route template @REV-08-S4 '
       '@assumption:REV-08-ASM-12', () {
     expect(
-      rutaDeclarada(
+      isRouteDeclared(
         'GET',
         '/bookings/all/00000000-0000-7000-8000-000000000007',
       ),
       isTrue,
     );
     expect(
-      rutaDeclarada(
+      isRouteDeclared(
         'POST',
         '/bookings/00000000-0000-7000-8000-000000000007/void',
       ),
       isTrue,
     );
-    expect(rutaDeclarada('GET', '/bookings?when=history'), isTrue);
+    expect(isRouteDeclared('GET', '/bookings?when=history'), isTrue);
     // The method counts: the route exists but with another method.
-    expect(rutaDeclarada('DELETE', '/bookings'), isFalse);
+    expect(isRouteDeclared('DELETE', '/bookings'), isFalse);
     expect(
-      rutaDeclarada(
+      isRouteDeclared(
         'GET',
         '/bookings/00000000-0000-7000-8000-000000000007/void',
       ),
@@ -101,19 +101,19 @@ void main() {
     );
     // The template counts: one segment more or less does not match.
     expect(
-      rutaDeclarada(
+      isRouteDeclared(
         'POST',
         '/bookings/00000000-0000-7000-8000-000000000007/8/void',
       ),
       isFalse,
     );
     expect(
-      rutaDeclarada(
+      isRouteDeclared(
         'GET',
         '/bookings/all/00000000-0000-7000-8000-000000000007/x',
       ),
       isFalse,
     );
-    expect(rutaDeclarada('GET', '/ruta-inventada'), isFalse);
+    expect(isRouteDeclared('GET', '/ruta-inventada'), isFalse);
   });
 }

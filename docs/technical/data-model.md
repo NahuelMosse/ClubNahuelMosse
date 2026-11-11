@@ -188,7 +188,7 @@ Rule: `expires_at > created_at`.
 
 ### outgoing_email
 
-Mailbox of emails for development and tests (`CORREO_MODO=buzon`); in production the email goes out over SMTP and the table stays
+Mailbox of emails for development and tests (`EMAIL_MODE=outbox`); in production the email goes out over SMTP and the table stays
 empty. Columns: `recipient`, `subject`, `body` (text, not null), `created_at` and `updated_at`. No relations.
 
 ### device
@@ -254,7 +254,7 @@ stateDiagram-v2
 
 There are no retries: a send that fails stays `failed`. If the API goes down in the middle of a send, the notice stays in `sending`;
 when dispatching, the one that has been in `sending` for more than 10 minutes since `sending_since` becomes `failed` and is logged as
-"aviso_sin_enviar". `no_permission` and `no_channel` leave the notice only in the notification center. A `pending` reminder
+"notice_not_sent". `no_permission` and `no_channel` leave the notice only in the notification center. A `pending` reminder
 whose booking was canceled, moved or has already started becomes `failed` without being sent.
 
 ## Logical removals and traceability

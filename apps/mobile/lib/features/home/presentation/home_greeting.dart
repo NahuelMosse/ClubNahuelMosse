@@ -8,11 +8,12 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/session.dart';
 
-/// El saludo de la hora del club y el nombre del socio, que se actualiza con la [sesion].
+/// The greeting of the club's time and the member's name, which updates with the
+/// [session].
 class HomeGreeting extends StatelessWidget {
-  const HomeGreeting({super.key, required this.sesion});
+  const HomeGreeting({super.key, required this.session});
 
-  final Session sesion;
+  final Session session;
 
   static const _afternoonStarts = 12;
   static const _nightStarts = 20;
@@ -42,9 +43,9 @@ class HomeGreeting extends StatelessWidget {
         ),
         const SizedBox(height: Spacing.s4),
         ListenableBuilder(
-          listenable: sesion,
+          listenable: session,
           builder: (context, _) => Text(
-            sesion.profile?.firstName ?? '',
+            session.profile?.firstName ?? '',
             style: Texts.h1.copyWith(color: p.textOnMedia),
           ),
         ),

@@ -46,7 +46,7 @@ void main() {
       // Verifies: going to the Home again without a session ends on the login.
       final login = tester.element(find.text('INICIAR SESIÓN'));
       expect(GoRouter.of(login).canPop(), isFalse);
-      GoRouter.of(login).go('/inicio');
+      GoRouter.of(login).go('/home');
       await tester.pumpAndSettle();
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       expect(find.text('RESERVÁ TU CANCHA'), findsNothing);

@@ -33,7 +33,7 @@ class LoginBrand extends StatelessWidget {
           header: true,
           label: l10n.appName,
           child: ExcludeSemantics(
-            // En el teléfono chico la marca se achica antes que partirse en dos líneas.
+            // On a small phone the brand shrinks rather than splitting into two lines.
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,

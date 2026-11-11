@@ -109,7 +109,7 @@ def reset_password(
 
 _LINK_SCRIPT = f"""
   var code = new URLSearchParams(location.hash.slice(1)).get("code") || "";
-  location.replace("intent://app/recuperar?codigo=" + encodeURIComponent(code) +
+  location.replace("intent://app/recover?code=" + encodeURIComponent(code) +
     "#Intent;scheme=clubnahuelmosse;package={ANDROID_PACKAGE};end");
 """
 

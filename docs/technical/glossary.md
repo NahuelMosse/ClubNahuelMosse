@@ -185,7 +185,7 @@ go_router: `/registro[/exitoso]`→`/register[/done]`, `recuperar-contrasena`→
 `reserva/:id`→`booking/:id`, `/admin/sedes[/nueva|/:sede/editar|/creada]`→`/admin/venues[/new|/:venue/edit|/created]`, likewise `/admin/espacios`→`/admin/spaces`.
 Env: `FIREBASE_CREDENCIALES_JSON`→`FIREBASE_CREDENTIALS_JSON`, `URL_PUBLICA`→`PUBLIC_URL`, `CORREO_MODO`→`EMAIL_MODE`, `SMTP_PUERTO`→`SMTP_PORT`,
 `SMTP_USUARIO`→`SMTP_USER`, `SMTP_CONTRASENA`→`SMTP_PASSWORD`, `CORREO_REMITENTE`→`EMAIL_SENDER`, `PRUEBAS`→`E2E_TESTING`,
-`RECORDATORIOS_CADA`→`REMINDERS_EVERY`; the settings accept the new name and the old one (`AliasChoices(new, old)`).
+`RECORDATORIOS_CADA`→`REMINDERS_EVERY`; the settings read only the new name.
 
 ## Rules
 - R1. An enum whose `.name` reaches the UI or the API first gets a Spanish `label` and an explicit API value; then it is renamed.

@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/notification_system.dart';
 
-/// El sistema de notificaciones real: Firebase Cloud Messaging con el proyecto de la
-/// configuración. Los avisos llegan por el servicio de Google y los muestra la bandeja del
-/// sistema; con la app abierta, [onArrive] avisa para que se lea el centro.
+/// The real notification system: Firebase Cloud Messaging with the project of the
+/// configuration. The notices arrive through Google's service and the system tray shows
+/// them; with the app open, [onArrive] reports so the center is read.
 class FcmNotificationSystem implements NotificationSystem {
   FcmNotificationSystem(this._messaging);
 

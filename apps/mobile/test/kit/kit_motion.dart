@@ -107,10 +107,10 @@ Map<String, dynamic>? analyzeSeries(
   final n = v.length;
   if (n < 4) return null;
   final first = v.first;
-  final fin = v.last;
+  final end = v.last;
   final range = v.reduce(math.max) - v.reduce(math.min);
   if (range < eps) return null;
-  final net = fin - first;
+  final net = end - first;
   final returns = net.abs() < eps;
   final amp = returns ? range : net.abs();
   final dir = returns ? 1.0 : net.sign;
@@ -124,7 +124,7 @@ Map<String, dynamic>? analyzeSeries(
   }
   var settle = n - 1;
   if (settled) {
-    while (settle > start && (v[settle - 1] - fin).abs() <= tol) {
+    while (settle > start && (v[settle - 1] - end).abs() <= tol) {
       settle--;
     }
   }
@@ -133,7 +133,7 @@ Map<String, dynamic>? analyzeSeries(
   var over = 0.0;
   if (!returns && settled) {
     for (var j = start; j < n; j++) {
-      over = math.max(over, (v[j] - fin) * dir);
+      over = math.max(over, (v[j] - end) * dir);
     }
   }
   final overshootPct = _round(over / amp * 100).toDouble();
@@ -151,7 +151,7 @@ Map<String, dynamic>? analyzeSeries(
       var err = 0.0;
       for (var j = start - 1; j <= settle; j++) {
         final u = (t[j] - t0) / (t[settle] - t0);
-        final p = (v[j] - base) / (fin - base);
+        final p = (v[j] - base) / (end - base);
         err += math.pow(p - s.value(u), 2).toDouble();
       }
       best[s.key] = math.min(best[s.key] ?? double.infinity, err);
@@ -178,7 +178,7 @@ Map<String, dynamic>? analyzeSeries(
   }
   return {
     'from': _round(v[start - 1], 2),
-    'to': _round(fin, 2),
+    'to': _round(end, 2),
     'startT': t0,
     'durationMs': _round(durationMs, 0),
     'overshootPct': overshootPct,

@@ -36,7 +36,7 @@ class _LoginFormState extends State<LoginForm> {
   String? _passwordError;
   String? _notice;
 
-  /// Sube cada vez que aparece el aviso, para que tiemble aunque sea el mismo.
+  /// Goes up each time the notice appears, so it shakes even if it is the same one.
   int _notices = 0;
 
   @override
@@ -76,7 +76,7 @@ class _LoginFormState extends State<LoginForm> {
       final profile = await widget.session.signIn(email, password);
       if (!mounted) return;
       if (widget.pending.isFor(profile.email)) {
-        context.go('/reservar', extra: widget.pending.take());
+        context.go('/book', extra: widget.pending.take());
       } else {
         context.go(profile.home);
       }
@@ -88,7 +88,7 @@ class _LoginFormState extends State<LoginForm> {
           _notices++;
         });
       }
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -102,7 +102,7 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    // El fondo no se redimensiona con el teclado: el formulario lo esquiva solo.
+    // The background is not resized with the keyboard: the form dodges it on its own.
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Scaffold(
       backgroundColor: p.bgBase,

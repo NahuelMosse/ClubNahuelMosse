@@ -4,7 +4,7 @@ import '../../../common/error_dialog.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
-/// Confirm deactivating a venue: DAR DE BAJA returns `true`.
+/// Confirm deactivating a venue: «DAR DE BAJA» returns `true`.
 Future<bool> confirmVenueDeactivation(BuildContext context, String text) async {
   final l10n = AppLocalizations.of(context);
   return await showDialog<bool>(
@@ -38,7 +38,7 @@ Future<void> showVenueWithBookings(BuildContext context) {
   );
 }
 
-/// Confirm deactivating the space [name]: CONFIRMAR BAJA returns `true`.
+/// Confirm deactivating the space [name]: «CONFIRMAR BAJA» returns `true`.
 Future<bool> confirmSpaceDeactivation(BuildContext context, String name) async {
   final l10n = AppLocalizations.of(context);
   return await showDialog<bool>(

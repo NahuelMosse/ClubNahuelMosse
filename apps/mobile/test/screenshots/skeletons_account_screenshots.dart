@@ -81,7 +81,7 @@ void main() {
 
   testWidgets('home loading and loaded', (tester) async {
     final api = HeldApi(_homeAnswers);
-    await mount(tester, api, '/inicio');
+    await mount(tester, api, '/home');
     await capture(tester, 'skeletons/home_loading.png');
     api.release();
     await tester.pumpAndSettle();
@@ -91,7 +91,7 @@ void main() {
 
   testWidgets('notifications loading and loaded', (tester) async {
     final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
-    await mount(tester, api, '/notificaciones');
+    await mount(tester, api, '/notifications');
     await capture(tester, 'skeletons/notifications_loading.png');
     api.release();
     await tester.pumpAndSettle();
@@ -102,7 +102,7 @@ void main() {
   testWidgets('profile loading and loaded', (tester) async {
     final api = HeldApi({});
     final session = _HeldSession();
-    await mount(tester, api, '/perfil', session: session);
+    await mount(tester, api, '/profile', session: session);
     await capture(tester, 'skeletons/profile_loading.png');
     session.release();
     await tester.pumpAndSettle();

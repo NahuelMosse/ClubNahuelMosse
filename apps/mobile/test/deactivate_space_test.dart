@@ -22,11 +22,11 @@ void main() {
     var deactivated = false;
     await mountAdmin(
       tester,
-      start: '/admin/espacios',
+      start: '/admin/spaces',
       size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           requests.add(request);
           final (status, body) = switch ((request.method, request.url.path)) {
             ('DELETE', '/spaces/00000000-0000-7000-8000-000000000009') => () {
@@ -170,11 +170,11 @@ void main() {
     );
     await mountAdmin(
       tester,
-      start: '/admin/espacios',
+      start: '/admin/spaces',
       size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           requests.add(request);
           if (request.method == 'DELETE') {
             final r = await onDeactivate(++attempts);

@@ -1,19 +1,19 @@
-/// Una ruta de la API que la app pide: método y plantilla (`/bookings/{booking_id}`),
-/// con los mismos nombres que el contrato que publica la API.
+/// A route of the API that the app asks for: method and template
+/// (`/bookings/{booking_id}`), with the same names as the contract the API publishes.
 class ApiRoute {
-  const ApiRoute(this.metodo, this.ruta);
+  const ApiRoute(this.method, this.route);
 
-  final String metodo;
-  final String ruta;
+  final String method;
+  final String route;
 
-  bool coincideCon(String metodoPedido, List<String> segmentos) {
-    if (metodo != metodoPedido) return false;
-    final plantilla = ruta.split('/');
-    if (plantilla.length != segmentos.length) return false;
-    for (var i = 0; i < plantilla.length; i++) {
-      final parte = plantilla[i];
-      final esParametro = parte.startsWith('{') && parte.endsWith('}');
-      if (esParametro ? segmentos[i].isEmpty : parte != segmentos[i]) {
+  bool matches(String requestedMethod, List<String> segments) {
+    if (method != requestedMethod) return false;
+    final template = route.split('/');
+    if (template.length != segments.length) return false;
+    for (var i = 0; i < template.length; i++) {
+      final part = template[i];
+      final isParameter = part.startsWith('{') && part.endsWith('}');
+      if (isParameter ? segments[i].isEmpty : part != segments[i]) {
         return false;
       }
     }
@@ -21,9 +21,9 @@ class ApiRoute {
   }
 }
 
-/// Todo lo que la app le pide a la API. Un test lo compara con el contrato publicado y
-/// el cliente falla en debug si pide algo que no está acá.
-const rutasDeLaApi = <ApiRoute>[
+/// Everything the app asks the API. A test compares it with the published contract and
+/// the client fails in debug if it asks for something that is not here.
+const apiRoutes = <ApiRoute>[
   ApiRoute('POST', '/register'),
   ApiRoute('GET', '/me'),
   ApiRoute('PUT', '/me'),
@@ -58,9 +58,10 @@ const rutasDeLaApi = <ApiRoute>[
   ApiRoute('POST', '/notifications/{notification_id}/read'),
 ];
 
-/// Si la app declara pedir [metodo] [pedido] (la consulta `?a=b` no cuenta).
-bool rutaDeclarada(String metodo, String pedido) {
-  final camino = Uri.parse(pedido).path;
-  final segmentos = camino.split('/');
-  return rutasDeLaApi.any((r) => r.coincideCon(metodo, segmentos));
+/// Whether the app declares asking for [method] [request] (the `?a=b` query does not
+/// count).
+bool isRouteDeclared(String method, String request) {
+  final path = Uri.parse(request).path;
+  final segments = path.split('/');
+  return apiRoutes.any((r) => r.matches(method, segments));
 }

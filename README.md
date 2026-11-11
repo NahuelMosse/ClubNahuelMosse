@@ -39,7 +39,7 @@ Each part is configured, run and deployed with its own README: [`apps/api/README
 [`apps/mobile/README.md`](apps/mobile/README.md).
 
 ```sh
-npm ci && npm run emuladores   # Firebase Auth emulator
+npm ci && npm run emulators   # Firebase Auth emulator
 sh scripts/test.sh             # checks and tests of the API and the app
 cd docs-site && npm install && npm run build   # documentation site (Docusaurus)
 ```

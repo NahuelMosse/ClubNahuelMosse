@@ -13,83 +13,85 @@ import '../domain/booking_exceptions.dart';
 import 'bookings.dart';
 import 'confirm_change_screen.dart';
 
-/// Cancela [reserva] con los avisos de cada desenlace; la repite mientras la persona
-/// elija reintentar tras un corte. Las pantallas que la usan ya pidieron confirmación.
+/// Cancels [booking] with the notices of each outcome; repeats it while the person
+/// chooses to retry after an outage. The screens that use it already asked for
+/// confirmation.
 ///
-/// - [marcar] pone la reserva que espera (o `null` al soltarla) en el estado de la pantalla.
-/// - [alCancelar] quita la reserva de lo que se ve y suelta la espera.
-/// - [recargar] vuelve a leer con avisos; [releer] sin ellos.
-/// - [toleraCorte]: tras un corte, que la reserva ya esté cancelada es que el pedido
-///   cortado la canceló.
+/// - [mark] puts the booking that is waiting (or `null` when released) in the state of
+///   the screen.
+/// - [onCancel] removes the booking from what is seen and releases the wait.
+/// - [reload] reads again with notices; [reread] without them.
+/// - [toleratesOutage]: after an outage, the booking already being cancelled means the
+///   cut request cancelled it.
 Future<void> cancelWithNotices(
   BuildContext context, {
-  required Session sesion,
-  required Bookings reservas,
-  required Booking reserva,
-  required void Function(String? id) marcar,
-  required void Function() alCancelar,
-  required Future<void> Function() recargar,
-  required Future<void> Function() releer,
-  bool toleraCorte = false,
+  required Session session,
+  required Bookings bookings,
+  required Booking booking,
+  required void Function(String? id) mark,
+  required void Function() onCancel,
+  required Future<void> Function() reload,
+  required Future<void> Function() reread,
+  bool toleratesOutage = false,
 }) async {
-  marcar(reserva.id);
-  var huboCorte = false;
+  mark(booking.id);
+  var hadOutage = false;
   while (context.mounted) {
-    Object? fallo;
+    Object? failure;
     try {
       try {
-        await reservas.cancel(reserva);
+        await bookings.cancel(booking);
       } on BookingChanged {
-        if (!(toleraCorte && huboCorte)) rethrow;
+        if (!(toleratesOutage && hadOutage)) rethrow;
       }
       if (!context.mounted) return;
-      alCancelar();
+      onCancel();
       await showBookingCanceled(context);
-      if (context.mounted) await recargar();
+      if (context.mounted) await reload();
       return;
     } on BookingChanged {
       if (!context.mounted) return;
-      marcar(null);
+      mark(null);
       await showChangedMeanwhile(context);
-      if (context.mounted) await recargar();
+      if (context.mounted) await reload();
       return;
     } on SessionExpired {
       if (!context.mounted) return;
-      marcar(null);
-      await avisarSesionVencida(context, sesion);
+      mark(null);
+      await notifySessionExpired(context, session);
       return;
-    } on SinConexion catch (e) {
-      huboCorte = true;
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
-      fallo = e;
+    } on NoConnection catch (e) {
+      hadOutage = true;
+      failure = e;
+    } on ServerError catch (e) {
+      failure = e;
     }
     if (!context.mounted) return;
-    marcar(null);
-    final otraVez = await askRetry(context, fallo);
+    mark(null);
+    final again = await askRetry(context, failure);
     if (!context.mounted) return;
-    if (!otraVez) {
-      // Si el corte llegó después de que el servidor la canceló, la lectura lo muestra.
-      await releer();
+    if (!again) {
+      // If the outage came after the server cancelled it, the read shows it.
+      await reread();
       return;
     }
-    marcar(reserva.id);
+    mark(booking.id);
   }
 }
 
-/// Abre la grilla para cambiar [r] de horario y, al volver, avisa si se modificó.
-/// Devuelve `false` si la pantalla ya no está.
-Future<bool> abrirModificar(
+/// Opens the grid to change the time of [r] and, on returning, reports whether it was
+/// modified. Returns `false` if the screen is gone.
+Future<bool> openModify(
   BuildContext context,
   Booking r, {
-  String ruta = '',
+  String route = '',
 }) async {
-  final resultado = await context.push<ModifyResult>(
-    '/reservas/${r.id}/modificar$ruta',
+  final result = await context.push<ModifyResult>(
+    '/bookings/${r.id}/modify$route',
     extra: r,
   );
   if (!context.mounted) return false;
-  if (resultado == ModifyResult.modificada) {
+  if (result == ModifyResult.modified) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).bookingModified)),
     );

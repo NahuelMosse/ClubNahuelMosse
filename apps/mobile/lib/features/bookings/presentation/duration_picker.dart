@@ -6,16 +6,16 @@ import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
 import 'round_button.dart';
 
-/// `Stepper-Duracion`: una hora menos, la duración y una hora más.
+/// `Stepper-Duracion`: one hour less, the duration and one hour more.
 class DurationSelector extends StatelessWidget {
   const DurationSelector({
     super.key,
-    required this.horas,
-    required this.alCambiar,
+    required this.hours,
+    required this.onChanged,
   });
 
-  final int horas;
-  final ValueChanged<int> alCambiar;
+  final int hours;
+  final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -31,24 +31,24 @@ class DurationSelector extends StatelessWidget {
       child: Row(
         children: [
           RoundButton(
-            icono: Icons.remove_rounded,
-            etiqueta: l.availabilityLessHour,
-            alTocar: horas > minHours ? () => alCambiar(horas - 1) : null,
+            icon: Icons.remove_rounded,
+            label: l.availabilityLessHour,
+            onTap: hours > minHours ? () => onChanged(hours - 1) : null,
           ),
           Expanded(
             child: Semantics(
               liveRegion: true,
               child: Text(
-                l.bookingDuration(horas),
+                l.bookingDuration(hours),
                 textAlign: TextAlign.center,
                 style: Texts.bodyStrong.copyWith(color: p.textPrimary),
               ),
             ),
           ),
           RoundButton(
-            icono: Icons.add_rounded,
-            etiqueta: l.availabilityMoreHour,
-            alTocar: horas < maxHours ? () => alCambiar(horas + 1) : null,
+            icon: Icons.add_rounded,
+            label: l.availabilityMoreHour,
+            onTap: hours < maxHours ? () => onChanged(hours + 1) : null,
           ),
         ],
       ),

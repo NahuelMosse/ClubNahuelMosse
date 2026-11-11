@@ -22,7 +22,7 @@ import 'session.dart';
 
 enum _Stage { checking, form, invalid, done }
 
-/// La contraseña nueva, adonde abre el enlace del correo de recuperación.
+/// The new password, where the link of the recovery email opens.
 class NewPasswordScreen extends StatefulWidget {
   const NewPasswordScreen({
     super.key,
@@ -33,7 +33,8 @@ class NewPasswordScreen extends StatefulWidget {
 
   final PasswordRecovery recovery;
 
-  /// Si el enlace se abre con una sesión iniciada, esa sesión ya no vale al terminar.
+  /// If the link is opened with a signed-in session, that session no longer applies at
+  /// the end.
   final Session session;
   final String code;
 
@@ -81,7 +82,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       if (mounted) {
         setState(() => _stage = valid ? _Stage.form : _Stage.invalid);
       }
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (failure != null && mounted) {
@@ -120,13 +121,13 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       if (mounted) setState(() => _stage = _Stage.invalid);
     } on PasswordRejected catch (e) {
       if (mounted) setState(() => _serverError = e.errors['new_password']);
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
     if (failure != null && mounted) {
-      // El servidor pudo haber cambiado la contraseña antes de que se cortara la red.
+      // The server may have changed the password before the network was cut.
       _hadNetworkFailure = true;
       final retry = await askRetry(context, failure);
       if (retry && mounted) await _save();
@@ -134,7 +135,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   }
 
   Future<void> _backToLogin() async {
-    // La contraseña cambió: si había una sesión abierta en este teléfono, ya venció.
+    // The password changed: if a session was open on this phone, it already expired.
     if (widget.session.profile != null) {
       await signOut(context, widget.session);
     }
@@ -191,7 +192,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               ? l10n.newPasswordInvalidAfterCutoff
               : l10n.newPasswordInvalid,
           primary: l10n.newPasswordRequestNew,
-          onPrimaryTap: () => context.go('/recuperar-contrasena'),
+          onPrimaryTap: () => context.go('/password-recovery'),
           secondary: l10n.newPasswordBackToSignIn,
           onSecondaryTap: () => context.go('/'),
         );

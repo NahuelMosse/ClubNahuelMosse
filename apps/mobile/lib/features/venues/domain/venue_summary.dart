@@ -2,7 +2,7 @@
 import '../../spaces/domain/space.dart';
 import 'venue.dart';
 
-/// Los nombres de los deportes de la sede, en el orden del catálogo.
+/// The names of the sports of the venue, in the order of the catalog.
 List<String> sportsOf(Venue venue, Catalog catalog) => [
   for (final d in catalog.sports)
     if (venue.sports.contains(d.key)) d.name,

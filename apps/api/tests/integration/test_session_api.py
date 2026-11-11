@@ -96,15 +96,15 @@ def test_the_seeding_creates_an_admin_who_signs_in_with_the_admin_role(
 ) -> None:
     s = unique()
     email = f"admin.{s}@club.com"
-    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    monkeypatch.setenv("ADMIN_PASSWORD", PASSWORD)
     arguments = [
-        "--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
-        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1985-06-01",
+        "--email", email, "--first-name", "Ana", "--last-name", "Díaz",
+        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--birth-date", "1985-06-01",
     ]  # fmt: skip
     assert seed(arguments) == 0
     # Seeding again does not duplicate: the account already exists and is only promoted if asked.
     assert seed(arguments) == 1
-    assert seed([*arguments, "--promover"]) == 0
+    assert seed([*arguments, "--promote"]) == 0
     code, body = _me(api, sign_in(email, PASSWORD))
     assert (code, body["role"]) == (200, "admin")
 
@@ -116,10 +116,10 @@ def test_the_seeding_does_not_promote_a_foreign_account_without_being_asked(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     email = _register(api, unique())
-    monkeypatch.setenv("ADMIN_CONTRASENA", "OtraClave9")
+    monkeypatch.setenv("ADMIN_PASSWORD", "OtraClave9")
     arguments = [
-        "--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
-        "--dni", "30111224", "--nacimiento", "1985-06-01",
+        "--email", email, "--first-name", "Ana", "--last-name", "Díaz",
+        "--dni", "30111224", "--birth-date", "1985-06-01",
     ]  # fmt: skip
     assert seed(arguments) == 1
     assert _me(api, sign_in(email, PASSWORD))[1]["role"] == "user"
@@ -132,10 +132,10 @@ def test_the_seeding_promotes_an_account_that_already_exists(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     email = _register(api, unique())
-    monkeypatch.setenv("ADMIN_CONTRASENA", "OtraClave9")
+    monkeypatch.setenv("ADMIN_PASSWORD", "OtraClave9")
     arguments = [
-        "--correo", email.upper(), "--nombre", "Lucía", "--apellido", "Gómez",
-        "--dni", "30111222", "--nacimiento", "1998-11-02", "--promover",
+        "--email", email.upper(), "--first-name", "Lucía", "--last-name", "Gómez",
+        "--dni", "30111222", "--birth-date", "1998-11-02", "--promote",
     ]  # fmt: skip
     assert seed(arguments) == 0
     # The account keeps its password: the seeding only changes its role.
@@ -145,11 +145,11 @@ def test_the_seeding_promotes_an_account_that_already_exists(
 def test_the_seeding_without_a_password_touches_nothing(
     engine: Engine, unique: Callable[[], str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("ADMIN_CONTRASENA", raising=False)
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
     email = f"admin.{unique()}@club.com"
     arguments = [
-        "--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
-        "--dni", "30111223", "--nacimiento", "1985-06-01",
+        "--email", email, "--first-name", "Ana", "--last-name", "Díaz",
+        "--dni", "30111223", "--birth-date", "1985-06-01",
     ]  # fmt: skip
     assert seed(arguments) == 2
     with engine.connect() as conn:

@@ -23,7 +23,7 @@ const venueCastelarJson =
 Future<void> mountAdmin(
   WidgetTester tester, {
   required ApiClient api,
-  String start = '/admin/sedes',
+  String start = '/admin/venues',
   bool dark = true,
   Size size = const Size(393, 852),
 }) async {

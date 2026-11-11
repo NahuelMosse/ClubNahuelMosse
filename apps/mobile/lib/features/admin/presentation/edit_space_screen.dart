@@ -25,8 +25,8 @@ import 'space_deactivation.dart';
 import 'space_deactivation_button.dart';
 import 'space_form_fields.dart';
 
-/// «Editar espacio deportivo»: condición, iluminación y precio. La sede, el deporte, el
-/// tipo y el nombre compuesto se ven pero no cambian.
+/// «Editar espacio deportivo»: condition, lighting and price. The venue, the sport, the
+/// type and the composed name are shown but do not change.
 class EditSpaceScreen extends StatefulWidget {
   const EditSpaceScreen({
     super.key,
@@ -54,7 +54,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
   bool _submitting = false;
   bool _deactivating = false;
 
-  /// Guardando o dando de baja: el formulario no se toca ni se sale.
+  /// Saving or deactivating: the form is not touched and it is not left.
   bool get _busy => _submitting || _deactivating;
 
   @override
@@ -75,7 +75,8 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
     super.dispose();
   }
 
-  /// Sólo para mostrar el deporte y el tipo con su nombre: si no llega, se ven las claves.
+  /// Only to show the sport and the type by name: if it does not arrive, the keys are
+  /// shown.
   Future<void> _loadCatalog() async {
     try {
       final catalog = await widget.spaces.repository.catalog();
@@ -134,7 +135,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).adminChangesSaved)),
       );
-      context.go('/admin/espacios');
+      context.go('/admin/spaces');
       return;
     } on SpaceUnavailable {
       gone = true;
@@ -147,7 +148,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       }
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -156,14 +157,14 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
     if (gone) {
       await showChangedMeanwhile(context);
       widget.spaces.notifyChange();
-      if (mounted) context.go('/admin/espacios');
+      if (mounted) context.go('/admin/spaces');
     } else {
-      await avisarFalloDeEnvio(
+      await notifySendFailure(
         context,
         session: widget.session,
         expired: expired,
         error: failure,
-        reintentar: _save,
+        retry: _save,
       );
     }
   }
@@ -181,7 +182,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
     );
   }
 
-  /// El precio cargado vale: el error se ve recién cuando se lo cambia.
+  /// The loaded price is valid: the error is only shown once it is changed.
   String? get _priceError =>
       _serverError ??
       (readPrice(_price.text) == widget.space.pricePerHour
@@ -194,7 +195,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
     final l10n = AppLocalizations.of(context);
     final s = widget.space;
     return PopScope(
-      // Mientras se guarda no se sale: el cambio quedaría hecho sin que se viera.
+      // It cannot be left while saving: the change would be made without being seen.
       canPop: !_busy,
       child: Scaffold(
         backgroundColor: p.bgBase,

@@ -7,19 +7,19 @@ import '../../../theme/tokens.dart';
 class AvailabilityActionBar extends StatelessWidget {
   const AvailabilityActionBar({
     super.key,
-    required this.texto,
-    required this.alContinuar,
+    required this.text,
+    required this.onContinue,
   });
 
-  final String texto;
-  final VoidCallback? alContinuar;
+  final String text;
+  final VoidCallback? onContinue;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return FixedBar(
       color: p.bgSurface,
-      child: PrimaryButton(label: texto, onTap: alContinuar),
+      child: PrimaryButton(label: text, onTap: onContinue),
     );
   }
 }

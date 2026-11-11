@@ -24,8 +24,7 @@ class LinksSql:
     def recipient(self, email: str) -> Recipient | None:
         row = self._conn.execute(
             text(
-                "SELECT id, first_name, email FROM app_user"
-                " WHERE lower(email) = :email AND active"
+                "SELECT id, first_name, email FROM app_user WHERE lower(email) = :email AND active"
             ),
             {"email": email},
         ).first()

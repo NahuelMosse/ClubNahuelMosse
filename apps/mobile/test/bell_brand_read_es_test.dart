@@ -60,7 +60,7 @@ Future<(FakeApi, SystemWithTaps, NotificationCenter)> _mountApp(
   late NotificationCenter center;
   await mountUser(
     tester,
-    start: '/inicio',
+    start: '/home',
     api: api.client,
     center: (session) => center = centerOf(api, session, system: system),
   );

@@ -26,225 +26,232 @@ import 'my_bookings_header.dart';
 
 export 'booking_card.dart' show BookingCard;
 
-/// «Mis reservas»: las próximas y el historial de quien inició sesión.
+/// «Mis reservas»: the upcoming ones and the history of whoever signed in.
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({
     super.key,
-    required this.reservas,
-    required this.espacios,
-    required this.sesion,
-    this.reservaId,
-    this.enHistorial = false,
+    required this.bookings,
+    required this.spaces,
+    required this.session,
+    this.bookingId,
+    this.inHistory = false,
   });
 
-  final Bookings reservas;
-  final Spaces espacios;
-  final Session sesion;
+  final Bookings bookings;
+  final Spaces spaces;
+  final Session session;
 
-  /// La reserva que se resalta y se trae a la vista, si se llegó desde un aviso.
-  final String? reservaId;
+  /// The booking that is highlighted and brought into view, if it was reached from a
+  /// notice.
+  final String? bookingId;
 
-  /// Abre en el historial: para los avisos de una reserva que ya no está entre las próximas.
-  final bool enHistorial;
+  /// Opens on the history: for the notices of a booking that is no longer among the
+  /// upcoming ones.
+  final bool inHistory;
 
   @override
   State<MyBookingsScreen> createState() => _MyBookingsScreenState();
 }
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
-  late bool _historial = widget.enHistorial;
-  (List<Booking>, Catalog)? _datos;
-  bool _fallo = false;
+  late bool _history = widget.inHistory;
+  (List<Booking>, Catalog)? _data;
+  bool _failure = false;
 
-  /// Sube con cada lectura: la respuesta de una pestaña que ya no se mira se descarta.
-  int _pedido = 0;
+  /// Goes up with each read: the response of a tab that is no longer looked at is
+  /// discarded.
+  int _request = 0;
 
-  /// La tarjeta resaltada, para traerla a la vista.
-  final _resaltada = GlobalKey();
+  /// The highlighted card, to bring it into view.
+  final _highlighted = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _cargar();
+    _load();
   }
 
   @override
-  void didUpdateWidget(MyBookingsScreen anterior) {
-    super.didUpdateWidget(anterior);
-    if (widget.reservaId == anterior.reservaId &&
-        widget.enHistorial == anterior.enHistorial) {
+  void didUpdateWidget(MyBookingsScreen previous) {
+    super.didUpdateWidget(previous);
+    if (widget.bookingId == previous.bookingId &&
+        widget.inHistory == previous.inHistory) {
       return;
     }
-    // Un aviso nuevo con la pantalla ya abierta: se va a la pestaña del aviso y se lee de nuevo.
-    if (_historial != widget.enHistorial) {
-      setState(() => _historial = widget.enHistorial);
-      _cargar();
+    // A new notice with the screen already open: goes to the notice's tab and reads
+    // again.
+    if (_history != widget.inHistory) {
+      setState(() => _history = widget.inHistory);
+      _load();
     } else {
-      _cargar(deCero: false);
+      _load(fromScratch: false);
     }
   }
 
-  void _traerALaVista() {
-    if (widget.reservaId == null) return;
+  void _scrollIntoView() {
+    if (widget.bookingId == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final card = _resaltada.currentContext;
+      final card = _highlighted.currentContext;
       if (mounted && card != null) {
         Scrollable.ensureVisible(card, alignment: 0.1);
       }
     });
   }
 
-  /// Con [deCero] (otra pestaña) la lista se vacía mientras llega la nueva; al refrescar
-  /// queda la que había hasta que llega la nueva, y se quita si la lectura falla.
-  Future<void> _cargar({bool deCero = true}) async {
-    final request = ++_pedido;
+  /// With [fromScratch] (another tab) the list is emptied while the new one arrives; on
+  /// refresh the existing one stays until the new one arrives, and is removed if the read
+  /// fails.
+  Future<void> _load({bool fromScratch = true}) async {
+    final request = ++_request;
     setState(() {
-      if (deCero) _datos = null;
-      _fallo = false;
+      if (fromScratch) _data = null;
+      _failure = false;
     });
-    Object? fallo;
-    var vencida = false;
+    Object? failure;
+    var expired = false;
     try {
-      final catalogo = await widget.espacios.repository.catalog();
-      final items = await widget.reservas.mine(history: _historial);
-      if (mounted && request == _pedido) {
-        setState(() => _datos = (items, catalogo));
-        _traerALaVista();
+      final catalog = await widget.spaces.repository.catalog();
+      final items = await widget.bookings.mine(history: _history);
+      if (mounted && request == _request) {
+        setState(() => _data = (items, catalog));
+        _scrollIntoView();
       }
       return;
     } on SessionExpired {
-      vencida = true;
-    } on FalloDeRed catch (e) {
-      fallo = e;
+      expired = true;
+    } on NetworkFailure catch (e) {
+      failure = e;
     }
-    if (!mounted || request != _pedido) return;
+    if (!mounted || request != _request) return;
     setState(() {
-      _datos = null;
-      _fallo = true;
+      _data = null;
+      _failure = true;
     });
-    await avisarFalloDeCarga(
+    await notifyLoadFailure(
       context,
-      session: widget.sesion,
-      expired: vencida,
-      error: fallo,
-      reintentar: _cargar,
+      session: widget.session,
+      expired: expired,
+      error: failure,
+      retry: _load,
     );
   }
 
-  /// La reserva que se está cancelando: su botón muestra que espera y los demás quedan
-  /// deshabilitados.
-  String? _cancelando;
+  /// The booking being cancelled: its button shows that it waits and the others are
+  /// disabled.
+  String? _cancelling;
 
-  /// Pide confirmación y cancela [r]. Al terminar, bien o porque la reserva ya había
-  /// cambiado, la lista se vuelve a leer.
-  Future<void> _cancelar(Booking r, Catalog catalogo) async {
-    if (_cancelando != null) return;
-    final confirmo = await confirmarCancelacion(
+  /// Asks for confirmation and cancels [r]. When done, well or because the booking had
+  /// already changed, the list is read again.
+  Future<void> _cancel(Booking r, Catalog catalog) async {
+    if (_cancelling != null) return;
+    final confirmed = await confirmCancellation(
       context,
-      textoDeCancelacion(AppLocalizations.of(context), r, catalogo),
+      cancellationText(AppLocalizations.of(context), r, catalog),
     );
-    if (!confirmo || !mounted) return;
+    if (!confirmed || !mounted) return;
     await cancelWithNotices(
       context,
-      sesion: widget.sesion,
-      reservas: widget.reservas,
-      reserva: r,
-      toleraCorte: true,
-      marcar: (id) => setState(() => _cancelando = id),
-      // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
-      alCancelar: () => setState(() {
-        if (_datos case (final items, final catalogo)) {
-          _datos = ([...items.where((x) => x.id != r.id)], catalogo);
+      session: widget.session,
+      bookings: widget.bookings,
+      booking: r,
+      toleratesOutage: true,
+      mark: (id) => setState(() => _cancelling = id),
+      // Leaves «Próximas» at once, so it cannot be touched again while the list arrives.
+      onCancel: () => setState(() {
+        if (_data case (final items, final catalog)) {
+          _data = ([...items.where((x) => x.id != r.id)], catalog);
         }
-        _cancelando = null;
+        _cancelling = null;
       }),
-      recargar: () => _cargar(deCero: false),
-      releer: _releerSinAvisar,
+      reload: () => _load(fromScratch: false),
+      reread: _reloadQuietly,
     );
   }
 
-  /// Abre la grilla para cambiar [r] de horario y, al volver, lee la lista de nuevo.
-  Future<void> _modificar(Booking r) async {
-    if (await abrirModificar(context, r)) await _releerSinAvisar();
+  /// Opens the grid to change the time of [r] and, on returning, reads the list again.
+  Future<void> _modify(Booking r) async {
+    if (await openModify(context, r)) await _reloadQuietly();
   }
 
-  /// Vuelve a leer la lista sin avisos: si no se puede, queda la que había.
-  Future<void> _releerSinAvisar() async {
-    final request = ++_pedido;
+  /// Reads the list again without notices: if it cannot, the existing one stays.
+  Future<void> _reloadQuietly() async {
+    final request = ++_request;
     try {
-      final items = await widget.reservas.mine(history: _historial);
-      final catalogo = await widget.espacios.repository.catalog();
-      if (mounted && request == _pedido) {
-        setState(() => _datos = (items, catalogo));
+      final items = await widget.bookings.mine(history: _history);
+      final catalog = await widget.spaces.repository.catalog();
+      if (mounted && request == _request) {
+        setState(() => _data = (items, catalog));
       }
     } on Exception {
-      // Sin red o con el servidor caído, la lista vieja sigue siendo lo mejor que hay.
+      // Without network or with the server down, the old list is still the best there is.
     }
   }
 
-  void _elegir(bool historial) {
-    if (historial == _historial) return;
-    setState(() => _historial = historial);
-    _cargar();
+  void _select(bool history) {
+    if (history == _history) return;
+    setState(() => _history = history);
+    _load();
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final data = _datos;
+    final data = _data;
     return PopScope(
-      canPop: _cancelando == null,
+      canPop: _cancelling == null,
       child: Scaffold(
         backgroundColor: p.bgBase,
         bottomNavigationBar: IgnorePointer(
-          ignoring: _cancelando != null,
+          ignoring: _cancelling != null,
           child: const BottomBar(current: Section.bookings),
         ),
         body: SafeArea(
           child: RefreshIndicator(
-            onRefresh: () => _cargar(deCero: false),
+            onRefresh: () => _load(fromScratch: false),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: Spacing.listPagePadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  MyBookingsHeader(sesion: widget.sesion),
+                  MyBookingsHeader(session: widget.session),
                   const SizedBox(height: Spacing.s16),
-                  BookingsTabBar(historial: _historial, alElegir: _elegir),
+                  BookingsTabBar(history: _history, onSelect: _select),
                   const SizedBox(height: Spacing.s16),
                   ListSwitcher(
                     child: Column(
-                      key: ValueKey((data == null, _fallo, _historial)),
+                      key: ValueKey((data == null, _failure, _history)),
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (data == null && !_fallo)
+                        if (data == null && !_failure)
                           const BookingCardSkeletons(),
-                        if (data == null && _fallo) ListRetry(onTap: _cargar),
+                        if (data == null && _failure) ListRetry(onTap: _load),
                         if (data != null && data.$1.isEmpty)
                           EmptyState(
-                            title: _historial
+                            title: _history
                                 ? l.bookingNoPastTitle
                                 : l.bookingNoUpcomingTitle,
-                            text: _historial
+                            text: _history
                                 ? l.bookingNoPastText
                                 : l.bookingNoUpcomingText,
                           ),
                         if (data != null)
                           for (final r in data.$1) ...[
                             BookingCard(
-                              reserva: r,
-                              catalogo: data.$2,
-                              key: r.id == widget.reservaId ? _resaltada : null,
-                              resaltada: r.id == widget.reservaId,
-                              cancelable: !_historial && r.cancelable,
-                              cancelando: _cancelando == r.id,
-                              alCancelar: _cancelando == null
-                                  ? () => _cancelar(r, data.$2)
+                              booking: r,
+                              catalog: data.$2,
+                              key: r.id == widget.bookingId
+                                  ? _highlighted
                                   : null,
-                              alModificar: _cancelando == null
-                                  ? () => _modificar(r)
+                              highlighted: r.id == widget.bookingId,
+                              cancelable: !_history && r.cancelable,
+                              cancelling: _cancelling == r.id,
+                              onCancel: _cancelling == null
+                                  ? () => _cancel(r, data.$2)
+                                  : null,
+                              onModify: _cancelling == null
+                                  ? () => _modify(r)
                                   : null,
                             ),
                             const SizedBox(height: Spacing.s12),
@@ -262,12 +269,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 }
 
-/// Lo que se le pide confirmar a quien va a cancelar [r].
-String textoDeCancelacion(AppLocalizations l, Booking r, Catalog catalogo) =>
+/// What is asked to be confirmed from whoever is going to cancel [r].
+String cancellationText(AppLocalizations l, Booking r, Catalog catalog) =>
     l.bookingCancelNotice(
       shortDay(r.startsAt),
-      catalogo.shortKind(r.sport, r.kind),
+      catalog.shortKind(r.sport, r.kind),
       formatPesos(r.total),
-      horarioDe(r),
+      scheduleOf(r),
       r.venue,
     );

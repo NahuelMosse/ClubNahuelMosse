@@ -31,9 +31,9 @@ void main() {
       }
       final router = File('lib/router.dart').readAsStringSync();
       for (final route in [
-        '/admin/sedes',
-        '/admin/espacios',
-        '/admin/acceso-denegado',
+        '/admin/venues',
+        '/admin/spaces',
+        '/admin/access-denied',
       ]) {
         expect(router, contains(route));
       }

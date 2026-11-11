@@ -248,10 +248,10 @@ def test_another_administrators_request_is_not_taken_as_its_own(
 ) -> None:
     venue_id, _ = venue
     s = unique()
-    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    monkeypatch.setenv("ADMIN_PASSWORD", PASSWORD)
     args = [
-        "--correo", f"otro.{s}@club.com", "--nombre", "Luis", "--apellido", "Paz",
-        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--nacimiento", "1980-02-02",
+        "--email", f"otro.{s}@club.com", "--first-name", "Luis", "--last-name", "Paz",
+        "--dni", str(int(s, 16) % 90_000_000 + 10_000_000), "--birth-date", "1980-02-02",
     ]  # fmt: skip
     assert seed(args) == 0
     other = sign_in(f"otro.{s}@club.com", PASSWORD)

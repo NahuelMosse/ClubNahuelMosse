@@ -284,7 +284,7 @@ def test_if_the_confirmation_email_fails_the_booking_answers_the_same_and_the_lo
     )
     assert getattr(response, "id", None) == _id(9)
 
-    with caplog.at_level(logging.ERROR, logger="clubnahuelmosse.correo"):
+    with caplog.at_level(logging.ERROR, logger="clubnahuelmosse.email"):
         _run(tasks)
 
     assert "Your booking is confirmed" in caplog.text

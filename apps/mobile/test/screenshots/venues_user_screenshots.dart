@@ -78,18 +78,18 @@ void main() {
           );
 
       testWidgets('all venues $width $mode', (tester) async {
-        await open(tester, '/sedes');
+        await open(tester, '/venues');
         await capture(tester, 'venues/all_${width}_$mode.png');
       });
 
       testWidgets('venue with courts $width $mode', (tester) async {
-        await open(tester, '/sedes/$venueMoron');
+        await open(tester, '/venues/$venueMoron');
         await capture(tester, 'venues/venue_${width}_$mode.png');
       });
 
       testWidgets('venue filtered by sport $width $mode', (tester) async {
         final semantics = tester.ensureSemantics();
-        await open(tester, '/sedes/$venueMoron');
+        await open(tester, '/venues/$venueMoron');
         await tester.tap(find.bySemanticsLabel('Deporte Fútbol'));
         await tester.pumpAndSettle();
         await capture(tester, 'venues/venue_filtered_${width}_$mode.png');
@@ -97,14 +97,14 @@ void main() {
       });
 
       testWidgets('venue without courts $width $mode', (tester) async {
-        await open(tester, '/sedes/$venueHaedo', spaces: '[]');
+        await open(tester, '/venues/$venueHaedo', spaces: '[]');
         await capture(tester, 'venues/venue_empty_${width}_$mode.png');
       });
 
       testWidgets('schedule $width $mode', (tester) async {
         await open(
           tester,
-          '/sedes/$venueMoron/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/$venueMoron/spaces/00000000-0000-7000-8000-000000000009',
         );
         await capture(tester, 'venues/availability_${width}_$mode.png');
       });
@@ -113,7 +113,7 @@ void main() {
         final semantics = tester.ensureSemantics();
         await open(
           tester,
-          '/sedes/$venueMoron/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/$venueMoron/spaces/00000000-0000-7000-8000-000000000009',
         );
         final slot = find.bySemanticsLabel('18:00 – 19:00');
         await tester.ensureVisible(slot);
@@ -136,7 +136,7 @@ void main() {
           dark: dark,
           size: size,
           start:
-              '/sedes/$venueMoron/canchas/00000000-0000-7000-8000-000000000009',
+              '/venues/$venueMoron/spaces/00000000-0000-7000-8000-000000000009',
           api: apiRoutes({
             ...venueRoutes(venues: venues, grid: gridJson(opens: false)),
             'GET /spaces/catalog': (200, fullCatalog),

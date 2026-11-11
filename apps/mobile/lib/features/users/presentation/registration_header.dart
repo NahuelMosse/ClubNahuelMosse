@@ -7,7 +7,7 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'registration_notice.dart';
 
-/// Lo que va arriba del formulario: el aviso que corresponda, el título y su bajada.
+/// What goes above the form: the corresponding notice, the title and its subtitle.
 class RegistrationHeader extends StatelessWidget {
   const RegistrationHeader({
     super.key,

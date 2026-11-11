@@ -72,7 +72,7 @@ void main() {
 
       await mountAdmin(
         tester,
-        start: '/admin/espacios',
+        start: '/admin/spaces',
         api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('Spaces'), findsOneWidget);
@@ -82,7 +82,7 @@ void main() {
 
       await mountAdmin(
         tester,
-        start: '/admin/sedes/nueva',
+        start: '/admin/venues/new',
         api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       expect(find.text('New venue'), findsOneWidget);
@@ -95,7 +95,7 @@ void main() {
 
       await mountAdmin(
         tester,
-        start: '/admin/espacios/nuevo',
+        start: '/admin/spaces/new',
         api: apiRoutes(spaceRoutes()),
       );
       expect(find.text('New sports space'), findsOneWidget);
@@ -138,7 +138,7 @@ void main() {
         device(tester, locales);
         await mountAdmin(
           tester,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tap(tester, save);

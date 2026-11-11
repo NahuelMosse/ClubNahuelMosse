@@ -7,7 +7,7 @@ import '../domain/booking_history_entry.dart';
 import 'admin_booking_card.dart';
 
 /// The sliver with the cards of the loaded bookings. A `null` [onVoid] disables
-/// ANULAR RESERVA on all of them.
+/// «ANULAR RESERVA» on all of them.
 class AdminBookingsList extends StatelessWidget {
   const AdminBookingsList({
     super.key,

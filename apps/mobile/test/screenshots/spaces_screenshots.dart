@@ -58,7 +58,7 @@ void main() {
 
       if (width != '320') {
         testWidgets('spaces panel $width $mode', (tester) async {
-          await open(tester, '/admin/espacios', {
+          await open(tester, '/admin/spaces', {
             ...spaceRoutes(),
             'GET /spaces': (
               200,
@@ -71,13 +71,13 @@ void main() {
       }
 
       testWidgets('empty space creation $width $mode', (tester) async {
-        await open(tester, '/admin/espacios/nuevo');
+        await open(tester, '/admin/spaces/new');
         await capture(tester, 'admin/create_space_empty_${width}_$mode.png');
       });
 
       testWidgets('complete space creation $width $mode', (tester) async {
         final semantics = tester.ensureSemantics();
-        await open(tester, '/admin/espacios/nuevo');
+        await open(tester, '/admin/spaces/new');
         await fill(tester);
         await capture(tester, 'admin/create_space_complete_${width}_$mode.png');
         semantics.dispose();
@@ -87,7 +87,7 @@ void main() {
         tester,
       ) async {
         final semantics = tester.ensureSemantics();
-        await open(tester, '/admin/espacios/nuevo');
+        await open(tester, '/admin/spaces/new');
         await choose(tester, 'Sede', 'Sede Morón');
         await choose(tester, 'Deporte', 'Fútbol');
         await save(tester);
@@ -105,7 +105,7 @@ void main() {
         final semantics = tester.ensureSemantics();
         await open(
           tester,
-          '/admin/espacios/nuevo',
+          '/admin/spaces/new',
           spaceRoutes(create: (409, duplicate)),
         );
         await fill(tester);
@@ -123,7 +123,7 @@ void main() {
 
       testWidgets('space created $width $mode', (tester) async {
         final semantics = tester.ensureSemantics();
-        await open(tester, '/admin/espacios/nuevo');
+        await open(tester, '/admin/spaces/new');
         await fill(tester);
         await save(tester);
         await capture(tester, 'admin/space_created_${width}_$mode.png');

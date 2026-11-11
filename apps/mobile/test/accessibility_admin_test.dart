@@ -22,7 +22,7 @@ void main() {
       await mountAdmin(
         tester,
         dark: dark,
-        start: '/admin/espacios',
+        start: '/admin/spaces',
         api: apiRoutes({
           ...spaceRoutes(),
           'GET /spaces': (
@@ -42,7 +42,7 @@ void main() {
         await mountAdmin(
           tester,
           dark: dark,
-          start: '/admin/espacios/nuevo',
+          start: '/admin/spaces/new',
           api: apiRoutes(spaceRoutes()),
         );
         await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
@@ -60,7 +60,7 @@ void main() {
       await mountAdmin(
         tester,
         dark: dark,
-        start: '/admin/espacios/nuevo',
+        start: '/admin/spaces/new',
         api: apiRoutes(spaceRoutes()),
       );
       await choose(tester, 'Sede', 'Sede Morón');
@@ -99,7 +99,7 @@ void main() {
         await mountAdmin(
           tester,
           dark: dark,
-          start: '/admin/sedes/nueva',
+          start: '/admin/venues/new',
           api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.tap(find.text('GUARDAR SEDE'));
@@ -116,7 +116,7 @@ void main() {
       await mountAdmin(
         tester,
         dark: dark,
-        start: '/admin/sedes/nueva',
+        start: '/admin/venues/new',
         api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.bySemanticsLabel('Horario de apertura'));
@@ -132,7 +132,7 @@ void main() {
       await mountAdmin(
         tester,
         dark: dark,
-        start: '/admin/sedes/nueva',
+        start: '/admin/venues/new',
         api: apiRoutes({
           'POST /venues': (201, venueHaedoJson),
           'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),

@@ -166,7 +166,7 @@ def test_the_email_link_is_https_and_the_code_does_not_reach_the_server(
     assert link is not None and link.group(1).startswith("http")
     page = api.get("/link/recover")
     assert page.status_code == 200
-    assert "intent://app/recuperar?codigo=" in page.text
+    assert "intent://app/recover?code=" in page.text
     assert "package=ar.edu.unimoron.clubnahuelmosse" in page.text
     assert page.headers["referrer-policy"] == "no-referrer"
 

@@ -23,8 +23,9 @@ import 'notice_card_skeleton.dart';
 import 'notification_center.dart';
 import 'notifications_disabled.dart';
 
-/// `Centro de notificaciones`: las notificaciones agrupadas por día, con las sin leer
-/// marcadas. Sin permiso del sistema, dice «Notificaciones desactivadas» y ofrece activarlas.
+/// `Centro de notificaciones`: the notifications grouped by day, with the unread ones
+/// marked. Without the system permission, it says «Notificaciones desactivadas» and
+/// offers to enable them.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({
     super.key,
@@ -37,7 +38,7 @@ class NotificationsScreen extends StatefulWidget {
   final NotificationCenter center;
   final Session session;
 
-  /// Lo que pasa al tocar una notificación: llevarla a lo que avisa.
+  /// What happens on tapping a notification: take it to what it announces.
   final void Function(BuildContext, AppNotification) onOpen;
   final DateTime Function() now;
 
@@ -48,10 +49,10 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _loading = true;
 
-  /// La lectura de esta visita salió bien: hasta entonces un centro vacío sería un dato viejo.
+  /// The read of this visit went well: until then an empty center would be stale data.
   bool _read = false;
 
-  /// La lectura falló y ya se avisó: queda REINTENTAR en lugar de la lista.
+  /// The read failed and was already reported: «REINTENTAR» stays in place of the list.
   bool _failed = false;
 
   @override
@@ -78,23 +79,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     }
     if (!mounted) return;
     setState(() => _loading = false);
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: expired,
       error: failure,
-      reintentar: _load,
-      alNoReintentar: () => setState(() => _failed = true),
+      retry: _load,
+      onGiveUp: () => setState(() => _failed = true),
     );
   }
 
-  /// Al salir se dan por leídas las que se mostraron; mientras está abierto siguen sin leer
-  /// para que se distingan. Va en un microtask: no se avisa a nadie en medio del desmontaje.
+  /// On leaving, the ones that were shown are marked as read; while open they stay unread
+  /// so they can be told apart. It goes in a microtask: nobody is notified in the middle
+  /// of the teardown.
   @override
   void dispose() {
     final center = widget.center;
@@ -119,7 +121,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           appBar: TopBar(
             title: l10n.notificationsTitle,
             onBack: () =>
-                context.canPop() ? context.pop() : context.go('/inicio'),
+                context.canPop() ? context.pop() : context.go('/home'),
           ),
           bottomNavigationBar: disabled && noNotices
               ? ActionBar(
@@ -143,7 +145,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final l10n = AppLocalizations.of(context);
     if (!_read && center.list.isEmpty) {
       if (_loading) return const NoticeCardSkeleton();
-      // Con el aviso de error abierto no hay nada más que mostrar: el reintento es el del aviso.
+      // With the error notice open there is nothing else to show: the retry is the
+      // notice's.
       return _failed
           ? Center(
               child: TextActionButton(label: l10n.commonRetry, onTap: _load),

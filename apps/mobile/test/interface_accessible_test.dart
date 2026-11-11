@@ -157,7 +157,7 @@ void main() {
         tester,
         api: ApiClient(
           'http://api.falsa',
-          cliente: MockClient((request) async {
+          client: MockClient((request) async {
             requests.add(request);
             final (status, body) = switch ((request.method, request.url.path)) {
               ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
@@ -207,7 +207,7 @@ void main() {
     await mountUser(
       tester,
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       api: apiRoutes({
         ...venueRoutes(),
         'POST /bookings': (
@@ -242,7 +242,7 @@ void main() {
       final routes = venueRoutes(grid: gridJson(taken: {9, 12}));
       await mountUser(
         tester,
-        start: '/reservas',
+        start: '/bookings',
         api: apiRoutes({
           ...routes,
           'GET /bookings': (200, '{"bookings": [${bookingJson()}]}'),
@@ -279,7 +279,7 @@ void main() {
       );
       await mountUser(
         tester,
-        start: '/reservas',
+        start: '/bookings',
         api: apiRoutes({
           ...venueRoutes(),
           'GET /bookings': (200, '{"bookings": [$upcoming]}'),
@@ -641,7 +641,7 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await mountAdmin(
       tester,
-      start: '/admin/espacios/nuevo',
+      start: '/admin/spaces/new',
       size: const Size(320, 568),
       api: apiRoutes(spaceRoutes()),
     );

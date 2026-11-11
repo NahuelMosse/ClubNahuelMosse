@@ -20,7 +20,7 @@ from app.shared.club_timezone import CLUB_TIMEZONE as ZONE
 from app.shared.errors import InvalidData, Unavailable
 from app.shared.input_validation import Identifier, parse_time
 
-router = APIRouter(tags=["horarios"])
+router = APIRouter(tags=["availability"])
 
 SPACE_UNAVAILABLE = "This court is no longer available"
 

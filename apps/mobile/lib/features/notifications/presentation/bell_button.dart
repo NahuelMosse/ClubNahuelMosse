@@ -6,8 +6,8 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'notification_center.dart';
 
-/// La campana de la cabecera: abre el centro de notificaciones y cuenta las que no se leyeron.
-/// Va sobre la foto de la portada, así que el ícono usa el color sobre foto en los dos modos.
+/// The bell of the header: opens the notification center and counts the unread ones. It
+/// goes over the cover photo, so the icon uses the on-photo color in both modes.
 class NotificationsButton extends StatelessWidget {
   const NotificationsButton({super.key, required this.center});
 
@@ -20,7 +20,7 @@ class NotificationsButton extends StatelessWidget {
       final p = context.palette;
       final l10n = AppLocalizations.of(context);
       final unread = center.unread;
-      void open() => context.push('/notificaciones');
+      void open() => context.push('/notifications');
       return Semantics(
         container: true,
         button: true,

@@ -5,7 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// Los deportes de la sede y «Ver canchas».
+/// The sports of the venue and «Ver canchas».
 class VenueCardFooter extends StatelessWidget {
   const VenueCardFooter({super.key, required this.sports});
 

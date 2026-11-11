@@ -38,7 +38,7 @@ void main() {
     var queries = 0;
     final api = ApiClient(
       'http://api.falsa',
-      cliente: MockClient((request) async {
+      client: MockClient((request) async {
         if (request.method == 'DELETE') {
           deactivations++;
           final (code, body) = deactivation;
@@ -69,7 +69,7 @@ void main() {
         api: api,
         session: session,
         appearance: appearanceUsed,
-        initialLocation: '/perfil',
+        initialLocation: '/profile',
       ),
     );
     await tester.pumpAndSettle();
@@ -113,7 +113,7 @@ void main() {
       Brightness.light,
     );
     final saved = await SharedPreferences.getInstance();
-    expect(saved.getBool('modo_oscuro'), isFalse);
+    expect(saved.getBool('dark_mode'), isFalse);
     semantics.dispose();
   });
 
@@ -338,7 +338,7 @@ void main() {
         api: homeApi(),
         session: session,
         appearance: Appearance.inMemory(),
-        initialLocation: '/inicio',
+        initialLocation: '/home',
       ),
     );
     await tester.pumpAndSettle();
@@ -420,7 +420,7 @@ void main() {
           credentials: credentials,
           api: ApiClient(
             'http://api.falsa',
-            cliente: MockClient((request) async {
+            client: MockClient((request) async {
               if (request.method == 'DELETE') return response.future;
               return http.Response(profileJson(), 200);
             }),
@@ -447,7 +447,7 @@ void main() {
       credentials = FakeCredentials();
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           if (request.method == 'DELETE') {
             attempts++;
             if (attempts == 1) throw const SocketException('se cortó');
@@ -468,7 +468,7 @@ void main() {
           api: api,
           session: session,
           appearance: Appearance.inMemory(),
-          initialLocation: '/perfil',
+          initialLocation: '/profile',
         ),
       );
       await tester.pumpAndSettle();

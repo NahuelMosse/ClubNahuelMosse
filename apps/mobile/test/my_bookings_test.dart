@@ -39,11 +39,11 @@ void main() {
     final routes = venueRoutes();
     await mountUser(
       tester,
-      start: '/reservas',
+      start: '/bookings',
       size: size,
       api: ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           requests.add(request);
           final (code, body) = request.url.path == '/bookings'
               ? (
@@ -150,7 +150,7 @@ void main() {
 
       GoRouter.of(
         tester.element(find.byType(MyBookingsScreen)),
-      ).go('/reservas?historial=1');
+      ).go('/bookings?history=1');
       await tester.pumpAndSettle();
 
       expect(requests.last.url.queryParameters['when'], 'history');

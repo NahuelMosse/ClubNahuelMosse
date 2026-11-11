@@ -15,7 +15,7 @@ import 'admin_listing_header.dart';
 import 'admin_venue_card.dart';
 import 'venue_deactivation.dart';
 
-/// «Gestionar sedes» del panel: las sedes activas y el acceso a dar de alta una nueva.
+/// «Gestionar sedes» of the panel: the active venues and the way to create a new one.
 class AdminVenuesScreen extends StatefulWidget {
   const AdminVenuesScreen({
     super.key,
@@ -34,13 +34,13 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
   List<Venue>? _venues;
   bool _failed = false;
 
-  /// La sede que se está dando de baja: mientras tanto no se toca ninguna tarjeta.
+  /// The venue being deactivated: meanwhile no card is touched.
   String? _deactivatingId;
 
   @override
   void initState() {
     super.initState();
-    // El listado queda debajo del alta: cuando se guarda una sede, se vuelve a leer.
+    // The list stays below the form: when a venue is saved, it is read again.
     widget.venues.addListener(_load);
     _load();
   }
@@ -76,7 +76,7 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
       title: l10n.adminVenuesTitle,
       session: widget.session,
       createText: l10n.adminAddVenue,
-      createRoute: '/admin/sedes/nueva',
+      createRoute: '/admin/venues/new',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: venues != null,

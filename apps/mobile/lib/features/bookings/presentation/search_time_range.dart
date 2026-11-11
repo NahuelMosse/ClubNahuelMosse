@@ -5,24 +5,24 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
 
-/// Los selectores DESDE y HASTA del formulario de consulta de canchas.
+/// The «DESDE» and «HASTA» selectors of the court query form.
 class SearchTimeRange extends StatelessWidget {
   const SearchTimeRange({
     super.key,
-    required this.desde,
-    required this.hasta,
-    required this.errorDesde,
-    required this.errorHasta,
-    required this.alElegirDesde,
-    required this.alElegirHasta,
+    required this.from,
+    required this.to,
+    required this.fromError,
+    required this.toError,
+    required this.onPickFrom,
+    required this.onPickTo,
   });
 
-  final int desde;
-  final int hasta;
-  final String? errorDesde;
-  final String? errorHasta;
-  final VoidCallback? alElegirDesde;
-  final VoidCallback? alElegirHasta;
+  final int from;
+  final int to;
+  final String? fromError;
+  final String? toError;
+  final VoidCallback? onPickFrom;
+  final VoidCallback? onPickTo;
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +34,11 @@ class SearchTimeRange extends StatelessWidget {
           child: SelectorField(
             label: l.spaceSearchFrom.toUpperCase(),
             semanticLabel: l.spaceSearchFrom,
-            value: hhmm(desde),
+            value: hhmm(from),
             placeholder: '',
             icon: Icons.expand_more_rounded,
-            onTap: alElegirDesde,
-            error: errorDesde,
+            onTap: onPickFrom,
+            error: fromError,
           ),
         ),
         const SizedBox(width: Spacing.s12),
@@ -46,11 +46,11 @@ class SearchTimeRange extends StatelessWidget {
           child: SelectorField(
             label: l.spaceSearchTo.toUpperCase(),
             semanticLabel: l.spaceSearchTo,
-            value: hhmm(hasta),
+            value: hhmm(to),
             placeholder: '',
             icon: Icons.expand_more_rounded,
-            onTap: alElegirHasta,
-            error: errorHasta,
+            onTap: onPickTo,
+            error: toError,
           ),
         ),
       ],

@@ -40,7 +40,7 @@ void main() {
   }
 
   testWidgets('availability loading and loaded', (tester) async {
-    final held = await mount(tester, '/sedes/$_moron/canchas/$_f5');
+    final held = await mount(tester, '/venues/$_moron/spaces/$_f5');
     await _capture(tester, 'skeletons/availability_loading.png');
     held.release();
     await tester.pumpAndSettle();
@@ -49,7 +49,7 @@ void main() {
   });
 
   testWidgets('availability changing the day and changed', (tester) async {
-    final held = await mount(tester, '/sedes/$_moron/canchas/$_f5');
+    final held = await mount(tester, '/venues/$_moron/spaces/$_f5');
     held.release();
     await tester.pumpAndSettle();
     held.holdAgain();
@@ -71,7 +71,7 @@ void main() {
   });
 
   testWidgets('search form loading and loaded', (tester) async {
-    final held = await mount(tester, '/inicio/buscar');
+    final held = await mount(tester, '/home/search');
     await _capture(tester, 'skeletons/search_form_loading.png');
     held.release();
     await tester.pumpAndSettle();
@@ -83,7 +83,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     final held = await mount(
       tester,
-      '/inicio/buscar',
+      '/home/search',
       extra: {
         'GET /spaces/available': (
           200,
@@ -105,7 +105,7 @@ void main() {
     final second = bookingJson(id: '00000000-0000-7000-8000-000000000002');
     final held = await mount(
       tester,
-      '/reservas',
+      '/bookings',
       extra: {
         'GET /bookings': (200, '{"bookings": [${bookingJson()}, $second]}'),
       },

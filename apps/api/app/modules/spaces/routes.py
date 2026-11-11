@@ -30,7 +30,7 @@ from app.shared.errors import (
 from app.shared.input_validation import Identifier
 from app.shared.responses import conflict
 
-router = APIRouter(tags=["espacios"])
+router = APIRouter(tags=["spaces"])
 
 DUPLICATE = "A sports space with that name already exists in the selected venue."
 VENUE_UNAVAILABLE = "The venue is no longer available"
@@ -287,7 +287,5 @@ def deactivate_space_route(
     try:
         deactivate_space(profile, space_id, repository)
     except HasFutureBookings:
-        return conflict(
-            {"space": "The space cannot be deleted because it has future bookings."}
-        )
+        return conflict({"space": "The space cannot be deleted because it has future bookings."})
     return Response(status_code=status.HTTP_204_NO_CONTENT)

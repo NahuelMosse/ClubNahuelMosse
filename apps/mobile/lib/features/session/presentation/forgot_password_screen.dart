@@ -17,8 +17,8 @@ import '../../users/presentation/field_problem_text.dart';
 import '../data/password_recovery.dart';
 import '../domain/recovery_exceptions.dart';
 
-/// Recuperar contraseña: se llega desde «¿Olvidaste tu contraseña?» del login, pide el
-/// correo y muestra lo mismo tenga o no cuenta.
+/// Password recovery: reached from «¿Olvidaste tu contraseña?» on the login, it asks for
+/// the email and shows the same whether or not it has an account.
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key, required this.recovery});
 
@@ -71,7 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) setState(() => _sent = true);
     } on EmailRejected catch (e) {
       if (mounted) setState(() => _serverError = e.message);
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       failure = e;
     } finally {
       if (mounted) setState(() => _submitting = false);

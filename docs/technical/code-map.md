@@ -62,7 +62,7 @@ app-tp/
 ├── scripts/                 test.sh, e2e.sh
 ├── render.yaml              Render blueprint: the API and its database
 ├── firebase.json            Firebase Auth emulator (port 9099)
-├── package.json             only for `npm run emuladores` (firebase-tools)
+├── package.json             only for `npm run emulators` (firebase-tools)
 └── .claude/                 the method kit (SDD): rules, agents, hooks and tools
 ```
 
@@ -199,12 +199,12 @@ if the role is not `admin`.
 | `DATABASE_URL` | `postgresql+psycopg://club:club@localhost:5432/club` | the database; used by the API and the migrations |
 | `FIREBASE_PROJECT_ID` | `demo-clubnahuelmosse` | the project that issues the tokens |
 | `FIREBASE_API_KEY` | empty | check passwords over REST (the emulator does not need it) |
-| `FIREBASE_CREDENTIALS_JSON` (or `FIREBASE_CREDENCIALES_JSON`) | empty | the service account; without it push stays on the null channel |
-| `PUBLIC_URL` (or `URL_PUBLICA`) | `http://localhost:8000` | the host of the email links |
-| `EMAIL_MODE` (or `CORREO_MODO`) | `smtp` | `buzon` stores the emails in the `outgoing_email` table (development only) |
+| `FIREBASE_CREDENTIALS_JSON` | empty | the service account; without it push stays on the null channel |
+| `PUBLIC_URL` | `http://localhost:8000` | the host of the email links |
+| `EMAIL_MODE` | `smtp` | `outbox` stores the emails in the `outgoing_email` table (development only) |
 | `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | empty | the outgoing email (each also read under its Spanish name, see the API README) |
-| `REMINDERS_EVERY` (or `RECORDATORIOS_CADA`) | 30 | seconds between sweeps; 0 turns the in-process sweep off |
-| `E2E_TESTING` (or `PRUEBAS`) | false | mount `/_testing` (only together with the emulator) |
+| `REMINDERS_EVERY` | 30 | seconds between sweeps; 0 turns the in-process sweep off |
+| `E2E_TESTING` | false | mount `/_testing` (only together with the emulator) |
 | `VERSION` | the one in `pyproject.toml` | what `/health` and the log report |
 
 Outside `Settings`: `FIREBASE_AUTH_EMULATOR_HOST` (Auth emulator), `GOOGLE_APPLICATION_CREDENTIALS` (service account
@@ -282,7 +282,7 @@ each test in a transaction that is discarded. To run only one card: `uv run pyte
 | `domain/token_source.dart` | `TokenSource`, what the API client asks for the token |
 | `data/session_repository.dart` | `SessionRepository` (sign in, resume, refresh, edit profile, change password, deactivate, sign out, `token()`) |
 | `data/credentials.dart` | `FirebaseCredentials` |
-| `data/firebase.dart` | `initFirebase`, with the emulator if `AUTH_EMULADOR` is set |
+| `data/firebase.dart` | `initFirebase`, with the emulator if `AUTH_EMULATOR` is set |
 | `data/password_recovery.dart` | `PasswordRecovery`, the repository of the three steps |
 | `presentation/session.dart` | `Session`, the `ChangeNotifier` the router listens to |
 | `presentation/login_screen.dart` | the login |
@@ -416,10 +416,10 @@ All in `lib/router.dart`. "Forward" enters from the right; "root" changes withou
 | Define | What for |
 |---|---|
 | `API_URL` | the address of the API; required (the Android emulator sees the machine at `http://10.0.2.2:8000`) |
-| `AUTH_EMULADOR` | `host:port` of the Firebase Auth emulator; with it the Firebase keys are not needed and push is simulated |
-| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_SENDER_ID`, `FIREBASE_PROJECT_ID` | the real Firebase project; required without `AUTH_EMULADOR` |
-| `PUSH` | `simulado` forces the fake push |
-| `AVISOS_SEGUNDOS` | how often it polls for notices with the app open (20 s; 2 s with the emulator) |
+| `AUTH_EMULATOR` | `host:port` of the Firebase Auth emulator; with it the Firebase keys are not needed and push is simulated |
+| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_SENDER_ID`, `FIREBASE_PROJECT_ID` | the real Firebase project; required without `AUTH_EMULATOR` |
+| `PUSH` | `simulated` forces the fake push |
+| `NOTIFICATION_POLL_SECONDS` | how often it polls for notices with the app open (20 s; 2 s with the emulator) |
 
 ### App components
 

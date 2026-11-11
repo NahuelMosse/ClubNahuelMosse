@@ -14,7 +14,7 @@ from app.shared.config import config
 from app.shared.errors import Duplicate, RateLimited
 from app.shared.firebase_credential import service_credential
 
-identity_log = logging.getLogger("clubnahuelmosse.identidad")
+identity_log = logging.getLogger("clubnahuelmosse.identity")
 
 
 @cache

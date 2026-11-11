@@ -11,7 +11,7 @@ import '../support/user.dart';
 Future<void> _openSchedule(WidgetTester tester, String grid) => mountUser(
   tester,
   start:
-      '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
   size: const Size(393, 2400),
   api: apiRoutes(venueRoutes(grid: grid)),
 );

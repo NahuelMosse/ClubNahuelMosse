@@ -19,7 +19,7 @@ from app.modules.session import NoSession, Profile, current_user
 from app.shared.errors import Unavailable
 from app.shared.input_validation import Identifier
 
-router = APIRouter(tags=["notificaciones"])
+router = APIRouter(tags=["notifications"])
 
 
 class DeviceRequest(BaseModel):
@@ -116,9 +116,7 @@ def _view(n: Notification) -> NotificationView:
     response_model=Center,
     responses={401: {"model": NoSession}},
     summary="The notification center of whoever asks",
-    description=(
-        "The latest 100, from newest to oldest, and how many are unread in total."
-    ),
+    description=("The latest 100, from newest to oldest, and how many are unread in total."),
 )
 def center(
     profile: Annotated[Profile, Depends(current_user)],

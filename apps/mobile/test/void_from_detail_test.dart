@@ -57,7 +57,7 @@ void main() {
       tester,
       BookingDetailScreen(
         booking: parsed!,
-        history: BookingHistory(api: api, sesion: session),
+        history: BookingHistory(api: api, session: session),
         session: session,
         spaces: Spaces(
           repository: SpacesRepository(api: api, session: session),

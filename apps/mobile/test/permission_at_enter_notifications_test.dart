@@ -4,8 +4,7 @@ import 'package:clubnahuelmosse/features/notifications/data/simulated_notificati
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'notifications_test.dart'
-    show FakeApi, FakeSystem, centerOf, bodyOf;
+import 'notifications_test.dart' show FakeApi, FakeSystem, centerOf, bodyOf;
 import 'support/mount.dart';
 
 /// A system that starts without having asked and answers whatever is set when asked.
@@ -42,15 +41,16 @@ void main() {
     },
   );
 
-  testWidgets('if it already answered, it does not ask again on entry @NOT-01-S2', (
-    tester,
-  ) async {
-    final system = UnaskedSystem()..alreadyAsked = true;
-    centerOf(FakeApi(), FakeSession(userProfile), system: system);
-    await tester.pumpAndSettle();
+  testWidgets(
+    'if it already answered, it does not ask again on entry @NOT-01-S2',
+    (tester) async {
+      final system = UnaskedSystem()..alreadyAsked = true;
+      centerOf(FakeApi(), FakeSession(userProfile), system: system);
+      await tester.pumpAndSettle();
 
-    expect(system.requests, 0);
-  });
+      expect(system.requests, 0);
+    },
+  );
 
   testWidgets(
     'an admin does not get the question on entry @assumption:NOT-01-ASM-01',
@@ -63,7 +63,9 @@ void main() {
     },
   );
 
-  testWidgets('«Activar» still asks for the permission @NOT-01-S2', (tester) async {
+  testWidgets('«Activar» still asks for the permission @NOT-01-S2', (
+    tester,
+  ) async {
     final system = UnaskedSystem()..alreadyAsked = true;
     final center = centerOf(
       FakeApi(),
@@ -108,7 +110,7 @@ void main() {
       expect(await system.isAllowed(), isTrue);
 
       SharedPreferences.setMockInitialValues({
-        'permiso_notificaciones_simulado': 'denegado',
+        'simulated_notification_permission': 'denied',
       });
       system = SimulatedNotificationSystem();
       expect(await system.wasAsked(), isTrue);

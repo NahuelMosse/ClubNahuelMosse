@@ -77,7 +77,7 @@ Future<Profile?> resumeWithRetry(Session session) async {
   while (true) {
     try {
       return await session.resume();
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       await WidgetsBinding.instance.endOfFrame;
       final context = navigator.currentState?.overlay?.context;
       if (context == null || !context.mounted) rethrow;

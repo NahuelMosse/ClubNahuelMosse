@@ -102,7 +102,7 @@ breaks it.
 | Add a business rule (for example, a maximum of hours) | `rules.py` of the feature in `apps/api/app/modules/` and its test in `apps/api/tests/unit/` |
 | Add a field to a table | A new migration in `apps/api/migrations/versions/` (copy the shape of the last one), the SQL of `repository.py` and the route in `routes.py`, both in the feature folder |
 | Add a screen | A `*_screen.dart` file in the feature folder and its route in `apps/mobile/lib/router.dart` |
-| Add an API route | The function in `app/modules/<feature>/routes.py`, register it in `apps/mobile/lib/api/rutas.dart` of the app and regenerate `openapi.json` (see the API README) |
+| Add an API route | The function in `app/modules/<feature>/routes.py`, register it in `apps/mobile/lib/api/api_routes.dart` of the app and regenerate `openapi.json` (see the API README) |
 
 ## How to try it on your machine
 
@@ -120,7 +120,7 @@ To work fully locally (server, database and a fake Firebase on your machine) the
 [the API](../apps/api/README.md) and of [the app](../apps/mobile/README.md). In short:
 
 1. A local PostgreSQL database.
-2. The Firebase emulator: `npm ci` and `npm run emuladores` at the root of the repo.
+2. The Firebase emulator: `npm ci` and `npm run emulators` at the root of the repo.
 3. The API: `cd apps/api`, `uv sync`, `uv run alembic upgrade head` and `uv run uvicorn app.main:app` with the variables from the
    README.
 4. The app pointing to `http://10.0.2.2:8000`, which is how the Android emulator sees your machine.

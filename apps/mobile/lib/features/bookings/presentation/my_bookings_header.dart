@@ -7,11 +7,11 @@ import '../../../theme/tokens.dart';
 import '../../session/presentation/account_card.dart';
 import '../../session/presentation/session.dart';
 
-/// El título «Mis reservas» con el botón de la cuenta.
+/// The title «Mis reservas» with the account button.
 class MyBookingsHeader extends StatelessWidget {
-  const MyBookingsHeader({super.key, required this.sesion});
+  const MyBookingsHeader({super.key, required this.session});
 
-  final Session sesion;
+  final Session session;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class MyBookingsHeader extends StatelessWidget {
             ),
           ),
         ),
-        AccountButton(session: sesion),
+        AccountButton(session: session),
       ],
     );
   }

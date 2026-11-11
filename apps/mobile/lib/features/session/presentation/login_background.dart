@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// La foto del club con el degradé del prototipo, que asegura el contraste del texto.
+/// The photo of the club with the prototype's gradient, which ensures the text contrast.
 class LoginBackground extends StatelessWidget {
   const LoginBackground({super.key});
 

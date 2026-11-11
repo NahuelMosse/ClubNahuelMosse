@@ -4,8 +4,8 @@ import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'photos.dart';
 
-/// La foto con velo y, encima, el camino de vuelta, un sobretítulo, el nombre de la sede y
-/// lo que cada pantalla agregue debajo ([extra]).
+/// The photo with a veil and, on top, the way back, an overline, the name of the venue
+/// and whatever each screen adds below ([extra]).
 class CoverWithTitle extends StatelessWidget {
   const CoverWithTitle({
     super.key,
@@ -20,11 +20,11 @@ class CoverWithTitle extends StatelessWidget {
 
   final ImageProvider image;
 
-  /// El nombre de la pantalla a la que se vuelve.
+  /// The name of the screen it goes back to.
   final String backTo;
   final VoidCallback onBack;
 
-  /// El alto entre el camino de vuelta y el sobretítulo.
+  /// The height between the way back and the overline.
   final double gap;
   final String overline;
   final String name;

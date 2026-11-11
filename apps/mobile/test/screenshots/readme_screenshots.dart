@@ -76,14 +76,14 @@ void main() {
 
   testWidgets('03-venues', (tester) async {
     useEnglishDevice(tester);
-    await openVenues(tester, '/sedes');
+    await openVenues(tester, '/venues');
     expect(find.text('Venues'), findsWidgets);
     await capture(tester, '03-venues.png');
   });
 
   testWidgets('05-availability', (tester) async {
     useEnglishDevice(tester);
-    await openVenues(tester, '/sedes/$venueId/canchas/$spaceId');
+    await openVenues(tester, '/venues/$venueId/spaces/$spaceId');
     expect(find.text('AVAILABLE TIME'), findsOneWidget);
     await capture(tester, '05-availability.png');
   });
@@ -91,7 +91,7 @@ void main() {
   testWidgets('07-done', (tester) async {
     useEnglishDevice(tester);
     final semantics = tester.ensureSemantics();
-    await openVenues(tester, '/sedes/$venueId/canchas/$spaceId');
+    await openVenues(tester, '/venues/$venueId/spaces/$spaceId');
     final slot = find.bySemanticsLabel('18:00 – 19:00');
     await tester.ensureVisible(slot);
     await tester.pumpAndSettle();

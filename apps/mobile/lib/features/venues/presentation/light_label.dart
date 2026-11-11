@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// La etiqueta de deporte sobre la portada: borde claro sobre la foto.
+/// The sport label over the cover: light border over the photo.
 class LightLabel extends StatelessWidget {
   const LightLabel({super.key, required this.text});
 

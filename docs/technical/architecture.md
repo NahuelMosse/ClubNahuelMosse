@@ -163,7 +163,7 @@ stateDiagram-v2
   pending ones. If a person has another booking voided while holding an unread voiding notice, a new notice is opened
   with the total count and the previous one is replaced (`replaced_by`); `notification_booking` links each booking
   to the notice that informed it.
-- **Reminders.** The sweep (`modules/notifications/sweep.py`) runs inside the web process every `RECORDATORIOS_CADA`
+- **Reminders.** The sweep (`modules/notifications/sweep.py`) runs inside the web process every `REMINDERS_EVERY`
   seconds: it first dispatches the pending ones and then looks for the active bookings that start within the next hour
   and have no reminder. The unique index `notification_reminder_unique` prevents a duplicate even if two sweeps
   cross. The same sweep exists as a one-pass command (`python -m app.modules.notifications.sweep --una-vez`) for a cron.
@@ -187,7 +187,7 @@ sequenceDiagram
   App->>API: POST /password-recovery {email}
   API-->>App: 202 always (whether the account exists or not)
   API->>API: stores the code hash, expires in 30 min, cap 3 per hour
-  API-)Email: link URL_PUBLICA/link/recover#code=…
+  API-)Email: link PUBLIC_URL/link/recover#code=…
   Note over App: the page opens clubnahuelmosse://app/recuperar?codigo=…
   App->>API: POST /password-recovery/check {code}
   App->>API: PUT /password-recovery {code, password}
@@ -251,7 +251,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   subgraph local["Local"]
-    emu["Android emulator<br/>API_URL=http://10.0.2.2:8000<br/>AUTH_EMULADOR"]
+    emu["Android emulator<br/>API_URL=http://10.0.2.2:8000<br/>AUTH_EMULATOR"]
     uv["uvicorn"]
     pgl[("Local Postgres<br/>club, club_test, club_e2e_test")]
     fbe["Firebase Auth emulator :9099"]
@@ -274,7 +274,7 @@ flowchart LR
 | API | `uvicorn app.main:app --reload` | build: `uv sync` and `alembic upgrade head`; start: `uvicorn` |
 | Database | Postgres on the machine or in Docker | Render Postgres, free plan |
 | Firebase | Auth emulator, simulated push | real project, with a service account |
-| Email | `CORREO_MODO=buzon` (table `outgoing_email`) | SMTP |
+| Email | `EMAIL_MODE=outbox` (table `outgoing_email`) | SMTP |
 
 There is no staging. The API and the database run on Render; the accounts, the secrets and the first deployment are in the runbook.
 

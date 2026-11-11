@@ -53,9 +53,9 @@ def main(args: list[str] | None = None) -> int:
     try:
         sent = sweep_once()
     except Exception:
-        _log.exception("barrido_fallido")
+        _log.exception("sweep_failed")
         return 1
-    _log.info("barrido_ok recordatorios=%s", sent)
+    _log.info("sweep_ok reminders=%s", sent)
     return 0
 
 

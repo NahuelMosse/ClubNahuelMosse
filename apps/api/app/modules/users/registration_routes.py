@@ -14,7 +14,7 @@ from app.shared.club_timezone import CLUB_TIMEZONE
 from app.shared.errors import Duplicate
 from app.shared.identity import FirebaseProvider, identity
 
-router = APIRouter(tags=["usuarios"])
+router = APIRouter(tags=["users"])
 DUPLICATE_MESSAGE: str = "The user is already registered. Change the email or the DNI."
 FIELD_MESSAGES = {
     "email": "This email is already registered",

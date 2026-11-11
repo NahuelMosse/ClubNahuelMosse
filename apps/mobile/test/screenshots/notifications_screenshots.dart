@@ -110,7 +110,7 @@ void main() {
           tester,
           dark: dark,
           size: size,
-          start: '/inicio',
+          start: '/home',
           api: api.client,
           center: (session) => centerOf(api, session),
         );

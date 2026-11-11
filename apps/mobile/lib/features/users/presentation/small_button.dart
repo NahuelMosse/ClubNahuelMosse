@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// `Btn-Small`: acción secundaria dentro de una tarjeta.
+/// `Btn-Small`: secondary action inside a card.
 class SmallButton extends StatelessWidget {
   const SmallButton({
     super.key,

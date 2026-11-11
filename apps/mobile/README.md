@@ -23,10 +23,10 @@ arrives through `--dart-define` when running or building.
 | Variable | What it is |
 |---|---|
 | `API_URL` | Base address of the API, required. With the Android emulator and the API on the same machine, `http://10.0.2.2:<port>` |
-| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_SENDER_ID`, `FIREBASE_PROJECT_ID` | Data of the Android app registered in the Firebase project (Firebase console, project settings). Required unless `AUTH_EMULADOR` is set |
-| `AUTH_EMULADOR` | `host:port` of the Firebase Auth emulator. When set, no Firebase project is needed and notifications are simulated |
-| `PUSH` | `simulado` to skip Firebase Cloud Messaging with a real project |
-| `AVISOS_SEGUNDOS` | How often, in seconds, the open app polls for new notifications (20 by default; 2 with the Auth emulator) |
+| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_SENDER_ID`, `FIREBASE_PROJECT_ID` | Data of the Android app registered in the Firebase project (Firebase console, project settings). Required unless `AUTH_EMULATOR` is set |
+| `AUTH_EMULATOR` | `host:port` of the Firebase Auth emulator. When set, no Firebase project is needed and notifications are simulated |
+| `PUSH` | `simulated` to skip Firebase Cloud Messaging with a real project |
+| `NOTIFICATION_POLL_SECONDS` | How often, in seconds, the open app polls for new notifications (20 by default; 2 with the Auth emulator) |
 
 The Android `applicationId` is `ar.edu.unimoron.clubnahuelmosse` and the name on the device is
 `ClubNahuelMosse`. The icon comes from `assets/icono/icono.png`; if the image changes, regenerate it
@@ -38,7 +38,7 @@ Against the Firebase Auth emulator and a local API (see "Ejecutar" in the API RE
 them):
 
 ```sh
-flutter run --dart-define=API_URL=http://10.0.2.2:8000 --dart-define=AUTH_EMULADOR=10.0.2.2:9099
+flutter run --dart-define=API_URL=http://10.0.2.2:8000 --dart-define=AUTH_EMULATOR=10.0.2.2:9099
 ```
 
 Against the deployed API and a real Firebase project:
@@ -71,7 +71,7 @@ sh scripts/e2e.sh
 sh scripts/e2e.sh integration_test/<area> --name "@<ID>-"
 ```
 
-The script reads `AVD` (the emulator to start if there is no device), `DISPOSITIVO`, `AUTH_PORT`,
+The script reads `AVD` (the emulator to start if there is no device), `DEVICE`, `AUTH_PORT`,
 `API_PORT` and `E2E_DATABASE_URL`; they are described in its header.
 
 ## Build the APK
@@ -79,7 +79,7 @@ The script reads `AVD` (the emulator to start if there is no device), `DISPOSITI
 The APK points at the API deployed on Render and at the real Firebase Authentication. It needs:
 
 - `API_URL`: the public address of the API, `https://<service>.onrender.com` (the same as
-  `URL_PUBLICA` on Render).
+  `PUBLIC_URL` on Render).
 - The data of the Android app registered in the Firebase project. In the Firebase console,
   *Project settings* → *General* → *Your apps* → *Add app* → Android, with the package name
   `ar.edu.unimoron.clubnahuelmosse`. From there come `FIREBASE_PROJECT_ID` (project ID),
@@ -88,7 +88,7 @@ The APK points at the API deployed on Render and at the real Firebase Authentica
 
 The app starts Firebase with those `--dart-define` values (`lib/features/session/data/firebase.dart`),
 so it does not use the Google Services plugin: **no `google-services.json` is needed** and the
-`build.gradle.kts` files stay as they are. Without `AUTH_EMULADOR`, the app uses the real project.
+`build.gradle.kts` files stay as they are. Without `AUTH_EMULATOR`, the app uses the real project.
 
 ```sh
 cd apps/mobile
@@ -96,7 +96,7 @@ flutter build apk --release   --dart-define=API_URL=https://<service>.onrender.c
 ```
 
 `flutter build apk --debug` takes the same `--dart-define` values. Without `API_URL` the app does
-not start; without the four Firebase ones or `AUTH_EMULADOR`, neither.
+not start; without the four Firebase ones or `AUTH_EMULATOR`, neither.
 
 To avoid repeating them, copy them to a local file that git ignores and pass them all at once:
 

@@ -46,7 +46,7 @@ void main() {
   Widget detail(BookingHistoryEntry booking, ApiClient api) =>
       BookingDetailScreen(
         booking: booking,
-        history: BookingHistory(api: api, sesion: session),
+        history: BookingHistory(api: api, session: session),
         session: session,
         spaces: Spaces(
           repository: SpacesRepository(api: api, session: session),
@@ -123,7 +123,7 @@ void main() {
       final response = Completer<http.Response>();
       final api = ApiClient(
         'http://api.falsa',
-        cliente: MockClient((request) async {
+        client: MockClient((request) async {
           if (request.method == 'POST') return response.future;
           return http.Response.bytes(
             utf8.encode(

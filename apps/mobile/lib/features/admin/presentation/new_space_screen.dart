@@ -18,8 +18,8 @@ import 'new_space_options.dart';
 import 'new_space_skeleton.dart';
 import 'space_form_fields.dart';
 
-/// Alta de espacio deportivo: sede, deporte, tipo, condición, iluminación y precio, con el
-/// nombre compuesto que calcula la API a la vista.
+/// Creation of a sports space: venue, sport, type, condition, lighting and price, with
+/// the composed name that the API calculates in view.
 class NewSpaceScreen extends StatefulWidget {
   const NewSpaceScreen({
     super.key,
@@ -56,7 +56,7 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     final failure = await _form.load();
     if (failure == null || !mounted) return;
     if (failure.expired) {
-      await avisarSesionVencida(context, widget.session);
+      await notifySessionExpired(context, widget.session);
       return;
     }
     final error = failure.failure;
@@ -66,14 +66,14 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     if (outcome == ErrorOutcome.retry) {
       await _load();
     } else if (outcome == ErrorOutcome.closed) {
-      context.go('/admin/espacios');
+      context.go('/admin/spaces');
     }
   }
 
-  /// Avisa que la sesión venció si [expired] lo dice.
+  /// Reports that the session expired if [expired] says so.
   Future<void> _notifyIfExpired(Future<bool> expired) async {
     if (await expired && mounted) {
-      await avisarSesionVencida(context, widget.session);
+      await notifySessionExpired(context, widget.session);
     }
   }
 
@@ -108,19 +108,20 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
     _form.pickYesNo(field, value: chosen);
   }
 
-  /// Calcula el nombre si falta; devuelve si hay que cortar el guardado porque no se pudo.
+  /// Calculates the name if missing; returns whether saving must be cut off because it
+  /// could not be done.
   Future<bool> _nameFails() async {
     if (_form.suggested != null || !_form.canComputeName) return false;
     await _computeName();
     if (!mounted) return true;
     final failure = _form.nameFailure;
     if (failure == null) return false;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: false,
       error: failure,
-      reintentar: _save,
+      retry: _save,
     );
     return true;
   }
@@ -128,28 +129,29 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
   Future<void> _save() async {
     if (_form.submitting || _form.computing) return;
     if (await _nameFails() || !mounted) return;
-    // Lo que se manda es lo que se ve ahora, aunque haya cambiado mientras se calculaba.
+    // What is sent is what is seen now, even if it changed while it was being calculated.
     if (!_form.isComplete) return _form.markSaveAttempt();
     FocusScope.of(context).unfocus();
     final pending = await _form.submit(
       onCreated: (space) {
-        if (mounted) context.go('/admin/espacios/creado', extra: space);
+        if (mounted) context.go('/admin/spaces/created', extra: space);
       },
     );
     if (pending == null || !mounted) return;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: pending.expired,
       error: pending.failure,
-      reintentar: _save,
+      retry: _save,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      // Mientras se guarda no se sale: el espacio se crearía sin que se viera el éxito.
+      // It cannot be left while saving: the space would be created without the success
+      // being seen.
       canPop: !_form.submitting,
       child: Scaffold(
         backgroundColor: context.palette.bgBase,

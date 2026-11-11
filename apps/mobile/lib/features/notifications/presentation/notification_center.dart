@@ -13,12 +13,12 @@ import '../domain/center_reading.dart';
 import '../domain/notification_kind.dart';
 import '../domain/notification_system.dart';
 
-/// El estado de las notificaciones de la app: la lista, cuántas hay sin leer, el permiso del
-/// sistema y el panel que avisa con la app abierta.
+/// The state of the app's notifications: the list, how many are unread, the system's
+/// permission and the panel that reports with the app open.
 ///
-/// Sólo actúa mientras hay un usuario con la sesión iniciada: registra el teléfono en la API,
-/// consulta el centro cada [every] mientras la app se ve, y baja el teléfono antes de cerrar la
-/// sesión.
+/// It only acts while there is a signed-in user: it registers the phone in the API,
+/// queries the center every [every] while the app is visible, and unregisters the phone
+/// before closing the session.
 class NotificationCenter extends ChangeNotifier {
   NotificationCenter({
     required NotificationsRepository notifications,
@@ -39,13 +39,13 @@ class NotificationCenter extends ChangeNotifier {
   final NotificationsRepository _repository;
   final Session _session;
 
-  /// El sistema de notificaciones del teléfono.
+  /// The notification system of the phone.
   final NotificationSystem system;
 
-  /// Cada cuánto se consulta la API mientras la app está abierta; cero, nunca.
+  /// How often the API is queried while the app is open; zero, never.
   final Duration every;
 
-  /// El reloj del teléfono, para saber qué llegó mientras la app arrancaba.
+  /// The phone's clock, to know what arrived while the app was starting.
   final DateTime Function() now;
 
   StreamSubscription<void>? _subscription;
@@ -54,29 +54,32 @@ class NotificationCenter extends ChangeNotifier {
   bool _active = false;
   bool _disposed = false;
 
-  /// La app no se ve (en segundo plano): no se consulta hasta que vuelva.
+  /// The app is not visible (in the background): no query until it comes back.
   bool _hidden = false;
 
-  /// Sube con cada arranque y cierre de sesión: la respuesta de una sesión anterior se
-  /// descarta.
+  /// Goes up with each start and sign-out: the response of a previous session is
+  /// discarded.
   int _currentSession = 0;
   bool _readAny = false;
 
-  /// Las que ya llegaron en alguna lectura de esta sesión: sólo una que no está acá es nueva.
+  /// The ones that already arrived in some read of this session: only one that is not
+  /// here is new.
   final _seen = <String>{};
 
-  /// Desde cuándo una notificación sin leer cuenta como recién llegada en la primera lectura:
-  /// una que llegó mientras la app arrancaba avisa; una de hace días queda en la campana.
+  /// Since when an unread notification counts as just arrived in the first read: one that
+  /// arrived while the app was starting is announced; one from days ago stays in the
+  /// bell.
   DateTime _since = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
-  /// Las que el panel ya mostró en esta sesión.
+  /// The ones the panel already showed in this session.
   final _announced = <String>{};
 
-  /// Confirmaciones de cancelación que llegaron con la persona en Mis reservas, donde ya vio
-  /// el mensaje de éxito: siguen sin leer, pero el panel no las muestra.
+  /// Cancellation confirmations that arrived while the person was in «Mis reservas»,
+  /// where they already saw the success message: they stay unread, but the panel does not
+  /// show them.
   final _silenced = <String>{};
 
-  /// La ruta en la que está la persona; la app la conecta al enrutador.
+  /// The route the person is on; the app connects it to the router.
   String Function() location = _noLocation;
 
   static String _noLocation() => '';
@@ -86,35 +89,35 @@ class NotificationCenter extends ChangeNotifier {
   bool _allowed = true;
   bool _panelOpen = false;
 
-  /// De la más nueva a la más vieja.
+  /// From newest to oldest.
   List<AppNotification> get list => _list;
 
-  /// Cuántas hay sin leer en total, según la API.
+  /// How many are unread in total, according to the API.
   int get unread => _unread;
 
-  /// Si el sistema operativo dejó al teléfono mostrar notificaciones.
+  /// Whether the operating system let the phone show notifications.
   bool get allowed => _allowed;
 
-  /// Si ya se leyó el centro alguna vez en esta sesión.
+  /// Whether the center was already read at some point in this session.
   bool get loaded => _readAny;
 
-  /// Las sin leer, que es lo que muestra el panel.
+  /// The unread ones, which is what the panel shows.
   List<AppNotification> get unreadList => [
     for (final n in _list)
       if (!n.read) n,
   ];
 
-  /// Las sin leer que el panel puede mostrar.
+  /// The unread ones the panel can show.
   List<AppNotification> get inPanel => [
     for (final n in unreadList)
       if (!_silenced.contains(n.id)) n,
   ];
 
-  /// El panel se muestra con la app abierta cuando llega una notificación nueva y el sistema
-  /// dejó mostrarlas.
+  /// The panel is shown with the app open when a new notification arrives and the system
+  /// allowed showing them.
   bool get panelOpen => _panelOpen && inPanel.isNotEmpty;
 
-  /// La persona tocó un aviso de la bandeja del sistema.
+  /// The person tapped a notice in the system tray.
   Stream<NoticeTapped> get onSystemTap => system.onTap;
 
   void _onSessionChanged() {
@@ -139,7 +142,7 @@ class NotificationCenter extends ChangeNotifier {
     _schedule();
   }
 
-  /// Arranca la consulta periódica, si la app se ve y hay cada cuánto.
+  /// Starts the periodic query, if the app is visible and an interval is given.
   void _schedule() {
     _clock?.cancel();
     _clock = null;
@@ -148,8 +151,8 @@ class NotificationCenter extends ChangeNotifier {
     }
   }
 
-  /// Mientras la app no se ve no se consulta; al volver se lee enseguida, porque pudo haber
-  /// llegado cualquier cosa.
+  /// While the app is not visible nothing is queried; on return it reads at once, because
+  /// anything may have arrived.
   void _onLifecycleChanged(AppLifecycleState state) {
     if (state == AppLifecycleState.hidden ||
         state == AppLifecycleState.paused) {
@@ -180,12 +183,12 @@ class NotificationCenter extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Vuelve a preguntar el permiso al sistema y, si cambió, se lo cuenta a la API.
+  /// Asks the system for the permission again and, if it changed, tells the API.
   Future<void> _checkPermission({bool register = false}) async {
     final allowed = await system.isAllowed();
     if (allowed == _allowed && !register) return;
-    // Primero se le cuenta a la API y recién entonces cambia lo que se ve: la pantalla no dice
-    // «activadas» mientras la API todavía cree que el teléfono no tiene permiso.
+    // The API is told first and only then does what is seen change: the screen does not
+    // say «activadas» while the API still believes the phone has no permission.
     try {
       final token = await system.token();
       if (token != null) {
@@ -196,14 +199,15 @@ class NotificationCenter extends ChangeNotifier {
         );
       }
     } on Exception catch (e, stack) {
-      // Sin red el registro queda para la próxima vez que cambie el permiso o se abra la app.
+      // Without network the registration waits for the next time the permission changes
+      // or the app is opened.
       logError(e, stack);
     }
     _allowed = allowed;
     notifyListeners();
   }
 
-  /// Lee el centro. Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
+  /// Reads the center. Throws [SessionExpired], [NoConnection] or [ServerError].
   Future<void> load() async {
     final session = _currentSession;
     await _checkPermission();
@@ -212,13 +216,13 @@ class NotificationCenter extends ChangeNotifier {
     _apply(reading);
   }
 
-  /// La lectura periódica: si falla, queda lo que había.
+  /// The periodic read: if it fails, what there was stays.
   Future<void> _poll() async {
     if (!_active || _disposed) return;
     try {
       await load();
     } on Exception catch (e, stack) {
-      // Sin red o con la API caída el panel sólo se entera después.
+      // Without network or with the API down the panel only finds out later.
       logError(e, stack);
     }
   }
@@ -226,7 +230,7 @@ class NotificationCenter extends ChangeNotifier {
   void _apply(CenterReading reading) {
     _list = reading.notifications;
     _unread = reading.unread;
-    if (location() == '/reservas') {
+    if (location() == '/bookings') {
       _silenced.addAll([
         for (final n in _list)
           if (!n.read &&
@@ -242,8 +246,8 @@ class NotificationCenter extends ChangeNotifier {
           !_seen.contains(n.id) &&
           (_readAny || n.createdAt.isAfter(_since)),
     );
-    // Si la persona cerró el panel sin leer, lo que llegue después suma a la campana y no
-    // vuelve a tapar la pantalla.
+    // If the person closed the panel without reading, what arrives afterwards adds to the
+    // bell and does not cover the screen again.
     final stillAnnounced = _list.any(
       (n) => !n.read && _announced.contains(n.id),
     );
@@ -262,7 +266,7 @@ class NotificationCenter extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Marca [n] como leída; si la API no contesta, la próxima lectura lo corrige.
+  /// Marks [n] as read; if the API does not answer, the next read corrects it.
   Future<void> markRead(AppNotification n) async {
     if (!n.read) {
       _list = [for (final x in _list) x.id == n.id ? x.markedRead() : x];
@@ -278,8 +282,9 @@ class NotificationCenter extends ChangeNotifier {
     }
   }
 
-  /// La persona tocó un aviso de la bandeja: quedan leídas las sin leer del mismo tipo y reserva.
-  /// Antes se vuelve a leer el centro, porque el aviso pudo llegar con la app cerrada.
+  /// The person tapped a notice in the tray: the unread ones of the same type and booking
+  /// become read. The center is read again first, because the notice may have arrived
+  /// with the app closed.
   Future<void> markNoticeRead(NoticeTapped notice) async {
     if (notice.kind == null || notice.bookingId == null) return;
     await _poll();
@@ -303,15 +308,16 @@ class NotificationCenter extends ChangeNotifier {
     }
   }
 
-  /// Pide el permiso al sistema operativo. Si lo concede, registra el teléfono con permiso.
+  /// Asks the operating system for the permission. If granted, registers the phone with
+  /// permission.
   Future<bool> enable() async {
     final granted = await system.requestPermission();
     await _checkPermission(register: true);
     return granted;
   }
 
-  /// Al cerrar la sesión: este teléfono deja de recibir los avisos de la cuenta, con el token
-  /// de la sesión que se cierra.
+  /// On signing out: this phone stops receiving the account's notices, with the token of
+  /// the session being closed.
   Future<void> _unregisterDevice(String session) async {
     if (!_active) return;
     final token = await system.token();
@@ -320,8 +326,9 @@ class NotificationCenter extends ChangeNotifier {
     }
   }
 
-  /// Sea cual sea la forma de salir —cerrar, una sesión que ya no vale, una baja de cuenta—,
-  /// el token del teléfono se borra: aunque la API no se entere, lo que mande deja de llegar.
+  /// However the exit happens —sign-out, a session that no longer applies, an account
+  /// deletion—, the phone's token is deleted: even if the API does not find out, what it
+  /// sends stops arriving.
   Future<void> _forgetToken() => system.forgetToken();
 
   @override

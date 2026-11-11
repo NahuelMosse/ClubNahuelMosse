@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import '../../../theme/tokens.dart';
 import '../../venues/presentation/photos.dart';
 
-/// La foto del deporte arriba de la pantalla, que se funde con el fondo hacia abajo.
+/// The photo of the sport at the top of the screen, which fades into the background
+/// downwards.
 class BookingPhotoBackground extends StatelessWidget {
-  const BookingPhotoBackground({super.key, required this.deporte});
+  const BookingPhotoBackground({super.key, required this.sport});
 
-  final String deporte;
+  final String sport;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class BookingPhotoBackground extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           PhotoWithScrim(
-            image: sportPhoto(deporte),
+            image: sportPhoto(sport),
             child: const SizedBox.expand(),
           ),
           DecoratedBox(

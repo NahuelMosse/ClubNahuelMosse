@@ -17,7 +17,7 @@ import 'support/mount.dart';
 /// An API that never answers: the screen stays loading.
 ApiClient _hungApi() => ApiClient(
   'http://api.falsa',
-  cliente: MockClient((_) => Completer<http.Response>().future),
+  client: MockClient((_) => Completer<http.Response>().future),
 );
 
 Future<void> _loading(
@@ -55,10 +55,10 @@ Future<void> _shape(
 void main() {
   group('loading skeletons', () {
     for (final (route, admin) in [
-      ('/sedes', false),
-      ('/reservas', false),
-      ('/inicio', false),
-      ('/admin/sedes', true),
+      ('/venues', false),
+      ('/bookings', false),
+      ('/home', false),
+      ('/admin/venues', true),
     ]) {
       testWidgets(
         'every loading screen shows skeletons shaped like its content, not a spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $route',

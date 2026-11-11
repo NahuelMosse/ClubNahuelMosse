@@ -1,5 +1,5 @@
-/// Las opciones de «DÍAS QUE ABRE» del alta de sede; el texto de cada una sale de las
-/// traducciones.
+/// The options of «DÍAS QUE ABRE» of the venue creation; the text of each comes from the
+/// translations.
 enum OpenDays {
   mondayToSunday([1, 2, 3, 4, 5, 6, 7]),
   mondayToSaturday([1, 2, 3, 4, 5, 6]),

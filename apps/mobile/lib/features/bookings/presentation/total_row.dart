@@ -4,7 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// TOTAL y el monto en lima.
+/// «TOTAL» and the amount in lime.
 class TotalRow extends StatelessWidget {
   const TotalRow({super.key, required this.total});
 

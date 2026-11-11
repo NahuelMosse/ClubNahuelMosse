@@ -22,9 +22,9 @@ class VenueCreatedScreen extends StatelessWidget {
       text: l10n.adminVenueCreatedText,
       detail: '${venue.name} · ${venue.address}',
       primary: l10n.adminGoToList,
-      onPrimaryTap: () => context.go('/admin/sedes'),
+      onPrimaryTap: () => context.go('/admin/venues'),
       secondary: l10n.adminCreateAnotherVenue,
-      onSecondaryTap: () => context.go('/admin/sedes/nueva'),
+      onSecondaryTap: () => context.go('/admin/venues/new'),
     );
   }
 }

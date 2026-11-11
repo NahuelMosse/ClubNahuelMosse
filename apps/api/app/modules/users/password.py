@@ -8,7 +8,7 @@ from app.modules.users.rules import password_problems
 from app.shared.errors import InvalidData
 
 DOES_NOT_MATCH = "The current password does not match"
-password_log = logging.getLogger("clubnahuelmosse.contrasena")
+password_log = logging.getLogger("clubnahuelmosse.password")
 
 
 class IdentityPasswords(Protocol):

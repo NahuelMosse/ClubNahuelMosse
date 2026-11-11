@@ -5,49 +5,50 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'booking_action.dart';
 
-/// MODIFICAR y CANCELAR de una reserva, lado a lado o uno sobre otro si la letra es grande.
+/// «MODIFICAR» and «CANCELAR» of a booking, side by side or one above the other if the
+/// font is large.
 class BookingActions extends StatelessWidget {
   const BookingActions({
     super.key,
-    required this.deQue,
-    required this.grande,
-    required this.alModificar,
-    required this.alCancelar,
+    required this.subject,
+    required this.large,
+    required this.onModify,
+    required this.onCancel,
   });
 
-  /// La descripción de la reserva para las etiquetas accesibles.
-  final String deQue;
-  final bool grande;
-  final VoidCallback? alModificar;
-  final VoidCallback? alCancelar;
+  /// The description of the booking for the accessible labels.
+  final String subject;
+  final bool large;
+  final VoidCallback? onModify;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Flex(
-      direction: grande ? Axis.vertical : Axis.horizontal,
-      crossAxisAlignment: grande
+      direction: large ? Axis.vertical : Axis.horizontal,
+      crossAxisAlignment: large
           ? CrossAxisAlignment.stretch
           : CrossAxisAlignment.center,
       children: [
         BookingAction(
-          expandir: !grande,
-          etiqueta: l.bookingModifyLabel(deQue),
-          alTocar: alModificar,
+          expand: !large,
+          label: l.bookingModifyLabel(subject),
+          onTap: onModify,
           child: OutlineButton(
             label: l.bookingModify,
-            onTap: alModificar,
+            onTap: onModify,
             compact: true,
           ),
         ),
         const SizedBox(width: Spacing.s8, height: Spacing.s8),
         BookingAction(
-          expandir: !grande,
-          etiqueta: l.bookingCancelLabel(deQue),
-          alTocar: alCancelar,
+          expand: !large,
+          label: l.bookingCancelLabel(subject),
+          onTap: onCancel,
           child: OutlineButton(
             label: l.bookingCancel,
-            onTap: alCancelar,
+            onTap: onCancel,
             danger: true,
             compact: true,
           ),

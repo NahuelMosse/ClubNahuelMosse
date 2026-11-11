@@ -25,7 +25,7 @@ class _Server {
       .length;
 
   ApiClient get api =>
-      ApiClient('http://api.falsa', cliente: MockClient(_respond));
+      ApiClient('http://api.falsa', client: MockClient(_respond));
 
   Future<http.Response> _respond(http.Request request) async {
     requests.add(request);
@@ -66,7 +66,7 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       final server = _Server();
-      await mountUser(tester, api: server.api, start: '/inicio');
+      await mountUser(tester, api: server.api, start: '/home');
       expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
@@ -89,7 +89,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     final cancellation = Completer<void>();
     final server = _Server(hold: cancellation.future);
-    await mountUser(tester, api: server.api, start: '/inicio');
+    await mountUser(tester, api: server.api, start: '/home');
 
     await tapAndSettle(tester, find.text('CANCELAR'));
     await tester.tap(find.text('CANCELAR RESERVA'));
@@ -123,7 +123,7 @@ void main() {
     'MODIFICAR goes back to the Home, which reads the bookings again',
     (tester) async {
       final server = _Server();
-      await mountUser(tester, api: server.api, start: '/inicio');
+      await mountUser(tester, api: server.api, start: '/home');
       final before = server.reads;
 
       await tapAndSettle(tester, find.text('MODIFICAR'));

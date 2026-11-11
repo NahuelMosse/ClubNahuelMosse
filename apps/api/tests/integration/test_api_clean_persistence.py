@@ -21,10 +21,10 @@ def test_a_created_venue_survives_restarting_the_api_on_the_same_database(
     """a created venue survives restarting the API on the same database @ARQ-02-S2"""
     s = unique()
     email = f"admin.{s}@club.com"
-    monkeypatch.setenv("ADMIN_CONTRASENA", PASSWORD)
+    monkeypatch.setenv("ADMIN_PASSWORD", PASSWORD)
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
-    arguments = ["--correo", email, "--nombre", "Ana", "--apellido", "Díaz",
-                 "--dni", dni, "--nacimiento", "1985-06-01"]  # fmt: skip
+    arguments = ["--email", email, "--first-name", "Ana", "--last-name", "Díaz",
+                 "--dni", dni, "--birth-date", "1985-06-01"]  # fmt: skip
     assert seed(arguments) == 0
     token = sign_in(email, PASSWORD)
     assert token is not None

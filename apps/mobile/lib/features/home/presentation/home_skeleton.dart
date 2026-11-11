@@ -7,8 +7,8 @@ import '../../../theme/tokens.dart';
 import 'home_sports_section.dart';
 import 'home_title.dart';
 
-/// El Home mientras llega: la tarjeta de la próxima reserva, los deportes y los accesos,
-/// con las mismas medidas que tendrán cuando lleguen.
+/// The Home while it arrives: the card of the next booking, the sports and the shortcuts,
+/// with the same measures they will have when they arrive.
 class HomeSkeleton extends StatelessWidget {
   const HomeSkeleton({super.key});
 

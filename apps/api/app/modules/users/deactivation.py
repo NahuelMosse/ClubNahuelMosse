@@ -6,7 +6,7 @@ from uuid import UUID
 from app.modules.session import Profile
 from app.shared.errors import Forbidden
 
-deactivation_log = logging.getLogger("clubnahuelmosse.baja")
+deactivation_log = logging.getLogger("clubnahuelmosse.deactivation")
 
 
 class DeactivatableAccounts(Protocol):

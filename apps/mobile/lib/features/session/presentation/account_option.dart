@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// Una fila de la tarjeta de la cuenta: ícono, texto y, salvo «Cerrar sesión», una flecha.
+/// A row of the account card: icon, text and, except «Cerrar sesión», an arrow.
 class AccountOption extends StatelessWidget {
   const AccountOption({
     super.key,

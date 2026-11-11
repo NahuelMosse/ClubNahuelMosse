@@ -7,30 +7,30 @@ import 'availability_space_card.dart';
 import 'paired_grid.dart';
 import 'slots_section.dart';
 
-/// SELECCIONÁ CANCHA: las canchas del mismo tipo, con la elegida marcada.
+/// «SELECCIONÁ CANCHA»: the courts of the same type, with the chosen one marked.
 class SpaceSelection extends StatelessWidget {
   const SpaceSelection({
     super.key,
-    required this.canchas,
-    required this.elegida,
-    required this.alElegir,
+    required this.spaceOptions,
+    required this.chosen,
+    required this.onSelect,
   });
 
-  final List<Space> canchas;
-  final String elegida;
-  final ValueChanged<String> alElegir;
+  final List<Space> spaceOptions;
+  final String chosen;
+  final ValueChanged<String> onSelect;
 
   @override
   Widget build(BuildContext context) {
     return SlotsSection(
-      titulo: AppLocalizations.of(context).availabilitySelectSpace,
+      title: AppLocalizations.of(context).availabilitySelectSpace,
       child: PairedGrid(
-        hijos: [
-          for (final c in canchas)
+        children: [
+          for (final c in spaceOptions)
             AvailabilitySpaceCard(
-              cancha: c,
-              elegida: c.id == elegida,
-              alTocar: () => alElegir(c.id),
+              space: c,
+              chosen: c.id == chosen,
+              onTap: () => onSelect(c.id),
             ),
         ],
       ),

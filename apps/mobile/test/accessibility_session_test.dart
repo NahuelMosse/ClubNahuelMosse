@@ -60,7 +60,7 @@ void main() {
         ),
       });
       return AdminPanelScreen(
-        history: BookingHistory(api: api, sesion: session),
+        history: BookingHistory(api: api, session: session),
         venues: Venues(
           repository: VenuesRepository(api: api, session: session),
         ),

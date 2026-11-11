@@ -3,7 +3,7 @@ import 'weekdays_label.dart';
 export 'open_days.dart';
 export 'weekdays_label.dart';
 
-/// Una sede activa, como la devuelve la API.
+/// An active venue, as the API returns it.
 class Venue {
   const Venue({
     required this.id,
@@ -20,18 +20,18 @@ class Venue {
   final String name;
   final String address;
 
-  /// `HH:MM`; un cierre a las `00:00` es la medianoche.
+  /// `HH:MM`; a closing at `00:00` is midnight.
   final String opening;
   final String closing;
 
-  /// Días de la semana en que abre, de 1 (lunes) a 7 (domingo).
+  /// Days of the week it opens, from 1 (Monday) to 7 (Sunday).
   final List<int> days;
   final int spaceCount;
 
-  /// Las claves de los deportes de sus canchas (`Futbol`, `Tenis`), sin repetir.
+  /// The keys of the sports of its courts (`Futbol`, `Tenis`), without repeats.
   final List<String> sports;
 
-  /// «Lunes a sábado», o los días sueltos si no son seguidos desde el lunes.
+  /// «Lunes a sábado», or the single days if they are not consecutive from Monday.
   WeekdaysLabel get daysLabel => weekdaysLabel(days);
 
   static Venue? fromJson(Object? json) {

@@ -35,7 +35,7 @@
     "/register": {
       "post": {
         "tags": [
-          "usuarios"
+          "users"
         ],
         "summary": "Register a new user",
         "operationId": "register_user_register_post",
@@ -586,7 +586,7 @@
     "/venues": {
       "get": {
         "tags": [
-          "sedes"
+          "venues"
         ],
         "summary": "The active venues, by name, with their courts and the sports they offer",
         "operationId": "list_venues_venues_get",
@@ -620,7 +620,7 @@
       },
       "post": {
         "tags": [
-          "sedes"
+          "venues"
         ],
         "summary": "Create a venue",
         "description": "On-the-hour times; a closing at 00:00 is midnight of the same day.",
@@ -720,7 +720,7 @@
     "/venues/{venue_id}": {
       "put": {
         "tags": [
-          "sedes"
+          "venues"
         ],
         "summary": "Edit a venue",
         "description": "The same data and rules as creation. Bookings already made are kept even if they fall outside the new hours, which apply to the ones to come.",
@@ -841,7 +841,7 @@
       },
       "delete": {
         "tags": [
-          "sedes"
+          "venues"
         ],
         "summary": "Delete a venue",
         "description": "Soft delete: the venue and its spaces stop being shown and bookable, and the history keeps naming it. Not allowed with active bookings that have not ended.",
@@ -909,7 +909,7 @@
     "/spaces/catalog": {
       "get": {
         "tags": [
-          "espacios"
+          "spaces"
         ],
         "summary": "The sports and their court kinds",
         "operationId": "show_catalog_spaces_catalog_get",
@@ -945,7 +945,7 @@
     "/spaces": {
       "get": {
         "tags": [
-          "espacios"
+          "spaces"
         ],
         "summary": "The active spaces of the active venues, by venue, sport, kind and number",
         "operationId": "list_spaces_spaces_get",
@@ -1042,7 +1042,7 @@
       },
       "post": {
         "tags": [
-          "espacios"
+          "spaces"
         ],
         "summary": "Create a sports space",
         "description": "The name is built from the venue, the address, the sport, the kind and the next number of that kind in that venue. `number` is the one the administrator saw; if omitted, the next one is used.",
@@ -1135,7 +1135,7 @@
     "/spaces/name": {
       "get": {
         "tags": [
-          "espacios"
+          "spaces"
         ],
         "summary": "The name the next space of that kind in that venue would have",
         "operationId": "suggest_name_spaces_name_get",
@@ -1214,7 +1214,7 @@
     "/spaces/{space_id}": {
       "put": {
         "tags": [
-          "espacios"
+          "spaces"
         ],
         "summary": "Edit a space",
         "description": "Condition, lighting and price per hour; what is not sent stays as it is. The venue, the sport, the kind and the composite name do not change; bookings already made keep their price.",
@@ -1317,7 +1317,7 @@
       },
       "delete": {
         "tags": [
-          "espacios"
+          "spaces"
         ],
         "summary": "Delete a space",
         "description": "Soft delete: the space stops being shown and bookable, and the history keeps naming it. Not allowed with active bookings that have not ended.",
@@ -1385,7 +1385,7 @@
     "/spaces/{space_id}/slots": {
       "get": {
         "tags": [
-          "horarios"
+          "availability"
         ],
         "summary": "The slots of a space for a day and a duration",
         "description": "Every on-the-hour start time that fits the venue's opening hours with that duration and has not started yet, in the club's time; `available` says whether they do not overlap an active booking. Without `date`, today's. `opens` is false if the venue is closed that day.",
@@ -1500,7 +1500,7 @@
     "/spaces/available": {
       "get": {
         "tags": [
-          "horarios"
+          "availability"
         ],
         "summary": "The courts of a venue that are free over a whole range",
         "description": "The active spaces of the venue, of the sport and kind if given, with no active bookings overlapping [since, until) on `date`, in the club's time. `until` at 00:00 is midnight. The range must be in the future, of whole hours, from 1 to 4 hours, within the next 7 days and inside the venue's opening hours: otherwise 422 with each field's error.",
@@ -1614,7 +1614,7 @@
     "/bookings": {
       "get": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "The bookings of whoever asks",
         "description": "`upcoming`: the active ones that have not ended, from the nearest to the farthest. `history`: the completed, cancelled and voided ones, from the most recent to the oldest. The total is the one saved when booking.",
@@ -1675,7 +1675,7 @@
       },
       "post": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "Book a space",
         "description": "`hours` hours from `start_hour` (`HH:MM`, in the club's time) on `date`. Whole hours, from 1 to 4, in the future, within the next 7 days and inside the venue's opening hours; if the same person repeats the same request within five minutes, it returns the booking already made.",
@@ -1775,7 +1775,7 @@
     "/bookings/{booking_id}/cancel": {
       "post": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "Cancel your own booking",
         "description": "Until the slot starts. The slot becomes free again, the booking moves to the history as cancelled and the confirmation stays in the notification center and goes out by push. Cancelling one the same person already cancelled answers the same.",
@@ -1847,7 +1847,7 @@
     "/bookings/{booking_id}/modify": {
       "post": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "Modify your own booking",
         "description": "Another court of the same kind in the same venue, another day or another slot, with the same duration. The previous slot is freed only if the new one is taken; the booking keeps its number and the total becomes the space's current price. Repeating a change already made answers the same.",
@@ -1962,7 +1962,7 @@
     "/bookings/all": {
       "get": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "The global booking history (CU-14)",
         "description": "All users, all venues. Filters by status (`active`, `completed` or `voided`; without a filter it also brings those cancelled by their user), venue, sport, date range and text (user, venue or space); pages by 20 with `page`, from the most recent to the oldest. It changes nothing.",
@@ -2130,7 +2130,7 @@
     "/bookings/all/{booking_id}": {
       "get": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "The detail of any booking (CU-14)",
         "operationId": "detail_bookings_all__booking_id__get",
@@ -2194,7 +2194,7 @@
     "/bookings/{booking_id}/void": {
       "post": {
         "tags": [
-          "reservas"
+          "bookings"
         ],
         "summary": "Void a booking (CU-15)",
         "description": "Until the slot starts. `space_id` and `starts_at` are the court and the slot the administrator saw: if the booking is no longer there, it answers 409. The slot becomes free again and the booking keeps the reason, who voided it and when. Repeating a voiding already done by the same administrator with the same reason answers the same. It notifies whoever booked, with the reason, without repeating the notice.",
@@ -2309,7 +2309,7 @@
     "/devices": {
       "put": {
         "tags": [
-          "notificaciones"
+          "notifications"
         ],
         "summary": "Register the phone to receive notices",
         "description": "`permission_granted` is what the operating system answered about notifications: without permission the notices stay only in the center. If the token was already in the name of another account, it moves to the requester.",
@@ -2395,7 +2395,7 @@
     "/devices/unregister": {
       "post": {
         "tags": [
-          "notificaciones"
+          "notifications"
         ],
         "summary": "Unregister the phone when the session closes",
         "description": "Stops receiving notices for this account. If it was not registered, it answers the same.",
@@ -2475,7 +2475,7 @@
     "/notifications": {
       "get": {
         "tags": [
-          "notificaciones"
+          "notifications"
         ],
         "summary": "The notification center of whoever asks",
         "description": "The latest 100, from newest to oldest, and how many are unread in total.",
@@ -2512,7 +2512,7 @@
     "/notifications/read-all": {
       "post": {
         "tags": [
-          "notificaciones"
+          "notifications"
         ],
         "summary": "Mark all notifications as read",
         "operationId": "read_all_notifications_read_all_post",
@@ -2541,7 +2541,7 @@
     "/notifications/{notification_id}/read": {
       "post": {
         "tags": [
-          "notificaciones"
+          "notifications"
         ],
         "summary": "Mark a notification as read",
         "description": "Marking one that was already read answers the same.",

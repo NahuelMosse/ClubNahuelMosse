@@ -95,12 +95,13 @@ void main() {
   testWidgets(
     'admin spaces load with the shape of their card @VIS-03-S1',
     (tester) =>
-        _cardShape(tester, start: '/admin/espacios', card: AdminSpaceCard),
+        _cardShape(tester, start: '/admin/spaces', card: AdminSpaceCard),
   );
 
   testWidgets(
     'admin venues load with the shape of their card @VIS-03-S1',
-    (tester) => _cardShape(tester, start: '/admin/sedes', card: AdminVenueCard),
+    (tester) =>
+        _cardShape(tester, start: '/admin/venues', card: AdminVenueCard),
   );
 
   testWidgets('the next history page is a block shaped like a booking '
@@ -108,7 +109,7 @@ void main() {
     final second = Completer<http.Response>();
     final api = ApiClient(
       'http://api.falsa',
-      cliente: MockClient((request) {
+      client: MockClient((request) {
         final headers = {'content-type': 'application/json; charset=utf-8'};
         if (request.url.path == '/bookings/all') {
           if (request.url.queryParameters['page'] == '2') {
@@ -182,7 +183,7 @@ void main() {
     '@VIS-03-S2',
     (tester) async {
       final held = HeldApi(spaceRoutes());
-      await _open(tester, held.client, '/admin/espacios/nuevo');
+      await _open(tester, held.client, '/admin/spaces/new');
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.text('Nuevo espacio'), findsOneWidget);
       expect(find.text('Nuevo espacio deportivo'), findsOneWidget);
@@ -208,7 +209,7 @@ void main() {
     'button spinners remain @assumption:VIS-03-ASM-02',
     (tester) async {
       final held = HeldApi(spaceRoutes());
-      await _open(tester, held.client, '/admin/espacios/nuevo');
+      await _open(tester, held.client, '/admin/spaces/new');
       held.release();
       await tester.pumpAndSettle();
       expect(find.byType(Skeleton), findsNothing);

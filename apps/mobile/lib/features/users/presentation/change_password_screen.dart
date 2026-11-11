@@ -15,8 +15,9 @@ import 'password_rules.dart';
 
 enum _Field { current, newPassword, repeat }
 
-/// Cambiar la contraseña con la sesión iniciada: pide la actual para confirmar que es la
-/// misma persona, y al terminar vuelve al perfil sin cerrar la sesión.
+/// Changing the password with a signed-in session: it asks for the current one to confirm
+/// it is the same person, and when done returns to the profile without closing the
+/// session.
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key, required this.session});
 
@@ -41,10 +42,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       final controller = _controllers[field.index];
       var previous = controller.text;
       controller.addListener(() {
-        // El controlador también avisa cuando se mueve el cursor: sólo cuenta el texto.
+        // The controller also notifies when the cursor moves: only the text counts.
         if (controller.text == previous) return;
         previous = controller.text;
-        // Lo que dijo el servidor de un campo deja de valer cuando la persona lo cambia.
+        // What the server said about a field stops applying when the person changes it.
         setState(() => _serverErrors.remove(field));
       });
     }
@@ -112,12 +113,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     });
     if (mounted) setState(() => _submitting = false);
     if (!mounted) return;
-    await avisarFalloDeEnvio(
+    await notifySendFailure(
       context,
       session: widget.session,
       expired: outcome.expired,
       error: outcome.error,
-      reintentar: _save,
+      retry: _save,
     );
   }
 

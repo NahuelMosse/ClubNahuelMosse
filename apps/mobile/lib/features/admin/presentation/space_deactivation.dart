@@ -38,6 +38,6 @@ Future<void> deactivateSpace(
     notifyChange: spaces.notifyChange,
     session: session,
     submitting: submitting,
-    returnTo: returnToList ? '/admin/espacios' : null,
+    returnTo: returnToList ? '/admin/spaces' : null,
   );
 }

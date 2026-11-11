@@ -3,10 +3,10 @@ import 'package:firebase_core/firebase_core.dart';
 
 import '../../../common/config.dart';
 
-/// Inicia Firebase una sola vez por configuración y devuelve su `FirebaseAuth`.
+/// Starts Firebase only once per configuration and returns its `FirebaseAuth`.
 ///
-/// Cada emulador distinto usa su propia instancia con nombre. En Android el SDK aplica el
-/// último `useAuthEmulator` a todas las instancias, así que se vuelve a fijar cada vez.
+/// Each different emulator uses its own named instance. On Android the SDK applies the
+/// last `useAuthEmulator` to all instances, so it is set again each time.
 Future<FirebaseAuth> initFirebase(AppConfig config) async {
   final emulator = config.authEmulator;
   final name = emulator == null ? defaultFirebaseAppName : 'auth-$emulator';

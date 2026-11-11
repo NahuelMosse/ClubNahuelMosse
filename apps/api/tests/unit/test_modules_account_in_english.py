@@ -134,7 +134,7 @@ def test_e2e_sh_and_e2e_support_use_the_new_modules_with_the_same_options() -> N
 
     assert not OLD_IMPORT.search(script)
     assert not OLD_IMPORT.search(support)
-    assert "--correo" in script
+    assert "--email" in script
     assert "app.modules.users" in script or "app.modules.users" in support
 
 

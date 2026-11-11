@@ -5,25 +5,25 @@ import '../../../l10n/app_localizations.dart';
 import '../domain/booking.dart';
 import 'availability_note.dart';
 
-/// El aviso de que se está modificando [reserva], con la duración que se mantiene.
+/// The notice that [booking] is being modified, with the duration that is kept.
 class ModificationNote extends StatelessWidget {
   const ModificationNote({
     super.key,
-    required this.reserva,
-    required this.horas,
+    required this.booking,
+    required this.hours,
   });
 
-  final Booking reserva;
-  final int horas;
+  final Booking booking;
+  final int hours;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return AvailabilityNote(
-      texto: l.bookingModifyNote(
-        shortDay(reserva.startsAt),
-        l.bookingDuration(horas),
-        timeRange(reserva.startsAt, reserva.endsAt),
+      text: l.bookingModifyNote(
+        shortDay(booking.startsAt),
+        l.bookingDuration(hours),
+        timeRange(booking.startsAt, booking.endsAt),
       ),
     );
   }

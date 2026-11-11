@@ -17,7 +17,7 @@ void main() {
     await mountUser(
       tester,
       start:
-          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+          '/venues/00000000-0000-7000-8000-000000000001/spaces/00000000-0000-7000-8000-000000000009',
       size: size,
       api: apiRoutes({
         ...venueRoutes(),
@@ -88,19 +88,20 @@ void main() {
     );
   });
 
-  testWidgets('the server fails: the notice shows and it stays on confirmation', (
-    tester,
-  ) async {
-    await untilConfirm(tester, response: (500, '{}'));
+  testWidgets(
+    'the server fails: the notice shows and it stays on confirmation',
+    (tester) async {
+      await untilConfirm(tester, response: (500, '{}'));
 
-    await tester.tap(find.text('CONFIRMAR RESERVA'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('CONFIRMAR RESERVA'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Error del servidor'), findsOneWidget);
-    await tester.tap(find.text('ACEPTAR'));
-    await tester.pumpAndSettle();
-    expect(find.text('Confirmá tu reserva'), findsOneWidget);
-  });
+      expect(find.text('Error del servidor'), findsOneWidget);
+      await tester.tap(find.text('ACEPTAR'));
+      await tester.pumpAndSettle();
+      expect(find.text('Confirmá tu reserva'), findsOneWidget);
+    },
+  );
 
   testWidgets('with text at 200 % the confirmation is not cut off', (
     tester,

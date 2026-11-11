@@ -29,14 +29,14 @@ Future<ErrorOutcome> handleNetworkError(
   BuildContext context,
   Object error,
 ) async {
-  if (error is ErrorDelServidor && error.codigo == 403) {
-    context.go('/admin/acceso-denegado');
+  if (error is ServerError && error.code == 403) {
+    context.go('/admin/access-denied');
     return ErrorOutcome.accessDenied;
   }
   final l10n = AppLocalizations.of(context);
-  final noConnection = error is SinConexion;
-  final message = error is ErrorDelServidor && error.codigo == 429
-      ? error.mensaje
+  final noConnection = error is NoConnection;
+  final message = error is ServerError && error.code == 429
+      ? error.message
       : null;
   final retry = await showDialog<bool>(
     context: context,
@@ -45,8 +45,8 @@ Future<ErrorOutcome> handleNetworkError(
       icon: noConnection ? Icons.wifi_off_rounded : Icons.cloud_off_rounded,
       title: noConnection ? l10n.errorConnectionTitle : l10n.errorServerTitle,
       text: switch (error) {
-        SinConexion() => l10n.errorConnectionText,
-        ServidorSinRespuesta() => l10n.errorNoResponseText,
+        NoConnection() => l10n.errorConnectionText,
+        ServerNotResponding() => l10n.errorNoResponseText,
         _ when message != null => message,
         _ => l10n.errorGenericText,
       },

@@ -33,8 +33,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "C90", "PLR", "RET", "N", "ERA", "FBT"]
-# N818: las excepciones del dominio conservan sus nombres en castellano (HorarioOcupado,
-# NoEncontrada), sin el sufijo `Error`.
+# N818: the domain exceptions are named after the case (SlotTaken, NotFound), without the `Error` suffix.
 ignore = ["N818"]
 
 [tool.ruff.lint.mccabe]
@@ -44,22 +43,22 @@ max-complexity = 10
 max-args = 4
 
 [tool.ruff.lint.per-file-ignores]
-# Con `--select` el `ignore` global no rige: las excepciones del dominio siguen sin sufijo `Error`.
+# With `--select` the global `ignore` does not apply: the domain exceptions stay without the `Error` suffix.
 "app/**/*.py" = ["N818"]
-# Cada `Depends` de una ruta de FastAPI cuenta como parámetro y es la forma de inyectar del framework.
+# Each `Depends` of a FastAPI route counts as a parameter and is the framework's way to inject.
 "app/modules/*/rutas*.py" = ["PLR0913", "PLR0917"]
 "app/modules/*/*routes.py" = ["PLR0913", "PLR0917"]
-# Las reglas de código legible son para la API; los tests siguen el estilo de pytest (parámetros
-# booleanos de `parametrize`, valores esperados escritos en el test).
+# The readable-code rules are for the API; the tests follow pytest's style (boolean parameters
+# of `parametrize`, expected values written in the test).
 "tests/**/*.py" = ["C90", "PLR", "RET", "N", "ERA", "FBT"]
-# Test congelado: sus literales son los umbrales que comprueba.
+# Frozen test: its literals are the thresholds it checks.
 "tests/unit/test_code_readable.py" = ["E501", "PLR2004", "SIM102", "C901"]
 "tests/integration/test_api_readable.py" = ["E501"]
-# Los escenarios quedan congelados al commitearse en rojo: el estilo no justifica recongelarlos.
+# The scenarios are frozen when they are committed red: style does not justify freezing them again.
 "tests/scenarios/*" = ["E501", "SIM117", "I001", "B008"]
-# Estos escenarios importan los fixtures de test_data.py para que pytest los vea.
+# These scenarios import the fixtures of test_data.py so that pytest sees them.
 "tests/scenarios/test_data_*.py" = ["E501", "SIM117", "I001", "B008", "F811"]
-# Tests congelados de SIM-01 (docstrings con la tag y el nombre de la spec).
+# Frozen tests of SIM-01 (docstrings with the tag and the name of the spec).
 "tests/unit/test_no_overengineering.py" = ["E501"]
 "tests/unit/test_body_bounded.py" = ["E501"]
 "tests/integration/test_no_overengineering_api.py" = ["E501", "I001"]
@@ -67,7 +66,7 @@ max-args = 4
 "tests/integration/test_uuid_and_audit.py" = ["E501"]
 "tests/integration/test_reminder_five_base.py" = ["E501"]
 "tests/unit/test_reminder_five.py" = ["SIM300"]
-# Tests congelados con literales largos.
+# Frozen tests with long literals.
 "tests/unit/test_layers_features.py" = ["E501"]
 # Imports the admin and user token fixtures so that pytest sees them.
 "tests/scenarios/test_basketball_3x3.py" = ["E501", "SIM117", "I001", "B008", "F811"]
@@ -82,17 +81,17 @@ mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/tests/scenarios"
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-# firebase-admin no publica tipos
+# firebase-admin does not publish types
 module = ["firebase_admin", "firebase_admin.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# PyYAML no publica tipos
+# PyYAML does not publish types
 module = ["yaml"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# tests congelados de REV-01: se anotan con ignores de error, no se editan
+# frozen tests of REV-01: they are annotated with error ignores, not edited
 module = [
   "*.test_seguridad_api",
   "*.test_seguridad_entradas_extra",
@@ -106,7 +105,7 @@ module = [
 disable_error_code = ["var-annotated", "attr-defined", "dict-item"]
 
 [[tool.mypy.overrides]]
-# test congelado de REV-01: no se edita
+# frozen test of REV-01: it is not edited
 module = [
   "*.test_repositorios_propios",
   "test_repositorios_propios",

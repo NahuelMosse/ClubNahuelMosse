@@ -1,10 +1,10 @@
 // kit-shape: a screen or error family kept with its private parts.
-/// El enlace del correo venció, ya se usó o quedó reemplazado por uno más nuevo.
+/// The link of the email expired, was already used or was replaced by a newer one.
 class InvalidLink implements Exception {
   const InvalidLink();
 }
 
-/// El formato del correo que la API rechazó, con su mensaje.
+/// The format of the email that the API rejected, with its message.
 class EmailRejected implements Exception {
   const EmailRejected(this.message);
   final String message;

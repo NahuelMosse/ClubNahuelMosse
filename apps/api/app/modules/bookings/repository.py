@@ -87,8 +87,6 @@ _SHARED_VENUE = (
 _CLUB_ZONE = f"'{CLUB_TIMEZONE_NAME}'"
 
 
-
-
 @contextmanager
 def _slot_taken() -> Iterator[None]:
     """An overlap with another active booking comes out as `SlotTaken`."""
@@ -336,8 +334,7 @@ class BookingsSql:
         venue = self._current_venue(params, opening_hours)
         space = self._conn.execute(
             text(
-                "SELECT price_per_hour FROM space WHERE id = :space_id AND active"
-                " FOR NO KEY UPDATE"
+                "SELECT price_per_hour FROM space WHERE id = :space_id AND active FOR NO KEY UPDATE"
             ),
             params,
         ).first()
@@ -431,11 +428,7 @@ class BookingsSql:
         with in_transaction(self._conn):
             previous = self._lock_for_void(params)
             row = self._lock_booking_to_void(params)
-            if (
-                row.status == "voided"
-                and row.canceled_by == admin_id
-                and row.reason == reason
-            ):
+            if row.status == "voided" and row.canceled_by == admin_id and row.reason == reason:
                 self._conn.rollback()
                 return self._detail(booking_id)
             if row.status != "active" or row.started or not row.as_seen:

@@ -15,7 +15,7 @@ import 'admin_listing_header.dart';
 import 'admin_space_card.dart';
 import 'space_deactivation.dart';
 
-/// «Gestionar espacios» del panel: los espacios activos y el acceso al alta.
+/// «Gestionar espacios» of the panel: the active spaces and the way to create one.
 class AdminSpacesScreen extends StatefulWidget {
   const AdminSpacesScreen({
     super.key,
@@ -34,13 +34,13 @@ class _AdminSpacesScreenState extends State<AdminSpacesScreen> {
   (List<Space>, Catalog)? _data;
   bool _failed = false;
 
-  /// El espacio que se está dando de baja: mientras tanto no se toca ninguna tarjeta.
+  /// The space being deactivated: meanwhile no card is touched.
   String? _deactivatingId;
 
   @override
   void initState() {
     super.initState();
-    // El listado queda debajo del alta: cuando se guarda un espacio, se vuelve a leer.
+    // The list stays below the form: when a space is saved, it is read again.
     widget.spaces.addListener(_load);
     _load();
   }
@@ -76,7 +76,7 @@ class _AdminSpacesScreenState extends State<AdminSpacesScreen> {
       title: l10n.adminSpacesTitle,
       session: widget.session,
       createText: l10n.adminAddSpace,
-      createRoute: '/admin/espacios/nuevo',
+      createRoute: '/admin/spaces/new',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: data != null,

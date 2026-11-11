@@ -10,12 +10,12 @@ import 'notice_card.dart';
 import 'notification_center.dart';
 import 'panel_header.dart';
 
-/// `Notificaciones in-app (overlay)`: con la app abierta, un panel arriba con las
-/// notificaciones sin leer y «MARCAR TODAS». Es una ruta modal del navegador: el lector de
-/// pantalla no llega a lo que queda abajo, el atrás del sistema lo cierra y tocar afuera lo
-/// cierra sin marcar nada.
+/// `Notificaciones in-app (overlay)`: with the app open, a panel on top with the unread
+/// notifications and «MARCAR TODAS». It is a modal route of the navigator: the screen
+/// reader does not reach what is below, the system back closes it and tapping outside
+/// closes it without marking anything.
 ///
-/// El widget no dibuja nada: abre y cierra la ruta según [center].
+/// The widget draws nothing: it opens and closes the route according to [center].
 class NoticePanel extends StatefulWidget {
   const NoticePanel({
     super.key,
@@ -27,11 +27,11 @@ class NoticePanel extends StatefulWidget {
 
   final NotificationCenter center;
 
-  /// Lo que pasa al tocar un aviso: llevarlo a lo que avisa.
+  /// What happens on tapping a notice: take it to what it announces.
   final void Function(AppNotification) onOpen;
 
-  /// El navegador donde se abre. Si el widget está arriba del `Navigator` (en el `builder` de la
-  /// app), hace falta su llave; debajo de él, se usa el más cercano.
+  /// The navigator where it opens. If the widget is above the `Navigator` (in the app's
+  /// `builder`), its key is needed; below it, the nearest one is used.
   final GlobalKey<NavigatorState>? navigator;
   final DateTime Function() now;
 
@@ -47,7 +47,7 @@ class _NoticePanelState extends State<NoticePanel> {
   void initState() {
     super.initState();
     widget.center.addListener(_check);
-    // El centro pudo haber abierto el panel antes de que este widget existiera.
+    // The center may have opened the panel before this widget existed.
     WidgetsBinding.instance.addPostFrameCallback((_) => _check());
   }
 
@@ -95,8 +95,8 @@ class _NoticePanelState extends State<NoticePanel> {
     );
     _navigator = navigator;
     _route = route;
-    // Se cierre como se cierre —tocando afuera, el atrás del sistema, un aviso—, el centro
-    // deja de tener el panel abierto.
+    // However it closes —tapping outside, the system back, a notice—, the center stops
+    // having the panel open.
     route.popped.then((_) {
       if (identical(_route, route)) _route = null;
       widget.center.closePanel();

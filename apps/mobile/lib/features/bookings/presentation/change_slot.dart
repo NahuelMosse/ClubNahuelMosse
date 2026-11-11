@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// El horario de antes, con una cruz, o el de ahora, con un tilde y en lima.
+/// The previous time, with a cross, or the current one, with a tick and in lime.
 class ChangeSlot extends StatelessWidget {
   const ChangeSlot({
     super.key,
-    required this.titulo,
-    required this.valor,
-    required this.nuevo,
+    required this.title,
+    required this.value,
+    required this.isNew,
   });
 
-  final String titulo;
-  final String valor;
-  final bool nuevo;
+  final String title;
+  final String value;
+  final bool isNew;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return Semantics(
       container: true,
-      label: '$titulo: $valor',
+      label: '$title: $value',
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: Spacing.s8),
@@ -28,18 +28,18 @@ class ChangeSlot extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              nuevo ? Icons.check_rounded : Icons.close_rounded,
+              isNew ? Icons.check_rounded : Icons.close_rounded,
               size: 18,
-              color: nuevo ? p.stateSuccessInk : p.stateDangerInk,
+              color: isNew ? p.stateSuccessInk : p.stateDangerInk,
             ),
             const SizedBox(width: Spacing.s8),
-            Text(titulo, style: Texts.overline.copyWith(color: p.textMuted)),
+            Text(title, style: Texts.overline.copyWith(color: p.textMuted)),
             const SizedBox(width: Spacing.s16),
             Expanded(
               child: Text(
-                valor,
+                value,
                 textAlign: TextAlign.end,
-                style: nuevo
+                style: isNew
                     ? Texts.bodyStrong.copyWith(color: p.accentInk)
                     : Texts.body.copyWith(color: p.textSecondary),
               ),

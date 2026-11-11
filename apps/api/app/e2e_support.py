@@ -1,5 +1,5 @@
 # kit-shape: the models of the test requests and the routes that use them are read together
-"""What the scenarios need to see or force and the app cannot. It only exists with `PRUEBAS=1`.
+"""What the scenarios need to see or force and the app cannot. It only exists with `E2E_TESTING=1`.
 Wire names (routes, JSON keys, query parameters) are English, like the public contract."""
 
 from datetime import date, datetime

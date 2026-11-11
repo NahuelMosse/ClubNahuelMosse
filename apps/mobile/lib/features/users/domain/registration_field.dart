@@ -1,4 +1,4 @@
-/// Los campos del formulario de registro, con el nombre que usa la API.
+/// The fields of the registration form, with the name the API uses.
 enum RegistrationField {
   firstName('first_name'),
   lastName('last_name'),

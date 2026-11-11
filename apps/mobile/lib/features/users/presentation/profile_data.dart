@@ -6,8 +6,8 @@ import '../../session/domain/profile.dart';
 import '../domain/registration_rules.dart';
 import 'profile_data_row.dart';
 
-/// Los datos personales en modo lectura. El correo no se puede cambiar (RF 2) y se ve y se
-/// anuncia así.
+/// The personal data in read mode. The email cannot be changed (RF 2) and is seen and
+/// announced that way.
 class ProfileData extends StatelessWidget {
   const ProfileData({super.key, required this.profile});
 

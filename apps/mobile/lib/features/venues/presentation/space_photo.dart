@@ -7,7 +7,7 @@ import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import 'photos.dart';
 
-/// La foto del deporte de la cancha, con su tipo arriba y su nombre abajo.
+/// The photo of the sport of the court, with its type on top and its name below.
 class SpacePhoto extends StatelessWidget {
   const SpacePhoto({super.key, required this.space, required this.kind});
 

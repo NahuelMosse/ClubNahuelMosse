@@ -56,7 +56,7 @@ class PaginatedHistory extends ChangeNotifier {
       return null;
     } on SessionExpired {
       expired = true;
-    } on FalloDeRed catch (e) {
+    } on NetworkFailure catch (e) {
       error = e;
     }
     if (_isStale(request)) return null;

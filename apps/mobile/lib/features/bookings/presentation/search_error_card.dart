@@ -4,18 +4,18 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
-/// `Card-Error` del prototipo: la consulta falló y los filtros siguen cargados.
+/// `Card-Error` of the prototype: the query failed and the filters stay loaded.
 class SearchErrorCard extends StatelessWidget {
   const SearchErrorCard({
     super.key,
-    required this.sinConexion,
-    required this.alVolver,
-    required this.alReintentar,
+    required this.noConnection,
+    required this.onBack,
+    required this.onRetry,
   });
 
-  final bool sinConexion;
-  final VoidCallback alVolver;
-  final VoidCallback alReintentar;
+  final bool noConnection;
+  final VoidCallback onBack;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -45,19 +45,19 @@ class SearchErrorCard extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.s4),
             Text(
-              '${sinConexion ? l.spaceSearchOffline : l.spaceSearchServerDown}'
+              '${noConnection ? l.spaceSearchOffline : l.spaceSearchServerDown}'
               ' ${l.spaceSearchFiltersKept}',
               style: Texts.body.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: Spacing.s12),
             Row(
               children: [
-                TextActionButton(label: l.spaceSearchBack, onTap: alVolver),
+                TextActionButton(label: l.spaceSearchBack, onTap: onBack),
                 const SizedBox(width: Spacing.s8),
                 Expanded(
                   child: OutlineButton(
                     label: l.bookingRetry,
-                    onTap: alReintentar,
+                    onTap: onRetry,
                     danger: true,
                   ),
                 ),

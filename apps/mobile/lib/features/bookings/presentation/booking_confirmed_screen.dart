@@ -10,11 +10,11 @@ import 'booking_photo_background.dart';
 import 'booking_receipt.dart';
 import 'booking_steps.dart';
 
-/// El comprobante: la reserva quedó hecha. Espera a que la persona elija adónde ir.
+/// The receipt: the booking is made. It waits for the person to choose where to go.
 class BookingConfirmedScreen extends StatelessWidget {
-  const BookingConfirmedScreen({super.key, required this.reserva});
+  const BookingConfirmedScreen({super.key, required this.booking});
 
-  final Booking reserva;
+  final Booking booking;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class BookingConfirmedScreen extends StatelessWidget {
       bottomNavigationBar: const BookingExitBar(),
       body: Stack(
         children: [
-          BookingPhotoBackground(deporte: reserva.sport),
+          BookingPhotoBackground(sport: booking.sport),
           SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
@@ -70,7 +70,7 @@ class BookingConfirmedScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  receipt: BookingReceipt(reserva: reserva),
+                  receipt: BookingReceipt(booking: booking),
                 ),
               ],
             ),

@@ -49,7 +49,7 @@ void main() {
   testWidgets(
     'the venue loads shaped like its cover, filters and court cards at 393 by 852, edges within 1 px and height within 8 px @VIS-03-S1 @assumption:VIS-03-ASM-01',
     (tester) async {
-      final held = await _mount(tester, '/sedes/$_moron');
+      final held = await _mount(tester, '/venues/$_moron');
       expect(find.byType(VenueSkeleton), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       final blocks = skeletonRects(tester);
@@ -85,7 +85,7 @@ void main() {
   testWidgets(
     'the venue on filtering loads court cards under the filters @VIS-03-S1',
     (tester) async {
-      final held = await _mount(tester, '/sedes/$_moron');
+      final held = await _mount(tester, '/venues/$_moron');
       held.release();
       await tester.pumpAndSettle();
       held.holdAgain();
@@ -112,7 +112,7 @@ void main() {
   testWidgets('«Sedes» loads shaped like the venue card @VIS-03-S1', (
     tester,
   ) async {
-    final held = await _mount(tester, '/sedes');
+    final held = await _mount(tester, '/venues');
     expect(find.byType(VenueCardSkeleton), findsWidgets);
     expect(find.text('Sedes'), findsWidgets);
     final card = _rect(tester, find.byType(VenueCardSkeleton));
@@ -128,7 +128,7 @@ void main() {
     'the venue skeletons keep what the previous card set: they shimmer, stop with reduce motion and say «Cargando» once @assumption:VIS-03-ASM-05',
     (tester) async {
       final semantics = tester.ensureSemantics();
-      for (final route in ['/sedes', '/sedes/$_moron']) {
+      for (final route in ['/venues', '/venues/$_moron']) {
         await _mount(tester, route);
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.hasRunningAnimations, isTrue, reason: route);
@@ -144,7 +144,7 @@ void main() {
       addTearDown(
         tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
       );
-      await _mount(tester, '/sedes');
+      await _mount(tester, '/venues');
       await tester.pump(const Duration(milliseconds: 100));
       expect(tester.hasRunningAnimations, isFalse);
       expect(find.bySemanticsLabel('Cargando'), findsOneWidget);
