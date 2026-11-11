@@ -364,10 +364,10 @@ void main() {
   );
 
   testWidgets(
-    'the die-cut draws the dotted line and the two notches and the screen reader does not read it @RED-02-S7',
+    'the die-cut draws the dotted line and the screen reader does not read it @RED-02-S7',
     (tester) async {
       final semantics = tester.ensureSemantics();
-      await _mount(tester, DieCut(background: _p.bgBase));
+      await _mount(tester, const DieCut());
 
       final painter = tester
           .widgetList<CustomPaint>(
@@ -380,8 +380,6 @@ void main() {
           .whereType<DieCutPainter>()
           .single;
       expect(painter.line, _p.borderControl);
-      expect(painter.background, _p.bgBase);
-      expect(painter.notchDiameter, 16);
       expect(tester.getSemantics(find.byType(DieCut)).label, isEmpty);
       semantics.dispose();
     },
