@@ -11,7 +11,7 @@
     "@docusaurus/core": "^3.10.2",
     "@docusaurus/preset-classic": "^3.10.2",
     "@docusaurus/theme-mermaid": "^3.10.2",
-    "@easyops-cn/docusaurus-search-local": "^0.52.1",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
     "@mdx-js/react": "^3.1.0",
     "@mermaid-js/layout-elk": "^0.1.9",
     "clsx": "^2.1.1",
@@ -19,7 +19,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "svg-pan-zoom": "^3.6.2",
-    "swagger-ui-dist": "^5.34.0"
+    "swagger-ui-dist": "^5.34.1"
   },
   "engines": {
     "node": ">=20"

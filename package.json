@@ -6,6 +6,6 @@
     "emulators": "firebase emulators:start --only auth --project demo-clubnahuelmosse"
   },
   "devDependencies": {
-    "firebase-tools": "^15.31.0"
+    "firebase-tools": "^15.35.0"
   }
 }
