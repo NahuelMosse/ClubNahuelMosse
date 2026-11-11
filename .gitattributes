@@ -10,3 +10,7 @@
 *.woff binary
 *.woff2 binary
 *.pdf binary
+
+# The agent kit in .claude/ and .specify/ is vendored tooling, not the product: GitHub leaves it out of the language bar.
+.claude/** linguist-vendored
+.specify/** linguist-vendored
