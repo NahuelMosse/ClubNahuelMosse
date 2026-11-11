@@ -4,12 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 
-/// Ticket separator: a dotted line with a notch on each side, decorative.
+/// Ticket separator: a dotted line, decorative.
 class DieCut extends StatelessWidget {
-  const DieCut({super.key, required this.background});
-
-  /// Color of what is behind, used to fill the notches.
-  final Color background;
+  const DieCut({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,36 +15,29 @@ class DieCut extends StatelessWidget {
       child: SizedBox(
         height: 16,
         width: double.infinity,
-        child: CustomPaint(
-          painter: DieCutPainter(line: p.borderControl, background: background),
-        ),
+        child: CustomPaint(painter: DieCutPainter(line: p.borderControl)),
       ),
     );
   }
 }
 
-/// Paints the dotted line and the two notches of the [DieCut].
+/// Paints the dotted line of the [DieCut].
 class DieCutPainter extends CustomPainter {
-  const DieCutPainter({
-    required this.line,
-    required this.background,
-    this.notchDiameter = 16,
-  });
+  const DieCutPainter({required this.line});
 
   final Color line;
-  final Color background;
-  final double notchDiameter;
+
+  static const _margin = 12.0;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = notchDiameter / 2;
     final y = size.height / 2;
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
       ..color = line;
-    final limit = size.width - radius - 4;
-    var x = radius + 4;
+    final limit = size.width - _margin;
+    var x = _margin;
     while (x < limit) {
       canvas.drawLine(
         Offset(x, y),
@@ -56,14 +46,8 @@ class DieCutPainter extends CustomPainter {
       );
       x += 10;
     }
-    final notch = Paint()..color = background;
-    canvas.drawCircle(Offset(0, y), radius, notch);
-    canvas.drawCircle(Offset(size.width, y), radius, notch);
   }
 
   @override
-  bool shouldRepaint(DieCutPainter oldDelegate) =>
-      oldDelegate.line != line ||
-      oldDelegate.background != background ||
-      oldDelegate.notchDiameter != notchDiameter;
+  bool shouldRepaint(DieCutPainter oldDelegate) => oldDelegate.line != line;
 }

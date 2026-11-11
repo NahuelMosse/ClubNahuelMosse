@@ -61,7 +61,7 @@ class BookingReceipt extends StatelessWidget {
                     ],
                   ),
                 ),
-                DieCut(background: p.bgBase),
+                const DieCut(),
                 Padding(
                   padding: const EdgeInsets.all(Spacing.s16),
                   child: TotalRow(total: r.total),

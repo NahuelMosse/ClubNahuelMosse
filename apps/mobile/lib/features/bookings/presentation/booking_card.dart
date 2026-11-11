@@ -126,7 +126,7 @@ class BookingCard extends StatelessWidget {
               ),
               child: BookingPriceAndStatus(booking: r, large: large),
             ),
-          DieCut(background: p.bgBase),
+          const DieCut(),
           BookingDetail(booking: r, account: account, reason: reason),
         ],
       ),

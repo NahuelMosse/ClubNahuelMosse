@@ -845,7 +845,6 @@ Future<void> _expectDieCutBetweenHeaderAndDetail(WidgetTester tester) async {
     matching: find.byType(DieCut),
   );
   expect(dieCut, findsOneWidget);
-  expect(tester.widget<DieCut>(dieCut).background, _dark.bgBase);
   final y = tester.getTopLeft(dieCut).dy;
   expect(
     tester.getTopLeft(find.text('Sede Morón · Av. Rivadavia 19850')).dy,
