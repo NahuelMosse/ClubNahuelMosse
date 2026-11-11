@@ -1,6 +1,6 @@
 // kit-boundary: the app-wide widget kit, shared by every feature.
 // kit-shape: a widget with its private parts kept together.
-// kit-shape: the widget, its State and the rings painter are a single Flutter piece
+// kit-shape: the widget and its State are a single Flutter piece
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -9,8 +9,8 @@ import '../../theme/tokens.dart';
 import 'fade_in.dart';
 import 'timings.dart';
 
-/// The celebration of the confirmed booking: a spinning dotted ring and sparks around the
-/// [center], the [cheer] that grows below and, after that, the [receipt]. Runs once.
+/// The celebration of the confirmed booking: sparks that pop around the [center], the
+/// [cheer] that grows below and, after that, the [receipt]. Runs once.
 class Celebration extends StatefulWidget {
   const Celebration({
     super.key,
@@ -83,14 +83,8 @@ class _CelebrationState extends State<Celebration>
     ]).chain(CurveTween(curve: _span(_sparksStart, _sparksDuration))),
   );
 
-  /// The spinning ring, the sparks and the [center], stacked.
+  /// The sparks and the [center], stacked.
   Widget _stage(Palette p) {
-    final turn = _controller.drive(
-      Tween<double>(
-        begin: 0,
-        end: -1 / 3,
-      ).chain(CurveTween(curve: AppMotion.out)),
-    );
     final spark = _spark;
     return SizedBox(
       width: _side,
@@ -98,15 +92,6 @@ class _CelebrationState extends State<Celebration>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          ExcludeSemantics(
-            child: RotationTransition(
-              turns: turn,
-              child: CustomPaint(
-                size: const Size.square(_side),
-                painter: _Ring(p.accentBase, _radius),
-              ),
-            ),
-          ),
           for (var i = 0; i < 8; i++)
             ExcludeSemantics(
               child: Transform.translate(
@@ -169,36 +154,4 @@ class _CelebrationState extends State<Celebration>
       ],
     );
   }
-}
-
-/// A ring of little dashes around the center.
-class _Ring extends CustomPainter {
-  _Ring(this.stroke, this.radius);
-
-  final Color stroke;
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final line = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round
-      ..color = stroke;
-    const dashes = 48;
-    for (var i = 0; i < dashes; i++) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        i * 2 * math.pi / dashes,
-        math.pi / dashes,
-        false,
-        line,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_Ring oldDelegate) =>
-      oldDelegate.stroke != stroke || oldDelegate.radius != radius;
 }

@@ -68,7 +68,7 @@ void main() {
   );
 
   testWidgets(
-    'the confirmed-booking celebration keeps its dotted ring and its sparks @assumption:VIS-04-ASM-01',
+    'the confirmed-booking celebration keeps its sparks, with no ring around them @VIS-04-S4',
     (tester) async {
       await _mount(
         tester,
@@ -80,11 +80,16 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 3));
 
-      final ring = find.descendant(
-        of: find.byType(Celebration),
-        matching: find.byType(CustomPaint),
-      );
-      expect(ring, findsWidgets);
+      for (final ring in [CustomPaint, RotationTransition]) {
+        expect(
+          find.descendant(
+            of: find.byType(Celebration),
+            matching: find.byType(ring),
+          ),
+          findsNothing,
+          reason: '$ring',
+        );
+      }
       final sparks = tester
           .widgetList<Container>(
             find.descendant(
