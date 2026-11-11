@@ -31,7 +31,7 @@ jobs:
       TEST_DATABASE_URL: postgresql+psycopg://club:club@127.0.0.1:5432/club_test
       FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # Frozen tests compare files against the local `main` branch, which the checkout of a pull request does not create.
@@ -88,7 +88,7 @@ jobs:
       run:
         working-directory: apps/mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -121,7 +121,7 @@ jobs:
     timeout-minutes: 10
     steps:
       # The repo tests read the card's commits and files as they were on main, which a shallow checkout lacks.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v7
