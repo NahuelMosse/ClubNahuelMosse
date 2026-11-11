@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
       # Frozen tests compare files against the local `main` branch, which the checkout of a pull request does not create.
       - run: git rev-parse --verify -q main > /dev/null || git branch main origin/main
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -89,7 +89,7 @@ jobs:
         working-directory: apps/mobile
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - uses: subosito/flutter-action@v2
@@ -124,7 +124,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
