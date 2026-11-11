@@ -28,7 +28,7 @@ not_read:
 
 ## Look
 
-- remove-only: las dos muescas del troquel
+- plain: la card saca las dos muescas del troquel y no trae look nuevo; la tarjeta y el comprobante siguen con los estilos del repo (`Palette`, `borderControl`)
 
 ## Gate
 
