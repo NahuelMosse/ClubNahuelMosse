@@ -16,7 +16,7 @@ dependencies:
   go_router: ^14.3.0
   intl: any
   firebase_core: ^4.15.2
-  firebase_auth: ^6.7.0
+  firebase_auth: ^6.7.1
   shared_preferences: ^2.5.5
   firebase_messaging: ^16.7.1
 
