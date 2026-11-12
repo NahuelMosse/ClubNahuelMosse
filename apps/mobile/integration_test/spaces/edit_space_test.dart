@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -100,9 +100,9 @@ void main() {
     await openEdit(tester, court);
 
     // Verifies: the three disabled, with their values, and the name confirmed.
-    expect(flags(tester, 'Sede').isEnabled, isFalse);
-    expect(flags(tester, 'Deporte').isEnabled, isFalse);
-    expect(flags(tester, 'Tipo').isEnabled, isFalse);
+    expect(flags(tester, 'Sede').isEnabled == Tristate.isTrue, isFalse);
+    expect(flags(tester, 'Deporte').isEnabled == Tristate.isTrue, isFalse);
+    expect(flags(tester, 'Tipo').isEnabled == Tristate.isTrue, isFalse);
     expect(find.text('Fútbol 5'), findsWidgets);
     expect(find.text(court), findsOneWidget);
     semantics.dispose();
@@ -136,7 +136,7 @@ void main() {
       // Verifies: empty, the required notice and unable to save.
       await typeInto(tester, 'Precio por hora', '');
       expect(find.text('Este campo es obligatorio'), findsOneWidget);
-      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled == Tristate.isTrue, isFalse);
 
       // Verifies: zero, the range notice.
       await typeInto(tester, 'Precio por hora', '0');
@@ -144,12 +144,12 @@ void main() {
         find.text('Ingresá un precio entre \$ 1 y \$ 9.999.999'),
         findsOneWidget,
       );
-      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled == Tristate.isTrue, isFalse);
 
       // Verifies: letters are not typed.
       await typeInto(tester, 'Precio por hora', 'abc');
       expect(find.text('abc'), findsNothing);
-      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled == Tristate.isTrue, isFalse);
       expect((await spaceAUserSees(court))?['price_per_hour'], 43000);
       semantics.dispose();
     },
@@ -165,9 +165,9 @@ void main() {
       await openEdit(tester, court);
 
       // Verifies: without changes it cannot save; with a change, it can.
-      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled == Tristate.isTrue, isFalse);
       await choose(tester, 'Condición', 'Al aire libre');
-      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled, isTrue);
+      expect(flags(tester, 'GUARDAR ESPACIO').isEnabled == Tristate.isTrue, isTrue);
       semantics.dispose();
     },
   );

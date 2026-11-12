@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show Tristate;
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/notifications/data/notifications_repository.dart';
@@ -1253,7 +1254,7 @@ void main() {
               ),
             )
             .flagsCollection
-            .isSelected;
+            .isSelected == Tristate.isTrue;
         expect(highlighted('10:00 – 11:00'), isTrue);
         expect(highlighted('21:00 – 22:00'), isFalse);
         semantics.dispose();
@@ -1301,7 +1302,7 @@ void main() {
                 ),
               )
               .flagsCollection
-              .isSelected,
+              .isSelected == Tristate.isTrue,
           isTrue,
         );
         semantics.dispose();
@@ -1323,7 +1324,7 @@ void main() {
                 ),
               )
               .flagsCollection
-              .isSelected,
+              .isSelected == Tristate.isTrue,
           isFalse,
         );
         semantics.dispose();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show Tristate;
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
@@ -108,7 +109,7 @@ void main() {
 
       expect(find.text('El nombre es obligatorio'), findsOneWidget);
       final button = find.bySemanticsLabel('GUARDAR CAMBIOS');
-      expect(tester.getSemantics(button).flagsCollection.isEnabled, isTrue);
+      expect(tester.getSemantics(button).flagsCollection.isEnabled == Tristate.isTrue, isTrue);
       await tapText(tester, 'GUARDAR CAMBIOS');
       expect(find.text('El nombre es obligatorio'), findsOneWidget);
       expect(requests.where((p) => p.method == 'PUT'), isEmpty);

@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -134,8 +134,8 @@ void main() {
       await tapLabel(tester, '${days[tomorrow.weekday - 1]} ${tomorrow.day}');
 
       // Verifies: the 21 is free and the 19 taken.
-      expect(flags(tester, slot(21)).isEnabled, isTrue);
-      expect(flags(tester, slot(19)).isEnabled, isFalse);
+      expect(flags(tester, slot(21)).isEnabled == Tristate.isTrue, isTrue);
+      expect(flags(tester, slot(19)).isEnabled == Tristate.isTrue, isFalse);
       semantics.dispose();
     },
   );
@@ -178,7 +178,7 @@ void main() {
         tester,
         find.textContaining('Estás modificando tu reserva'),
       );
-      expect(flags(tester, slot(19)).isEnabled, isFalse);
+      expect(flags(tester, slot(19)).isEnabled == Tristate.isTrue, isFalse);
       expect(await bookingsOf(email), [(court, '21:00')]);
       semantics.dispose();
     },
@@ -194,9 +194,9 @@ void main() {
       await openModify(tester, court);
 
       // Verifies: with the current time picked it cannot continue.
-      expect(flags(tester, 'CONTINUAR CON EL CAMBIO').isEnabled, isFalse);
+      expect(flags(tester, 'CONTINUAR CON EL CAMBIO').isEnabled == Tristate.isTrue, isFalse);
       await tapLabel(tester, slot(19));
-      expect(flags(tester, 'CONTINUAR CON EL CAMBIO').isEnabled, isTrue);
+      expect(flags(tester, 'CONTINUAR CON EL CAMBIO').isEnabled == Tristate.isTrue, isTrue);
       semantics.dispose();
     },
   );

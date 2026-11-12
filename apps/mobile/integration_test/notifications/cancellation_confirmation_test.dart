@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -95,7 +97,7 @@ void main() {
         find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(venue)},')),
       )
       .flagsCollection
-      .isSelected;
+      .isSelected == Tristate.isTrue;
 
   testWidgets(
     'cancels a booking and receives the confirmation with the booking and the freed time @CU-24.3-H01-01 @assumption:CU-24.3-SUP-05',

@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -112,7 +112,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verifies: the 21 one is free again.
-      expect(flags(tester, '21:00 – 22:00').isEnabled, isTrue);
+      expect(flags(tester, '21:00 – 22:00').isEnabled == Tristate.isTrue, isTrue);
       semantics.dispose();
     },
   );

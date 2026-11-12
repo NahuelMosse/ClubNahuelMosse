@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:clubnahuelmosse/common/clock.dart';
 import 'package:clubnahuelmosse/features/bookings/domain/search_rules.dart';
 import 'package:clubnahuelmosse/features/bookings/presentation/search_problem_texts.dart';
@@ -158,7 +160,7 @@ void main() {
     bool enabled(WidgetTester tester, String label) => tester
         .getSemantics(find.bySemanticsLabel(label))
         .flagsCollection
-        .isEnabled;
+        .isEnabled == Tristate.isTrue;
 
     testWidgets(
       'searching asks for venue, sport, date and range, and lists the free ones',
