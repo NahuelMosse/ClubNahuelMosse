@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show Tristate;
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
@@ -100,10 +101,10 @@ void main() {
       expect(find.text('(actual)'), findsOneWidget);
       expect(find.bySemanticsLabel('21:00 – 22:00 (actual)'), findsOneWidget);
       final button = find.bySemanticsLabel('CONTINUAR CON EL CAMBIO');
-      expect(tester.getSemantics(button).flagsCollection.isEnabled, isFalse);
+      expect(tester.getSemantics(button).flagsCollection.isEnabled == Tristate.isTrue, isFalse);
 
       await tap(tester, find.text('19:00 – 20:00'));
-      expect(tester.getSemantics(button).flagsCollection.isEnabled, isTrue);
+      expect(tester.getSemantics(button).flagsCollection.isEnabled == Tristate.isTrue, isTrue);
       semantics.dispose();
     },
   );

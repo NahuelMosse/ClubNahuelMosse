@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show Tristate;
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
@@ -42,12 +43,12 @@ void main() {
   bool enabled(WidgetTester tester, String label) => tester
       .getSemantics(find.bySemanticsLabel(label))
       .flagsCollection
-      .isEnabled;
+      .isEnabled == Tristate.isTrue;
 
   bool chosen(WidgetTester tester, String label) => tester
       .getSemantics(find.bySemanticsLabel(label))
       .flagsCollection
-      .isSelected;
+      .isSelected == Tristate.isTrue;
 
   Future<void> tapLabel(WidgetTester tester, String label) async {
     await tester.ensureVisible(find.bySemanticsLabel(label));

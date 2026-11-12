@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show Tristate;
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
@@ -360,7 +361,7 @@ void main() {
         tester
             .getSemantics(find.bySemanticsLabel('Cancha 1, Al aire libre'))
             .flagsCollection
-            .isSelected,
+            .isSelected == Tristate.isTrue,
         isTrue,
       );
       // The tennis court is not of that kind.

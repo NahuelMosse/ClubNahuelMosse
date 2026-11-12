@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -127,17 +127,17 @@ void main() {
 
       // Verifies: the grid of that court arrives with the day, the duration and the time.
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(flags(tester, 'Cancha 1, Techada').isSelected, isTrue);
+      expect(flags(tester, 'Cancha 1, Techada').isSelected == Tristate.isTrue, isTrue);
       expect(
         flags(
           tester,
           '${days[tomorrow.weekday - 1]} ${tomorrow.day}',
-        ).isSelected,
+        ).isSelected == Tristate.isTrue,
         isTrue,
       );
       expect(find.text('2 horas'), findsOneWidget);
-      expect(flags(tester, '10:00 – 12:00').isSelected, isTrue);
-      expect(flags(tester, 'CONTINUAR').isEnabled, isTrue);
+      expect(flags(tester, '10:00 – 12:00').isSelected == Tristate.isTrue, isTrue);
+      expect(flags(tester, 'CONTINUAR').isEnabled == Tristate.isTrue, isTrue);
       semantics.dispose();
     },
   );
@@ -200,7 +200,7 @@ void main() {
 
     // Verifies: the error on the date and the query blocked.
     await waitUntil(tester, find.text('La fecha tiene que ser futura'));
-    expect(flags(tester, 'CONSULTAR').isEnabled, isFalse);
+    expect(flags(tester, 'CONSULTAR').isEnabled == Tristate.isTrue, isFalse);
     expect(find.textContaining('DISPONIBLE'), findsNothing);
     semantics.dispose();
   });
@@ -216,7 +216,7 @@ void main() {
 
       // Verifies: the error on the range and the query blocked.
       await waitUntil(tester, find.text('La duración mínima es de una hora'));
-      expect(flags(tester, 'CONSULTAR').isEnabled, isFalse);
+      expect(flags(tester, 'CONSULTAR').isEnabled == Tristate.isTrue, isFalse);
       semantics.dispose();
     },
   );
@@ -232,7 +232,7 @@ void main() {
 
       // Verifies: the error with the closing time and the query blocked.
       await waitUntil(tester, find.text('La sede cierra a las 23:00'));
-      expect(flags(tester, 'CONSULTAR').isEnabled, isFalse);
+      expect(flags(tester, 'CONSULTAR').isEnabled == Tristate.isTrue, isFalse);
       semantics.dispose();
     },
   );

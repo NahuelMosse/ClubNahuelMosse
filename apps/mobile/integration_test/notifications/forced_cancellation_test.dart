@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -62,7 +64,7 @@ void main() {
         find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(venue)},')),
       )
       .flagsCollection
-      .isSelected;
+      .isSelected == Tristate.isTrue;
 
   testWidgets(
     'the administrator voids the booking and the user sees the notice with sport, venue, date and reason @CU-24.2-H01-01 @assumption:CU-24.2-SUP-06',

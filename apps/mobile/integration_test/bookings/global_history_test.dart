@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -343,7 +345,7 @@ void main() {
       tester
           .getSemantics(find.bySemanticsLabel('APLICAR'))
           .flagsCollection
-          .isEnabled,
+          .isEnabled == Tristate.isTrue,
       isFalse,
     );
     semantics.dispose();

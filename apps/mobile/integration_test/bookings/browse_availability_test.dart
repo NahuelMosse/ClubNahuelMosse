@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -81,10 +81,10 @@ void main() {
       tester.getSemantics(find.bySemanticsLabel(label)).flagsCollection;
 
   bool enabled(WidgetTester tester, String label) =>
-      flags(tester, label).isEnabled;
+      flags(tester, label).isEnabled == Tristate.isTrue;
 
   bool selected(WidgetTester tester, String label) =>
-      flags(tester, label).isSelected;
+      flags(tester, label).isSelected == Tristate.isTrue;
 
   Future<void> viewDay(WidgetTester tester, DateTime day) async {
     await tapLabel(tester, chip(day));

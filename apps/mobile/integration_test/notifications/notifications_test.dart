@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -74,7 +76,7 @@ void main() {
       find.bySemanticsLabel(RegExp('^Fútbol 5, ${RegExp.escape(venue)},'));
 
   bool highlighted(WidgetTester tester, String venue) =>
-      tester.getSemantics(cardOf(venue)).flagsCollection.isSelected;
+      tester.getSemantics(cardOf(venue)).flagsCollection.isSelected == Tristate.isTrue;
 
   testWidgets(
     'on tapping the reminder the app opens «Mis reservas» with that booking in view @CU-24.1-H01-02 @assumption:CU-24.1-SUP-03 @assumption:CU-24.1-SUP-11',

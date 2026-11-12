@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show Tristate;
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +79,7 @@ void main() {
   bool enabled(WidgetTester tester, String label) => tester
       .getSemantics(find.bySemanticsLabel(label))
       .flagsCollection
-      .isEnabled;
+      .isEnabled == Tristate.isTrue;
 
   testWidgets('opens with the space data and what is not editable, disabled', (
     tester,

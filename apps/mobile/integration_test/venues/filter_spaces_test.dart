@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -53,7 +55,7 @@ void main() {
   bool picked(WidgetTester tester, String chip) => tester
       .getSemantics(find.bySemanticsLabel(chip))
       .flagsCollection
-      .isSelected;
+      .isSelected == Tristate.isTrue;
 
   testWidgets(
     'picks a sport in a venue and only sees the courts of that sport, with the counter @CU-20-H01-01',

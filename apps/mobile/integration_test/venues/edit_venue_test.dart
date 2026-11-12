@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -126,7 +126,7 @@ void main() {
 
       // Verifies: the notice on the field and «GUARDAR CAMBIOS» disabled.
       expect(find.text('La dirección es obligatoria'), findsOneWidget);
-      expect(flags(tester, 'GUARDAR CAMBIOS').isEnabled, isFalse);
+      expect(flags(tester, 'GUARDAR CAMBIOS').isEnabled == Tristate.isTrue, isFalse);
       expect((await venueAUserSees(name))?['address'], 'Av. Vergara 1850');
       semantics.dispose();
     },

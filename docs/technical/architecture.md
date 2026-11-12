@@ -26,7 +26,7 @@ flowchart LR
 
 | Piece | Technology | Responsibility |
 |---|---|---|
-| App | Flutter (Dart 3.9), `go_router`, `http`, `firebase_auth`, `firebase_messaging` | screens, session, notifications; it decides no business rules |
+| App | Flutter (Dart 3.11), `go_router`, `http`, `firebase_auth`, `firebase_messaging` | screens, session, notifications; it decides no business rules |
 | API | Python 3.12, FastAPI, SQLAlchemy Core (hand-written SQL, no ORM), Alembic, pydantic-settings | all the rules: who can do what, schedules, overlap, notifications |
 | Database | PostgreSQL with `btree_gist` | the truth of the system; the hard constraints live here |
 | Firebase Authentication | external service | accounts and passwords; it issues the token the API verifies |

@@ -26,7 +26,7 @@ C4Context
 
 ```mermaid
 C4Container
-  Container(movil, "Mobile app", "Flutter, Dart ^3.9.2, Android only", "Screens, session, notices")
+  Container(movil, "Mobile app", "Flutter, Dart ^3.11.0, Android only", "Screens, session, notices")
   Container(api, "API", "FastAPI, Python 3.12, uvicorn", "Rules for bookings, venues, spaces, profiles and notices")
   ContainerDb(db, "Database", "PostgreSQL, btree_gist extension", "Users, venues, spaces, bookings, notices")
   System_Ext(auth, "Firebase Authentication", "Accounts and tokens")

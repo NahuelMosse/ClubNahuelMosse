@@ -70,7 +70,7 @@ test('the API job runs ruff, mypy and the whole pytest on Python 3.13 against Po
 
 test('the app job runs flutter analyze, the format check and flutter test judged by the replaced tests rule @CI-01-S1 @assumption:CI-01-ASM-03', () => {
   const mobile = job('mobile');
-  assert.match(mobile, /flutter-version: 3\.35\.3/);
+  assert.match(mobile, /flutter-version: 3\.41\.9/);
   assert.match(mobile, /run: flutter analyze/);
   assert.match(mobile, /run: dart format --output=none --set-exit-if-changed lib\n/);
   assert.match(mobile, /flutter test --reporter expanded > \.\.\/\.\.\/flutter\.log/);

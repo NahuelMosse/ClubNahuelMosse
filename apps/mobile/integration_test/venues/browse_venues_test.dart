@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -133,7 +135,7 @@ void main() {
       tester
           .getSemantics(find.bySemanticsLabel('Cancha 1, Techada'))
           .flagsCollection
-          .isSelected,
+          .isSelected == Tristate.isTrue,
       isTrue,
     );
     semantics.dispose();

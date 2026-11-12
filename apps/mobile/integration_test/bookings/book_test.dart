@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlags;
+import 'dart:ui' show SemanticsFlags, Tristate;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -140,8 +140,8 @@ void main() {
       await openTimes(tester, venue);
 
       // Verifies: 11 can no longer be picked.
-      expect(flags(tester, slot(11)).isEnabled, isFalse);
-      expect(flags(tester, slot(12)).isEnabled, isTrue);
+      expect(flags(tester, slot(11)).isEnabled == Tristate.isTrue, isFalse);
+      expect(flags(tester, slot(12)).isEnabled == Tristate.isTrue, isTrue);
       semantics.dispose();
     },
   );
@@ -213,7 +213,7 @@ void main() {
       await waitUntil(tester, find.text('Ese horario se ocupó'));
       await tapText(tester, 'ELEGIR OTRO HORARIO');
       await waitUntil(tester, find.text('HORARIO DISPONIBLE'));
-      expect(flags(tester, slot(20)).isEnabled, isFalse);
+      expect(flags(tester, slot(20)).isEnabled == Tristate.isTrue, isFalse);
       expect(await bookingsOf(email), isEmpty);
       semantics.dispose();
     },
@@ -230,7 +230,7 @@ void main() {
 
       // Verifies: cannot continue until one is picked, and the summary says what is missing.
       expect(find.text('Sin horario elegido'), findsOneWidget);
-      expect(flags(tester, 'CONTINUAR').isEnabled, isFalse);
+      expect(flags(tester, 'CONTINUAR').isEnabled == Tristate.isTrue, isFalse);
       semantics.dispose();
     },
   );
