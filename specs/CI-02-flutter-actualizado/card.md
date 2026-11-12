@@ -14,7 +14,7 @@ not_read: ninguno: no hay Jira ni adjuntos
 
 ## Tasks
 
-- T1 · S1,CI-02-ASM-01,CI-02-ASM-02 · .github/workflows/ci.yml (presentation), apps/mobile/pubspec.yaml, apps/mobile/pubspec.lock, tests/flutter-sdk.test.mjs · tests: tests/flutter-sdk.test.mjs "the app job installs a Flutter whose Dart is 3.11 or more @CI-02-S1"; tests/flutter-sdk.test.mjs "the app job installs the latest 3.41 Flutter @CI-02-ASM-01"; tests/flutter-sdk.test.mjs "the SDK floor of the app is Dart 3.11.0 and the lock agrees @CI-02-ASM-02"
+- T1 · S1,CI-02-ASM-01,CI-02-ASM-02 · .github/workflows/ci.yml (presentation), apps/mobile/pubspec.yaml, apps/mobile/pubspec.lock, tests/ci.test.mjs, tests/flutter-sdk.test.mjs · tests: tests/flutter-sdk.test.mjs "the app job installs a Flutter whose Dart is 3.11 or more @CI-02-S1"; tests/flutter-sdk.test.mjs "the app job installs the latest 3.41 Flutter @CI-02-ASM-01"; tests/flutter-sdk.test.mjs "the SDK floor of the app is Dart 3.11.0 and the lock agrees @CI-02-ASM-02"
   new: no test reads the Flutter version of the workflow or the SDK floor (Grep flutter-version, sdk: in tests/)
 - T2 · S1,CI-02-ASM-03 · apps/mobile/README.md (presentation), docs/technical/architecture.md (presentation), docs/technical/system-design.md (presentation), tests/flutter-sdk.test.mjs · tests: tests/flutter-sdk.test.mjs "the current docs name the Dart of the app SDK floor @CI-02-ASM-03"
   new: no doc test names the Dart version (Grep Dart in tests/)
@@ -27,9 +27,8 @@ not_read: ninguno: no hay Jira ni adjuntos
 
 ```
 node: node --test tests/flutter-sdk.test.mjs tests/ci.test.mjs
-lint: cd apps/mobile && flutter analyze
-fmt: cd apps/mobile && dart format --output=none --set-exit-if-changed lib
-suite [timeout 30 min]: cd apps/mobile && flutter test
+lint: npx -y eslint@9 --no-config-lookup --rule {"no-unused-vars":"error"} tests/ci.test.mjs tests/flutter-sdk.test.mjs
+refactor-tests: tests/ci.test.mjs fija la versión de Flutter del job de la app; sigue la versión nueva (3.35.3 → 3.41.9) sin cambiar lo que verifica
 no-visual: la card no toca ninguna pantalla de la app
 no-docs: la card sube la versión de la herramienta; no cambia comportamiento ni contrato
 ```
@@ -40,3 +39,4 @@ no-docs: la card sube la versión de la herramienta; no cambia comportamiento ni
 - L2 · 2026-11-11 · declared · restart · la card no guarda nada: sube la versión de Flutter del CI y del pubspec; la app y su base quedan como en main
 - L3 · 2026-11-12 · declared · S1 · «o más» es un piso de versión, no una rama: un solo comportamiento, que el CI instale un Flutter con Dart 3.11 o más
 - L4 · 2026-11-12 · declared · ASM-01 · Flutter 3.50.0 se descartó: analyze da 397 problemas no mecánicos; se fija 3.41.9 (Dart 3.11.5); el test de ASM-01 se corrigió antes del primer push, cuando todavía no estaba en main
+- L5 · 2026-11-12 · declared · gate · flutter analyze, dart format y flutter test con Flutter 3.41.9 no corren en esta máquina (no hay ese SDK instalado): los corre el job de la app del CI del PR, que es el chequeo requerido
