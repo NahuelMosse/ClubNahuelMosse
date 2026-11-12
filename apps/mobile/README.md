@@ -6,7 +6,7 @@ only.
 
 ## Requirements
 
-- Flutter with Dart `^3.9.2` (`flutter doctor` with no Android errors).
+- Flutter with Dart `^3.11.0` (`flutter doctor` with no Android errors).
 - Android SDK and an emulator or a phone with USB debugging on.
 - The API in `apps/api` running (see its README), local or deployed.
 
